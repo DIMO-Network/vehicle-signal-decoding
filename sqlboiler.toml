@@ -1,0 +1,18 @@
+output = "internal/infrastructure/db/models"
+no-tests = true
+
+[psql]  
+dbname = "vehicle_signal_decoding_api"
+blacklist = ["migrations"]
+host   = "localhost"
+port   = 5432
+user   = "dimo"
+pass   = "dimo"
+schema = "vehicle_signal_decoding_api"
+sslmode= "disable"
+
+[aliases.tables.wmis]
+up_plural     = "Wmis"
+up_singular   = "Wmi"
+down_plural   = "wmis"
+down_singular = "wmi"

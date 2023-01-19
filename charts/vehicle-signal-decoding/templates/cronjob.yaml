@@ -1,0 +1,36 @@
+{{- if .Values.cronJob.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "vehicle-signal-decoding.fullname" . }}-load-dd
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "vehicle-signal-decoding.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.cronJob.schedule | quote}}
+  concurrencyPolicy: "Forbid"
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          annotations:
+          {{- with .Values.podAnnotations }}
+            {{- toYaml . | nindent 8 }}
+          {{- end }}
+          labels:
+            {{- include "vehicle-signal-decoding.selectorLabels" . | nindent 12 }}
+        spec:
+          containers:
+          - name: edmunds-vehicles-sync
+            securityContext:
+              {{- toYaml .Values.securityContext | nindent 14 }}
+            image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+            command: ['/bin/sh']
+            args: ['-c', '/vehicle-signal-decoding smartcar-sync && /vehicle-signal-decoding search-sync-dds && /vehicle-signal-decoding populate-device-features && /vehicle-signal-decoding nhtsa-sync-recalls; CODE=$?; echo "smart-car-sync and search-sync-dds completed"; wget -q --post-data "hello=shutdown" http://localhost:4191/shutdown; exit $CODE;']
+            envFrom:
+            - configMapRef:
+                name: {{ include "vehicle-signal-decoding.fullname" . }}-config
+            - secretRef:
+                name: {{ include "vehicle-signal-decoding.fullname" . }}-secret
+          restartPolicy: OnFailure
+{{ end }}          

@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "vehicle-signal-decoding.fullname" . }}-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "vehicle-signal-decoding.labels" . | nindent 4 }}
+data:
+{{- range $key, $val := .Values.env }}
+  {{ $key }} : {{ $val | quote}}
+{{- end}}

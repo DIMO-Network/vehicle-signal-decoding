@@ -1,0 +1,15 @@
+ENVIRONMENT: local
+LOG_LEVEL: info
+PORT: 3050
+GRPC_PORT: 9000
+SERVICE_NAME: vehicle-signal-decoding
+SERVICE_VERSION: "1.0.0"
+DB:
+  USER: dimo
+  PASSWORD: dimo
+  PORT: 5432
+  HOST: localhost
+  NAME: vehicle_signal_decoding_api
+  MAX_OPEN_CONNECTIONS: 5
+  MAX_IDLE_CONNECTIONS: 5
+TRACE_MONITOR_VIEW: http://localhost:14268/api/traces

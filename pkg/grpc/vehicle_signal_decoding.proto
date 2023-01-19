@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+option go_package = "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc";
+
+package grpc;
+
+message BaseRequest {
+  string input = 1;
+}
+
+message BaseResponse {
+  bool result = 1;
+}
+
+service VehicleSignalDecodingService {
+  rpc ToDo(BaseRequest) returns (BaseResponse);
+}
