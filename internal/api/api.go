@@ -2,8 +2,11 @@ package api
 
 import (
 	"context"
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/kafka"
+	"github.com/Shopify/sarama"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/DIMO-Network/shared/db"
@@ -20,9 +23,11 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 	pdb := db.NewDbConnectionFromSettings(ctx, &settings.DB, true)
 	pdb.WaitForDB(logger)
 
-	go StartGrpcServer(logger, settings)
+	go StartGrpcServer(logger, pdb.DBS, settings)
 
 	startMonitoringServer(logger)
+	startVehicleSignalConsumer(logger, settings, pdb)
+
 	c := make(chan os.Signal, 1)                    // Create channel to signify a signal being sent with length of 1
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM) // When an interrupt or termination signal is sent, notify the channel
 	<-c                                             // This blocks the main thread until an interrupt is received
@@ -46,4 +51,28 @@ func startMonitoringServer(logger zerolog.Logger) {
 	}()
 
 	logger.Info().Str("port", "8888").Msg("Started monitoring web server.")
+}
+
+func startVehicleSignalConsumer(logger zerolog.Logger, settings *config.Settings, pdb db.Store) {
+	clusterConfig := sarama.NewConfig()
+	clusterConfig.Version = sarama.V2_8_1_0
+	clusterConfig.Consumer.Offsets.Initial = sarama.OffsetNewest
+
+	cfg := &kafka.Config{
+		ClusterConfig:   clusterConfig,
+		BrokerAddresses: strings.Split(settings.KafkaBrokers, ","),
+		Topic:           settings.TaskStatusTopic,
+		GroupID:         "user-devicesYY",
+		MaxInFlight:     int64(5),
+	}
+	consumer, err := kafka.NewConsumer(cfg, &logger)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("Could not start credential update consumer")
+	}
+
+	service := NewWorkerListenerService(pdb.DBS, &logger)
+
+	consumer.Start(context.Background(), service.ProcessWorker)
+
+	logger.Info().Msg("Vehicle Signal Decoding consumer started")
 }

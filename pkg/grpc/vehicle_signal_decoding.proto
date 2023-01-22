@@ -1,17 +1,86 @@
 syntax = "proto3";
 
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
 option go_package = "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc";
 
 package grpc;
 
-message BaseRequest {
-  string input = 1;
+message CreateDBCCodeRequest {
+  string name = 1;
+  string dbc_contents = 2;
+}
+
+message UpdateDBCCodeRequest {
+  string id = 1;
+  string name = 2;
+  string dbc_contents = 3;
+}
+
+message GetDBCCodeResponse {
+  string id = 1;
+  string name = 2;
+  string dbc_contents = 3;
+  google.protobuf.Timestamp created_at = 4;
+  google.protobuf.Timestamp updated_at = 5;
+}
+
+message GetDBCCodeListResponse {
+  repeated GetDBCCodeResponse items = 1;
+}
+
+message CreateTestSignalRequest {
+  string device_definition_id = 1;
+  string dbc_codes_id = 2;
+  string user_device_id = 3;
+  string trigger = 4;
+  string name = 5;
+  string value = 6;
+}
+
+message UpdateTestSignalRequest {
+  string id = 1;
+  string device_definition_id = 2;
+  string dbc_codes_id = 3;
+  string user_device_id = 4;
+  string trigger = 5;
+  string name = 6;
+  string value = 7;
+}
+
+message GetTestSignalResponse {
+  string id = 1;
+  string device_definition_id = 2;
+  string dbc_codes_id = 3;
+  string user_device_id = 4;
+  string trigger = 5;
+  string name = 6;
+  string value = 7;
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp updated_at = 9;
+}
+
+message GetTestSignalListResponse {
+  repeated GetTestSignalResponse items = 1;
 }
 
 message BaseResponse {
-  bool result = 1;
+  string id = 1;
+}
+
+message GetByIdRequest {
+  string id = 1;
 }
 
 service VehicleSignalDecodingService {
-  rpc ToDo(BaseRequest) returns (BaseResponse);
+  rpc CreateDBCCode(CreateDBCCodeRequest) returns (BaseResponse);
+  rpc UpdateDBCCode(UpdateDBCCodeRequest) returns (BaseResponse);
+  rpc GetDBCCodes(google.protobuf.Empty) returns (GetDBCCodeListResponse);
+  rpc GetDBCCodesById(GetByIdRequest) returns (GetDBCCodeResponse);
+
+  rpc CreateTestSignal(CreateTestSignalRequest) returns (BaseResponse);
+  rpc UpdateTestSignal(UpdateTestSignalRequest) returns (BaseResponse);
+  rpc GetTestSignals(google.protobuf.Empty) returns (GetTestSignalListResponse);
+  rpc GetTestSignalById(GetByIdRequest) returns (GetTestSignalResponse);
 }

@@ -13,4 +13,6 @@ type Settings struct {
 	ServiceVersion   string      `yaml:"SERVICE_VERSION"`
 	GRPCPort         string      `yaml:"GRPC_PORT"`
 	TraceMonitorView string      `yaml:"TRACE_MONITOR_VIEW"`
+	KafkaBrokers     string      `yaml:"KAFKA_BROKERS"`
+	TaskStatusTopic  string      `yaml:"TASK_STATUS_TOPIC"`
 }

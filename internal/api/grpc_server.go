@@ -1,6 +1,7 @@
 package api
 
 import (
+	"github.com/DIMO-Network/shared/db"
 	"net"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/api/common"
@@ -12,7 +13,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-func StartGrpcServer(logger zerolog.Logger, s *config.Settings) {
+func StartGrpcServer(logger zerolog.Logger, dbs func() *db.ReaderWriter, s *config.Settings) {
 	lis, err := net.Listen("tcp", ":"+s.GRPCPort)
 	if err != nil {
 		logger.Fatal().Msgf("Failed to listen on port %v: %v", s.GRPCPort, err)
@@ -22,7 +23,7 @@ func StartGrpcServer(logger zerolog.Logger, s *config.Settings) {
 		grpc_recovery.WithRecoveryHandler(common.GrpcConfig),
 	}
 
-	vehicleSignalDecodingService := NewGrpcService(&logger)
+	vehicleSignalDecodingService := NewGrpcService(&logger, dbs)
 
 	server := grpc.NewServer(
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
