@@ -4,7 +4,7 @@ image:
   pullPolicy: IfNotPresent
   tag: '3462825'
 cronJob:
-  enabled: true
+  enabled: false
   schedule: 0 0 * * 0
 env:
   ENVIRONMENT: prod
@@ -17,13 +17,9 @@ env:
   SERVICE_NAME: vehicle-signal-decoding
   JWT_KEY_SET_URL: https://auth.dimo.zone/keys
   DEPLOYMENT_BASE_URL: https://vehicle-signal-decoding.dimo.zone
-  TOR_PROXY_URL: socks5://tor.p2p:9050
-  REDIS_USER: default
-  REDIS_CLUSTER_MODE: true
-  REDIS_TLS: true
   KAFKA_BROKERS: kafka-prod-dimo-kafka-kafka-brokers:9092
 ingress:
-  enabled: true
+  enabled: false
   className: nginx
   annotations:
     nginx.ingress.kubernetes.io/auth-tls-secret: ingress/cf-origin-ca
