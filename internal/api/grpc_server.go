@@ -1,8 +1,9 @@
 package api
 
 import (
-	"github.com/DIMO-Network/shared/db"
 	"net"
+
+	"github.com/DIMO-Network/shared/db"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/api/common"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"

@@ -2,12 +2,13 @@ package api
 
 import (
 	"context"
-	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/kafka"
-	"github.com/Shopify/sarama"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
+
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/kafka"
+	"github.com/Shopify/sarama"
 
 	"github.com/DIMO-Network/shared/db"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"

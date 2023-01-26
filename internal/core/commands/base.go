@@ -3,6 +3,7 @@ package commands
 import (
 	"context"
 	"fmt"
+
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/exceptions"
 
 	"github.com/DIMO-Network/shared/db"

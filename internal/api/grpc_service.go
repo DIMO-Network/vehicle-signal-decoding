@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+
 	"github.com/DIMO-Network/shared/db"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/commands"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/queries"
