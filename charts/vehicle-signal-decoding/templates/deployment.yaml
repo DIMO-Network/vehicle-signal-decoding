@@ -62,12 +62,12 @@ spec:
 {{ toYaml .Values.ports | indent 12 }}
           livenessProbe:
             httpGet:
-              path: /
-              port: http
+              path: /health
+              port: mon-http
           readinessProbe:
             httpGet:
-              path: /
-              port: http
+              path: /health
+              port: mon-http
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
