@@ -2,7 +2,7 @@ replicaCount: 2
 image:
   repository: dimozone/vehicle-signal-decoding
   pullPolicy: IfNotPresent
-  tag: d806776
+  tag: 94a245b
 imagePullSecrets: []
 nameOverride: ''
 fullnameOverride: ''
@@ -44,10 +44,6 @@ service:
       port: 8888
       targetPort: mon-http
       protocol: TCP
-#    http:
-#      port: 8080
-#      targetPort: http
-#      protocol: TCP
     grpc:
       port: 8086
       targetPort: grpc
@@ -56,9 +52,6 @@ ports:
   - name: mon-http
     containerPort: 8888
     protocol: TCP
-#  - name: http
-#    containerPort: 8080
-#    protocol: TCP
   - name: grpc
     containerPort: 8086
     protocol: TCP
