@@ -15,4 +15,5 @@ type Settings struct {
 	TraceMonitorView string      `yaml:"TRACE_MONITOR_VIEW"`
 	KafkaBrokers     string      `yaml:"KAFKA_BROKERS"`
 	TaskStatusTopic  string      `yaml:"TASK_STATUS_TOPIC"`
+	MonitoringPort   string      `yaml:"MONITORING_PORT"`
 }

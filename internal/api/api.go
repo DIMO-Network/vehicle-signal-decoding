@@ -26,7 +26,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 
 	go StartGrpcServer(logger, pdb.DBS, settings)
 
-	startMonitoringServer(logger)
+	startMonitoringServer(logger, settings)
 	//startVehicleSignalConsumer(logger, settings, pdb)
 
 	c := make(chan os.Signal, 1)                    // Create channel to signify a signal being sent with length of 1
@@ -39,7 +39,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 }
 
 // startMonitoringServer start server for monitoring endpoints. Could likely be moved to shared lib.
-func startMonitoringServer(logger zerolog.Logger) {
+func startMonitoringServer(logger zerolog.Logger, settings *config.Settings) {
 	monApp := fiber.New(fiber.Config{DisableStartupMessage: true})
 	monApp.Get("/health", func(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusOK).SendString("healthy")
@@ -49,8 +49,8 @@ func startMonitoringServer(logger zerolog.Logger) {
 
 	go func() {
 		// 8888 is our standard port for exposing metrics in DIMO infra
-		if err := monApp.Listen(":8887"); err != nil {
-			logger.Fatal().Err(err).Str("port", "8887").Msg("Failed to start monitoring web server.")
+		if err := monApp.Listen(":" + settings.MonitoringPort); err != nil {
+			logger.Fatal().Err(err).Str("port", settings.MonitoringPort).Msg("Failed to start monitoring web server.")
 		}
 	}()
 
