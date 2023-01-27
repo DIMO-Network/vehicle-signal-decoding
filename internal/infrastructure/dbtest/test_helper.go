@@ -3,7 +3,9 @@ package dbtest
 import (
 	"context"
 	"database/sql"
-	_ "embed"
+
+	_ "embed" //nolint
+
 	"fmt"
 	"os"
 	"testing"

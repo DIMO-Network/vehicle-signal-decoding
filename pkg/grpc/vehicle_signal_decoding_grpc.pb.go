@@ -23,13 +23,16 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type VehicleSignalDecodingServiceClient interface {
-	CreateDBCCode(ctx context.Context, in *CreateDBCCodeRequest, opts ...grpc.CallOption) (*BaseResponse, error)
-	UpdateDBCCode(ctx context.Context, in *UpdateDBCCodeRequest, opts ...grpc.CallOption) (*BaseResponse, error)
+	CreateDBCCode(ctx context.Context, in *CreateDBCCodeRequest, opts ...grpc.CallOption) (*VehicleSignalBaseResponse, error)
+	UpdateDBCCode(ctx context.Context, in *UpdateDBCCodeRequest, opts ...grpc.CallOption) (*VehicleSignalBaseResponse, error)
 	GetDBCCodes(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetDBCCodeListResponse, error)
 	GetDBCCodesById(ctx context.Context, in *GetByIdRequest, opts ...grpc.CallOption) (*GetDBCCodeResponse, error)
-	CreateTestSignal(ctx context.Context, in *CreateTestSignalRequest, opts ...grpc.CallOption) (*BaseResponse, error)
-	UpdateTestSignal(ctx context.Context, in *UpdateTestSignalRequest, opts ...grpc.CallOption) (*BaseResponse, error)
+	CreateTestSignal(ctx context.Context, in *CreateTestSignalRequest, opts ...grpc.CallOption) (*VehicleSignalBaseResponse, error)
+	UpdateTestSignal(ctx context.Context, in *UpdateTestSignalRequest, opts ...grpc.CallOption) (*VehicleSignalBaseResponse, error)
 	GetTestSignals(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetTestSignalListResponse, error)
+	GetTestSignalsByDeviceDefinitionId(ctx context.Context, in *GetByIdRequest, opts ...grpc.CallOption) (*GetTestSignalListResponse, error)
+	GetTestSignalsByUserDeviceId(ctx context.Context, in *GetByIdRequest, opts ...grpc.CallOption) (*GetTestSignalListResponse, error)
+	GetTestSignalsByDBCCodeId(ctx context.Context, in *GetByIdRequest, opts ...grpc.CallOption) (*GetTestSignalListResponse, error)
 	GetTestSignalById(ctx context.Context, in *GetByIdRequest, opts ...grpc.CallOption) (*GetTestSignalResponse, error)
 }
 
@@ -41,8 +44,8 @@ func NewVehicleSignalDecodingServiceClient(cc grpc.ClientConnInterface) VehicleS
 	return &vehicleSignalDecodingServiceClient{cc}
 }
 
-func (c *vehicleSignalDecodingServiceClient) CreateDBCCode(ctx context.Context, in *CreateDBCCodeRequest, opts ...grpc.CallOption) (*BaseResponse, error) {
-	out := new(BaseResponse)
+func (c *vehicleSignalDecodingServiceClient) CreateDBCCode(ctx context.Context, in *CreateDBCCodeRequest, opts ...grpc.CallOption) (*VehicleSignalBaseResponse, error) {
+	out := new(VehicleSignalBaseResponse)
 	err := c.cc.Invoke(ctx, "/grpc.VehicleSignalDecodingService/CreateDBCCode", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -50,8 +53,8 @@ func (c *vehicleSignalDecodingServiceClient) CreateDBCCode(ctx context.Context, 
 	return out, nil
 }
 
-func (c *vehicleSignalDecodingServiceClient) UpdateDBCCode(ctx context.Context, in *UpdateDBCCodeRequest, opts ...grpc.CallOption) (*BaseResponse, error) {
-	out := new(BaseResponse)
+func (c *vehicleSignalDecodingServiceClient) UpdateDBCCode(ctx context.Context, in *UpdateDBCCodeRequest, opts ...grpc.CallOption) (*VehicleSignalBaseResponse, error) {
+	out := new(VehicleSignalBaseResponse)
 	err := c.cc.Invoke(ctx, "/grpc.VehicleSignalDecodingService/UpdateDBCCode", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -77,8 +80,8 @@ func (c *vehicleSignalDecodingServiceClient) GetDBCCodesById(ctx context.Context
 	return out, nil
 }
 
-func (c *vehicleSignalDecodingServiceClient) CreateTestSignal(ctx context.Context, in *CreateTestSignalRequest, opts ...grpc.CallOption) (*BaseResponse, error) {
-	out := new(BaseResponse)
+func (c *vehicleSignalDecodingServiceClient) CreateTestSignal(ctx context.Context, in *CreateTestSignalRequest, opts ...grpc.CallOption) (*VehicleSignalBaseResponse, error) {
+	out := new(VehicleSignalBaseResponse)
 	err := c.cc.Invoke(ctx, "/grpc.VehicleSignalDecodingService/CreateTestSignal", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -86,8 +89,8 @@ func (c *vehicleSignalDecodingServiceClient) CreateTestSignal(ctx context.Contex
 	return out, nil
 }
 
-func (c *vehicleSignalDecodingServiceClient) UpdateTestSignal(ctx context.Context, in *UpdateTestSignalRequest, opts ...grpc.CallOption) (*BaseResponse, error) {
-	out := new(BaseResponse)
+func (c *vehicleSignalDecodingServiceClient) UpdateTestSignal(ctx context.Context, in *UpdateTestSignalRequest, opts ...grpc.CallOption) (*VehicleSignalBaseResponse, error) {
+	out := new(VehicleSignalBaseResponse)
 	err := c.cc.Invoke(ctx, "/grpc.VehicleSignalDecodingService/UpdateTestSignal", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -98,6 +101,33 @@ func (c *vehicleSignalDecodingServiceClient) UpdateTestSignal(ctx context.Contex
 func (c *vehicleSignalDecodingServiceClient) GetTestSignals(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetTestSignalListResponse, error) {
 	out := new(GetTestSignalListResponse)
 	err := c.cc.Invoke(ctx, "/grpc.VehicleSignalDecodingService/GetTestSignals", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *vehicleSignalDecodingServiceClient) GetTestSignalsByDeviceDefinitionId(ctx context.Context, in *GetByIdRequest, opts ...grpc.CallOption) (*GetTestSignalListResponse, error) {
+	out := new(GetTestSignalListResponse)
+	err := c.cc.Invoke(ctx, "/grpc.VehicleSignalDecodingService/GetTestSignalsByDeviceDefinitionId", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *vehicleSignalDecodingServiceClient) GetTestSignalsByUserDeviceId(ctx context.Context, in *GetByIdRequest, opts ...grpc.CallOption) (*GetTestSignalListResponse, error) {
+	out := new(GetTestSignalListResponse)
+	err := c.cc.Invoke(ctx, "/grpc.VehicleSignalDecodingService/GetTestSignalsByUserDeviceId", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *vehicleSignalDecodingServiceClient) GetTestSignalsByDBCCodeId(ctx context.Context, in *GetByIdRequest, opts ...grpc.CallOption) (*GetTestSignalListResponse, error) {
+	out := new(GetTestSignalListResponse)
+	err := c.cc.Invoke(ctx, "/grpc.VehicleSignalDecodingService/GetTestSignalsByDBCCodeId", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -117,13 +147,16 @@ func (c *vehicleSignalDecodingServiceClient) GetTestSignalById(ctx context.Conte
 // All implementations must embed UnimplementedVehicleSignalDecodingServiceServer
 // for forward compatibility
 type VehicleSignalDecodingServiceServer interface {
-	CreateDBCCode(context.Context, *CreateDBCCodeRequest) (*BaseResponse, error)
-	UpdateDBCCode(context.Context, *UpdateDBCCodeRequest) (*BaseResponse, error)
+	CreateDBCCode(context.Context, *CreateDBCCodeRequest) (*VehicleSignalBaseResponse, error)
+	UpdateDBCCode(context.Context, *UpdateDBCCodeRequest) (*VehicleSignalBaseResponse, error)
 	GetDBCCodes(context.Context, *emptypb.Empty) (*GetDBCCodeListResponse, error)
 	GetDBCCodesById(context.Context, *GetByIdRequest) (*GetDBCCodeResponse, error)
-	CreateTestSignal(context.Context, *CreateTestSignalRequest) (*BaseResponse, error)
-	UpdateTestSignal(context.Context, *UpdateTestSignalRequest) (*BaseResponse, error)
+	CreateTestSignal(context.Context, *CreateTestSignalRequest) (*VehicleSignalBaseResponse, error)
+	UpdateTestSignal(context.Context, *UpdateTestSignalRequest) (*VehicleSignalBaseResponse, error)
 	GetTestSignals(context.Context, *emptypb.Empty) (*GetTestSignalListResponse, error)
+	GetTestSignalsByDeviceDefinitionId(context.Context, *GetByIdRequest) (*GetTestSignalListResponse, error)
+	GetTestSignalsByUserDeviceId(context.Context, *GetByIdRequest) (*GetTestSignalListResponse, error)
+	GetTestSignalsByDBCCodeId(context.Context, *GetByIdRequest) (*GetTestSignalListResponse, error)
 	GetTestSignalById(context.Context, *GetByIdRequest) (*GetTestSignalResponse, error)
 	mustEmbedUnimplementedVehicleSignalDecodingServiceServer()
 }
@@ -132,10 +165,10 @@ type VehicleSignalDecodingServiceServer interface {
 type UnimplementedVehicleSignalDecodingServiceServer struct {
 }
 
-func (UnimplementedVehicleSignalDecodingServiceServer) CreateDBCCode(context.Context, *CreateDBCCodeRequest) (*BaseResponse, error) {
+func (UnimplementedVehicleSignalDecodingServiceServer) CreateDBCCode(context.Context, *CreateDBCCodeRequest) (*VehicleSignalBaseResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateDBCCode not implemented")
 }
-func (UnimplementedVehicleSignalDecodingServiceServer) UpdateDBCCode(context.Context, *UpdateDBCCodeRequest) (*BaseResponse, error) {
+func (UnimplementedVehicleSignalDecodingServiceServer) UpdateDBCCode(context.Context, *UpdateDBCCodeRequest) (*VehicleSignalBaseResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateDBCCode not implemented")
 }
 func (UnimplementedVehicleSignalDecodingServiceServer) GetDBCCodes(context.Context, *emptypb.Empty) (*GetDBCCodeListResponse, error) {
@@ -144,14 +177,23 @@ func (UnimplementedVehicleSignalDecodingServiceServer) GetDBCCodes(context.Conte
 func (UnimplementedVehicleSignalDecodingServiceServer) GetDBCCodesById(context.Context, *GetByIdRequest) (*GetDBCCodeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetDBCCodesById not implemented")
 }
-func (UnimplementedVehicleSignalDecodingServiceServer) CreateTestSignal(context.Context, *CreateTestSignalRequest) (*BaseResponse, error) {
+func (UnimplementedVehicleSignalDecodingServiceServer) CreateTestSignal(context.Context, *CreateTestSignalRequest) (*VehicleSignalBaseResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateTestSignal not implemented")
 }
-func (UnimplementedVehicleSignalDecodingServiceServer) UpdateTestSignal(context.Context, *UpdateTestSignalRequest) (*BaseResponse, error) {
+func (UnimplementedVehicleSignalDecodingServiceServer) UpdateTestSignal(context.Context, *UpdateTestSignalRequest) (*VehicleSignalBaseResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateTestSignal not implemented")
 }
 func (UnimplementedVehicleSignalDecodingServiceServer) GetTestSignals(context.Context, *emptypb.Empty) (*GetTestSignalListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetTestSignals not implemented")
+}
+func (UnimplementedVehicleSignalDecodingServiceServer) GetTestSignalsByDeviceDefinitionId(context.Context, *GetByIdRequest) (*GetTestSignalListResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetTestSignalsByDeviceDefinitionId not implemented")
+}
+func (UnimplementedVehicleSignalDecodingServiceServer) GetTestSignalsByUserDeviceId(context.Context, *GetByIdRequest) (*GetTestSignalListResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetTestSignalsByUserDeviceId not implemented")
+}
+func (UnimplementedVehicleSignalDecodingServiceServer) GetTestSignalsByDBCCodeId(context.Context, *GetByIdRequest) (*GetTestSignalListResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetTestSignalsByDBCCodeId not implemented")
 }
 func (UnimplementedVehicleSignalDecodingServiceServer) GetTestSignalById(context.Context, *GetByIdRequest) (*GetTestSignalResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetTestSignalById not implemented")
@@ -296,6 +338,60 @@ func _VehicleSignalDecodingService_GetTestSignals_Handler(srv interface{}, ctx c
 	return interceptor(ctx, in, info, handler)
 }
 
+func _VehicleSignalDecodingService_GetTestSignalsByDeviceDefinitionId_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetByIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(VehicleSignalDecodingServiceServer).GetTestSignalsByDeviceDefinitionId(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/grpc.VehicleSignalDecodingService/GetTestSignalsByDeviceDefinitionId",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(VehicleSignalDecodingServiceServer).GetTestSignalsByDeviceDefinitionId(ctx, req.(*GetByIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _VehicleSignalDecodingService_GetTestSignalsByUserDeviceId_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetByIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(VehicleSignalDecodingServiceServer).GetTestSignalsByUserDeviceId(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/grpc.VehicleSignalDecodingService/GetTestSignalsByUserDeviceId",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(VehicleSignalDecodingServiceServer).GetTestSignalsByUserDeviceId(ctx, req.(*GetByIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _VehicleSignalDecodingService_GetTestSignalsByDBCCodeId_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetByIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(VehicleSignalDecodingServiceServer).GetTestSignalsByDBCCodeId(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/grpc.VehicleSignalDecodingService/GetTestSignalsByDBCCodeId",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(VehicleSignalDecodingServiceServer).GetTestSignalsByDBCCodeId(ctx, req.(*GetByIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _VehicleSignalDecodingService_GetTestSignalById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetByIdRequest)
 	if err := dec(in); err != nil {
@@ -348,6 +444,18 @@ var VehicleSignalDecodingService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetTestSignals",
 			Handler:    _VehicleSignalDecodingService_GetTestSignals_Handler,
+		},
+		{
+			MethodName: "GetTestSignalsByDeviceDefinitionId",
+			Handler:    _VehicleSignalDecodingService_GetTestSignalsByDeviceDefinitionId_Handler,
+		},
+		{
+			MethodName: "GetTestSignalsByUserDeviceId",
+			Handler:    _VehicleSignalDecodingService_GetTestSignalsByUserDeviceId_Handler,
+		},
+		{
+			MethodName: "GetTestSignalsByDBCCodeId",
+			Handler:    _VehicleSignalDecodingService_GetTestSignalsByDBCCodeId_Handler,
 		},
 		{
 			MethodName: "GetTestSignalById",

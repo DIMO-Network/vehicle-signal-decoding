@@ -14,23 +14,23 @@ import (
 	"github.com/rs/zerolog"
 )
 
-type GetDBCCodeByIdQueryHandler struct {
+type GetDBCCodeByIDQueryHandler struct {
 	DBS    func() *db.ReaderWriter
 	logger *zerolog.Logger
 }
 
-func NewGetDBCCodeByIdQueryHandler(dbs func() *db.ReaderWriter, logger *zerolog.Logger) GetDBCCodeByIdQueryHandler {
-	return GetDBCCodeByIdQueryHandler{
+func NewGetDBCCodeByIDQueryHandler(dbs func() *db.ReaderWriter, logger *zerolog.Logger) GetDBCCodeByIDQueryHandler {
+	return GetDBCCodeByIDQueryHandler{
 		DBS:    dbs,
 		logger: logger,
 	}
 }
 
-type GetDBCCodeByIdQueryRequest struct {
+type GetDBCCodeByIDQueryRequest struct {
 	ID string
 }
 
-func (h GetDBCCodeByIdQueryHandler) Handle(ctx context.Context, query *GetDBCCodeByIdQueryRequest) (*p_grpc.GetDBCCodeResponse, error) {
+func (h GetDBCCodeByIDQueryHandler) Handle(ctx context.Context, query *GetDBCCodeByIDQueryRequest) (*p_grpc.GetDBCCodeResponse, error) {
 
 	item, err := models.DBCCodes(models.DBCCodeWhere.ID.EQ(query.ID)).One(ctx, h.DBS().Reader)
 	if err != nil {

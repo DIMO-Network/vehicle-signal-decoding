@@ -22,7 +22,7 @@ func NewGrpcService(logger *zerolog.Logger, dbs func() *db.ReaderWriter) p_grpc.
 	return &GrpcService{logger: logger, DBS: dbs}
 }
 
-func (s *GrpcService) CreateDBCCode(ctx context.Context, in *p_grpc.CreateDBCCodeRequest) (*p_grpc.BaseResponse, error) {
+func (s *GrpcService) CreateDBCCode(ctx context.Context, in *p_grpc.CreateDBCCodeRequest) (*p_grpc.VehicleSignalBaseResponse, error) {
 	service := commands.NewCreateDBCCodeCommandHandler(s.DBS)
 	response, err := service.Execute(ctx, &commands.CreateDBCCodeCommandRequest{
 		Name:        in.Name,
@@ -33,10 +33,10 @@ func (s *GrpcService) CreateDBCCode(ctx context.Context, in *p_grpc.CreateDBCCod
 		return nil, err
 	}
 
-	return &p_grpc.BaseResponse{Id: response.ID}, nil
+	return &p_grpc.VehicleSignalBaseResponse{Id: response.ID}, nil
 }
 
-func (s *GrpcService) UpdateDBCCode(ctx context.Context, in *p_grpc.UpdateDBCCodeRequest) (*p_grpc.BaseResponse, error) {
+func (s *GrpcService) UpdateDBCCode(ctx context.Context, in *p_grpc.UpdateDBCCodeRequest) (*p_grpc.VehicleSignalBaseResponse, error) {
 	service := commands.NewUpdateDBCCodeCommandHandler(s.DBS)
 	response, err := service.Execute(ctx, &commands.UpdateDBCCodeCommandRequest{
 		ID:          in.Id,
@@ -48,7 +48,7 @@ func (s *GrpcService) UpdateDBCCode(ctx context.Context, in *p_grpc.UpdateDBCCod
 		return nil, err
 	}
 
-	return &p_grpc.BaseResponse{Id: response.ID}, nil
+	return &p_grpc.VehicleSignalBaseResponse{Id: response.ID}, nil
 }
 
 func (s *GrpcService) GetDBCCodes(ctx context.Context, in *emptypb.Empty) (*p_grpc.GetDBCCodeListResponse, error) {
@@ -62,9 +62,9 @@ func (s *GrpcService) GetDBCCodes(ctx context.Context, in *emptypb.Empty) (*p_gr
 	return response, nil
 }
 
-func (s *GrpcService) GetDBCCodesById(ctx context.Context, in *p_grpc.GetByIdRequest) (*p_grpc.GetDBCCodeResponse, error) {
-	service := queries.NewGetDBCCodeByIdQueryHandler(s.DBS, s.logger)
-	response, err := service.Handle(ctx, &queries.GetDBCCodeByIdQueryRequest{
+func (s *GrpcService) GetDBCCodesByID(ctx context.Context, in *p_grpc.GetByIdRequest) (*p_grpc.GetDBCCodeResponse, error) {
+	service := queries.NewGetDBCCodeByIDQueryHandler(s.DBS, s.logger)
+	response, err := service.Handle(ctx, &queries.GetDBCCodeByIDQueryRequest{
 		ID: in.Id,
 	})
 
@@ -75,7 +75,7 @@ func (s *GrpcService) GetDBCCodesById(ctx context.Context, in *p_grpc.GetByIdReq
 	return response, nil
 }
 
-func (s *GrpcService) CreateTestSignal(ctx context.Context, in *p_grpc.CreateTestSignalRequest) (*p_grpc.BaseResponse, error) {
+func (s *GrpcService) CreateTestSignal(ctx context.Context, in *p_grpc.CreateTestSignalRequest) (*p_grpc.VehicleSignalBaseResponse, error) {
 	service := commands.NewCreateTestSignalCommandHandler(s.DBS)
 	response, err := service.Execute(ctx, &commands.CreateTestSignalCommandRequest{
 		Name:               in.Name,
@@ -90,10 +90,10 @@ func (s *GrpcService) CreateTestSignal(ctx context.Context, in *p_grpc.CreateTes
 		return nil, err
 	}
 
-	return &p_grpc.BaseResponse{Id: response.ID}, nil
+	return &p_grpc.VehicleSignalBaseResponse{Id: response.ID}, nil
 }
 
-func (s *GrpcService) UpdateTestSignal(ctx context.Context, in *p_grpc.UpdateTestSignalRequest) (*p_grpc.BaseResponse, error) {
+func (s *GrpcService) UpdateTestSignal(ctx context.Context, in *p_grpc.UpdateTestSignalRequest) (*p_grpc.VehicleSignalBaseResponse, error) {
 	service := commands.NewUpdateTestSignalCommandHandler(s.DBS)
 	response, err := service.Execute(ctx, &commands.UpdateTestSignalCommandRequest{
 		ID:                 in.Id,
@@ -109,7 +109,7 @@ func (s *GrpcService) UpdateTestSignal(ctx context.Context, in *p_grpc.UpdateTes
 		return nil, err
 	}
 
-	return &p_grpc.BaseResponse{Id: response.ID}, nil
+	return &p_grpc.VehicleSignalBaseResponse{Id: response.ID}, nil
 }
 
 func (s *GrpcService) GetTestSignals(ctx context.Context, in *emptypb.Empty) (*p_grpc.GetTestSignalListResponse, error) {
@@ -123,10 +123,49 @@ func (s *GrpcService) GetTestSignals(ctx context.Context, in *emptypb.Empty) (*p
 	return response, nil
 }
 
-func (s *GrpcService) GetTestSignalById(ctx context.Context, in *p_grpc.GetByIdRequest) (*p_grpc.GetTestSignalResponse, error) {
-	service := queries.NewGetTestSignalByIdQueryHandler(s.DBS, s.logger)
-	response, err := service.Handle(ctx, &queries.GetTestSignalByIdQueryRequest{
+func (s *GrpcService) GetTestSignalByID(ctx context.Context, in *p_grpc.GetByIdRequest) (*p_grpc.GetTestSignalResponse, error) {
+	service := queries.NewGetTestSignalByIDQueryHandler(s.DBS, s.logger)
+	response, err := service.Handle(ctx, &queries.GetTestSignalByIDQueryRequest{
 		ID: in.Id,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+
+func (s *GrpcService) GetTestSignalsByDeviceDefinitionID(ctx context.Context, in *p_grpc.GetByIdRequest) (*p_grpc.GetTestSignalListResponse, error) {
+	service := queries.NewGetTestSignalFilterQueryHandler(s.DBS, s.logger)
+	response, err := service.Handle(ctx, &queries.GetTestSignalFilterQueryRequest{
+		DeviceDefinitionID: in.Id,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+
+func (s *GrpcService) GetTestSignalsByUserDeviceID(ctx context.Context, in *p_grpc.GetByIdRequest) (*p_grpc.GetTestSignalListResponse, error) {
+	service := queries.NewGetTestSignalFilterQueryHandler(s.DBS, s.logger)
+	response, err := service.Handle(ctx, &queries.GetTestSignalFilterQueryRequest{
+		UserDeviceID: in.Id,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+
+func (s *GrpcService) GetTestSignalsByDBCCodeID(ctx context.Context, in *p_grpc.GetByIdRequest) (*p_grpc.GetTestSignalListResponse, error) {
+	service := queries.NewGetTestSignalFilterQueryHandler(s.DBS, s.logger)
+	response, err := service.Handle(ctx, &queries.GetTestSignalFilterQueryRequest{
+		DBCCodeID: in.Id,
 	})
 
 	if err != nil {

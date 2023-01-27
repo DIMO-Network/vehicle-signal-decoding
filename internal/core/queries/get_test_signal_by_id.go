@@ -14,23 +14,23 @@ import (
 	"github.com/rs/zerolog"
 )
 
-type GetTestSignalByIdQueryHandler struct {
+type GetTestSignalByIDQueryHandler struct {
 	DBS    func() *db.ReaderWriter
 	logger *zerolog.Logger
 }
 
-func NewGetTestSignalByIdQueryHandler(dbs func() *db.ReaderWriter, logger *zerolog.Logger) GetTestSignalByIdQueryHandler {
-	return GetTestSignalByIdQueryHandler{
+func NewGetTestSignalByIDQueryHandler(dbs func() *db.ReaderWriter, logger *zerolog.Logger) GetTestSignalByIDQueryHandler {
+	return GetTestSignalByIDQueryHandler{
 		DBS:    dbs,
 		logger: logger,
 	}
 }
 
-type GetTestSignalByIdQueryRequest struct {
+type GetTestSignalByIDQueryRequest struct {
 	ID string
 }
 
-func (h GetTestSignalByIdQueryHandler) Handle(ctx context.Context, query *GetTestSignalByIdQueryRequest) (*p_grpc.GetTestSignalResponse, error) {
+func (h GetTestSignalByIDQueryHandler) Handle(ctx context.Context, query *GetTestSignalByIDQueryRequest) (*p_grpc.GetTestSignalResponse, error) {
 
 	item, err := models.TestSignals(models.TestSignalWhere.ID.EQ(query.ID)).One(ctx, h.DBS().Reader)
 	if err != nil {
