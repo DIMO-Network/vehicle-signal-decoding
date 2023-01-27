@@ -37,7 +37,7 @@ env:
   KAFKA_BROKERS: kafka-dev-dimo-kafka-kafka-brokers:9092
   AWS_REGION: us-east-2
   GRPC_PORT: 8086
-  MONITORING_PORT: 8088
+  MONITORING_PORT: 8888
 service:
   type: ClusterIP
   ports:
