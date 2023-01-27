@@ -41,6 +41,9 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 // startMonitoringServer start server for monitoring endpoints. Could likely be moved to shared lib.
 func startMonitoringServer(logger zerolog.Logger) {
 	monApp := fiber.New(fiber.Config{DisableStartupMessage: true})
+	monApp.Get("/health", func(c *fiber.Ctx) error {
+		return c.Status(fiber.StatusOK).SendString("healthy")
+	})
 
 	monApp.Get("/metrics", adaptor.HTTPHandler(promhttp.Handler()))
 
