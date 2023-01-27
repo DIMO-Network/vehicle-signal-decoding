@@ -77,13 +77,13 @@ service VehicleSignalDecodingService {
   rpc CreateDBCCode(CreateDBCCodeRequest) returns (VehicleSignalBaseResponse);
   rpc UpdateDBCCode(UpdateDBCCodeRequest) returns (VehicleSignalBaseResponse);
   rpc GetDBCCodes(google.protobuf.Empty) returns (GetDBCCodeListResponse);
-  rpc GetDBCCodesById(GetByIdRequest) returns (GetDBCCodeResponse);
+  rpc GetDBCCodesByID(GetByIdRequest) returns (GetDBCCodeResponse);
 
   rpc CreateTestSignal(CreateTestSignalRequest) returns (VehicleSignalBaseResponse);
   rpc UpdateTestSignal(UpdateTestSignalRequest) returns (VehicleSignalBaseResponse);
   rpc GetTestSignals(google.protobuf.Empty) returns (GetTestSignalListResponse);
-  rpc GetTestSignalsByDeviceDefinitionId(GetByIdRequest) returns (GetTestSignalListResponse);
-  rpc GetTestSignalsByUserDeviceId(GetByIdRequest) returns (GetTestSignalListResponse);
-  rpc GetTestSignalsByDBCCodeId(GetByIdRequest) returns (GetTestSignalListResponse);
-  rpc GetTestSignalById(GetByIdRequest) returns (GetTestSignalResponse);
+  rpc GetTestSignalsByDeviceDefinitionID(GetByIdRequest) returns (GetTestSignalListResponse);
+  rpc GetTestSignalsByUserDeviceID(GetByIdRequest) returns (GetTestSignalListResponse);
+  rpc GetTestSignalsByDBCCodeID(GetByIdRequest) returns (GetTestSignalListResponse);
+  rpc GetTestSignalByID(GetByIdRequest) returns (GetTestSignalResponse);
 }

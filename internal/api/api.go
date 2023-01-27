@@ -27,7 +27,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 	go StartGrpcServer(logger, pdb.DBS, settings)
 
 	startMonitoringServer(logger)
-	startVehicleSignalConsumer(logger, settings, pdb)
+	//startVehicleSignalConsumer(logger, settings, pdb)
 
 	c := make(chan os.Signal, 1)                    // Create channel to signify a signal being sent with length of 1
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM) // When an interrupt or termination signal is sent, notify the channel
@@ -49,8 +49,8 @@ func startMonitoringServer(logger zerolog.Logger) {
 
 	go func() {
 		// 8888 is our standard port for exposing metrics in DIMO infra
-		if err := monApp.Listen(":8888"); err != nil {
-			logger.Fatal().Err(err).Str("port", "8888").Msg("Failed to start monitoring web server.")
+		if err := monApp.Listen(":8887"); err != nil {
+			logger.Fatal().Err(err).Str("port", "8887").Msg("Failed to start monitoring web server.")
 		}
 	}()
 
