@@ -8,68 +8,6 @@ import (
 	"time"
 )
 
-type signals struct {
-}
-
-type ObdSignalValue interface {
-	int | float64 | string
-}
-
-/*
-type ObdSignal_Val_and_TS struct {
-	Stamp time.Time `json:"_stamp"`
-	Value any       `json:"value"`
-}
-
-func NewObdSignal_Val_and_TS(stamp time.Time, value ObdSignalValue) *ObdSignal_Val_and_TS {
-	return &ObdSignal_Val_and_TS{Stamp: stamp, Value: value}
-}*/
-
-func RandomOdometerValue() (v int) {
-	rand.Seed(time.Now().UnixNano())
-	return rand.Intn(200 - 1 + 1)
-}
-
-type ObdSignal struct {
-	SignalName string   `json:"SignalName"`
-	SignalType string   `json:"SignalType"` // odometer, vin, fuelevel, etc
-	DataType   string   `json:"DataType"`   // int, float, string
-	MinVal     int      `json:"MinVal"`     // max value for this signal
-	MaxVal     int      `json:"MaxVal"`     // min value for this signal
-	Options    []string `json:"Options"`    // available choices for this signal value
-}
-
-// This method reads an ObdSignal struct,
-// and generates an appropriate value for the signal type (within a range)
-// odometer is first up, will expand into processing other signal types after
-func (thisSignal ObdSignal) GetRandomValue() int {
-	if thisSignal.SignalType == "odometer" {
-		rand.Seed(time.Now().UnixNano())
-		min := thisSignal.MinVal
-		max := thisSignal.MaxVal
-		returnVal := rand.Intn((max - min + 1) + min)
-		fmt.Println("getrandomvalue: ", returnVal)
-		return returnVal
-	} else {
-		return 999
-	}
-}
-
-/*
-func ReturnPopulatedMap() map[string]string {
-	mymap map[string]string =  map[string]string{}
-}*/
-
-func GetRandomCanSignal(inputArray []ObdSignal) ObdSignal {
-	rand.Seed(time.Now().UnixNano())
-	min := 10
-	max := 23
-	fmt.Println("random index: ", rand.Intn(max-min+1)+min)
-	var returnVal ObdSignal = inputArray[rand.Intn(max-min+1)+min]
-	fmt.Println("returnVal:", returnVal)
-	return returnVal
-}
-
 func main() {
 	rand.Seed(time.Now().UnixNano())
 	min := 10
@@ -152,6 +90,68 @@ func main() {
 	}
 	fmt.Println(len(mysignals))
 
+}
+
+type signals struct {
+}
+
+/*
+type ObdSignal_Val_and_TS struct {
+	Stamp time.Time `json:"_stamp"`
+	Value any       `json:"value"`
+}
+
+func NewObdSignal_Val_and_TS(stamp time.Time, value ObdSignalValue) *ObdSignal_Val_and_TS {
+	return &ObdSignal_Val_and_TS{Stamp: stamp, Value: value}
+}*/
+
+type ObdSignalValue interface {
+	int | float64 | string
+}
+
+func RandomOdometerValue() (v int) {
+	rand.Seed(time.Now().UnixNano())
+	return rand.Intn(200 - 1 + 1)
+}
+
+type ObdSignal struct {
+	SignalName string   `json:"SignalName"`
+	SignalType string   `json:"SignalType"` // odometer, vin, fuelevel, etc
+	DataType   string   `json:"DataType"`   // int, float, string
+	MinVal     int      `json:"MinVal"`     // max value for this signal
+	MaxVal     int      `json:"MaxVal"`     // min value for this signal
+	Options    []string `json:"Options"`    // available choices for this signal value
+}
+
+/*
+func ReturnPopulatedMap() map[string]string {
+	mymap map[string]string =  map[string]string{}
+}*/
+
+// This method reads an ObdSignal struct,
+// and generates an appropriate value for the signal type (within a range)
+// odometer is first up, will expand into processing other signal types after
+func (thisSignal ObdSignal) GetRandomValue() int {
+	if thisSignal.SignalType == "odometer" {
+		rand.Seed(time.Now().UnixNano())
+		min := thisSignal.MinVal
+		max := thisSignal.MaxVal
+		returnVal := rand.Intn((max - min + 1) + min)
+		fmt.Println("getrandomvalue: ", returnVal)
+		return returnVal
+	} else {
+		return 999
+	}
+}
+
+func GetRandomCanSignal(inputArray []ObdSignal) ObdSignal {
+	rand.Seed(time.Now().UnixNano())
+	min := 10
+	max := 23
+	fmt.Println("random index: ", rand.Intn(max-min+1)+min)
+	var returnVal ObdSignal = inputArray[rand.Intn(max-min+1)+min]
+	fmt.Println("returnVal:", returnVal)
+	return returnVal
 }
 
 /*	json.Unmarshal( [
