@@ -16,4 +16,5 @@ type Settings struct {
 	KafkaBrokers     string      `yaml:"KAFKA_BROKERS"`
 	TaskStatusTopic  string      `yaml:"TASK_STATUS_TOPIC"`
 	MonitoringPort   string      `yaml:"MONITORING_PORT"`
+	DBCDecodingTopic string      `yaml:"DBC_DECODING_TOPIC"`
 }

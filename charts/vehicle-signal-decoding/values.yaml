@@ -38,6 +38,7 @@ env:
   AWS_REGION: us-east-2
   GRPC_PORT: 8086
   MONITORING_PORT: 8888
+  DBC_DECODING_TOPIC: topic.dbc.decoding
 service:
   type: ClusterIP
   ports:

@@ -18,6 +18,7 @@ env:
   JWT_KEY_SET_URL: https://auth.dimo.zone/keys
   DEPLOYMENT_BASE_URL: https://vehicle-signal-decoding.dimo.zone
   KAFKA_BROKERS: kafka-prod-dimo-kafka-kafka-brokers:9092
+  DBC_DECODING_TOPIC: topic.dbc.decoding
 ingress:
   enabled: false
   className: nginx
