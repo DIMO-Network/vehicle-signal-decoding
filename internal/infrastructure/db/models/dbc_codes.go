@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/friendsofgo/errors"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -23,42 +24,62 @@ import (
 
 // DBCCode is an object representing the database table.
 type DBCCode struct {
-	ID          string    `boil:"id" json:"id" toml:"id" yaml:"id"`
-	Name        string    `boil:"name" json:"name" toml:"name" yaml:"name"`
-	DBCContents string    `boil:"dbc_contents" json:"dbc_contents" toml:"dbc_contents" yaml:"dbc_contents"`
-	CreatedAt   time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	UpdatedAt   time.Time `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	ID               string      `boil:"id" json:"id" toml:"id" yaml:"id"`
+	Name             string      `boil:"name" json:"name" toml:"name" yaml:"name"`
+	DBCContents      null.String `boil:"dbc_contents" json:"dbc_contents,omitempty" toml:"dbc_contents" yaml:"dbc_contents,omitempty"`
+	Header           null.Int    `boil:"header" json:"header,omitempty" toml:"header" yaml:"header,omitempty"`
+	Trigger          string      `boil:"trigger" json:"trigger" toml:"trigger" yaml:"trigger"`
+	RecordingEnabled bool        `boil:"recording_enabled" json:"recording_enabled" toml:"recording_enabled" yaml:"recording_enabled"`
+	MaxSampleSize    int         `boil:"max_sample_size" json:"max_sample_size" toml:"max_sample_size" yaml:"max_sample_size"`
+	CreatedAt        time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UpdatedAt        time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
 
 	R *dbcCodeR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L dbcCodeL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var DBCCodeColumns = struct {
-	ID          string
-	Name        string
-	DBCContents string
-	CreatedAt   string
-	UpdatedAt   string
+	ID               string
+	Name             string
+	DBCContents      string
+	Header           string
+	Trigger          string
+	RecordingEnabled string
+	MaxSampleSize    string
+	CreatedAt        string
+	UpdatedAt        string
 }{
-	ID:          "id",
-	Name:        "name",
-	DBCContents: "dbc_contents",
-	CreatedAt:   "created_at",
-	UpdatedAt:   "updated_at",
+	ID:               "id",
+	Name:             "name",
+	DBCContents:      "dbc_contents",
+	Header:           "header",
+	Trigger:          "trigger",
+	RecordingEnabled: "recording_enabled",
+	MaxSampleSize:    "max_sample_size",
+	CreatedAt:        "created_at",
+	UpdatedAt:        "updated_at",
 }
 
 var DBCCodeTableColumns = struct {
-	ID          string
-	Name        string
-	DBCContents string
-	CreatedAt   string
-	UpdatedAt   string
+	ID               string
+	Name             string
+	DBCContents      string
+	Header           string
+	Trigger          string
+	RecordingEnabled string
+	MaxSampleSize    string
+	CreatedAt        string
+	UpdatedAt        string
 }{
-	ID:          "dbc_codes.id",
-	Name:        "dbc_codes.name",
-	DBCContents: "dbc_codes.dbc_contents",
-	CreatedAt:   "dbc_codes.created_at",
-	UpdatedAt:   "dbc_codes.updated_at",
+	ID:               "dbc_codes.id",
+	Name:             "dbc_codes.name",
+	DBCContents:      "dbc_codes.dbc_contents",
+	Header:           "dbc_codes.header",
+	Trigger:          "dbc_codes.trigger",
+	RecordingEnabled: "dbc_codes.recording_enabled",
+	MaxSampleSize:    "dbc_codes.max_sample_size",
+	CreatedAt:        "dbc_codes.created_at",
+	UpdatedAt:        "dbc_codes.updated_at",
 }
 
 // Generated where
@@ -79,6 +100,114 @@ func (w whereHelperstring) IN(slice []string) qm.QueryMod {
 	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
 }
 func (w whereHelperstring) NIN(slice []string) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
+}
+
+type whereHelpernull_String struct{ field string }
+
+func (w whereHelpernull_String) EQ(x null.String) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, false, x)
+}
+func (w whereHelpernull_String) NEQ(x null.String) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, true, x)
+}
+func (w whereHelpernull_String) LT(x null.String) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LT, x)
+}
+func (w whereHelpernull_String) LTE(x null.String) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LTE, x)
+}
+func (w whereHelpernull_String) GT(x null.String) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GT, x)
+}
+func (w whereHelpernull_String) GTE(x null.String) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GTE, x)
+}
+func (w whereHelpernull_String) IN(slice []string) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
+}
+func (w whereHelpernull_String) NIN(slice []string) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
+}
+
+func (w whereHelpernull_String) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
+func (w whereHelpernull_String) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
+
+type whereHelpernull_Int struct{ field string }
+
+func (w whereHelpernull_Int) EQ(x null.Int) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, false, x)
+}
+func (w whereHelpernull_Int) NEQ(x null.Int) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, true, x)
+}
+func (w whereHelpernull_Int) LT(x null.Int) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LT, x)
+}
+func (w whereHelpernull_Int) LTE(x null.Int) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LTE, x)
+}
+func (w whereHelpernull_Int) GT(x null.Int) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GT, x)
+}
+func (w whereHelpernull_Int) GTE(x null.Int) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GTE, x)
+}
+func (w whereHelpernull_Int) IN(slice []int) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
+}
+func (w whereHelpernull_Int) NIN(slice []int) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
+}
+
+func (w whereHelpernull_Int) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
+func (w whereHelpernull_Int) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
+
+type whereHelperbool struct{ field string }
+
+func (w whereHelperbool) EQ(x bool) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.EQ, x) }
+func (w whereHelperbool) NEQ(x bool) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.NEQ, x) }
+func (w whereHelperbool) LT(x bool) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.LT, x) }
+func (w whereHelperbool) LTE(x bool) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.LTE, x) }
+func (w whereHelperbool) GT(x bool) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.GT, x) }
+func (w whereHelperbool) GTE(x bool) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
+
+type whereHelperint struct{ field string }
+
+func (w whereHelperint) EQ(x int) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.EQ, x) }
+func (w whereHelperint) NEQ(x int) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.NEQ, x) }
+func (w whereHelperint) LT(x int) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.LT, x) }
+func (w whereHelperint) LTE(x int) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.LTE, x) }
+func (w whereHelperint) GT(x int) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.GT, x) }
+func (w whereHelperint) GTE(x int) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
+func (w whereHelperint) IN(slice []int) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
+}
+func (w whereHelperint) NIN(slice []int) qm.QueryMod {
 	values := make([]interface{}, 0, len(slice))
 	for _, value := range slice {
 		values = append(values, value)
@@ -108,17 +237,25 @@ func (w whereHelpertime_Time) GTE(x time.Time) qm.QueryMod {
 }
 
 var DBCCodeWhere = struct {
-	ID          whereHelperstring
-	Name        whereHelperstring
-	DBCContents whereHelperstring
-	CreatedAt   whereHelpertime_Time
-	UpdatedAt   whereHelpertime_Time
+	ID               whereHelperstring
+	Name             whereHelperstring
+	DBCContents      whereHelpernull_String
+	Header           whereHelpernull_Int
+	Trigger          whereHelperstring
+	RecordingEnabled whereHelperbool
+	MaxSampleSize    whereHelperint
+	CreatedAt        whereHelpertime_Time
+	UpdatedAt        whereHelpertime_Time
 }{
-	ID:          whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"dbc_codes\".\"id\""},
-	Name:        whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"dbc_codes\".\"name\""},
-	DBCContents: whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"dbc_codes\".\"dbc_contents\""},
-	CreatedAt:   whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"dbc_codes\".\"created_at\""},
-	UpdatedAt:   whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"dbc_codes\".\"updated_at\""},
+	ID:               whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"dbc_codes\".\"id\""},
+	Name:             whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"dbc_codes\".\"name\""},
+	DBCContents:      whereHelpernull_String{field: "\"vehicle_signal_decoding_api\".\"dbc_codes\".\"dbc_contents\""},
+	Header:           whereHelpernull_Int{field: "\"vehicle_signal_decoding_api\".\"dbc_codes\".\"header\""},
+	Trigger:          whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"dbc_codes\".\"trigger\""},
+	RecordingEnabled: whereHelperbool{field: "\"vehicle_signal_decoding_api\".\"dbc_codes\".\"recording_enabled\""},
+	MaxSampleSize:    whereHelperint{field: "\"vehicle_signal_decoding_api\".\"dbc_codes\".\"max_sample_size\""},
+	CreatedAt:        whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"dbc_codes\".\"created_at\""},
+	UpdatedAt:        whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"dbc_codes\".\"updated_at\""},
 }
 
 // DBCCodeRels is where relationship names are stored.
@@ -149,9 +286,9 @@ func (r *dbcCodeR) GetTestSignals() TestSignalSlice {
 type dbcCodeL struct{}
 
 var (
-	dbcCodeAllColumns            = []string{"id", "name", "dbc_contents", "created_at", "updated_at"}
-	dbcCodeColumnsWithoutDefault = []string{"id", "name", "dbc_contents"}
-	dbcCodeColumnsWithDefault    = []string{"created_at", "updated_at"}
+	dbcCodeAllColumns            = []string{"id", "name", "dbc_contents", "header", "trigger", "recording_enabled", "max_sample_size", "created_at", "updated_at"}
+	dbcCodeColumnsWithoutDefault = []string{"id", "name"}
+	dbcCodeColumnsWithDefault    = []string{"dbc_contents", "header", "trigger", "recording_enabled", "max_sample_size", "created_at", "updated_at"}
 	dbcCodePrimaryKeyColumns     = []string{"id"}
 	dbcCodeGeneratedColumns      = []string{}
 )

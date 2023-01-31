@@ -40,9 +40,13 @@ func (h GetDBCCodeAllQueryHandler) Handle(ctx context.Context, query *GetDBCCode
 
 	for _, item := range all {
 		result.Items = append(result.Items, &p_grpc.GetDBCCodeResponse{
-			Id:          item.ID,
-			Name:        item.Name,
-			DbcContents: item.DBCContents,
+			Id:               item.ID,
+			Name:             item.Name,
+			DbcContents:      item.DBCContents.String,
+			Header:           int32(item.Header.Int),
+			Trigger:          item.Trigger,
+			MaxSampleSize:    int32(item.MaxSampleSize),
+			RecordingEnabled: item.RecordingEnabled,
 		})
 	}
 

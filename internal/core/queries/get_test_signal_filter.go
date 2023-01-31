@@ -3,6 +3,7 @@ package queries
 import (
 	"context"
 	"fmt"
+
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
@@ -63,12 +64,12 @@ func (h GetTestSignalFilterQueryHandler) Handle(ctx context.Context, query *GetT
 	for _, item := range all {
 		result.Items = append(result.Items, &p_grpc.GetTestSignalResponse{
 			Id:                 item.ID,
-			Name:               item.SignalName,
 			UserDeviceId:       item.UserDeviceID,
 			DeviceDefinitionId: item.DeviceDefinitionID,
 			DbcCodesId:         item.DBCCodesID,
-			Trigger:            item.Trigger,
 			Value:              item.Value,
+			AutopiUnitId:       item.AutopiUnitID,
+			Approved:           item.Approved,
 		})
 	}
 

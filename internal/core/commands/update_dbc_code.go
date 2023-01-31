@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/volatiletech/null/v8"
+
 	"github.com/volatiletech/sqlboiler/v4/boil"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/exceptions"
@@ -23,9 +25,13 @@ func NewUpdateDBCCodeCommandHandler(dbs func() *db.ReaderWriter) UpdateDBCCodeCo
 }
 
 type UpdateDBCCodeCommandRequest struct {
-	ID          string
-	Name        string
-	DBCContents string
+	ID               string
+	Name             string
+	DBCContents      string
+	Header           int
+	Trigger          string
+	RecordingEnabled bool
+	MaxSampleSize    int32
 }
 
 type UpdateDBCCodeCommandResponse struct {
@@ -51,7 +57,11 @@ func (h UpdateDBCCodeCommandHandler) Execute(ctx context.Context, command *Updat
 	}
 
 	dbc.Name = command.Name
-	dbc.DBCContents = command.DBCContents
+	dbc.DBCContents = null.StringFrom(command.DBCContents)
+	dbc.Header = null.IntFrom(command.Header)
+	dbc.Trigger = command.Trigger
+	dbc.RecordingEnabled = command.RecordingEnabled
+	dbc.MaxSampleSize = int(command.MaxSampleSize)
 
 	if _, err := dbc.Update(ctx, h.DBS().Writer.DB, boil.Infer()); err != nil {
 		return nil, &exceptions.InternalError{

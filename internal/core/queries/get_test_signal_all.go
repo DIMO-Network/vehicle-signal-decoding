@@ -42,12 +42,12 @@ func (h GetTestSignalAllQueryHandler) Handle(ctx context.Context, query *GetTest
 	for _, item := range all {
 		result.Items = append(result.Items, &p_grpc.GetTestSignalResponse{
 			Id:                 item.ID,
-			Name:               item.SignalName,
 			UserDeviceId:       item.UserDeviceID,
 			DeviceDefinitionId: item.DeviceDefinitionID,
 			DbcCodesId:         item.DBCCodesID,
-			Trigger:            item.Trigger,
 			Value:              item.Value,
+			AutopiUnitId:       item.AutopiUnitID,
+			Approved:           item.Approved,
 		})
 	}
 

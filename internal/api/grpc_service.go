@@ -25,8 +25,11 @@ func NewGrpcService(logger *zerolog.Logger, dbs func() *db.ReaderWriter) p_grpc.
 func (s *GrpcService) CreateDBCCode(ctx context.Context, in *p_grpc.CreateDBCCodeRequest) (*p_grpc.VehicleSignalBaseResponse, error) {
 	service := commands.NewCreateDBCCodeCommandHandler(s.DBS)
 	response, err := service.Execute(ctx, &commands.CreateDBCCodeCommandRequest{
-		Name:        in.Name,
-		DBCContents: in.DbcContents,
+		Name:             in.Name,
+		DBCContents:      in.DbcContents,
+		MaxSampleSize:    in.MaxSampleSize,
+		Header:           int(in.Header),
+		RecordingEnabled: in.RecordingEnabled,
 	})
 
 	if err != nil {
@@ -39,9 +42,12 @@ func (s *GrpcService) CreateDBCCode(ctx context.Context, in *p_grpc.CreateDBCCod
 func (s *GrpcService) UpdateDBCCode(ctx context.Context, in *p_grpc.UpdateDBCCodeRequest) (*p_grpc.VehicleSignalBaseResponse, error) {
 	service := commands.NewUpdateDBCCodeCommandHandler(s.DBS)
 	response, err := service.Execute(ctx, &commands.UpdateDBCCodeCommandRequest{
-		ID:          in.Id,
-		Name:        in.Name,
-		DBCContents: in.DbcContents,
+		ID:               in.Id,
+		Name:             in.Name,
+		DBCContents:      in.DbcContents,
+		MaxSampleSize:    in.MaxSampleSize,
+		Header:           int(in.Header),
+		RecordingEnabled: in.RecordingEnabled,
 	})
 
 	if err != nil {
@@ -78,12 +84,12 @@ func (s *GrpcService) GetDBCCodesByID(ctx context.Context, in *p_grpc.GetByIdReq
 func (s *GrpcService) CreateTestSignal(ctx context.Context, in *p_grpc.CreateTestSignalRequest) (*p_grpc.VehicleSignalBaseResponse, error) {
 	service := commands.NewCreateTestSignalCommandHandler(s.DBS)
 	response, err := service.Execute(ctx, &commands.CreateTestSignalCommandRequest{
-		Name:               in.Name,
-		Trigger:            in.Trigger,
 		DBCCodesID:         in.DbcCodesId,
 		DeviceDefinitionID: in.DeviceDefinitionId,
 		UserDeviceID:       in.UserDeviceId,
 		Value:              in.Value,
+		Approved:           in.Approved,
+		AutoPIUnitID:       in.AutopiUnitId,
 	})
 
 	if err != nil {
@@ -97,12 +103,12 @@ func (s *GrpcService) UpdateTestSignal(ctx context.Context, in *p_grpc.UpdateTes
 	service := commands.NewUpdateTestSignalCommandHandler(s.DBS)
 	response, err := service.Execute(ctx, &commands.UpdateTestSignalCommandRequest{
 		ID:                 in.Id,
-		Name:               in.Name,
-		Trigger:            in.Trigger,
 		DBCCodesID:         in.DbcCodesId,
 		DeviceDefinitionID: in.DeviceDefinitionId,
 		UserDeviceID:       in.UserDeviceId,
 		Value:              in.Value,
+		Approved:           in.Approved,
+		AutoPIUnitID:       in.AutopiUnitId,
 	})
 
 	if err != nil {

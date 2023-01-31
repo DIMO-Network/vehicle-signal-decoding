@@ -27,7 +27,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 	go StartGrpcServer(logger, pdb.DBS, settings)
 
 	startMonitoringServer(logger, settings)
-	//startVehicleSignalConsumer(logger, settings, pdb)
+	startVehicleSignalConsumer(logger, settings, pdb)
 
 	c := make(chan os.Signal, 1)                    // Create channel to signify a signal being sent with length of 1
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM) // When an interrupt or termination signal is sent, notify the channel
@@ -58,6 +58,11 @@ func startMonitoringServer(logger zerolog.Logger, settings *config.Settings) {
 }
 
 func startVehicleSignalConsumer(logger zerolog.Logger, settings *config.Settings, pdb db.Store) {
+
+	if len(settings.KafkaBrokers) == 0 {
+		return
+	}
+
 	clusterConfig := sarama.NewConfig()
 	clusterConfig.Version = sarama.V2_8_1_0
 	clusterConfig.Consumer.Offsets.Initial = sarama.OffsetNewest

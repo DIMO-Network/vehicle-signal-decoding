@@ -47,12 +47,12 @@ func (h GetTestSignalByIDQueryHandler) Handle(ctx context.Context, query *GetTes
 
 	result := &p_grpc.GetTestSignalResponse{
 		Id:                 item.ID,
-		Name:               item.SignalName,
 		UserDeviceId:       item.UserDeviceID,
 		DeviceDefinitionId: item.DeviceDefinitionID,
 		DbcCodesId:         item.DBCCodesID,
-		Trigger:            item.Trigger,
 		Value:              item.Value,
+		AutopiUnitId:       item.AutopiUnitID,
+		Approved:           item.Approved,
 	}
 
 	return result, nil

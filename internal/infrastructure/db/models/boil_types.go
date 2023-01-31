@@ -50,3 +50,16 @@ func makeCacheKey(cols boil.Columns, nzDefaults []string) string {
 	strmangle.PutBuffer(buf)
 	return str
 }
+
+// Enum values for TriggerEnum
+const (
+	TriggerEnumCAN string = "CAN"
+	TriggerEnumPID string = "PID"
+)
+
+func AllTriggerEnum() []string {
+	return []string{
+		TriggerEnumCAN,
+		TriggerEnumPID,
+	}
+}

@@ -46,9 +46,13 @@ func (h GetDBCCodeByIDQueryHandler) Handle(ctx context.Context, query *GetDBCCod
 	}
 
 	result := &p_grpc.GetDBCCodeResponse{
-		Id:          item.ID,
-		Name:        item.Name,
-		DbcContents: item.DBCContents,
+		Id:               item.ID,
+		Name:             item.Name,
+		DbcContents:      item.DBCContents.String,
+		Header:           int32(item.Header.Int),
+		Trigger:          item.Trigger,
+		MaxSampleSize:    int32(item.MaxSampleSize),
+		RecordingEnabled: item.RecordingEnabled,
 	}
 
 	return result, nil

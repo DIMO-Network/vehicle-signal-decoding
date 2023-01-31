@@ -10,12 +10,20 @@ package grpc;
 message CreateDBCCodeRequest {
   string name = 1;
   string dbc_contents = 2;
+  int32 header = 3;
+  string trigger = 4;
+  bool recording_enabled = 5;
+  int32  max_sample_size = 6;
 }
 
 message UpdateDBCCodeRequest {
   string id = 1;
   string name = 2;
   string dbc_contents = 3;
+  int32 header = 4;
+  string trigger = 5;
+  bool recording_enabled = 6;
+  int32  max_sample_size = 7;
 }
 
 message GetDBCCodeResponse {
@@ -24,6 +32,10 @@ message GetDBCCodeResponse {
   string dbc_contents = 3;
   google.protobuf.Timestamp created_at = 4;
   google.protobuf.Timestamp updated_at = 5;
+  int32 header = 6;
+  string trigger = 7;
+  bool recording_enabled = 8;
+  int32  max_sample_size = 9;
 }
 
 message GetDBCCodeListResponse {
@@ -34,8 +46,8 @@ message CreateTestSignalRequest {
   string device_definition_id = 1;
   string dbc_codes_id = 2;
   string user_device_id = 3;
-  string trigger = 4;
-  string name = 5;
+  string autopi_unit_id = 4;
+  bool approved = 5;
   string value = 6;
 }
 
@@ -44,8 +56,8 @@ message UpdateTestSignalRequest {
   string device_definition_id = 2;
   string dbc_codes_id = 3;
   string user_device_id = 4;
-  string trigger = 5;
-  string name = 6;
+  string autopi_unit_id = 5;
+  bool approved = 6;
   string value = 7;
 }
 
@@ -54,8 +66,8 @@ message GetTestSignalResponse {
   string device_definition_id = 2;
   string dbc_codes_id = 3;
   string user_device_id = 4;
-  string trigger = 5;
-  string name = 6;
+  string autopi_unit_id = 5;
+  bool approved = 6;
   string value = 7;
   google.protobuf.Timestamp created_at = 8;
   google.protobuf.Timestamp updated_at = 9;

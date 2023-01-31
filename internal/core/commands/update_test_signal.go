@@ -27,9 +27,9 @@ type UpdateTestSignalCommandRequest struct {
 	DeviceDefinitionID string
 	DBCCodesID         string
 	UserDeviceID       string
-	Trigger            string
-	Name               string
+	AutoPIUnitID       string
 	Value              string
+	Approved           bool
 }
 
 type UpdateTestSignalCommandResponse struct {
@@ -54,11 +54,11 @@ func (h UpdateTestSignalCommandHandler) Execute(ctx context.Context, command *Up
 		}
 	}
 
-	test.SignalName = command.Name
 	test.DeviceDefinitionID = command.DeviceDefinitionID
 	test.DBCCodesID = command.DBCCodesID
-	test.Trigger = command.Trigger
+	test.AutopiUnitID = command.AutoPIUnitID
 	test.Value = command.Value
+	test.Approved = command.Approved
 
 	if _, err := test.Update(ctx, h.DBS().Writer.DB, boil.Infer()); err != nil {
 		return nil, &exceptions.InternalError{

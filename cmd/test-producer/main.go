@@ -2,6 +2,9 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"strings"
+
 	"github.com/DIMO-Network/shared"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
 	"github.com/Shopify/sarama"
@@ -9,8 +12,6 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/segmentio/ksuid"
 	"github.com/tidwall/sjson"
-	"os"
-	"strings"
 )
 
 func main() {

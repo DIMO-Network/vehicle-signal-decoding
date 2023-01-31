@@ -27,10 +27,10 @@ type TestSignal struct {
 	DeviceDefinitionID string    `boil:"device_definition_id" json:"device_definition_id" toml:"device_definition_id" yaml:"device_definition_id"`
 	DBCCodesID         string    `boil:"dbc_codes_id" json:"dbc_codes_id" toml:"dbc_codes_id" yaml:"dbc_codes_id"`
 	UserDeviceID       string    `boil:"user_device_id" json:"user_device_id" toml:"user_device_id" yaml:"user_device_id"`
-	Trigger            string    `boil:"trigger" json:"trigger" toml:"trigger" yaml:"trigger"`
-	SignalName         string    `boil:"signal_name" json:"signal_name" toml:"signal_name" yaml:"signal_name"`
+	AutopiUnitID       string    `boil:"autopi_unit_id" json:"autopi_unit_id" toml:"autopi_unit_id" yaml:"autopi_unit_id"`
 	Value              string    `boil:"value" json:"value" toml:"value" yaml:"value"`
-	Validated          bool      `boil:"validated" json:"validated" toml:"validated" yaml:"validated"`
+	Approved           bool      `boil:"approved" json:"approved" toml:"approved" yaml:"approved"`
+	VehicleTimestamp   time.Time `boil:"vehicle_timestamp" json:"vehicle_timestamp" toml:"vehicle_timestamp" yaml:"vehicle_timestamp"`
 	CreatedAt          time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 	UpdatedAt          time.Time `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
 
@@ -43,10 +43,10 @@ var TestSignalColumns = struct {
 	DeviceDefinitionID string
 	DBCCodesID         string
 	UserDeviceID       string
-	Trigger            string
-	SignalName         string
+	AutopiUnitID       string
 	Value              string
-	Validated          string
+	Approved           string
+	VehicleTimestamp   string
 	CreatedAt          string
 	UpdatedAt          string
 }{
@@ -54,10 +54,10 @@ var TestSignalColumns = struct {
 	DeviceDefinitionID: "device_definition_id",
 	DBCCodesID:         "dbc_codes_id",
 	UserDeviceID:       "user_device_id",
-	Trigger:            "trigger",
-	SignalName:         "signal_name",
+	AutopiUnitID:       "autopi_unit_id",
 	Value:              "value",
-	Validated:          "validated",
+	Approved:           "approved",
+	VehicleTimestamp:   "vehicle_timestamp",
 	CreatedAt:          "created_at",
 	UpdatedAt:          "updated_at",
 }
@@ -67,10 +67,10 @@ var TestSignalTableColumns = struct {
 	DeviceDefinitionID string
 	DBCCodesID         string
 	UserDeviceID       string
-	Trigger            string
-	SignalName         string
+	AutopiUnitID       string
 	Value              string
-	Validated          string
+	Approved           string
+	VehicleTimestamp   string
 	CreatedAt          string
 	UpdatedAt          string
 }{
@@ -78,34 +78,25 @@ var TestSignalTableColumns = struct {
 	DeviceDefinitionID: "test_signals.device_definition_id",
 	DBCCodesID:         "test_signals.dbc_codes_id",
 	UserDeviceID:       "test_signals.user_device_id",
-	Trigger:            "test_signals.trigger",
-	SignalName:         "test_signals.signal_name",
+	AutopiUnitID:       "test_signals.autopi_unit_id",
 	Value:              "test_signals.value",
-	Validated:          "test_signals.validated",
+	Approved:           "test_signals.approved",
+	VehicleTimestamp:   "test_signals.vehicle_timestamp",
 	CreatedAt:          "test_signals.created_at",
 	UpdatedAt:          "test_signals.updated_at",
 }
 
 // Generated where
 
-type whereHelperbool struct{ field string }
-
-func (w whereHelperbool) EQ(x bool) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.EQ, x) }
-func (w whereHelperbool) NEQ(x bool) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.NEQ, x) }
-func (w whereHelperbool) LT(x bool) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.LT, x) }
-func (w whereHelperbool) LTE(x bool) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.LTE, x) }
-func (w whereHelperbool) GT(x bool) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.GT, x) }
-func (w whereHelperbool) GTE(x bool) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
-
 var TestSignalWhere = struct {
 	ID                 whereHelperstring
 	DeviceDefinitionID whereHelperstring
 	DBCCodesID         whereHelperstring
 	UserDeviceID       whereHelperstring
-	Trigger            whereHelperstring
-	SignalName         whereHelperstring
+	AutopiUnitID       whereHelperstring
 	Value              whereHelperstring
-	Validated          whereHelperbool
+	Approved           whereHelperbool
+	VehicleTimestamp   whereHelpertime_Time
 	CreatedAt          whereHelpertime_Time
 	UpdatedAt          whereHelpertime_Time
 }{
@@ -113,10 +104,10 @@ var TestSignalWhere = struct {
 	DeviceDefinitionID: whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"test_signals\".\"device_definition_id\""},
 	DBCCodesID:         whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"test_signals\".\"dbc_codes_id\""},
 	UserDeviceID:       whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"test_signals\".\"user_device_id\""},
-	Trigger:            whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"test_signals\".\"trigger\""},
-	SignalName:         whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"test_signals\".\"signal_name\""},
+	AutopiUnitID:       whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"test_signals\".\"autopi_unit_id\""},
 	Value:              whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"test_signals\".\"value\""},
-	Validated:          whereHelperbool{field: "\"vehicle_signal_decoding_api\".\"test_signals\".\"validated\""},
+	Approved:           whereHelperbool{field: "\"vehicle_signal_decoding_api\".\"test_signals\".\"approved\""},
+	VehicleTimestamp:   whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"test_signals\".\"vehicle_timestamp\""},
 	CreatedAt:          whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"test_signals\".\"created_at\""},
 	UpdatedAt:          whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"test_signals\".\"updated_at\""},
 }
@@ -149,8 +140,8 @@ func (r *testSignalR) GetDBCCode() *DBCCode {
 type testSignalL struct{}
 
 var (
-	testSignalAllColumns            = []string{"id", "device_definition_id", "dbc_codes_id", "user_device_id", "trigger", "signal_name", "value", "validated", "created_at", "updated_at"}
-	testSignalColumnsWithoutDefault = []string{"id", "device_definition_id", "dbc_codes_id", "user_device_id", "trigger", "signal_name", "value", "validated"}
+	testSignalAllColumns            = []string{"id", "device_definition_id", "dbc_codes_id", "user_device_id", "autopi_unit_id", "value", "approved", "vehicle_timestamp", "created_at", "updated_at"}
+	testSignalColumnsWithoutDefault = []string{"id", "device_definition_id", "dbc_codes_id", "user_device_id", "autopi_unit_id", "value", "approved", "vehicle_timestamp"}
 	testSignalColumnsWithDefault    = []string{"created_at", "updated_at"}
 	testSignalPrimaryKeyColumns     = []string{"id"}
 	testSignalGeneratedColumns      = []string{}

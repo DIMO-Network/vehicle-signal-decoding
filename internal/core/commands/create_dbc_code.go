@@ -3,6 +3,8 @@ package commands
 import (
 	"context"
 
+	"github.com/volatiletech/null/v8"
+
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/exceptions"
 	"github.com/pkg/errors"
 	"github.com/volatiletech/sqlboiler/v4/boil"
@@ -21,8 +23,12 @@ func NewCreateDBCCodeCommandHandler(dbs func() *db.ReaderWriter) CreateDBCCodeCo
 }
 
 type CreateDBCCodeCommandRequest struct {
-	Name        string
-	DBCContents string
+	Name             string
+	DBCContents      string
+	Header           int
+	Trigger          string
+	RecordingEnabled bool
+	MaxSampleSize    int32
 }
 
 type CreateDBCCodeCommandResponse struct {
@@ -34,7 +40,11 @@ func (h CreateDBCCodeCommandHandler) Execute(ctx context.Context, command *Creat
 	dbc := &models.DBCCode{}
 	dbc.ID = ksuid.New().String()
 	dbc.Name = command.Name
-	dbc.DBCContents = command.DBCContents
+	dbc.DBCContents = null.StringFrom(command.DBCContents)
+	dbc.Header = null.IntFrom(command.Header)
+	dbc.Trigger = command.Trigger
+	dbc.RecordingEnabled = command.RecordingEnabled
+	dbc.MaxSampleSize = int(command.MaxSampleSize)
 
 	err := dbc.Insert(ctx, h.DBS().Writer, boil.Infer())
 
