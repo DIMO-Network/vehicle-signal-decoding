@@ -61,39 +61,38 @@ func main() {
 func buildTestMessage(autopiUnitID string, signals []signal) ([]byte, error) {
 
 	json := `{
-      "_source": {
-    	"data": {
-    	  "signals": {
-    	    "canbus_vin_toyota580v0": {
-    	      "_stamp": "2023-01-30T15:12:17.464970",
-    	      "value": 0
-    	    }
-    	  }
-    	},
-    	"id": "2L3EreOFbikS9QT7c2Iu0NV3t4M",
-    	"source": "autopi/status/transform",
-    	"specversion": "1.0",
-    	"subject": "f20d8f09-9f1b-7fda-fec8-a7b6d3edfb0b",
-    	"time": "2023-01-30T15:12:45.911Z",
-    	"type": "zone.dimo.canbus.signal.update"
-      }`
+	  "data": {
+		"signals": {
+		  "canbus_vin_toyota580v0": {
+			"_stamp": "2023-01-30T15:12:17.464970",
+			"value": "0"
+		  }
+		}
+	  },
+	  "id": "2L3EreOFbikS9QT7c2Iu0NV3t4M",
+	  "source": "autopi/status/transform",
+	  "specversion": "1.0",
+	  "subject": "f20d8f09-9f1b-7fda-fec8-a7b6d3edfb0b",
+	  "time": "2023-01-30T15:12:45.911Z",
+	  "type": "zone.dimo.canbus.signal.update"
+	}`
 
-	set, err := sjson.Set(json, "_source.id", ksuid.New().String())
+	set, err := sjson.Set(json, "id", ksuid.New().String())
 	if err != nil {
 		return nil, err
 	}
-	set, err = sjson.Set(set, "_source.subject", autopiUnitID)
+	set, err = sjson.Set(set, "subject", autopiUnitID)
 	if err != nil {
 		return nil, err
 	}
 	// process signals - note it is not an array but a json numeric object
 	for _, s := range signals {
 		ts := "2023-01-30T15:12:17.464970"
-		set, err = sjson.Set(set, fmt.Sprintf("_source.data.signals.:%s._stamp", s.SignalName), ts)
+		set, err = sjson.Set(set, fmt.Sprintf("data.signals.:%s._stamp", s.SignalName), ts)
 		if err != nil {
 			return nil, err
 		}
-		set, err = sjson.Set(set, fmt.Sprintf("_source.data.signals.:%s.value", s.SignalName), s.Value)
+		set, err = sjson.Set(set, fmt.Sprintf("data.signals.:%s.value", s.SignalName), s.Value)
 		if err != nil {
 			return nil, err
 		}

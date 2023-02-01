@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/services"
 	"os"
 	"os/signal"
 	"strings"
@@ -70,8 +71,8 @@ func startVehicleSignalConsumer(logger zerolog.Logger, settings *config.Settings
 	cfg := &kafka.Config{
 		ClusterConfig:   clusterConfig,
 		BrokerAddresses: strings.Split(settings.KafkaBrokers, ","),
-		Topic:           settings.TaskStatusTopic,
-		GroupID:         "user-devicesYY",
+		Topic:           settings.DBCDecodingTopic,
+		GroupID:         "vehicle-signal-decoding",
 		MaxInFlight:     int64(5),
 	}
 	consumer, err := kafka.NewConsumer(cfg, &logger)
@@ -79,7 +80,8 @@ func startVehicleSignalConsumer(logger zerolog.Logger, settings *config.Settings
 		logger.Fatal().Err(err).Msg("Could not start credential update consumer")
 	}
 
-	service := NewWorkerListenerService(pdb.DBS, &logger)
+	userDeviceService := services.NewUserDeviceService()
+	service := NewWorkerListenerService(pdb.DBS, &logger, userDeviceService)
 
 	consumer.Start(context.Background(), service.ProcessWorker)
 
