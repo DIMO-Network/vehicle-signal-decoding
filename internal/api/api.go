@@ -80,7 +80,7 @@ func startVehicleSignalConsumer(logger zerolog.Logger, settings *config.Settings
 		logger.Fatal().Err(err).Msg("Could not start credential update consumer")
 	}
 
-	userDeviceService := services.NewUserDeviceService()
+	userDeviceService := services.NewUserDeviceService(settings)
 	service := NewWorkerListenerService(pdb.DBS, &logger, userDeviceService)
 
 	consumer.Start(context.Background(), service.ProcessWorker)

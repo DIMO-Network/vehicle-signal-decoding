@@ -32,7 +32,8 @@ type CreateDBCCodeCommandRequest struct {
 }
 
 type CreateDBCCodeCommandResponse struct {
-	ID string
+	ID   string
+	Name string
 }
 
 func (h CreateDBCCodeCommandHandler) Execute(ctx context.Context, command *CreateDBCCodeCommandRequest) (*CreateDBCCodeCommandResponse, error) {
@@ -52,5 +53,5 @@ func (h CreateDBCCodeCommandHandler) Execute(ctx context.Context, command *Creat
 		return nil, &exceptions.InternalError{Err: errors.Wrapf(err, "error inserting dbc_code: %s", command.Name)}
 	}
 
-	return &CreateDBCCodeCommandResponse{ID: dbc.ID}, nil
+	return &CreateDBCCodeCommandResponse{ID: dbc.ID, Name: dbc.Name}, nil
 }

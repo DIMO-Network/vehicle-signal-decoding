@@ -40,7 +40,7 @@ type RunTestSignalCommandResponse struct {
 func (h RunTestSignalCommandHandler) Execute(ctx context.Context, command *RunTestSignalCommandRequest) error {
 
 	// Get user device
-	userDevice, err := h.userDeviceService.GetUserDeviceServiceByAutoPIUnitID(command.AutoPIUnitID)
+	userDevice, err := h.userDeviceService.GetUserDeviceServiceByAutoPIUnitID(ctx, command.AutoPIUnitID)
 	if err != nil {
 		return err
 	}

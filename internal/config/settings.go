@@ -17,4 +17,5 @@ type Settings struct {
 	TaskStatusTopic  string      `yaml:"TASK_STATUS_TOPIC"`
 	MonitoringPort   string      `yaml:"MONITORING_PORT"`
 	DBCDecodingTopic string      `yaml:"DBC_DECODING_TOPIC"`
+	DeviceGRPCAddr   string      `yaml:"DEVICE_GRPC_ADDR"`
 }
