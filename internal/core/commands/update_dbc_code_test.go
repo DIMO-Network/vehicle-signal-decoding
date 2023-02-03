@@ -56,17 +56,39 @@ func (s *UpdateDbcCodeTestSuite) Test_UpdateDbcCode() {
 	}
 
 	const (
-		dbcName = "dbc name"
+		dbcName       = "db_code_name"
+		dbcNameUpdate = "db_code_name update"
 	)
+
+	dbCode := setupCreateDbcCode(s.T(), dbcName, s.pdb)
 
 	for _, scenario := range []tableTestCases{
 		{
-			description: "Create dbc code success",
+			description: "Update dbc code success",
 			command: &UpdateDBCCodeCommandRequest{
-				Name: dbcName,
+				ID:               dbCode.ID,
+				Name:             dbcNameUpdate,
+				RecordingEnabled: dbCode.RecordingEnabled,
+				Trigger:          dbCode.Trigger,
+				MaxSampleSize:    int32(dbCode.MaxSampleSize),
+				Header:           dbCode.Header.Int,
+				DBCContents:      dbCode.DBCContents.String,
 			},
-			expected: dbcName,
+			expected: dbcNameUpdate,
 			isError:  false,
+		},
+		{
+			description: "Update dbc code with not found dbc_code",
+			command: &UpdateDBCCodeCommandRequest{
+				Name:             dbcNameUpdate,
+				RecordingEnabled: dbCode.RecordingEnabled,
+				Trigger:          dbCode.Trigger,
+				MaxSampleSize:    int32(dbCode.MaxSampleSize),
+				Header:           dbCode.Header.Int,
+				DBCContents:      dbCode.DBCContents.String,
+			},
+			expected: "",
+			isError:  true,
 		},
 	} {
 		s.T().Run(scenario.description, func(t *testing.T) {
@@ -75,7 +97,7 @@ func (s *UpdateDbcCodeTestSuite) Test_UpdateDbcCode() {
 				s.Nil(result)
 				s.Error(err)
 			} else {
-				assert.Equal(t, scenario.expected, result.ID)
+				assert.Equal(t, scenario.expected, result.Name)
 			}
 
 		})

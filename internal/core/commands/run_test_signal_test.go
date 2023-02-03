@@ -70,12 +70,21 @@ func (s *RunTestSignalTestSuite) Test_RunTestSignal() {
 
 	s.mockUserDeviceService.EXPECT().GetUserDeviceServiceByAutoPIUnitID(s.ctx, gomock.Any()).Return(userDeviceMock, nil).Times(1)
 
+	signals := map[string]RunTestSignalItemCommandRequest{}
+	signals["canbus_vin_toyota580v1"] = RunTestSignalItemCommandRequest{
+		Time:  "2023-01-30T15:12:17.464970",
+		Value: "0",
+	}
+
 	for _, scenario := range []tableTestCases{
 		{
 			description: "Run test signal success",
-			command:     &RunTestSignalCommandRequest{},
-			expected:    "dbcName",
-			isError:     false,
+			command: &RunTestSignalCommandRequest{
+				AutoPIUnitID: autoPIUnitID,
+				Signals:      signals,
+			},
+			expected: "dbcName",
+			isError:  false,
 		},
 	} {
 		s.T().Run(scenario.description, func(t *testing.T) {

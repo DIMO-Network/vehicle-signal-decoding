@@ -35,7 +35,8 @@ type UpdateDBCCodeCommandRequest struct {
 }
 
 type UpdateDBCCodeCommandResponse struct {
-	ID string
+	ID   string
+	Name string
 }
 
 func (h UpdateDBCCodeCommandHandler) Execute(ctx context.Context, command *UpdateDBCCodeCommandRequest) (*UpdateDBCCodeCommandResponse, error) {
@@ -69,5 +70,5 @@ func (h UpdateDBCCodeCommandHandler) Execute(ctx context.Context, command *Updat
 		}
 	}
 
-	return &UpdateDBCCodeCommandResponse{ID: dbc.ID}, nil
+	return &UpdateDBCCodeCommandResponse{ID: dbc.ID, Name: dbc.Name}, nil
 }

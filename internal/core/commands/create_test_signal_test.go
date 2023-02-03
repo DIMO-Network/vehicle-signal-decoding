@@ -2,6 +2,9 @@ package commands
 
 import (
 	"context"
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
+	"github.com/segmentio/ksuid"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -63,18 +66,34 @@ func (s *CreateTestSignalTestSuite) Test_CreateTestSignal() {
 		approved           = true
 	)
 
+	dbCode := setupCreateDbcCode(s.T(), "db_code_name", s.pdb)
+
 	for _, scenario := range []tableTestCases{
 		{
 			description: "Create test signal success",
 			command: &CreateTestSignalCommandRequest{
+				DBCCodesID:         dbCode.ID,
 				DeviceDefinitionID: deviceDefinitionID,
 				UserDeviceID:       userDeviceID,
 				AutoPIUnitID:       autoPIUnitID,
 				Value:              value,
 				Approved:           approved,
 			},
-			expected: "dbcName",
+			expected: dbCode.ID,
 			isError:  false,
+		},
+		{
+			description: "Create test signal with bad request dbc_code",
+			command: &CreateTestSignalCommandRequest{
+				DBCCodesID:         "",
+				DeviceDefinitionID: deviceDefinitionID,
+				UserDeviceID:       userDeviceID,
+				AutoPIUnitID:       autoPIUnitID,
+				Value:              value,
+				Approved:           approved,
+			},
+			expected: "",
+			isError:  true,
 		},
 	} {
 		s.T().Run(scenario.description, func(t *testing.T) {
@@ -83,9 +102,19 @@ func (s *CreateTestSignalTestSuite) Test_CreateTestSignal() {
 				s.Nil(result)
 				s.Error(err)
 			} else {
-				assert.Equal(t, scenario.expected, result.ID)
+				assert.Equal(t, scenario.expected, dbCode.ID)
 			}
 
 		})
 	}
+}
+
+func setupCreateDbcCode(t *testing.T, name string, pdb db.Store) models.DBCCode {
+	dbcCode := models.DBCCode{
+		ID:   ksuid.New().String(),
+		Name: name,
+	}
+	err := dbcCode.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err, "database error")
+	return dbcCode
 }
