@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
 	"github.com/volatiletech/sqlboiler/v4/boil"
+	"strconv"
 	"time"
 
 	"github.com/DIMO-Network/shared/db"
@@ -30,7 +31,7 @@ type RunTestSignalCommandRequest struct {
 }
 
 type RunTestSignalItemCommandRequest struct {
-	Value string `json:"value"`
+	Value any `json:"value"`
 	Time  string `json:"_stamp"`
 }
 
@@ -79,7 +80,14 @@ func (h RunTestSignalCommandHandler) Execute(ctx context.Context, command *RunTe
 		test.DeviceDefinitionID = userDevice.DeviceDefinitionID
 		test.DBCCodesID = item.ID
 		test.AutopiUnitID = command.AutoPIUnitID
-		test.Value = command.Signals[k].Value
+		switch v := command.Signals[k].Value.(type) {
+		case string:
+			test.Value = v
+		case int32, int64:
+			test.Value = strconv.Itoa(v.(int))
+		case float32, float64:
+			test.Value = fmt.Sprintf("%v", v)
+		}
 		test.Approved = false
 
 		err = test.Insert(ctx, h.DBS().Writer, boil.Infer())
