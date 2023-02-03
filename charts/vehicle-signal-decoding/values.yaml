@@ -39,6 +39,7 @@ env:
   GRPC_PORT: 8086
   MONITORING_PORT: 8888
   DBC_DECODING_TOPIC: topic.dbc.decoding
+  DEVICE_GRPC_ADDR: devices-api-dev:8086
 service:
   type: ClusterIP
   ports:

@@ -19,6 +19,7 @@ env:
   DEPLOYMENT_BASE_URL: https://vehicle-signal-decoding.dimo.zone
   KAFKA_BROKERS: kafka-prod-dimo-kafka-kafka-brokers:9092
   DBC_DECODING_TOPIC: topic.dbc.decoding
+  DEVICE_GRPC_ADDR: devices-api-prod:8086
 ingress:
   enabled: false
   className: nginx
