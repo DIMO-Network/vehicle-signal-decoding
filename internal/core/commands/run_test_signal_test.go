@@ -2,8 +2,11 @@ package commands
 
 import (
 	"context"
-	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/services/models"
+	"os"
 	"testing"
+
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/services/models"
+	"github.com/rs/zerolog"
 
 	mockService "github.com/DIMO-Network/vehicle-signal-decoding/internal/core/services/mocks"
 	dbtesthelper "github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/dbtest"
@@ -41,7 +44,7 @@ func (s *RunTestSignalTestSuite) SetupTest() {
 	s.mockUserDeviceService = mockService.NewMockUserDeviceService(s.ctrl)
 	s.pdb, s.container = dbtesthelper.StartContainerDatabase(s.ctx, dbName, s.T(), migrationsDirRelPath)
 
-	s.handler = NewRunTestSignalCommandHandler(s.pdb.DBS, s.mockUserDeviceService)
+	s.handler = NewRunTestSignalCommandHandler(s.pdb.DBS, zerolog.New(os.Stdout), s.mockUserDeviceService)
 }
 
 func (s *RunTestSignalTestSuite) TearDownTest() {
@@ -70,10 +73,18 @@ func (s *RunTestSignalTestSuite) Test_RunTestSignal() {
 
 	s.mockUserDeviceService.EXPECT().GetUserDeviceServiceByAutoPIUnitID(s.ctx, gomock.Any()).Return(userDeviceMock, nil).Times(1)
 
-	signals := map[string]RunTestSignalItemCommandRequest{}
-	signals["canbus_vin_toyota580v1"] = RunTestSignalItemCommandRequest{
+	eventSignals1 := map[string]RunTestSignalItemCommandRequest{}
+	eventSignals1["canbus_vin_toyota580v1"] = RunTestSignalItemCommandRequest{
 		Time:  "2023-01-30T15:12:17.464970",
 		Value: "0",
+	}
+	eventSignals1["canbus_vin_toyota580v2"] = RunTestSignalItemCommandRequest{
+		Time:  "2023-01-30T15:12:17.464970",
+		Value: 1,
+	}
+	eventSignals1["canbus_vin_toyota580v3"] = RunTestSignalItemCommandRequest{
+		Time:  "2023-01-30T15:12:17.464970",
+		Value: 1.4,
 	}
 
 	for _, scenario := range []tableTestCases{
@@ -81,7 +92,7 @@ func (s *RunTestSignalTestSuite) Test_RunTestSignal() {
 			description: "Run test signal success",
 			command: &RunTestSignalCommandRequest{
 				AutoPIUnitID: autoPIUnitID,
-				Signals:      signals,
+				Signals:      eventSignals1,
 			},
 			expected: "dbcName",
 			isError:  false,

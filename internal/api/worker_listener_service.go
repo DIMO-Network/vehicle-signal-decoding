@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
 	"github.com/DIMO-Network/shared"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/commands"
@@ -19,7 +20,7 @@ const (
 
 type WorkerListenerService struct {
 	DBS               func() *db.ReaderWriter
-	logger            *zerolog.Logger
+	logger            zerolog.Logger
 	userDeviceService services.UserDeviceService
 }
 
@@ -27,7 +28,7 @@ type VechicleSignalDecodingData struct {
 	Signals map[string]commands.RunTestSignalItemCommandRequest `json:"signals"`
 }
 
-func NewWorkerListenerService(dbs func() *db.ReaderWriter, logger *zerolog.Logger, userDeviceService services.UserDeviceService) *WorkerListenerService {
+func NewWorkerListenerService(dbs func() *db.ReaderWriter, logger zerolog.Logger, userDeviceService services.UserDeviceService) *WorkerListenerService {
 	return &WorkerListenerService{DBS: dbs, logger: logger, userDeviceService: userDeviceService}
 }
 
@@ -59,7 +60,7 @@ func (i *WorkerListenerService) processEvent(event *shared.CloudEvent[VechicleSi
 
 	switch event.Type {
 	case vehicleSignalDecodingEventType:
-		service := commands.NewRunTestSignalCommandHandler(i.DBS, i.userDeviceService)
+		service := commands.NewRunTestSignalCommandHandler(i.DBS, i.logger, i.userDeviceService)
 
 		command := &commands.RunTestSignalCommandRequest{
 			AutoPIUnitID: event.Subject,

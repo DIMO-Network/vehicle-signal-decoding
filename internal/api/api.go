@@ -2,11 +2,12 @@ package api
 
 import (
 	"context"
-	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/services"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
+
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/services"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/kafka"
 	"github.com/Shopify/sarama"
@@ -81,7 +82,7 @@ func startVehicleSignalConsumer(logger zerolog.Logger, settings *config.Settings
 	}
 
 	userDeviceService := services.NewUserDeviceService(settings)
-	service := NewWorkerListenerService(pdb.DBS, &logger, userDeviceService)
+	service := NewWorkerListenerService(pdb.DBS, logger, userDeviceService)
 
 	consumer.Start(context.Background(), service.ProcessWorker)
 
