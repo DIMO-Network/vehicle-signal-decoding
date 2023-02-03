@@ -48,7 +48,7 @@ func (h RunTestSignalCommandHandler) Execute(ctx context.Context, command *RunTe
 		return err
 	}
 	if userDevice == nil {
-		return fmt.Errorf("User Device not found associate to autopi_unit_id %s", command.AutoPIUnitID)
+		return fmt.Errorf("failed to find user device associated to autopi_unit_id %s", command.AutoPIUnitID)
 	}
 
 	// Validate Signals exists
@@ -64,8 +64,9 @@ func (h RunTestSignalCommandHandler) Execute(ctx context.Context, command *RunTe
 			value = fmt.Sprintf("%v", v)
 		}
 
-		h.logger.Info().Str("signal_name", k).
-			Str("signal_value", value)
+		localLog := h.logger.With().Str("signal_name", k).
+			Str("signal_value", value).Str("autopi_unit_id", command.AutoPIUnitID).Logger()
+
 		dbcCode, err := models.DBCCodes(models.DBCCodeWhere.Name.EQ(k)).One(ctx, h.DBS().Reader)
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
@@ -77,7 +78,8 @@ func (h RunTestSignalCommandHandler) Execute(ctx context.Context, command *RunTe
 
 				err = dbc.Insert(ctx, h.DBS().Writer, boil.Infer())
 				if err != nil {
-					return fmt.Errorf("error inserting dbc_code")
+					localLog.Err(err).Msg("error inserting dbc_code")
+					continue
 				}
 
 				dbcCode = dbc
@@ -85,18 +87,22 @@ func (h RunTestSignalCommandHandler) Execute(ctx context.Context, command *RunTe
 		}
 
 		if !dbcCode.RecordingEnabled {
-			return fmt.Errorf("recording is not enabled")
+			localLog.Info().Msg("recording is not enabled for dbc_code")
+			continue
 		}
 
 		testSignalsCount, err := models.TestSignals(models.TestSignalWhere.AutopiUnitID.EQ(command.AutoPIUnitID)).
 			Count(ctx, h.DBS().Reader)
 
 		if err != nil {
-			return fmt.Errorf("error getting count() test signals for autopi_unit_id %s", command.AutoPIUnitID)
+			localLog.Err(err).Msgf("error getting count() test signals for autopi_unit_id %s", command.AutoPIUnitID)
+			continue
 		}
 
 		if int(testSignalsCount) >= dbcCode.MaxSampleSize {
-			return fmt.Errorf("reached signal limit. Signal tests %d", dbcCode.MaxSampleSize)
+			// don't want to log this b/c will happen a lot
+			//"reached signal sample size limit. Signal tests %d", dbcCode.MaxSampleSize)
+			continue
 		}
 
 		// Insert test_signals
@@ -106,12 +112,12 @@ func (h RunTestSignalCommandHandler) Execute(ctx context.Context, command *RunTe
 		test.DBCCodesID = dbcCode.ID
 		test.AutopiUnitID = command.AutoPIUnitID
 		test.Value = value
-		test.VehicleTimestamp = time.Now() //todo: validate with james
+		test.VehicleTimestamp = command.Time
 		test.Approved = false
 
 		err = test.Insert(ctx, h.DBS().Writer, boil.Infer())
 		if err != nil {
-			return fmt.Errorf("error inserting test signal: %s", k)
+			localLog.Err(err).Msg("error inserting test signal")
 		}
 	}
 
