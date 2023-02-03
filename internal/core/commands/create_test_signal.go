@@ -2,6 +2,8 @@ package commands
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/exceptions"
 	"github.com/pkg/errors"
@@ -35,15 +37,31 @@ type CreateTestSignalCommandResponse struct {
 
 func (h CreateTestSignalCommandHandler) Execute(ctx context.Context, command *CreateTestSignalCommandRequest) (*CreateTestSignalCommandResponse, error) {
 
+	dbc, err := models.DBCCodes(models.DBCCodeWhere.ID.EQ(command.DBCCodesID)).One(ctx, h.DBS().Reader)
+
+	if err != nil {
+		if !errors.Is(err, sql.ErrNoRows) {
+			return nil, &exceptions.InternalError{
+				Err: err,
+			}
+		}
+
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, &exceptions.NotFoundError{
+				Err: fmt.Errorf("could not find dbc_code id: %s", command.DBCCodesID),
+			}
+		}
+	}
+
 	test := models.TestSignal{}
 	test.ID = ksuid.New().String()
 	test.DeviceDefinitionID = command.DeviceDefinitionID
-	test.DBCCodesID = command.DBCCodesID
+	test.DBCCodesID = dbc.ID
 	test.AutopiUnitID = command.AutoPIUnitID
 	test.Value = command.Value
 	test.Approved = command.Approved
 
-	err := test.Insert(ctx, h.DBS().Writer, boil.Infer())
+	err = test.Insert(ctx, h.DBS().Writer, boil.Infer())
 
 	if err != nil {
 		return nil, &exceptions.InternalError{Err: errors.Wrapf(err, "error inserting test signal: %s", command.Value)}

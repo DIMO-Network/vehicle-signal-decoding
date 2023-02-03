@@ -32,7 +32,7 @@ type RunTestSignalCommandRequest struct {
 
 type RunTestSignalItemCommandRequest struct {
 	Value any `json:"value"`
-	//Time  time.Time `json:"_stamp"`
+	Time  string `json:"_stamp"`
 }
 
 type RunTestSignalCommandResponse struct {
