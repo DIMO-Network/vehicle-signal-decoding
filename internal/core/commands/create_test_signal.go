@@ -56,6 +56,7 @@ func (h CreateTestSignalCommandHandler) Execute(ctx context.Context, command *Cr
 	test := models.TestSignal{}
 	test.ID = ksuid.New().String()
 	test.DeviceDefinitionID = command.DeviceDefinitionID
+	test.UserDeviceID = command.UserDeviceID
 	test.DBCCodesID = dbc.ID
 	test.AutopiUnitID = command.AutoPIUnitID
 	test.Value = command.Value

@@ -49,7 +49,8 @@ func (h GetTestSignalFilterQueryHandler) Handle(ctx context.Context, query *GetT
 	}
 
 	queryMods = append(queryMods,
-		qm.Load(models.TestSignalRels.DBCCode))
+		qm.Load(models.TestSignalRels.DBCCode),
+		qm.OrderBy("created_at DESC, updated_at ASC"))
 
 	all, err := models.TestSignals(queryMods...).All(ctx, h.DBS().Reader)
 

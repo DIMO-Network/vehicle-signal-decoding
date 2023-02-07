@@ -57,6 +57,7 @@ func (h UpdateTestSignalCommandHandler) Execute(ctx context.Context, command *Up
 	test.DeviceDefinitionID = command.DeviceDefinitionID
 	test.DBCCodesID = command.DBCCodesID
 	test.AutopiUnitID = command.AutoPIUnitID
+	test.UserDeviceID = command.UserDeviceID
 	test.Value = command.Value
 	test.Approved = command.Approved
 

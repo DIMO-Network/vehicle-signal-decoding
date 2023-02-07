@@ -26,6 +26,7 @@ func (s *GrpcService) CreateDBCCode(ctx context.Context, in *p_grpc.CreateDBCCod
 	service := commands.NewCreateDBCCodeCommandHandler(s.DBS)
 	response, err := service.Execute(ctx, &commands.CreateDBCCodeCommandRequest{
 		Name:             in.Name,
+		Trigger:          in.Trigger,
 		DBCContents:      in.DbcContents,
 		MaxSampleSize:    in.MaxSampleSize,
 		Header:           int(in.Header),
@@ -44,6 +45,7 @@ func (s *GrpcService) UpdateDBCCode(ctx context.Context, in *p_grpc.UpdateDBCCod
 	response, err := service.Execute(ctx, &commands.UpdateDBCCodeCommandRequest{
 		ID:               in.Id,
 		Name:             in.Name,
+		Trigger:          in.Trigger,
 		DBCContents:      in.DbcContents,
 		MaxSampleSize:    in.MaxSampleSize,
 		Header:           int(in.Header),

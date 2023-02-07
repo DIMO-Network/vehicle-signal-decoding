@@ -57,7 +57,7 @@ func (h UpdateDBCCodeCommandHandler) Execute(ctx context.Context, command *Updat
 		}
 	}
 
-	dbc.Name = command.Name
+	//dbc.Name = command.Name
 	dbc.DBCContents = null.StringFrom(command.DBCContents)
 	dbc.Header = null.IntFrom(command.Header)
 	dbc.Trigger = command.Trigger
