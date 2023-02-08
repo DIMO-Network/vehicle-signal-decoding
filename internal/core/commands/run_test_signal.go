@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/DIMO-Network/shared/db"
@@ -114,7 +115,7 @@ func (h RunTestSignalCommandHandler) Execute(ctx context.Context, command *RunTe
 			Value:              value,
 			VehicleTimestamp:   command.Time,
 			Approved:           false,
-			UserDeviceID:       userDevice.UserDeviceID,
+			UserDeviceID:       strings.TrimSpace(userDevice.UserDeviceID),
 		}
 
 		err = test.Insert(ctx, h.DBS().Writer, boil.Infer())

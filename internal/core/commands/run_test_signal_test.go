@@ -2,6 +2,9 @@ package commands
 
 import (
 	"context"
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
+	"github.com/segmentio/ksuid"
+	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
 
@@ -62,10 +65,10 @@ func (s *RunTestSignalTestSuite) Test_RunTestSignal() {
 	}
 
 	const (
-		deviceDefinitionID = "1"
-		userDeviceID       = "2"
-		autoPIUnitID       = "3"
+		autoPIUnitID = "3"
 	)
+	deviceDefinitionID := ksuid.New().String()
+	userDeviceID := ksuid.New().String()
 
 	userDeviceMock := &services.UserDeviceAutoPIUnit{
 		UserDeviceID:       userDeviceID,
@@ -105,7 +108,10 @@ func (s *RunTestSignalTestSuite) Test_RunTestSignal() {
 				s.Error(err)
 			} else {
 				s.NoError(err)
-
+				all, err := models.TestSignals().All(context.Background(), s.pdb.DBS().Reader)
+				require.NoError(t, err)
+				assert.Len(t, all, 3)
+				assert.Equal(t, userDeviceID, all[0].UserDeviceID)
 			}
 		})
 	}
