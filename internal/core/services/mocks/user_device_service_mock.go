@@ -8,7 +8,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	models "github.com/DIMO-Network/vehicle-signal-decoding/internal/core/services/models"
+	services "github.com/DIMO-Network/vehicle-signal-decoding/internal/core/services"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -36,10 +36,10 @@ func (m *MockUserDeviceService) EXPECT() *MockUserDeviceServiceMockRecorder {
 }
 
 // GetUserDeviceServiceByAutoPIUnitID mocks base method.
-func (m *MockUserDeviceService) GetUserDeviceServiceByAutoPIUnitID(ctx context.Context, id string) (*models.UserDeviceAutoPIUnit, error) {
+func (m *MockUserDeviceService) GetUserDeviceServiceByAutoPIUnitID(ctx context.Context, id string) (*services.UserDeviceAutoPIUnit, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetUserDeviceServiceByAutoPIUnitID", ctx, id)
-	ret0, _ := ret[0].(*models.UserDeviceAutoPIUnit)
+	ret0, _ := ret[0].(*services.UserDeviceAutoPIUnit)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

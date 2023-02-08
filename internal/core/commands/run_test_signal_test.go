@@ -5,7 +5,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/services/models"
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/services"
+
 	"github.com/rs/zerolog"
 
 	mockService "github.com/DIMO-Network/vehicle-signal-decoding/internal/core/services/mocks"
@@ -62,11 +63,11 @@ func (s *RunTestSignalTestSuite) Test_RunTestSignal() {
 
 	const (
 		deviceDefinitionID = "1"
-		userDeviceID       = "1"
-		autoPIUnitID       = "1"
+		userDeviceID       = "2"
+		autoPIUnitID       = "3"
 	)
 
-	userDeviceMock := &models.UserDeviceAutoPIUnit{
+	userDeviceMock := &services.UserDeviceAutoPIUnit{
 		UserDeviceID:       userDeviceID,
 		DeviceDefinitionID: deviceDefinitionID,
 	}
@@ -104,6 +105,7 @@ func (s *RunTestSignalTestSuite) Test_RunTestSignal() {
 				s.Error(err)
 			} else {
 				s.NoError(err)
+
 			}
 		})
 	}
