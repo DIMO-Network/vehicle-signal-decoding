@@ -106,14 +106,16 @@ func (h RunTestSignalCommandHandler) Execute(ctx context.Context, command *RunTe
 		}
 
 		// Insert test_signals
-		test := models.TestSignal{}
-		test.ID = ksuid.New().String()
-		test.DeviceDefinitionID = userDevice.DeviceDefinitionID
-		test.DBCCodesID = dbcCode.ID
-		test.AutopiUnitID = command.AutoPIUnitID
-		test.Value = value
-		test.VehicleTimestamp = command.Time
-		test.Approved = false
+		test := models.TestSignal{
+			ID:                 ksuid.New().String(),
+			DeviceDefinitionID: userDevice.DeviceDefinitionID,
+			DBCCodesID:         dbcCode.ID,
+			AutopiUnitID:       command.AutoPIUnitID,
+			Value:              value,
+			VehicleTimestamp:   command.Time,
+			Approved:           false,
+			UserDeviceID:       userDevice.UserDeviceID,
+		}
 
 		err = test.Insert(ctx, h.DBS().Writer, boil.Infer())
 		if err != nil {
