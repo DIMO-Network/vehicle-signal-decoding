@@ -64,7 +64,7 @@ func (s *UpdateDbcCodeTestSuite) Test_UpdateDbcCode() {
 
 	for _, scenario := range []tableTestCases{
 		{
-			description: "Update dbc code success",
+			description: "Update dbc code success and does not allow updating name",
 			command: &UpdateDBCCodeCommandRequest{
 				ID:               dbCode.ID,
 				Name:             dbcNameUpdate,
@@ -74,7 +74,7 @@ func (s *UpdateDbcCodeTestSuite) Test_UpdateDbcCode() {
 				Header:           dbCode.Header.Int,
 				DBCContents:      dbCode.DBCContents.String,
 			},
-			expected: dbcNameUpdate,
+			expected: dbcName, // does not allow updating name
 			isError:  false,
 		},
 		{
