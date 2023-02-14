@@ -50,7 +50,7 @@ func (h GetTestSignalFilterQueryHandler) Handle(ctx context.Context, query *GetT
 
 	queryMods = append(queryMods,
 		qm.Load(models.TestSignalRels.DBCCode),
-		qm.OrderBy("created_at DESC, updated_at ASC"))
+		qm.OrderBy("device_definition_id ASC, autopi_unit_id ASC, created_at DESC"))
 
 	all, err := models.TestSignals(queryMods...).All(ctx, h.DBS().Reader)
 
