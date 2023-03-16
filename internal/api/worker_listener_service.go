@@ -4,11 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-
 	"github.com/DIMO-Network/shared"
-	"github.com/DIMO-Network/shared/db"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/commands"
-	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/services"
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
@@ -19,17 +16,19 @@ const (
 )
 
 type WorkerListenerService struct {
-	DBS               func() *db.ReaderWriter
-	logger            zerolog.Logger
-	userDeviceService services.UserDeviceService
+	logger  zerolog.Logger
+	handler commands.RunTestSignalCommandHandler
 }
 
 type VechicleSignalDecodingData struct {
-	Signals map[string]commands.RunTestSignalItemCommandRequest `json:"signals"`
+	Signals []map[string]commands.RunTestSignalItemCommandRequest `json:"signals"`
 }
 
-func NewWorkerListenerService(dbs func() *db.ReaderWriter, logger zerolog.Logger, userDeviceService services.UserDeviceService) *WorkerListenerService {
-	return &WorkerListenerService{DBS: dbs, logger: logger, userDeviceService: userDeviceService}
+func NewWorkerListenerService(logger zerolog.Logger, handler commands.RunTestSignalCommandHandler) *WorkerListenerService {
+	return &WorkerListenerService{
+		logger:  logger,
+		handler: handler,
+	}
 }
 
 func (i *WorkerListenerService) ProcessWorker(messages <-chan *message.Message) {
@@ -61,15 +60,13 @@ func (i *WorkerListenerService) processEvent(event *shared.CloudEvent[VechicleSi
 
 	switch event.Type {
 	case vehicleSignalDecodingEventType:
-		service := commands.NewRunTestSignalCommandHandler(i.DBS, i.logger, i.userDeviceService)
-
 		command := &commands.RunTestSignalCommandRequest{
 			AutoPIUnitID: event.Subject,
 			Time:         event.Time,
-			Signals:      event.Data.Signals,
+			Signals:      event.Data.Signals[0], // due to way ingest is processing the message we get an array of 1 with a map of the signals
 		}
 
-		return service.Execute(ctx, command)
+		return i.handler.Execute(ctx, command)
 	default:
 		return fmt.Errorf("unexpected event type %s", event.Type)
 	}

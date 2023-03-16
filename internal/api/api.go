@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/commands"
 	"os"
 	"os/signal"
 	"strings"
@@ -82,7 +83,8 @@ func startVehicleSignalConsumer(logger zerolog.Logger, settings *config.Settings
 	}
 
 	userDeviceService := services.NewUserDeviceService(settings)
-	service := NewWorkerListenerService(pdb.DBS, logger, userDeviceService)
+	handler := commands.NewRunTestSignalCommandHandler(pdb.DBS, logger, userDeviceService)
+	service := NewWorkerListenerService(logger, handler)
 
 	consumer.Start(context.Background(), service.ProcessWorker)
 
