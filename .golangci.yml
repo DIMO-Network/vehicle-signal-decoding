@@ -1,5 +1,7 @@
 run:
   timeout: 5m
+  skip-dirs:
+    - pkg/grpc
 linters:
   enable:
     - prealloc
@@ -17,6 +19,8 @@ issues:
   fix: true
 
 linters-settings:
+  exclude-rules:
+    - dir: pkg/grpc
   gci:
     # DEPRECATED: use `sections` and `prefix(github.com/org/project)` instead.
     local-prefixes: github.com/org/project
