@@ -17,14 +17,20 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
-type RunTestSignalCommandHandler struct {
+//go:generate mockgen -source run_test_signal.go -destination mocks/run_test_signal_mock.go
+
+type RunTestSignalCommandHandler interface {
+	Execute(ctx context.Context, command *RunTestSignalCommandRequest) error
+}
+
+type runTestSignalCommandHandler struct {
 	DBS               func() *db.ReaderWriter
 	userDeviceService services.UserDeviceService
 	logger            zerolog.Logger
 }
 
 func NewRunTestSignalCommandHandler(dbs func() *db.ReaderWriter, logger zerolog.Logger, userDeviceService services.UserDeviceService) RunTestSignalCommandHandler {
-	return RunTestSignalCommandHandler{DBS: dbs, logger: logger, userDeviceService: userDeviceService}
+	return runTestSignalCommandHandler{DBS: dbs, logger: logger, userDeviceService: userDeviceService}
 }
 
 type RunTestSignalCommandRequest struct {
@@ -41,7 +47,7 @@ type RunTestSignalItemCommandRequest struct {
 type RunTestSignalCommandResponse struct {
 }
 
-func (h RunTestSignalCommandHandler) Execute(ctx context.Context, command *RunTestSignalCommandRequest) error {
+func (h runTestSignalCommandHandler) Execute(ctx context.Context, command *RunTestSignalCommandRequest) error {
 
 	// Get user device
 	userDevice, err := h.userDeviceService.GetUserDeviceServiceByAutoPIUnitID(ctx, command.AutoPIUnitID)
