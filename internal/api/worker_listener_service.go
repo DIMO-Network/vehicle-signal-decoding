@@ -47,6 +47,7 @@ func (i *WorkerListenerService) processMessage(msg *message.Message) error {
 
 	event := new(shared.CloudEvent[VechicleSignalDecodingData])
 	if err := json.Unmarshal(msg.Payload, event); err != nil {
+		i.logger.Warn().Str("payload", string(msg.Payload)).Msg("failed to unmarshall processMessage payload")
 		return errors.Wrap(err, "error parsing vehicle signal decoding payload")
 	}
 
