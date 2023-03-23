@@ -3,7 +3,7 @@ package services
 import (
 	"context"
 
-	pb "github.com/DIMO-Network/shared/api/devices"
+	pb "github.com/DIMO-Network/devices-api/pkg/grpc"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
 	"google.golang.org/grpc"
