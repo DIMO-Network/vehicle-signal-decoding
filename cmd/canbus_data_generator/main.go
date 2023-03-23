@@ -111,15 +111,15 @@ type ObdSignal_Val_and_TS struct {
 func NewObdSignal_Val_and_TS(stamp time.Time, value ObdSignalValue) *ObdSignal_Val_and_TS {
 	return &ObdSignal_Val_and_TS{Stamp: stamp, Value: value}
 }*/
-
-type ObdSignalValue interface {
-	int | float64 | string
-}
-
-func RandomOdometerValue() (v int) {
-	rand.Seed(time.Now().UnixNano())
-	return rand.Intn(200 - 1 + 1)
-}
+//
+//type ObdSignalValue interface {
+//	int | float64 | string
+//}
+//
+//func RandomOdometerValue() (v int) {
+//	rand.Seed(time.Now().UnixNano())
+//	return rand.Intn(200 - 1 + 1)
+//}
 
 type ObdSignal struct {
 	SignalName string   `json:"SignalName"`
