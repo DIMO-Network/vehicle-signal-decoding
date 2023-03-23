@@ -27,7 +27,7 @@ func NewGetDBCCodeAllQueryHandler(dbs func() *db.ReaderWriter, logger *zerolog.L
 type GetDBCCodeAllQueryRequest struct {
 }
 
-func (h GetDBCCodeAllQueryHandler) Handle(ctx context.Context, query *GetDBCCodeAllQueryRequest) (*p_grpc.GetDBCCodeListResponse, error) {
+func (h GetDBCCodeAllQueryHandler) Handle(ctx context.Context, _ *GetDBCCodeAllQueryRequest) (*p_grpc.GetDBCCodeListResponse, error) {
 
 	all, err := models.DBCCodes().All(ctx, h.DBS().Reader)
 	if err != nil {
