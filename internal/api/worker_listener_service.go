@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
 	"github.com/DIMO-Network/shared"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/commands"
 	"github.com/ThreeDotsLabs/watermill/message"

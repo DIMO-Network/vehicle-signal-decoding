@@ -2,11 +2,12 @@ package commands
 
 import (
 	"context"
+	"os"
+	"testing"
+
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 	"github.com/segmentio/ksuid"
 	"github.com/stretchr/testify/assert"
-	"os"
-	"testing"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/services"
 

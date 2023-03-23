@@ -28,7 +28,7 @@ type GetTestSignalAllQueryRequest struct {
 	Input string
 }
 
-func (h GetTestSignalAllQueryHandler) Handle(ctx context.Context, query *GetTestSignalAllQueryRequest) (*p_grpc.GetTestSignalListResponse, error) {
+func (h GetTestSignalAllQueryHandler) Handle(ctx context.Context, _ *GetTestSignalAllQueryRequest) (*p_grpc.GetTestSignalListResponse, error) {
 
 	all, err := models.TestSignals().All(ctx, h.DBS().Reader)
 	if err != nil {

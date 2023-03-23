@@ -59,7 +59,7 @@ func (s *GrpcService) UpdateDBCCode(ctx context.Context, in *p_grpc.UpdateDBCCod
 	return &p_grpc.VehicleSignalBaseResponse{Id: response.ID}, nil
 }
 
-func (s *GrpcService) GetDBCCodes(ctx context.Context, in *emptypb.Empty) (*p_grpc.GetDBCCodeListResponse, error) {
+func (s *GrpcService) GetDBCCodes(ctx context.Context, _ *emptypb.Empty) (*p_grpc.GetDBCCodeListResponse, error) {
 	service := queries.NewGetDBCCodeAllQueryHandler(s.DBS, s.logger)
 	response, err := service.Handle(ctx, &queries.GetDBCCodeAllQueryRequest{})
 
@@ -120,7 +120,7 @@ func (s *GrpcService) UpdateTestSignal(ctx context.Context, in *p_grpc.UpdateTes
 	return &p_grpc.VehicleSignalBaseResponse{Id: response.ID}, nil
 }
 
-func (s *GrpcService) GetTestSignals(ctx context.Context, in *emptypb.Empty) (*p_grpc.GetTestSignalListResponse, error) {
+func (s *GrpcService) GetTestSignals(ctx context.Context, _ *emptypb.Empty) (*p_grpc.GetTestSignalListResponse, error) {
 	service := queries.NewGetTestSignalAllQueryHandler(s.DBS, s.logger)
 	response, err := service.Handle(ctx, &queries.GetTestSignalAllQueryRequest{})
 
