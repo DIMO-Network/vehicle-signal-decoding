@@ -2,11 +2,12 @@ package api
 
 import (
 	"context"
-	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/commands"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
+
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/commands"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/services"
 

@@ -52,7 +52,10 @@ func main() {
 	//json.Unmarshal([]byte(signaljson), &mysignals)
 
 	//var mysignals = &myArray
-	json.Unmarshal([]byte(signaljson), &mysignals)
+	err := json.Unmarshal([]byte(signaljson), &mysignals)
+	if err != nil {
+		return
+	}
 
 	//json.Marshal()
 
@@ -78,7 +81,10 @@ func main() {
 	if err != nil {
 		fmt.Printf("Error: %s", err.Error())
 	} else {
-		os.WriteFile("temp.json", jsonStr, 0666)
+		err := os.WriteFile("temp.json", jsonStr, 0666)
+		if err != nil {
+			return
+		}
 		fmt.Print(string(jsonStr))
 		fmt.Print(string("\n"))
 	}
@@ -92,8 +98,9 @@ func main() {
 
 }
 
-type signals struct {
-}
+//
+//type signals struct {
+//}
 
 /*
 type ObdSignal_Val_and_TS struct {
@@ -139,9 +146,9 @@ func (thisSignal ObdSignal) GetRandomValue() int {
 		returnVal := rand.Intn((max - min + 1) + min)
 		fmt.Println("getrandomvalue: ", returnVal)
 		return returnVal
-	} else {
-		return 999
 	}
+
+	return 999
 }
 
 func GetRandomCanSignal(inputArray []ObdSignal) ObdSignal {
@@ -149,7 +156,7 @@ func GetRandomCanSignal(inputArray []ObdSignal) ObdSignal {
 	min := 10
 	max := 23
 	fmt.Println("random index: ", rand.Intn(max-min+1)+min)
-	var returnVal ObdSignal = inputArray[rand.Intn(max-min+1)+min]
+	var returnVal = inputArray[rand.Intn(max-min+1)+min]
 	fmt.Println("returnVal:", returnVal)
 	return returnVal
 }
