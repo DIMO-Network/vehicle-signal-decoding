@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/common"
+
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/exceptions"
 
@@ -48,6 +50,7 @@ func (h GetTestSignalAllQueryHandler) Handle(ctx context.Context, _ *GetTestSign
 			Value:              item.Value,
 			AutopiUnitId:       item.AutopiUnitID,
 			Approved:           item.Approved,
+			Signals:            string(common.JSONOrDefault(item.Signals)),
 		})
 	}
 

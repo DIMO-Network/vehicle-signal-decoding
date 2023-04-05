@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/common"
+
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
@@ -71,7 +73,9 @@ func (h GetTestSignalFilterQueryHandler) Handle(ctx context.Context, query *GetT
 			Value:              item.Value,
 			AutopiUnitId:       item.AutopiUnitID,
 			Approved:           item.Approved,
+			Signals:            string(common.JSONOrDefault(item.Signals)),
 		})
+
 	}
 
 	return result, nil

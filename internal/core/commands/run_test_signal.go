@@ -3,10 +3,13 @@ package commands
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/volatiletech/null/v8"
 
 	"github.com/DIMO-Network/shared/db"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/services"
@@ -56,6 +59,11 @@ func (h runTestSignalCommandHandler) Execute(ctx context.Context, command *RunTe
 	}
 	if userDevice == nil {
 		return fmt.Errorf("failed to find user device associated to autopi_unit_id %s", command.AutoPIUnitID)
+	}
+
+	signals, err := json.Marshal(command.Signals)
+	if err != nil {
+		return err
 	}
 
 	// Validate Signals exists
@@ -119,6 +127,7 @@ func (h runTestSignalCommandHandler) Execute(ctx context.Context, command *RunTe
 			DBCCodesID:         dbcCode.ID,
 			AutopiUnitID:       command.AutoPIUnitID,
 			Value:              value,
+			Signals:            null.JSONFrom(signals),
 			VehicleTimestamp:   command.Time,
 			Approved:           false,
 			UserDeviceID:       strings.TrimSpace(userDevice.UserDeviceID),

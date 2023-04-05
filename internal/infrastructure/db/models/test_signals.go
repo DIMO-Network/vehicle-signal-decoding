@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/friendsofgo/errors"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -33,6 +34,7 @@ type TestSignal struct {
 	VehicleTimestamp   time.Time `boil:"vehicle_timestamp" json:"vehicle_timestamp" toml:"vehicle_timestamp" yaml:"vehicle_timestamp"`
 	CreatedAt          time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 	UpdatedAt          time.Time `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	Signals            null.JSON `boil:"signals" json:"signals,omitempty" toml:"signals" yaml:"signals,omitempty"`
 
 	R *testSignalR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L testSignalL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -49,6 +51,7 @@ var TestSignalColumns = struct {
 	VehicleTimestamp   string
 	CreatedAt          string
 	UpdatedAt          string
+	Signals            string
 }{
 	ID:                 "id",
 	DeviceDefinitionID: "device_definition_id",
@@ -60,6 +63,7 @@ var TestSignalColumns = struct {
 	VehicleTimestamp:   "vehicle_timestamp",
 	CreatedAt:          "created_at",
 	UpdatedAt:          "updated_at",
+	Signals:            "signals",
 }
 
 var TestSignalTableColumns = struct {
@@ -73,6 +77,7 @@ var TestSignalTableColumns = struct {
 	VehicleTimestamp   string
 	CreatedAt          string
 	UpdatedAt          string
+	Signals            string
 }{
 	ID:                 "test_signals.id",
 	DeviceDefinitionID: "test_signals.device_definition_id",
@@ -84,9 +89,34 @@ var TestSignalTableColumns = struct {
 	VehicleTimestamp:   "test_signals.vehicle_timestamp",
 	CreatedAt:          "test_signals.created_at",
 	UpdatedAt:          "test_signals.updated_at",
+	Signals:            "test_signals.signals",
 }
 
 // Generated where
+
+type whereHelpernull_JSON struct{ field string }
+
+func (w whereHelpernull_JSON) EQ(x null.JSON) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, false, x)
+}
+func (w whereHelpernull_JSON) NEQ(x null.JSON) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, true, x)
+}
+func (w whereHelpernull_JSON) LT(x null.JSON) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LT, x)
+}
+func (w whereHelpernull_JSON) LTE(x null.JSON) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LTE, x)
+}
+func (w whereHelpernull_JSON) GT(x null.JSON) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GT, x)
+}
+func (w whereHelpernull_JSON) GTE(x null.JSON) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GTE, x)
+}
+
+func (w whereHelpernull_JSON) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
+func (w whereHelpernull_JSON) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
 
 var TestSignalWhere = struct {
 	ID                 whereHelperstring
@@ -99,6 +129,7 @@ var TestSignalWhere = struct {
 	VehicleTimestamp   whereHelpertime_Time
 	CreatedAt          whereHelpertime_Time
 	UpdatedAt          whereHelpertime_Time
+	Signals            whereHelpernull_JSON
 }{
 	ID:                 whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"test_signals\".\"id\""},
 	DeviceDefinitionID: whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"test_signals\".\"device_definition_id\""},
@@ -110,6 +141,7 @@ var TestSignalWhere = struct {
 	VehicleTimestamp:   whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"test_signals\".\"vehicle_timestamp\""},
 	CreatedAt:          whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"test_signals\".\"created_at\""},
 	UpdatedAt:          whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"test_signals\".\"updated_at\""},
+	Signals:            whereHelpernull_JSON{field: "\"vehicle_signal_decoding_api\".\"test_signals\".\"signals\""},
 }
 
 // TestSignalRels is where relationship names are stored.
@@ -140,9 +172,9 @@ func (r *testSignalR) GetDBCCode() *DBCCode {
 type testSignalL struct{}
 
 var (
-	testSignalAllColumns            = []string{"id", "device_definition_id", "dbc_codes_id", "user_device_id", "autopi_unit_id", "value", "approved", "vehicle_timestamp", "created_at", "updated_at"}
+	testSignalAllColumns            = []string{"id", "device_definition_id", "dbc_codes_id", "user_device_id", "autopi_unit_id", "value", "approved", "vehicle_timestamp", "created_at", "updated_at", "signals"}
 	testSignalColumnsWithoutDefault = []string{"id", "device_definition_id", "dbc_codes_id", "user_device_id", "autopi_unit_id", "value", "approved", "vehicle_timestamp"}
-	testSignalColumnsWithDefault    = []string{"created_at", "updated_at"}
+	testSignalColumnsWithDefault    = []string{"created_at", "updated_at", "signals"}
 	testSignalPrimaryKeyColumns     = []string{"id"}
 	testSignalGeneratedColumns      = []string{}
 )
