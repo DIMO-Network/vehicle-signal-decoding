@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"strings"
@@ -51,6 +52,10 @@ func startMonitoringServer(logger zerolog.Logger, settings *config.Settings) {
 
 	monApp.Get("/metrics", adaptor.HTTPHandler(promhttp.Handler()))
 
+	// New endpoints
+	monApp.Get("/device-config/vin/:vin", getDefaultConfigHandler)
+	monApp.Get("/device-config/serial/:serial", getDefaultConfigHandler)
+
 	go func() {
 		// 8888 is our standard port for exposing metrics in DIMO infra
 		if err := monApp.Listen(":" + settings.MonitoringPort); err != nil {
@@ -90,4 +95,29 @@ func startVehicleSignalConsumer(logger zerolog.Logger, settings *config.Settings
 	consumer.Start(context.Background(), service.ProcessWorker)
 
 	logger.Info().Msg("Vehicle Signal Decoding consumer started")
+}
+
+func getDefaultConfigHandler(c *fiber.Ctx) error {
+	identifier := c.Params("identifier")
+
+	type Response struct {
+		PIDURL   string `json:"pidsUrl"`
+		PowerURL string `json:"powerUrl"`
+		DBCURL   string `json:"dbcUrl"`
+	}
+
+	defaultConfig := Response{
+		PIDURL:   fmt.Sprintf("https://something/default/pid-config/%s", identifier),
+		PowerURL: fmt.Sprintf("https://something/default/power-config/%s", identifier),
+		DBCURL:   fmt.Sprintf("https://something/default/dbc-config/%s", identifier),
+	}
+
+	// Desired response payload format
+	responsePayload := fiber.Map{
+		"pidsUrl":  defaultConfig.PIDURL,
+		"powerUrl": defaultConfig.PowerURL,
+		"dbcUrl":   defaultConfig.DBCURL,
+	}
+
+	return c.JSON(responsePayload)
 }
