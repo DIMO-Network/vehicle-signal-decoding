@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/signal"
@@ -19,9 +20,20 @@ import (
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
 	"github.com/gofiber/adaptor/v2"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/swagger"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog"
+
+	"github.com/DIMO-Network/device-data-api/internal/middleware/metrics"
+	fiberrecover "github.com/gofiber/fiber/v2/middleware/recover"
 )
+
+type Response struct {
+	PIDURL   string `json:"pidsUrl"`
+	PowerURL string `json:"powerUrl"`
+	DBCURL   string `json:"dbcUrl"`
+}
 
 func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) {
 
@@ -97,14 +109,33 @@ func startVehicleSignalConsumer(logger zerolog.Logger, settings *config.Settings
 	logger.Info().Msg("Vehicle Signal Decoding consumer started")
 }
 
+func startConfigAPI(logger zerolog.Logger, settings *config.Settings) *fiber.App {
+	app := fiber.New(fiber.Config{
+		ErrorHandler: func(c *fiber.Ctx, err error) error {
+			return ErrorHandler(c, err, logger)
+		},
+		DisableStartupMessage: true,
+		ReadBufferSize:        16000,
+	})
+
+	app.Use(metrics.HTTPMetricsMiddleware)
+
+	app.Use(fiberrecover.New(fiberrecover.Config{
+		Next:              nil,
+		EnableStackTrace:  true,
+		StackTraceHandler: nil,
+	}))
+	app.Use(cors.New())
+
+	app.Get("/v1/swagger/*", swagger.HandlerDefault)
+
+	app.Get("/v1/default-config/:identifier", getDefaultConfigHandler)
+
+	return app
+}
+
 func getDefaultConfigHandler(c *fiber.Ctx) error {
 	identifier := c.Params("identifier")
-
-	type Response struct {
-		PIDURL   string `json:"pidsUrl"`
-		PowerURL string `json:"powerUrl"`
-		DBCURL   string `json:"dbcUrl"`
-	}
 
 	defaultConfig := Response{
 		PIDURL:   fmt.Sprintf("https://something/default/pid-config/%s", identifier),
@@ -120,4 +151,25 @@ func getDefaultConfigHandler(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(responsePayload)
+}
+
+// Code below copied from device-data-api/main.go
+func ErrorHandler(c *fiber.Ctx, err error, logger zerolog.Logger) error {
+	code := fiber.StatusInternalServerError // Default 500 statuscode
+	message := "Internal error."
+
+	var e *fiber.Error
+	if errors.As(err, &e) {
+		code = e.Code
+		message = e.Message
+	}
+
+	logger.Err(err).Int("code", code).Str("path", strings.TrimPrefix(c.Path(), "/")).Msg("Failed request.")
+
+	return c.Status(code).JSON(CodeResp{Code: code, Message: message})
+}
+
+type CodeResp struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
 }
