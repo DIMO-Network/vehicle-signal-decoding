@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"errors"
-	"fmt"
 	"os"
 	"os/signal"
 	"strings"
@@ -11,6 +10,7 @@ import (
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/commands"
 
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/controllers"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/services"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/kafka"
@@ -25,15 +25,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog"
 
-	"github.com/DIMO-Network/device-data-api/internal/middleware/metrics"
 	fiberrecover "github.com/gofiber/fiber/v2/middleware/recover"
 )
-
-type Response struct {
-	PIDURL   string `json:"pidsUrl"`
-	PowerURL string `json:"powerUrl"`
-	DBCURL   string `json:"dbcUrl"`
-}
 
 func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) {
 
@@ -43,7 +36,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 
 	go StartGrpcServer(logger, pdb.DBS, settings)
 
-	startMonitoringServer(logger, settings)
+	startWebAPI(logger, settings)
 	startVehicleSignalConsumer(logger, settings, pdb)
 
 	c := make(chan os.Signal, 1)                    // Create channel to signify a signal being sent with length of 1
@@ -53,29 +46,6 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 	_ = ctx.Done()
 	_ = pdb.DBS().Writer.Close()
 	_ = pdb.DBS().Reader.Close()
-}
-
-// startMonitoringServer start server for monitoring endpoints. Could likely be moved to shared lib.
-func startMonitoringServer(logger zerolog.Logger, settings *config.Settings) {
-	monApp := fiber.New(fiber.Config{DisableStartupMessage: true})
-	monApp.Get("/health", func(c *fiber.Ctx) error {
-		return c.Status(fiber.StatusOK).SendString("healthy")
-	})
-
-	monApp.Get("/metrics", adaptor.HTTPHandler(promhttp.Handler()))
-
-	// New endpoints
-	monApp.Get("/device-config/vin/:vin", getDefaultConfigHandler)
-	monApp.Get("/device-config/serial/:serial", getDefaultConfigHandler)
-
-	go func() {
-		// 8888 is our standard port for exposing metrics in DIMO infra
-		if err := monApp.Listen(":" + settings.MonitoringPort); err != nil {
-			logger.Fatal().Err(err).Str("port", settings.MonitoringPort).Msg("Failed to start monitoring web server.")
-		}
-	}()
-
-	logger.Info().Str("port", "8888").Msg("Started monitoring web server.")
 }
 
 func startVehicleSignalConsumer(logger zerolog.Logger, settings *config.Settings, pdb db.Store) {
@@ -109,7 +79,7 @@ func startVehicleSignalConsumer(logger zerolog.Logger, settings *config.Settings
 	logger.Info().Msg("Vehicle Signal Decoding consumer started")
 }
 
-func startConfigAPI(logger zerolog.Logger, settings *config.Settings) *fiber.App {
+func startWebAPI(logger zerolog.Logger, settings *config.Settings) *fiber.App {
 	app := fiber.New(fiber.Config{
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			return ErrorHandler(c, err, logger)
@@ -118,6 +88,16 @@ func startConfigAPI(logger zerolog.Logger, settings *config.Settings) *fiber.App
 		ReadBufferSize:        16000,
 	})
 
+	go func() {
+		// 8888 is our standard port for exposing metrics in DIMO infra
+		if err := app.Listen(":" + settings.MonitoringPort); err != nil {
+			logger.Fatal().Err(err).Str("port", settings.MonitoringPort).Msg("Failed to start monitoring web server.")
+		}
+	}()
+
+	deviceDataController := controllers.NewDeviceDataController(settings, &logger)
+
+	// TODO: copy middleware code from device-data-api, use from shared repo
 	app.Use(metrics.HTTPMetricsMiddleware)
 
 	app.Use(fiberrecover.New(fiberrecover.Config{
@@ -127,30 +107,19 @@ func startConfigAPI(logger zerolog.Logger, settings *config.Settings) *fiber.App
 	}))
 	app.Use(cors.New())
 
+	app.Get("/health", func(c *fiber.Ctx) error {
+		return c.Status(fiber.StatusOK).SendString("healthy")
+	})
+
+	app.Get("/metrics", adaptor.HTTPHandler(promhttp.Handler()))
+
 	app.Get("/v1/swagger/*", swagger.HandlerDefault)
 
-	app.Get("/v1/default-config/:identifier", getDefaultConfigHandler)
+	app.Get("/v1/default-config/:vin", deviceDataController.GetDefaultConfigHandler)
+
+	logger.Info().Str("port", "8888").Msg("Started monitoring web server.")
 
 	return app
-}
-
-func getDefaultConfigHandler(c *fiber.Ctx) error {
-	identifier := c.Params("identifier")
-
-	defaultConfig := Response{
-		PIDURL:   fmt.Sprintf("https://something/default/pid-config/%s", identifier),
-		PowerURL: fmt.Sprintf("https://something/default/power-config/%s", identifier),
-		DBCURL:   fmt.Sprintf("https://something/default/dbc-config/%s", identifier),
-	}
-
-	// Desired response payload format
-	responsePayload := fiber.Map{
-		"pidsUrl":  defaultConfig.PIDURL,
-		"powerUrl": defaultConfig.PowerURL,
-		"dbcUrl":   defaultConfig.DBCURL,
-	}
-
-	return c.JSON(responsePayload)
 }
 
 // Code below copied from device-data-api/main.go
