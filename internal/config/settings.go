@@ -18,4 +18,5 @@ type Settings struct {
 	MonitoringPort   string      `yaml:"MONITORING_PORT"`
 	DBCDecodingTopic string      `yaml:"DBC_DECODING_TOPIC"`
 	DeviceGRPCAddr   string      `yaml:"DEVICE_GRPC_ADDR"`
+	DeploymentURL    string      `yaml:"DEPLOYMENT_URL"`
 }

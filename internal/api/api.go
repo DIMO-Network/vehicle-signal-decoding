@@ -17,6 +17,7 @@ import (
 	"github.com/Shopify/sarama"
 
 	"github.com/DIMO-Network/shared/db"
+	"github.com/DIMO-Network/shared/middleware/metrics"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
 	"github.com/gofiber/adaptor/v2"
 	"github.com/gofiber/fiber/v2"
@@ -95,9 +96,6 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings) *fiber.App {
 		}
 	}()
 
-	deviceDataController := controllers.NewDeviceDataController(settings, &logger)
-
-	// TODO: copy middleware code from device-data-api, use from shared repo
 	app.Use(metrics.HTTPMetricsMiddleware)
 
 	app.Use(fiberrecover.New(fiberrecover.Config{
@@ -107,6 +105,8 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings) *fiber.App {
 	}))
 	app.Use(cors.New())
 
+	deviceConfigController := controllers.NewDeviceConfigController(settings, &logger)
+
 	app.Get("/health", func(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusOK).SendString("healthy")
 	})
@@ -115,7 +115,9 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings) *fiber.App {
 
 	app.Get("/v1/swagger/*", swagger.HandlerDefault)
 
-	app.Get("/v1/default-config/:vin", deviceDataController.GetDefaultConfigHandler)
+	app.Get("/user/vehicle-signal-decoding/{vin}/pid-config", deviceConfigController.GetPIDConfig)
+	app.Get("/user/vehicle-signal-decoding/{vin}/power-config", deviceConfigController.GetPowerConfig)
+	app.Get("/user/vehicle-signal-decoding/{vin}/dbc-config", deviceConfigController.GetDBCFile)
 
 	logger.Info().Str("port", "8888").Msg("Started monitoring web server.")
 

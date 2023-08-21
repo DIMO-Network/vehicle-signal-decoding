@@ -1,79 +1,161 @@
 package controllers
 
 import (
-	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
 )
 
-type DeviceDataController struct {
+type DeviceConfigController struct {
 	Settings *config.Settings
 	log      *zerolog.Logger
 }
 
-type Response struct {
-	PIDURL   string `json:"pidsUrl"`
-	PowerURL string `json:"powerUrl"`
-	DBCURL   string `json:"dbcUrl"`
-}
-type CodeResp struct {
-	Code    int    `json:"code"`
-	Message string `json:"message"`
+type PIDConfig struct {
+	Name            string `json:"name"`
+	Header          int    `json:"header"`
+	Mode            int    `json:"mode"`
+	PID             int    `json:"pid"`
+	Formula         string `json:"formula"`
+	IntervalSeconds int    `json:"intervalSeconds"`
 }
 
-// NewDeviceDataController constructor
-func NewDeviceDataController(settings *config.Settings, logger *zerolog.Logger) DeviceDataController {
-	return DeviceDataController{
+type PowerConfig struct {
+	Battery struct {
+		CriticalLevel struct {
+			Voltage string `json:"voltage"`
+		} `json:"critical_level"`
+	} `json:"battery"`
+
+	SafetyCutOut struct {
+		Voltage string `json:"voltage"`
+	} `json:"safety_cut-out"`
+
+	SleepTimer struct {
+		EventDriven struct {
+			Interval string `json:"interval"`
+			Period   string `json:"period"`
+		} `json:"event_driven"`
+
+		InactivityAfterSleep struct {
+			Interval string `json:"interval"`
+		} `json:"inactivity_after_sleep"`
+
+		InactivityFallback struct {
+			Interval string `json:"interval"`
+		} `json:"inactivity_fallback"`
+	} `json:"sleep_timer"`
+
+	WakeTrigger struct {
+		VoltageLevel string `json:"voltage_level"`
+	} `json:"wake_trigger"`
+}
+
+// NewDeviceConfigController constructor
+func NewDeviceConfigController(settings *config.Settings, logger *zerolog.Logger) DeviceConfigController {
+	return DeviceConfigController{
 		Settings: settings,
 		log:      logger,
 	}
 }
 
-// GetHistoricalRaw godoc
-// @Description  Get all historical data for a userDeviceID, within start and end range
-// @Tags         device-data
+// / GetPIDConfig godoc
+// @Description  Retrieve the PID configuration based on a given VIN
+// @Tags         vehicle-signal-decoding
 // @Produce      json
-// @Success      200
-// @Param        userDeviceID  path   string  true   "user id"
-// @Param        startDate     query  string  false  "startDate eg 2022-01-02. if empty two weeks back"
-// @Param        endDate       query  string  false  "endDate eg 2022-03-01. if empty today"
-// @Security     BearerAuth
-// @Router       /user/device-data/{userDeviceID}/historical [get]
-func (d *DeviceDataController) GetDefaultConfigHandler(c *fiber.Ctx) error {
+// @Success      200 {object} PIDConfig
+// @Param        vin  path   string  true   "vehicle identification number (VIN)"
+// @Router       /user/vehicle-signal-decoding/{vin}/pid-config [get]
+func (d *DeviceConfigController) GetPIDConfig(c *fiber.Ctx) error {
 	vin := c.Params("vin")
-
-	defaultConfig := Response{
-		PIDURL:   fmt.Sprintf("https://something/default/pid-config/%s", vin),
-		PowerURL: fmt.Sprintf("https://something/default/power-config/%s", vin),
-		DBCURL:   fmt.Sprintf("https://something/default/dbc-config/%s", vin),
+	pidConfig := PIDConfig{
+		Name:            vin,
+		Header:          2015,
+		Mode:            9,
+		PID:             2,
+		Formula:         "ascii: 3|17 X",
+		IntervalSeconds: 5,
 	}
-
-	// Desired response payload format
-	responsePayload := fiber.Map{
-		"pidsUrl":  defaultConfig.PIDURL,
-		"powerUrl": defaultConfig.PowerURL,
-		"dbcUrl":   defaultConfig.DBCURL,
-	}
-
-	return c.JSON(responsePayload)
+	return c.JSON(pidConfig)
 }
 
-// Code below copied from device-data-api/main.go
-func ErrorHandler(c *fiber.Ctx, err error, logger zerolog.Logger) error {
-	code := fiber.StatusInternalServerError // Default 500 statuscode
-	message := "Internal error."
-
-	var e *fiber.Error
-	if errors.As(err, &e) {
-		code = e.Code
-		message = e.Message
+// GetPowerConfig godoc
+// @Description  Retrieve the power configuration based on a given VIN
+// @Tags         vehicle-signal-decoding
+// @Produce      json
+// @Success      200 {object} PowerConfig
+// @Param        vin  path   string  true   "vehicle identification number (VIN)"
+// @Router       /user/vehicle-signal-decoding/{vin}/power-config [get]
+func (d *DeviceConfigController) GetPowerConfig(c *fiber.Ctx) error {
+	// Example hardcoded power config
+	powerConfig := PowerConfig{
+		Battery: struct {
+			CriticalLevel struct {
+				Voltage string `json:"voltage"`
+			} `json:"critical_level"`
+		}{
+			CriticalLevel: struct {
+				Voltage string `json:"voltage"`
+			}{
+				Voltage: "200V",
+			},
+		},
+		SafetyCutOut: struct {
+			Voltage string `json:"voltage"`
+		}{
+			Voltage: "180V",
+		},
+		SleepTimer: struct {
+			EventDriven struct {
+				Interval string `json:"interval"`
+				Period   string `json:"period"`
+			} `json:"event_driven"`
+			InactivityAfterSleep struct {
+				Interval string `json:"interval"`
+			} `json:"inactivity_after_sleep"`
+			InactivityFallback struct {
+				Interval string `json:"interval"`
+			} `json:"inactivity_fallback"`
+		}{
+			EventDriven: struct {
+				Interval string `json:"interval"`
+				Period   string `json:"period"`
+			}{
+				Interval: "5m",
+				Period:   "10m",
+			},
+			InactivityAfterSleep: struct {
+				Interval string `json:"interval"`
+			}{
+				Interval: "30m",
+			},
+			InactivityFallback: struct {
+				Interval string `json:"interval"`
+			}{
+				Interval: "1h",
+			},
+		},
+		WakeTrigger: struct {
+			VoltageLevel string `json:"voltage_level"`
+		}{
+			VoltageLevel: "210V",
+		},
 	}
 
-	logger.Err(err).Int("code", code).Str("path", strings.TrimPrefix(c.Path(), "/")).Msg("Failed request.")
+	return c.JSON(powerConfig)
+}
 
-	return c.Status(code).JSON(CodeResp{Code: code, Message: message})
+// GetDBCFile godoc
+// @Description  Retrieve the URL pointing to the DBC file for a given VIN
+// @Tags         vehicle-signal-decoding
+// @Produce      json
+// @Success      200 {string} string
+// @Param        vin  path   string  true   "vehicle identification number (VIN)"
+// @Router       /user/vehicle-signal-decoding/{vin}/dbc-config [get]
+func (d *DeviceConfigController) GetDBCFile(c *fiber.Ctx) error {
+	baseURL := d.Settings.DeploymentURL
+	dbcURL := fmt.Sprintf("%s/default/dbc-config/%s.dbc", baseURL, c.Params("vin"))
+	return c.JSON(fiber.Map{"dbcFileUrl": dbcURL})
 }
