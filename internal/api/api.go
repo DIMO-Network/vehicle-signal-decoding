@@ -39,6 +39,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 
 	startWebAPI(logger, settings)
 	startVehicleSignalConsumer(logger, settings, pdb)
+	startMonitoringServer(logger, settings)
 
 	c := make(chan os.Signal, 1)                    // Create channel to signify a signal being sent with length of 1
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM) // When an interrupt or termination signal is sent, notify the channel
@@ -80,6 +81,25 @@ func startVehicleSignalConsumer(logger zerolog.Logger, settings *config.Settings
 	logger.Info().Msg("Vehicle Signal Decoding consumer started")
 }
 
+func startMonitoringServer(logger zerolog.Logger, settings *config.Settings) {
+	monApp := fiber.New(fiber.Config{
+		ErrorHandler: func(c *fiber.Ctx, err error) error {
+			return ErrorHandler(c, err, logger)
+		},
+		DisableStartupMessage: true,
+	})
+	monApp.Get("/metrics", adaptor.HTTPHandler(promhttp.Handler()))
+
+	go func() {
+		// 8888 is our standard port for exposing metrics in DIMO infra
+		if err := monApp.Listen(":" + settings.MonitoringPort); err != nil {
+			logger.Fatal().Err(err).Str("port", settings.MonitoringPort).Msg("Failed to start monitoring web server.")
+		}
+	}()
+
+	logger.Info().Str("port", settings.MonitoringPort).Msg("Started monitoring web server.")
+}
+
 func startWebAPI(logger zerolog.Logger, settings *config.Settings) *fiber.App {
 	app := fiber.New(fiber.Config{
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
@@ -90,9 +110,8 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings) *fiber.App {
 	})
 
 	go func() {
-		// 8888 is our standard port for exposing metrics in DIMO infra
-		if err := app.Listen(":" + settings.MonitoringPort); err != nil {
-			logger.Fatal().Err(err).Str("port", settings.MonitoringPort).Msg("Failed to start monitoring web server.")
+		if err := app.Listen(":" + settings.Port); err != nil {
+			logger.Fatal().Err(err).Str("port", settings.Port).Msg("Failed to start monitoring web server.")
 		}
 	}()
 
@@ -111,15 +130,13 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings) *fiber.App {
 		return c.Status(fiber.StatusOK).SendString("healthy")
 	})
 
-	app.Get("/metrics", adaptor.HTTPHandler(promhttp.Handler()))
-
 	app.Get("/v1/swagger/*", swagger.HandlerDefault)
 
-	app.Get("/user/vehicle-signal-decoding/{vin}/pid-config", deviceConfigController.GetPIDConfig)
-	app.Get("/user/vehicle-signal-decoding/{vin}/power-config", deviceConfigController.GetPowerConfig)
-	app.Get("/user/vehicle-signal-decoding/{vin}/dbc-config", deviceConfigController.GetDBCFile)
+	app.Get("/device-config/{vin}/pids", deviceConfigController.GetPIDConfig)
+	app.Get("/device-config/{vin}/power", deviceConfigController.GetPowerConfig)
+	app.Get("/device-config/{vin}/dbc", deviceConfigController.GetDBCFile)
 
-	logger.Info().Str("port", "8888").Msg("Started monitoring web server.")
+	logger.Info().Str("port", settings.Port).Msg("Started api web server")
 
 	return app
 }
