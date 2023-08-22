@@ -109,12 +109,6 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings) *fiber.App {
 		ReadBufferSize:        16000,
 	})
 
-	go func() {
-		if err := app.Listen(":" + settings.Port); err != nil {
-			logger.Fatal().Err(err).Str("port", settings.Port).Msg("Failed to start monitoring web server.")
-		}
-	}()
-
 	app.Use(metrics.HTTPMetricsMiddleware)
 
 	app.Use(fiberrecover.New(fiberrecover.Config{
@@ -130,11 +124,19 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings) *fiber.App {
 		return c.Status(fiber.StatusOK).SendString("healthy")
 	})
 
-	app.Get("/v1/swagger/*", swagger.HandlerDefault)
+	v1 := app.Group("/v1")
 
-	app.Get("/device-config/{vin}/pids", deviceConfigController.GetPIDConfig)
-	app.Get("/device-config/{vin}/power", deviceConfigController.GetPowerConfig)
-	app.Get("/device-config/{vin}/dbc", deviceConfigController.GetDBCFile)
+	v1.Get("/swagger/*", swagger.HandlerDefault)
+
+	v1.Get("/device-config/{vin}/pids", deviceConfigController.GetPIDConfig)
+	v1.Get("/device-config/{vin}/power", deviceConfigController.GetPowerConfig)
+	v1.Get("/device-config/{vin}/dbc", deviceConfigController.GetDBCFile)
+
+	go func() {
+		if err := app.Listen(":" + settings.Port); err != nil {
+			logger.Fatal().Err(err).Str("port", settings.Port).Msg("Failed to start monitoring web server.")
+		}
+	}()
 
 	logger.Info().Str("port", settings.Port).Msg("Started api web server")
 

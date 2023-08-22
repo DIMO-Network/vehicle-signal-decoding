@@ -1,0 +1,118 @@
+basePath: /v1
+definitions:
+  controllers.PIDConfig:
+    properties:
+      formula:
+        type: string
+      header:
+        type: integer
+      intervalSeconds:
+        type: integer
+      mode:
+        type: integer
+      name:
+        type: string
+      pid:
+        type: integer
+    type: object
+  controllers.PowerConfig:
+    properties:
+      battery:
+        properties:
+          critical_level:
+            properties:
+              voltage:
+                type: string
+            type: object
+        type: object
+      safety_cut-out:
+        properties:
+          voltage:
+            type: string
+        type: object
+      sleep_timer:
+        properties:
+          event_driven:
+            properties:
+              interval:
+                type: string
+              period:
+                type: string
+            type: object
+          inactivity_after_sleep:
+            properties:
+              interval:
+                type: string
+            type: object
+          inactivity_fallback:
+            properties:
+              interval:
+                type: string
+            type: object
+        type: object
+      wake_trigger:
+        properties:
+          voltage_level:
+            type: string
+        type: object
+    type: object
+info:
+  contact: {}
+  title: DIMO Vehicle-Signal-Decoding
+  version: "1.0"
+paths:
+  /device-config/{vin}/dbc:
+    get:
+      description: Retrieve the URL pointing to the DBC file for a given VIN
+      parameters:
+      - description: vehicle identification number (VIN)
+        in: path
+        name: vin
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      tags:
+      - vehicle-signal-decoding
+  /device-config/{vin}/pid:
+    get:
+      description: Retrieve the PID configuration based on a given VIN
+      parameters:
+      - description: vehicle identification number (VIN)
+        in: path
+        name: vin
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.PIDConfig'
+      tags:
+      - vehicle-signal-decoding
+  /device-config/{vin}/power:
+    get:
+      description: Retrieve the power configuration based on a given VIN
+      parameters:
+      - description: vehicle identification number (VIN)
+        in: path
+        name: vin
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.PowerConfig'
+      tags:
+      - vehicle-signal-decoding
+swagger: "2.0"

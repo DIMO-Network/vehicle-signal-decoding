@@ -67,7 +67,7 @@ func NewDeviceConfigController(settings *config.Settings, logger *zerolog.Logger
 // @Produce      json
 // @Success      200 {object} PIDConfig
 // @Param        vin  path   string  true   "vehicle identification number (VIN)"
-// @Router       /user/vehicle-signal-decoding/{vin}/pid-config [get]
+// @Router       /device-config/{vin}/pid [get]
 func (d *DeviceConfigController) GetPIDConfig(c *fiber.Ctx) error {
 	vin := c.Params("vin")
 	pidConfig := PIDConfig{
@@ -87,9 +87,11 @@ func (d *DeviceConfigController) GetPIDConfig(c *fiber.Ctx) error {
 // @Produce      json
 // @Success      200 {object} PowerConfig
 // @Param        vin  path   string  true   "vehicle identification number (VIN)"
-// @Router       /user/vehicle-signal-decoding/{vin}/power-config [get]
+// @Router       /device-config/{vin}/power [get]
 func (d *DeviceConfigController) GetPowerConfig(c *fiber.Ctx) error {
 	// Example hardcoded power config
+	vin := c.Params("vin")
+	d.log.Info().Msg("recieved vin" + vin)
 	powerConfig := PowerConfig{
 		Battery: struct {
 			CriticalLevel struct {
@@ -153,7 +155,7 @@ func (d *DeviceConfigController) GetPowerConfig(c *fiber.Ctx) error {
 // @Produce      json
 // @Success      200 {string} string
 // @Param        vin  path   string  true   "vehicle identification number (VIN)"
-// @Router       /user/vehicle-signal-decoding/{vin}/dbc-config [get]
+// @Router       /device-config/{vin}/dbc [get]
 func (d *DeviceConfigController) GetDBCFile(c *fiber.Ctx) error {
 	baseURL := d.Settings.DeploymentURL
 	dbcURL := fmt.Sprintf("%s/default/dbc-config/%s.dbc", baseURL, c.Params("vin"))

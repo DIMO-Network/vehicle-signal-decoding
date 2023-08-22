@@ -6,11 +6,15 @@ import (
 	"os"
 
 	"github.com/DIMO-Network/shared"
+	_ "github.com/DIMO-Network/vehicle-signal-decoding/docs"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/api"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
 	"github.com/rs/zerolog"
 )
 
+// @title                      DIMO Vehicle-Signal-Decoding
+// @version                    1.0
+// @BasePath                   /v1
 func main() {
 
 	gitSha1 := os.Getenv("GIT_SHA1")
