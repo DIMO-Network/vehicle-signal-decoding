@@ -1,8 +1,25 @@
 # vehicle-signal-decoding
 
 Api for managing vehicle signal decoding on the DIMO platform.
-
 ## Developing locally
+
+To download postgres:
+
+```bash
+brew install postgresql
+pg_ctl -D /usr/local/var/postgres start && brew services start postgresql
+```
+If postgres is already installed, go ahead and create database in postgres. 
+
+```bash
+psql postgres
+create user dimo PASSWORD 'dimo';
+grant dimo to postgres;
+create database vehicle_signal_decoding_api
+    with owner dimo;
+```
+
+Open postgres database in DataGrip to view schema, tables, etc.
 
 **TL;DR**
 

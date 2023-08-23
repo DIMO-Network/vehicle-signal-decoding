@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"os"
 	"os/signal"
 	"strings"
@@ -9,17 +10,23 @@ import (
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/commands"
 
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/controllers"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/services"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/kafka"
 	"github.com/Shopify/sarama"
 
 	"github.com/DIMO-Network/shared/db"
+	"github.com/DIMO-Network/shared/middleware/metrics"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
 	"github.com/gofiber/adaptor/v2"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/swagger"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog"
+
+	fiberrecover "github.com/gofiber/fiber/v2/middleware/recover"
 )
 
 func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) {
@@ -30,8 +37,9 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 
 	go StartGrpcServer(logger, pdb.DBS, settings)
 
-	startMonitoringServer(logger, settings)
+	startWebAPI(logger, settings)
 	startVehicleSignalConsumer(logger, settings, pdb)
+	startMonitoringServer(logger, settings)
 
 	c := make(chan os.Signal, 1)                    // Create channel to signify a signal being sent with length of 1
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM) // When an interrupt or termination signal is sent, notify the channel
@@ -40,25 +48,6 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 	_ = ctx.Done()
 	_ = pdb.DBS().Writer.Close()
 	_ = pdb.DBS().Reader.Close()
-}
-
-// startMonitoringServer start server for monitoring endpoints. Could likely be moved to shared lib.
-func startMonitoringServer(logger zerolog.Logger, settings *config.Settings) {
-	monApp := fiber.New(fiber.Config{DisableStartupMessage: true})
-	monApp.Get("/health", func(c *fiber.Ctx) error {
-		return c.Status(fiber.StatusOK).SendString("healthy")
-	})
-
-	monApp.Get("/metrics", adaptor.HTTPHandler(promhttp.Handler()))
-
-	go func() {
-		// 8888 is our standard port for exposing metrics in DIMO infra
-		if err := monApp.Listen(":" + settings.MonitoringPort); err != nil {
-			logger.Fatal().Err(err).Str("port", settings.MonitoringPort).Msg("Failed to start monitoring web server.")
-		}
-	}()
-
-	logger.Info().Str("port", "8888").Msg("Started monitoring web server.")
 }
 
 func startVehicleSignalConsumer(logger zerolog.Logger, settings *config.Settings, pdb db.Store) {
@@ -90,4 +79,88 @@ func startVehicleSignalConsumer(logger zerolog.Logger, settings *config.Settings
 	consumer.Start(context.Background(), service.ProcessWorker)
 
 	logger.Info().Msg("Vehicle Signal Decoding consumer started")
+}
+
+func startMonitoringServer(logger zerolog.Logger, settings *config.Settings) {
+	monApp := fiber.New(fiber.Config{
+		ErrorHandler: func(c *fiber.Ctx, err error) error {
+			return ErrorHandler(c, err, logger)
+		},
+		DisableStartupMessage: true,
+	})
+	monApp.Get("/metrics", adaptor.HTTPHandler(promhttp.Handler()))
+
+	go func() {
+		// 8888 is our standard port for exposing metrics in DIMO infra
+		if err := monApp.Listen(":" + settings.MonitoringPort); err != nil {
+			logger.Fatal().Err(err).Str("port", settings.MonitoringPort).Msg("Failed to start monitoring web server.")
+		}
+	}()
+
+	logger.Info().Str("port", settings.MonitoringPort).Msg("Started monitoring web server.")
+}
+
+func startWebAPI(logger zerolog.Logger, settings *config.Settings) *fiber.App {
+	app := fiber.New(fiber.Config{
+		ErrorHandler: func(c *fiber.Ctx, err error) error {
+			return ErrorHandler(c, err, logger)
+		},
+		DisableStartupMessage: true,
+		ReadBufferSize:        16000,
+	})
+
+	app.Use(metrics.HTTPMetricsMiddleware)
+
+	app.Use(fiberrecover.New(fiberrecover.Config{
+		Next:              nil,
+		EnableStackTrace:  true,
+		StackTraceHandler: nil,
+	}))
+	app.Use(cors.New())
+
+	deviceConfigController := controllers.NewDeviceConfigController(settings, &logger)
+
+	app.Get("/health", func(c *fiber.Ctx) error {
+		return c.Status(fiber.StatusOK).SendString("healthy")
+	})
+
+	v1 := app.Group("/v1")
+
+	v1.Get("/swagger/*", swagger.HandlerDefault)
+
+	v1.Get("/device-config/:vin/pid", deviceConfigController.GetPIDConfig)
+	v1.Get("/device-config/:vin/power", deviceConfigController.GetPowerConfig)
+	v1.Get("/device-config/:vin/dbc", deviceConfigController.GetDBCFile)
+	v1.Get("/device-config/:vin/urls", deviceConfigController.GetConfigURLs)
+
+	go func() {
+		if err := app.Listen(":" + settings.Port); err != nil {
+			logger.Fatal().Err(err).Str("port", settings.Port).Msg("Failed to start monitoring web server.")
+		}
+	}()
+
+	logger.Info().Str("port", settings.Port).Msg("Started api web server")
+
+	return app
+}
+
+// Code below copied from device-data-api/main.go
+func ErrorHandler(c *fiber.Ctx, err error, logger zerolog.Logger) error {
+	code := fiber.StatusInternalServerError // Default 500 statuscode
+	message := "Internal error."
+
+	var e *fiber.Error
+	if errors.As(err, &e) {
+		code = e.Code
+		message = e.Message
+	}
+
+	logger.Err(err).Int("code", code).Str("path", strings.TrimPrefix(c.Path(), "/")).Msg("Failed request.")
+
+	return c.Status(code).JSON(CodeResp{Code: code, Message: message})
+}
+
+type CodeResp struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
 }
