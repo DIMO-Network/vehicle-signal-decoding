@@ -67,7 +67,7 @@ func NewDeviceConfigController(settings *config.Settings, logger *zerolog.Logger
 // @Produce      json
 // @Success      200 {object} PIDConfig
 // @Param        vin  path   string  true   "vehicle identification number (VIN)"
-// @Router       /device-config/{vin}/pid [get]
+// @Router       /device-config/:vin/pid [get]
 func (d *DeviceConfigController) GetPIDConfig(c *fiber.Ctx) error {
 	vin := c.Params("vin")
 	pidConfig := PIDConfig{
@@ -87,7 +87,7 @@ func (d *DeviceConfigController) GetPIDConfig(c *fiber.Ctx) error {
 // @Produce      json
 // @Success      200 {object} PowerConfig
 // @Param        vin  path   string  true   "vehicle identification number (VIN)"
-// @Router       /device-config/{vin}/power [get]
+// @Router       /device-config/:vin/power [get]
 func (d *DeviceConfigController) GetPowerConfig(c *fiber.Ctx) error {
 	// Example hardcoded power config
 	vin := c.Params("vin")
@@ -155,9 +155,30 @@ func (d *DeviceConfigController) GetPowerConfig(c *fiber.Ctx) error {
 // @Produce      json
 // @Success      200 {string} string
 // @Param        vin  path   string  true   "vehicle identification number (VIN)"
-// @Router       /device-config/{vin}/dbc [get]
+// @Router       /device-config/:vin/dbc [get]
 func (d *DeviceConfigController) GetDBCFile(c *fiber.Ctx) error {
 	baseURL := d.Settings.DeploymentURL
 	dbcURL := fmt.Sprintf("%s/default/dbc-config/%s.dbc", baseURL, c.Params("vin"))
 	return c.JSON(fiber.Map{"dbcFileUrl": dbcURL})
+}
+
+// GetConfigURLs godoc
+// @Description  Retrieve the URLs for PID, Power, and DBC configuration based on a given VIN
+// @Tags         vehicle-signal-decoding
+// @Produce      json
+// @Success      200 {object} map[string]string
+// @Param        vin  path   string  true   "vehicle identification number (VIN)"
+// @Router       /device-config/:vin/urls [get]
+func (d *DeviceConfigController) GetConfigURLs(c *fiber.Ctx) error {
+	baseURL := d.Settings.DeploymentURL
+	vin := c.Params("vin")
+	pidURL := fmt.Sprintf("/device-config/%s/pid", vin)
+	powerURL := fmt.Sprintf("/device-config/%s/power", vin)
+	dbcURL := fmt.Sprintf("/device-config/%s/dbc", vin)
+
+	return c.JSON(fiber.Map{
+		"pidURL":   baseURL + pidURL,
+		"powerURL": baseURL + powerURL,
+		"dbcURL":   baseURL + dbcURL,
+	})
 }

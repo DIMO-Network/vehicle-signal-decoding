@@ -131,6 +131,7 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings) *fiber.App {
 	v1.Get("/device-config/:vin/pid", deviceConfigController.GetPIDConfig)
 	v1.Get("/device-config/:vin/power", deviceConfigController.GetPowerConfig)
 	v1.Get("/device-config/:vin/dbc", deviceConfigController.GetDBCFile)
+	v1.Get("/device-config/:vin/urls", deviceConfigController.GetConfigURLs)
 
 	go func() {
 		if err := app.Listen(":" + settings.Port); err != nil {
