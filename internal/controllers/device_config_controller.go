@@ -34,19 +34,21 @@ func InitializeDatabaseConnection(connStr string) (*sql.DB, error) {
 	return db, db.Ping()
 }
 
-// resolveTemplateName get template name based on VIN
-func resolveTemplateName(vin string, db *sql.DB) (string, error) {
-	var templateName string
-	query := "SELECT template_name FROM vin_to_template WHERE vin=$1"
-	err := db.QueryRow(query, vin).Scan(&templateName)
+// resolveTemplateName retrieves associated template and parent given a vin
+func resolveTemplateName(vin string, db *sql.DB) (string, string, error) {
+	var templateName, parentTemplateName string
+	query := "SELECT template_name, parent_template_name FROM vin_to_template WHERE vin=$1"
+	err := db.QueryRow(query, vin).Scan(&templateName, &parentTemplateName)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return "", fmt.Errorf("No template found for VIN: %s", vin)
+			return "", "", fmt.Errorf("No template found for VIN: %s", vin)
 		}
-		return "", err
+		return "", "", err
 	}
-	return templateName, nil
+	return templateName, parentTemplateName, nil
 }
+
+/*
 func getParentTemplateName(templateName string, db *sql.DB) (string, error) {
 	var parentTemplateName string
 	query := "SELECT parent_template FROM vin_to_template WHERE template_name=$1"
@@ -59,6 +61,7 @@ func getParentTemplateName(templateName string, db *sql.DB) (string, error) {
 	}
 	return parentTemplateName, nil
 }
+*/
 
 func getConfigurationVersion(configType string, templateName string, db *sql.DB) (string, error) {
 	query := fmt.Sprintf("SELECT version FROM %s_configs WHERE template_name = $1", configType)
@@ -291,20 +294,13 @@ func (d *DeviceConfigController) GetConfigURLs(c *fiber.Ctx) error {
 	vin := c.Params("vin")
 
 	// Resolve template name using VIN
-	templateName, err := resolveTemplateName(vin, d.db)
+	templateName, parentTemplateName, err := resolveTemplateName(vin, d.db)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": fmt.Sprintf("Failed to retrieve template name for VIN: %s", vin),
 		})
 	}
 
-	// Get the parent template if exists
-	parentTemplateName, err := getParentTemplateName(templateName, d.db)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": fmt.Sprintf("Failed to retrieve parent template for: %s", templateName),
-		})
-	}
 	pidTemplateName := templateName
 	powerTemplateName := parentTemplateName
 
