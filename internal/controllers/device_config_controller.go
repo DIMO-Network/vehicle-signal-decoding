@@ -47,6 +47,28 @@ func resolveTemplateName(vin string, db *sql.DB) (string, error) {
 	}
 	return templateName, nil
 }
+func getParentTemplateName(templateName string, db *sql.DB) (string, error) {
+	var parentTemplateName string
+	query := "SELECT parent_template FROM vin_to_template WHERE template_name=$1"
+	err := db.QueryRow(query, templateName).Scan(&parentTemplateName)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "", nil // No parent template found
+		}
+		return "", err
+	}
+	return parentTemplateName, nil
+}
+
+func getConfigurationVersion(configType string, templateName string, db *sql.DB) (string, error) {
+	query := fmt.Sprintf("SELECT version FROM %s_configs WHERE template_name = $1", configType)
+	var version string
+	err := db.QueryRow(query, templateName).Scan(&version)
+	if err != nil {
+		return "", err
+	}
+	return version, nil
+}
 
 // Struct definitions
 type PIDConfig struct {
@@ -275,13 +297,46 @@ func (d *DeviceConfigController) GetConfigURLs(c *fiber.Ctx) error {
 			"error": fmt.Sprintf("Failed to retrieve template name for VIN: %s", vin),
 		})
 	}
-	pidURL := fmt.Sprintf("/device-config/%s/pid", templateName)
-	powerURL := fmt.Sprintf("/device-config/%s/power", templateName)
-	dbcURL := fmt.Sprintf("/device-config/%s/dbc", vin) //TODO: implement with templateName instead of VIN
+
+	// Get the parent template if exists
+	parentTemplateName, err := getParentTemplateName(templateName, d.db)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": fmt.Sprintf("Failed to retrieve parent template for: %s", templateName),
+		})
+	}
+	pidTemplateName := templateName
+	powerTemplateName := parentTemplateName
+
+	if powerTemplateName == "" {
+		powerTemplateName = templateName
+	}
+
+	//Versioning
+
+	pidVersion, err := getConfigurationVersion("pid", pidTemplateName, d.db)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": fmt.Sprintf("Failed to retrieve PID version for template: %s", pidTemplateName),
+		})
+	}
+
+	powerVersion, err := getConfigurationVersion("power", powerTemplateName, d.db)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": fmt.Sprintf("Failed to retrieve Power version for template: %s", powerTemplateName),
+		})
+	}
+
+	pidURL := fmt.Sprintf("%s/device-config/pid/%s", baseURL, pidTemplateName)
+	powerURL := fmt.Sprintf("%s/device-config/power/%s", baseURL, powerTemplateName)
+	dbcURL := fmt.Sprintf("%s/device-config/dbc/%s", baseURL, pidTemplateName)
 
 	return c.JSON(fiber.Map{
-		"pidURL":   baseURL + pidURL,
-		"powerURL": baseURL + powerURL,
-		"dbcURL":   baseURL + dbcURL,
+		"pidUrl":       pidURL,
+		"powerUrl":     powerURL,
+		"dbcURL":       dbcURL, //TODO: implement
+		"pidVersion":   pidVersion,
+		"powerVersion": powerVersion,
 	})
 }
