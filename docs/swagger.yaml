@@ -61,7 +61,7 @@ info:
   title: DIMO Vehicle-Signal-Decoding
   version: "1.0"
 paths:
-  /device-config/{vin}/dbc:
+  /device-config/:vin/dbc:
     get:
       description: Retrieve the URL pointing to the DBC file for a given VIN
       parameters:
@@ -79,7 +79,7 @@ paths:
             type: string
       tags:
       - vehicle-signal-decoding
-  /device-config/{vin}/pid:
+  /device-config/:vin/pid:
     get:
       description: Retrieve the PID configuration based on a given VIN
       parameters:
@@ -97,7 +97,7 @@ paths:
             $ref: '#/definitions/controllers.PIDConfig'
       tags:
       - vehicle-signal-decoding
-  /device-config/{vin}/power:
+  /device-config/:vin/power:
     get:
       description: Retrieve the power configuration based on a given VIN
       parameters:
@@ -113,6 +113,27 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/controllers.PowerConfig'
+      tags:
+      - vehicle-signal-decoding
+  /device-config/:vin/urls:
+    get:
+      description: Retrieve the URLs for PID, Power, and DBC configuration based on
+        a given VIN
+      parameters:
+      - description: vehicle identification number (VIN)
+        in: path
+        name: vin
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
       tags:
       - vehicle-signal-decoding
 swagger: "2.0"
