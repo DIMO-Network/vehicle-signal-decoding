@@ -51,7 +51,7 @@ BEGIN
        FROM   pg_class c
        JOIN   pg_namespace n ON n.oid = c.relnamespace
        WHERE  c.relname = 'idx_autopi_unit_id' 
-       AND    n.nspname = 'vehicle_signal_decoding_api' -- assuming this is the schema where your table is located
+       AND    n.nspname = 'vehicle_signal_decoding_api' 
    ) THEN
        CREATE INDEX idx_autopi_unit_id ON test_signals(autopi_unit_id);
    END IF;
