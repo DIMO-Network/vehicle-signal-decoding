@@ -4,9 +4,23 @@
 package models
 
 var TableNames = struct {
-	DBCCodes    string
-	TestSignals string
+	DBCCodes                  string
+	DBCFiles                  string
+	PidConfigs                string
+	PowerConfigs              string
+	SerialToTemplateOverrides string
+	TemplateTypes             string
+	TemplateVehicles          string
+	Templates                 string
+	TestSignals               string
 }{
-	DBCCodes:    "dbc_codes",
-	TestSignals: "test_signals",
+	DBCCodes:                  "dbc_codes",
+	DBCFiles:                  "dbc_files",
+	PidConfigs:                "pid_configs",
+	PowerConfigs:              "power_configs",
+	SerialToTemplateOverrides: "serial_to_template_overrides",
+	TemplateTypes:             "template_types",
+	TemplateVehicles:          "template_vehicles",
+	Templates:                 "templates",
+	TestSignals:               "test_signals",
 }
