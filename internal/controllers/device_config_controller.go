@@ -34,34 +34,24 @@ func InitializeDatabaseConnection(connStr string) (*sql.DB, error) {
 	return db, db.Ping()
 }
 
-// resolveTemplateName retrieves associated template and parent given a vin
-func resolveTemplateName(vin string, db *sql.DB) (string, string, error) {
+// resolveTemplateName retrieves associated template and parent given a serial
+func resolveTemplateName(serial string, db *sql.DB) (string, string, error) {
 	var templateName, parentTemplateName string
-	query := "SELECT template_name, parent_template_name FROM vin_to_template WHERE vin=$1"
-	err := db.QueryRow(query, vin).Scan(&templateName, &parentTemplateName)
+	query := `
+		SELECT t.template_name, t.parent_template_name
+		FROM templates t
+		JOIN serial_to_template_overrides sto ON t.template_name = sto.template_name
+		WHERE sto.serial = $1
+	`
+	err := db.QueryRow(query, serial).Scan(&templateName, &parentTemplateName)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return "", "", fmt.Errorf("No template found for VIN: %s", vin)
+			return "", "", fmt.Errorf("No template found for serial: %s", serial)
 		}
 		return "", "", err
 	}
 	return templateName, parentTemplateName, nil
 }
-
-/*
-func getParentTemplateName(templateName string, db *sql.DB) (string, error) {
-	var parentTemplateName string
-	query := "SELECT parent_template FROM vin_to_template WHERE template_name=$1"
-	err := db.QueryRow(query, templateName).Scan(&parentTemplateName)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return "", nil // No parent template found
-		}
-		return "", err
-	}
-	return parentTemplateName, nil
-}
-*/
 
 func getConfigurationVersion(configType string, templateName string, db *sql.DB) (string, error) {
 	query := fmt.Sprintf("SELECT version FROM %s_configs WHERE template_name = $1", configType)
@@ -114,33 +104,23 @@ type PowerConfig struct {
 	} `json:"wake_trigger"`
 }
 
+type DBCFile struct {
+	FilePath     string
+	TemplateName string
+	Version      string
+	CreatedAt    string
+	UpdatedAt    string
+}
+
 //Endpoints:
 
-/*
-//I don't think we need hard coded GetPIDConfig anymore
-// / GetPIDConfig godoc
-// @Description  Retrieve the PID configuration based on a given VIN
+// GetPIDSByTemplate godoc
+// @Description  Retrieves a list of PID configurations from the database given a template name
 // @Tags         vehicle-signal-decoding
 // @Produce      json
-// @Success      200 {object} PIDConfig
-// @Param        vin  path   string  true   "vehicle identification number (VIN)"
-// @Router       /device-config/:vin/pid [get]
-func (d *DeviceConfigController) GetPIDConfig(c *fiber.Ctx) error {
-	vin := c.Params("vin")
-	pidConfig := PIDConfig{
-		Name:            vin,
-		Header:          2015,
-		Mode:            9,
-		PID:             2,
-		Formula:         "ascii: 3|17 X",
-		IntervalSeconds: 5,
-	}
-	return c.JSON(pidConfig)
-}
-*/
-
-// I think this is what we want instead
-// GetPIDSByTemplate (device-config/pid/:template_name) fetches PID config from DB based on template name provided in URL
+// @Success      200 {array} PIDConfig "Successfully retrieved PID Configurations"
+// @Param        template_name  path   string  true   "template name"
+// @Router       /device-config/:template_name/pids [get]
 func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 	templateName := c.Params("template_name")
 	var pids []PIDConfig
@@ -169,78 +149,13 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 	return c.JSON(pids)
 }
 
-/*
-// I don't think we need hard coded GetPowerConfig anymore
-// GetPowerConfig godoc
-// @Description  Retrieve the power configuration based on a given VIN
+// GetPowerByTemplate godoc
+// @Description  Fetches the power configurations from power_configs table given a template name
 // @Tags         vehicle-signal-decoding
 // @Produce      json
-// @Success      200 {object} PowerConfig
-// @Param        vin  path   string  true   "vehicle identification number (VIN)"
-// @Router       /device-config/:vin/power [get]
-func (d *DeviceConfigController) GetPowerConfig(c *fiber.Ctx) error {
-	// Example hardcoded power config
-	vin := c.Params("vin")
-	d.log.Info().Msg("recieved vin" + vin)
-	powerConfig := PowerConfig{
-		Battery: struct {
-			CriticalLevel struct {
-				Voltage string `json:"voltage"`
-			} `json:"critical_level"`
-		}{
-			CriticalLevel: struct {
-				Voltage string `json:"voltage"`
-			}{
-				Voltage: "200V",
-			},
-		},
-		SafetyCutOut: struct {
-			Voltage string `json:"voltage"`
-		}{
-			Voltage: "180V",
-		},
-		SleepTimer: struct {
-			EventDriven struct {
-				Interval string `json:"interval"`
-				Period   string `json:"period"`
-			} `json:"event_driven"`
-			InactivityAfterSleep struct {
-				Interval string `json:"interval"`
-			} `json:"inactivity_after_sleep"`
-			InactivityFallback struct {
-				Interval string `json:"interval"`
-			} `json:"inactivity_fallback"`
-		}{
-			EventDriven: struct {
-				Interval string `json:"interval"`
-				Period   string `json:"period"`
-			}{
-				Interval: "5m",
-				Period:   "10m",
-			},
-			InactivityAfterSleep: struct {
-				Interval string `json:"interval"`
-			}{
-				Interval: "30m",
-			},
-			InactivityFallback: struct {
-				Interval string `json:"interval"`
-			}{
-				Interval: "1h",
-			},
-		},
-		WakeTrigger: struct {
-			VoltageLevel string `json:"voltage_level"`
-		}{
-			VoltageLevel: "210V",
-		},
-	}
-
-	return c.JSON(powerConfig)
-}
-*/
-
-// GetPowerByTemplate assumes DB stores power config flat. Dependencies: power_configs table with columns matching fields of DbPowerConfig struct
+// @Success      200 {array} PowerConfig "Successfully retrieved Power Configurations"
+// @Param        template_name  path   string  true   "template name"
+// @Router       /device-config/:template_name/power [get]
 func (d *DeviceConfigController) GetPowerByTemplate(c *fiber.Ctx) error {
 	templateName := c.Params("template_name")
 	var powerConfigs []PowerConfig
@@ -269,17 +184,29 @@ func (d *DeviceConfigController) GetPowerByTemplate(c *fiber.Ctx) error {
 	return c.JSON(powerConfigs)
 }
 
-// GetDBCFile godoc
-// @Description  Retrieve the URL pointing to the DBC file for a given VIN
+// GetDBCFilePathByTemplateName godoc
+// @Description  Fetches the DBC file path from the dbc_files table given a template name
 // @Tags         vehicle-signal-decoding
-// @Produce      json
-// @Success      200 {string} string
-// @Param        vin  path   string  true   "vehicle identification number (VIN)"
-// @Router       /device-config/:vin/dbc [get]
-func (d *DeviceConfigController) GetDBCFile(c *fiber.Ctx) error {
-	baseURL := d.Settings.DeploymentURL
-	dbcURL := fmt.Sprintf("%s/default/dbc-config/%s.dbc", baseURL, c.Params("vin"))
-	return c.JSON(fiber.Map{"dbcFileUrl": dbcURL})
+// @Produce      plain
+// @Success      200 {string} string "Successfully retrieved DBC file path"
+// @Param        template_name  path   string  true   "template name"
+// @Router       /device-config/:template_name/dbc-file-path [get]
+func (d *DeviceConfigController) GetDBCFilePathByTemplateName(c *fiber.Ctx) error { // getDBCFilePathByTemplateName fetches dbc_file_path from dbc_file table given template_name
+
+	templateName := c.Params("template_name")
+
+	query := "SELECT dbc_file_path FROM dbc_files WHERE template_name = $1"
+	var filePath string
+	err := d.db.QueryRow(query, templateName).Scan(&filePath)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return c.Status(fiber.StatusNotFound).SendString(fmt.Sprintf("No DBC file found for template name: %s", templateName))
+		}
+		return c.Status(fiber.StatusInternalServerError).SendString(fmt.Sprintf("Failed to retrieve DBC file path for template: %s, Error: %s", templateName, err.Error()))
+	}
+
+	// returns DBC file path as a plain text response
+	return c.Status(fiber.StatusOK).SendString(filePath)
 }
 
 // GetConfigURLs godoc
