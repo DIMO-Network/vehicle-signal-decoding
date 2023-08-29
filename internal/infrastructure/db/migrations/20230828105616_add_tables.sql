@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS template_vehicles (
 );
 
 CREATE TABLE IF NOT EXISTS dbc_files (
-    dbc_file_path text NOT NULL,
+    dbc_file text NOT NULL,
     template_name text REFERENCES templates(template_name),
     version text,
     created_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -87,11 +87,11 @@ CREATE TABLE IF NOT EXISTS dbc_files (
 SELECT 'down SQL query';
 
 DROP TABLE serial_to_template_overrides;
-DROP TABLE template_types;
-DROP TABLE templates;
 DROP TABLE pid_configs;
 DROP TABLE power_configs;
 DROP TABLE template_vehicles;
 DROP TABLE dbc_files;
+DROP TABLE templates;
+DROP TABLE template_types;
 
 -- +goose StatementEnd

@@ -37,7 +37,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 
 	go StartGrpcServer(logger, pdb.DBS, settings)
 
-	startWebAPI(logger, settings)
+	startWebAPI(logger, settings, pdb)
 	startVehicleSignalConsumer(logger, settings, pdb)
 	startMonitoringServer(logger, settings)
 
@@ -100,7 +100,7 @@ func startMonitoringServer(logger zerolog.Logger, settings *config.Settings) {
 	logger.Info().Str("port", settings.MonitoringPort).Msg("Started monitoring web server.")
 }
 
-func startWebAPI(logger zerolog.Logger, settings *config.Settings) *fiber.App {
+func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.Store) *fiber.App {
 	app := fiber.New(fiber.Config{
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			return ErrorHandler(c, err, logger)
@@ -118,7 +118,7 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings) *fiber.App {
 	}))
 	app.Use(cors.New())
 
-	deviceConfigController := controllers.NewDeviceConfigController(settings, &logger)
+	deviceConfigController := controllers.NewDeviceConfigController(settings, &logger, database.DBS().Reader.DB)
 
 	app.Get("/health", func(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusOK).SendString("healthy")

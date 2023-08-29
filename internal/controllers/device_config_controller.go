@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
 	"time"
@@ -13,7 +12,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/volatiletech/null/v8"
-	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
 type DeviceConfigController struct {
@@ -106,9 +104,7 @@ type DBCFile struct {
 	UpdatedAt    string
 }
 
-//Endpoints:
-
-// GetPIDSByTemplate godoc
+// GetPIDsByTemplate godoc
 // @Description  Retrieves a list of PID configurations from the database given a template name
 // @Tags         vehicle-signal-decoding
 // @Produce      json
@@ -122,30 +118,25 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 	/// Query the database to get the PIDs based on the template name using SQLBoiler
 	pidConfigs, err := models.PidConfigs(
 		models.PidConfigWhere.TemplateName.EQ(null.StringFrom(templateName)),
-	).All(context.Background(), d.db)
+	).All(c.Context(), d.db)
 
 	// Error handling
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return fiber.NewError(fiber.StatusNotFound, "No PID data found for the given template name.")
 		}
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to retrieve PID data",
-		})
+		return errors.Wrap(err, "Failed to retrieve PID Configs")
 	}
 	// Convert SQLBoiler model
 	for _, pidConfig := range pidConfigs {
 		pid := PIDConfig{
 			ID:              pidConfig.ID,
-			TemplateName:    pidConfig.TemplateName.String,
 			Header:          pidConfig.Header,
 			Mode:            pidConfig.Mode,
 			Pid:             pidConfig.Pid,
 			Formula:         pidConfig.Formula,
 			IntervalSeconds: pidConfig.IntervalSeconds,
 			Version:         pidConfig.Version.String,
-			CreatedAt:       pidConfig.CreatedAt,
-			UpdatedAt:       pidConfig.UpdatedAt,
 		}
 		pids = append(pids, pid)
 	}
@@ -157,7 +148,7 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 // @Description  Fetches the power configurations from power_configs table given a template name
 // @Tags         vehicle-signal-decoding
 // @Produce      json
-// @Success      200 {array} PowerConfig "Successfully retrieved Power Configurations"
+// @Success      200 {object} PowerConfig "Successfully retrieved Power Configurations"
 // @Param        template_name  path   string  true   "template name"
 // @Router       /device-config/:template_name/power [get]
 func (d *DeviceConfigController) GetPowerByTemplate(c *fiber.Ctx) error {
@@ -166,25 +157,22 @@ func (d *DeviceConfigController) GetPowerByTemplate(c *fiber.Ctx) error {
 	// Query the database to get the PowerConfigs based on the template name using SQLBoiler
 	dbPowerConfigs, err := models.PowerConfigs(
 		models.PowerConfigWhere.TemplateName.EQ(templateName),
-	).All(context.Background(), d.db)
+	).All(c.Context(), d.db)
 
 	// Error handling
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return fiber.NewError(fiber.StatusNotFound, "No Power Config data found for the given template name.")
 		}
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to retrieve Power Config data",
-		})
+		return errors.Wrap(err, "Failed to retrieve Power Configs")
 	}
-
+	//return powerconfig object instead of an array
 	var apiPowerConfigs []PowerConfig
 
 	for _, dbPowerConfig := range dbPowerConfigs {
 		apiPowerConfig := PowerConfig{
 			ID:                                     dbPowerConfig.ID,
 			Version:                                dbPowerConfig.Version.String,
-			TemplateName:                           dbPowerConfig.TemplateName,
 			BatteryCriticalLevelVoltage:            dbPowerConfig.BatteryCriticalLevelVoltage,
 			SafetyCutOutVoltage:                    dbPowerConfig.SafetyCutOutVoltage,
 			SleepTimerEventDrivenInterval:          dbPowerConfig.SleepTimerEventDrivenInterval,
@@ -192,8 +180,6 @@ func (d *DeviceConfigController) GetPowerByTemplate(c *fiber.Ctx) error {
 			SleepTimerInactivityAfterSleepInterval: dbPowerConfig.SleepTimerInactivityAfterSleepInterval,
 			SleepTimerInactivityFallbackInterval:   dbPowerConfig.SleepTimerInactivityFallbackInterval,
 			WakeTriggerVoltageLevel:                dbPowerConfig.WakeTriggerVoltageLevel,
-			CreatedAt:                              dbPowerConfig.CreatedAt,
-			UpdatedAt:                              dbPowerConfig.UpdatedAt,
 		}
 
 		apiPowerConfigs = append(apiPowerConfigs, apiPowerConfig)
@@ -214,18 +200,20 @@ func (d *DeviceConfigController) GetDBCFilePathByTemplateName(c *fiber.Ctx) erro
 	templateName := c.Params("template_name")
 
 	// Query the database using SQLBoiler
-	dbResult, err := models.DBCFiles(qm.Where("template_name=?", templateName)).One(context.Background(), d.db)
+	//use same logic as above
+	dbResult, err := models.DBCFiles(
+		models.DBCFileWhere.TemplateName.EQ(templateName)).One(c.Context(), d.db)
 
 	// Error handling
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return c.Status(fiber.StatusNotFound).SendString(fmt.Sprintf("No DBC file found for template name: %s", templateName))
 		}
-		return c.Status(fiber.StatusInternalServerError).SendString(fmt.Sprintf("Failed to retrieve DBC file path for template: %s, Error: %s", templateName, err.Error()))
+		return errors.Wrap(err, "Failed to retrieve DBC File")
 	}
 
-	// Return the DBC file path as plain text
-	return c.Status(fiber.StatusOK).SendString(dbResult.DBCFilePath)
+	// Return the DBC file itself
+	return c.Status(fiber.StatusOK).SendString(dbResult.DBCFile)
 }
 
 // GetConfigURLs godoc

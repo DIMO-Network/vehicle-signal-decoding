@@ -24,7 +24,7 @@ import (
 
 // DBCFile is an object representing the database table.
 type DBCFile struct {
-	DBCFilePath  string      `boil:"dbc_file_path" json:"dbc_file_path" toml:"dbc_file_path" yaml:"dbc_file_path"`
+	DBCFile      string      `boil:"dbc_file" json:"dbc_file" toml:"dbc_file" yaml:"dbc_file"`
 	TemplateName string      `boil:"template_name" json:"template_name" toml:"template_name" yaml:"template_name"`
 	Version      null.String `boil:"version" json:"version,omitempty" toml:"version" yaml:"version,omitempty"`
 	CreatedAt    time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
@@ -35,13 +35,13 @@ type DBCFile struct {
 }
 
 var DBCFileColumns = struct {
-	DBCFilePath  string
+	DBCFile      string
 	TemplateName string
 	Version      string
 	CreatedAt    string
 	UpdatedAt    string
 }{
-	DBCFilePath:  "dbc_file_path",
+	DBCFile:      "dbc_file",
 	TemplateName: "template_name",
 	Version:      "version",
 	CreatedAt:    "created_at",
@@ -49,13 +49,13 @@ var DBCFileColumns = struct {
 }
 
 var DBCFileTableColumns = struct {
-	DBCFilePath  string
+	DBCFile      string
 	TemplateName string
 	Version      string
 	CreatedAt    string
 	UpdatedAt    string
 }{
-	DBCFilePath:  "dbc_files.dbc_file_path",
+	DBCFile:      "dbc_files.dbc_file",
 	TemplateName: "dbc_files.template_name",
 	Version:      "dbc_files.version",
 	CreatedAt:    "dbc_files.created_at",
@@ -65,13 +65,13 @@ var DBCFileTableColumns = struct {
 // Generated where
 
 var DBCFileWhere = struct {
-	DBCFilePath  whereHelperstring
+	DBCFile      whereHelperstring
 	TemplateName whereHelperstring
 	Version      whereHelpernull_String
 	CreatedAt    whereHelpertime_Time
 	UpdatedAt    whereHelpertime_Time
 }{
-	DBCFilePath:  whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"dbc_files\".\"dbc_file_path\""},
+	DBCFile:      whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"dbc_files\".\"dbc_file\""},
 	TemplateName: whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"dbc_files\".\"template_name\""},
 	Version:      whereHelpernull_String{field: "\"vehicle_signal_decoding_api\".\"dbc_files\".\"version\""},
 	CreatedAt:    whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"dbc_files\".\"created_at\""},
@@ -106,8 +106,8 @@ func (r *dbcFileR) GetTemplateNameTemplate() *Template {
 type dbcFileL struct{}
 
 var (
-	dbcFileAllColumns            = []string{"dbc_file_path", "template_name", "version", "created_at", "updated_at"}
-	dbcFileColumnsWithoutDefault = []string{"dbc_file_path", "template_name"}
+	dbcFileAllColumns            = []string{"dbc_file", "template_name", "version", "created_at", "updated_at"}
+	dbcFileColumnsWithoutDefault = []string{"dbc_file", "template_name"}
 	dbcFileColumnsWithDefault    = []string{"version", "created_at", "updated_at"}
 	dbcFilePrimaryKeyColumns     = []string{"template_name"}
 	dbcFileGeneratedColumns      = []string{}
