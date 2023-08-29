@@ -1,13 +1,19 @@
 package controllers
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 	"github.com/gofiber/fiber/v2"
 	_ "github.com/lib/pq"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
+	"github.com/volatiletech/null/v8"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
 type DeviceConfigController struct {
@@ -65,43 +71,31 @@ func getConfigurationVersion(configType string, templateName string, db *sql.DB)
 
 // Struct definitions
 type PIDConfig struct {
-	Name            string `json:"name"`
-	Header          int    `json:"header"`
-	Mode            int    `json:"mode"`
-	PID             int    `json:"pid"`
-	Formula         string `json:"formula"`
-	IntervalSeconds int    `json:"intervalSeconds"`
+	ID              int64     `json:"id"`
+	TemplateName    string    `json:"template_name,omitempty"`
+	Header          int       `json:"header"`
+	Mode            int       `json:"mode"`
+	Pid             int       `json:"pid"`
+	Formula         string    `json:"formula"`
+	IntervalSeconds int       `json:"interval_seconds"`
+	Version         string    `json:"version,omitempty"`
+	CreatedAt       time.Time `json:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at"`
 }
 
 type PowerConfig struct {
-	Battery struct {
-		CriticalLevel struct {
-			Voltage string `json:"voltage"`
-		} `json:"critical_level"`
-	} `json:"battery"`
-
-	SafetyCutOut struct {
-		Voltage string `json:"voltage"`
-	} `json:"safety_cut-out"`
-
-	SleepTimer struct {
-		EventDriven struct {
-			Interval string `json:"interval"`
-			Period   string `json:"period"`
-		} `json:"event_driven"`
-
-		InactivityAfterSleep struct {
-			Interval string `json:"interval"`
-		} `json:"inactivity_after_sleep"`
-
-		InactivityFallback struct {
-			Interval string `json:"interval"`
-		} `json:"inactivity_fallback"`
-	} `json:"sleep_timer"`
-
-	WakeTrigger struct {
-		VoltageLevel string `json:"voltage_level"`
-	} `json:"wake_trigger"`
+	ID                                     int64     `json:"id"`
+	Version                                string    `json:"version,omitempty"`
+	TemplateName                           string    `json:"template_name"`
+	BatteryCriticalLevelVoltage            string    `json:"battery_critical_level_voltage"`
+	SafetyCutOutVoltage                    string    `json:"safety_cut_out_voltage"`
+	SleepTimerEventDrivenInterval          string    `json:"sleep_timer_event_driven_interval"`
+	SleepTimerEventDrivenPeriod            string    `json:"sleep_timer_event_driven_period"`
+	SleepTimerInactivityAfterSleepInterval string    `json:"sleep_timer_inactivity_after_sleep_interval"`
+	SleepTimerInactivityFallbackInterval   string    `json:"sleep_timer_inactivity_fallback_interval"`
+	WakeTriggerVoltageLevel                string    `json:"wake_trigger_voltage_level"`
+	CreatedAt                              time.Time `json:"created_at"`
+	UpdatedAt                              time.Time `json:"updated_at"`
 }
 
 type DBCFile struct {
@@ -125,23 +119,33 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 	templateName := c.Params("template_name")
 	var pids []PIDConfig
 
-	// Query the database to get the PIDs based on the template name
-	query := "SELECT * FROM pid_configs WHERE template_name = $1"
-	rows, err := d.db.Query(query, templateName)
+	/// Query the database to get the PIDs based on the template name using SQLBoiler
+	pidConfigs, err := models.PidConfigs(
+		models.PidConfigWhere.TemplateName.EQ(null.StringFrom(templateName)),
+	).All(context.Background(), d.db)
+
+	// Error handling
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return fiber.NewError(fiber.StatusNotFound, "No PID data found for the given template name.")
+		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to retrieve PID data",
 		})
 	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var pid PIDConfig
-		err := rows.Scan(&pid.Name, &pid.Header, &pid.Mode, &pid.PID, &pid.Formula, &pid.IntervalSeconds)
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": "Failed to process PID data",
-			})
+	// Convert SQLBoiler model
+	for _, pidConfig := range pidConfigs {
+		pid := PIDConfig{
+			ID:              pidConfig.ID,
+			TemplateName:    pidConfig.TemplateName.String,
+			Header:          pidConfig.Header,
+			Mode:            pidConfig.Mode,
+			Pid:             pidConfig.Pid,
+			Formula:         pidConfig.Formula,
+			IntervalSeconds: pidConfig.IntervalSeconds,
+			Version:         pidConfig.Version.String,
+			CreatedAt:       pidConfig.CreatedAt,
+			UpdatedAt:       pidConfig.UpdatedAt,
 		}
 		pids = append(pids, pid)
 	}
@@ -158,30 +162,45 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 // @Router       /device-config/:template_name/power [get]
 func (d *DeviceConfigController) GetPowerByTemplate(c *fiber.Ctx) error {
 	templateName := c.Params("template_name")
-	var powerConfigs []PowerConfig
 
-	// Query the database to get the PowerConfigs based on the template name
-	query := "SELECT battery_critical_level_voltage, safety_cut_out_voltage, sleep_timer_event_driven_interval, sleep_timer_event_driven_period, sleep_timer_inactivity_after_sleep_interval, sleep_timer_inactivity_fallback_interval, wake_trigger_voltage_level FROM power_configs WHERE template_name = $1"
-	rows, err := d.db.Query(query, templateName)
+	// Query the database to get the PowerConfigs based on the template name using SQLBoiler
+	dbPowerConfigs, err := models.PowerConfigs(
+		models.PowerConfigWhere.TemplateName.EQ(templateName),
+	).All(context.Background(), d.db)
+
+	// Error handling
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return fiber.NewError(fiber.StatusNotFound, "No Power Config data found for the given template name.")
+		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to retrieve Power Config data",
 		})
 	}
-	defer rows.Close()
 
-	for rows.Next() {
-		var pc PowerConfig
-		err := rows.Scan(&pc.Battery.CriticalLevel.Voltage, &pc.SafetyCutOut.Voltage, &pc.SleepTimer.EventDriven.Interval, &pc.SleepTimer.EventDriven.Period, &pc.SleepTimer.InactivityAfterSleep.Interval, &pc.SleepTimer.InactivityFallback.Interval, &pc.WakeTrigger.VoltageLevel)
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": "Failed to process Power Config data",
-			})
+	var apiPowerConfigs []PowerConfig
+
+	for _, dbPowerConfig := range dbPowerConfigs {
+		apiPowerConfig := PowerConfig{
+			ID:                                     dbPowerConfig.ID,
+			Version:                                dbPowerConfig.Version.String,
+			TemplateName:                           dbPowerConfig.TemplateName,
+			BatteryCriticalLevelVoltage:            dbPowerConfig.BatteryCriticalLevelVoltage,
+			SafetyCutOutVoltage:                    dbPowerConfig.SafetyCutOutVoltage,
+			SleepTimerEventDrivenInterval:          dbPowerConfig.SleepTimerEventDrivenInterval,
+			SleepTimerEventDrivenPeriod:            dbPowerConfig.SleepTimerEventDrivenPeriod,
+			SleepTimerInactivityAfterSleepInterval: dbPowerConfig.SleepTimerInactivityAfterSleepInterval,
+			SleepTimerInactivityFallbackInterval:   dbPowerConfig.SleepTimerInactivityFallbackInterval,
+			WakeTriggerVoltageLevel:                dbPowerConfig.WakeTriggerVoltageLevel,
+			CreatedAt:                              dbPowerConfig.CreatedAt,
+			UpdatedAt:                              dbPowerConfig.UpdatedAt,
 		}
-		powerConfigs = append(powerConfigs, pc)
+
+		apiPowerConfigs = append(apiPowerConfigs, apiPowerConfig)
 	}
 
-	return c.JSON(powerConfigs)
+	return c.JSON(apiPowerConfigs)
+
 }
 
 // GetDBCFilePathByTemplateName godoc
@@ -191,22 +210,22 @@ func (d *DeviceConfigController) GetPowerByTemplate(c *fiber.Ctx) error {
 // @Success      200 {string} string "Successfully retrieved DBC file path"
 // @Param        template_name  path   string  true   "template name"
 // @Router       /device-config/:template_name/dbc-file-path [get]
-func (d *DeviceConfigController) GetDBCFilePathByTemplateName(c *fiber.Ctx) error { // getDBCFilePathByTemplateName fetches dbc_file_path from dbc_file table given template_name
-
+func (d *DeviceConfigController) GetDBCFilePathByTemplateName(c *fiber.Ctx) error {
 	templateName := c.Params("template_name")
 
-	query := "SELECT dbc_file_path FROM dbc_files WHERE template_name = $1"
-	var filePath string
-	err := d.db.QueryRow(query, templateName).Scan(&filePath)
+	// Query the database using SQLBoiler
+	dbResult, err := models.DBCFiles(qm.Where("template_name=?", templateName)).One(context.Background(), d.db)
+
+	// Error handling
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return c.Status(fiber.StatusNotFound).SendString(fmt.Sprintf("No DBC file found for template name: %s", templateName))
 		}
 		return c.Status(fiber.StatusInternalServerError).SendString(fmt.Sprintf("Failed to retrieve DBC file path for template: %s, Error: %s", templateName, err.Error()))
 	}
 
-	// returns DBC file path as a plain text response
-	return c.Status(fiber.StatusOK).SendString(filePath)
+	// Return the DBC file path as plain text
+	return c.Status(fiber.StatusOK).SendString(dbResult.DBCFilePath)
 }
 
 // GetConfigURLs godoc

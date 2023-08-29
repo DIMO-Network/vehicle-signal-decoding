@@ -4,13 +4,7 @@ SELECT 'up SQL query';
 
 SET search_path = vehicle_signal_decoding_api, public;
 
-DO $$ 
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'trigger_enum') THEN
-    CREATE TYPE trigger_enum AS ENUM ('CAN', 'PID');
-  END IF;
-END $$;
-
+CREATE TYPE trigger_enum as enum ('CAN', 'PID');
 
 CREATE TABLE IF NOT EXISTS dbc_codes
 (
@@ -44,19 +38,8 @@ CREATE TABLE IF NOT EXISTS test_signals
     CONSTRAINT test_signals_pkey PRIMARY KEY (id),
     CONSTRAINT fk_dbc_codes FOREIGN KEY (dbc_codes_id) REFERENCES dbc_codes (id)
 );
-DO $$
-BEGIN
-   IF NOT EXISTS (
-       SELECT 1 
-       FROM   pg_class c
-       JOIN   pg_namespace n ON n.oid = c.relnamespace
-       WHERE  c.relname = 'idx_autopi_unit_id' 
-       AND    n.nspname = 'vehicle_signal_decoding_api' 
-   ) THEN
-       CREATE INDEX idx_autopi_unit_id ON test_signals(autopi_unit_id);
-   END IF;
-END $$;
-
+CREATE INDEX idx_autopi_unit_id
+    ON test_signals(autopi_unit_id);
 -- +goose StatementEnd
 
 -- +goose Down
