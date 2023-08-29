@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"time"
@@ -12,6 +13,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/volatiletech/null/v8"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
 type DeviceConfigController struct {
@@ -40,21 +42,32 @@ func InitializeDatabaseConnection(connStr string) (*sql.DB, error) {
 
 // resolveTemplateName retrieves associated template and parent given a serial
 func resolveTemplateName(serial string, db *sql.DB) (string, string, error) {
-	var templateName, parentTemplateName string
-	query := `
-		SELECT t.template_name, t.parent_template_name
-		FROM templates t
-		JOIN serial_to_template_overrides sto ON t.template_name = sto.template_name
-		WHERE sto.serial = $1
-	`
-	err := db.QueryRow(query, serial).Scan(&templateName, &parentTemplateName)
+	// Create empty Template and SerialToTemplateOverride structs to hold query results
+	var template models.Template
+
+	// Create query modifiers
+	queryMods := []qm.QueryMod{
+		qm.Select("t.template_name", "t.parent_template_name"),
+		qm.From("templates t"),
+		qm.InnerJoin("serial_to_template_overrides sto ON t.template_name = sto.template_name"),
+		qm.Where("sto.serial = ?", serial),
+	}
+
+	// Execute the query and bind the results to the Template struct
+	err := models.Templates(queryMods...).Bind(context.Background(), db, &template)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return "", "", fmt.Errorf("No template found for serial: %s", serial)
 		}
 		return "", "", err
 	}
-	return templateName, parentTemplateName, nil
+
+	parentTemplateName := ""
+	if template.ParentTemplateName.Valid {
+		parentTemplateName = template.ParentTemplateName.String
+	}
+
+	return template.TemplateName, parentTemplateName, nil
 }
 
 func getConfigurationVersion(configType string, templateName string, db *sql.DB) (string, error) {
@@ -67,7 +80,6 @@ func getConfigurationVersion(configType string, templateName string, db *sql.DB)
 	return version, nil
 }
 
-// Struct definitions
 type PIDConfig struct {
 	ID              int64     `json:"id"`
 	TemplateName    string    `json:"template_name,omitempty"`
@@ -96,19 +108,12 @@ type PowerConfig struct {
 	UpdatedAt                              time.Time `json:"updated_at"`
 }
 
-type DBCFile struct {
-	FilePath     string
-	TemplateName string
-	Version      string
-	CreatedAt    string
-	UpdatedAt    string
-}
-
 // GetPIDsByTemplate godoc
 // @Description  Retrieves a list of PID configurations from the database given a template name
 // @Tags         vehicle-signal-decoding
 // @Produce      json
 // @Success      200 {array} PIDConfig "Successfully retrieved PID Configurations"
+// @Failure 404 "No PID Config data found for the given template name."
 // @Param        template_name  path   string  true   "template name"
 // @Router       /device-config/:template_name/pids [get]
 func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
@@ -149,54 +154,51 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 // @Tags         vehicle-signal-decoding
 // @Produce      json
 // @Success      200 {object} PowerConfig "Successfully retrieved Power Configurations"
+// @Failure 404 "No Power Config data found for the given template name."
 // @Param        template_name  path   string  true   "template name"
 // @Router       /device-config/:template_name/power [get]
 func (d *DeviceConfigController) GetPowerByTemplate(c *fiber.Ctx) error {
 	templateName := c.Params("template_name")
 
 	// Query the database to get the PowerConfigs based on the template name using SQLBoiler
-	dbPowerConfigs, err := models.PowerConfigs(
+	dbPowerConfig, err := models.PowerConfigs(
 		models.PowerConfigWhere.TemplateName.EQ(templateName),
-	).All(c.Context(), d.db)
+	).One(c.Context(), d.db)
 
 	// Error handling
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return fiber.NewError(fiber.StatusNotFound, "No Power Config data found for the given template name.")
 		}
-		return errors.Wrap(err, "Failed to retrieve Power Configs")
-	}
-	//return powerconfig object instead of an array
-	var apiPowerConfigs []PowerConfig
-
-	for _, dbPowerConfig := range dbPowerConfigs {
-		apiPowerConfig := PowerConfig{
-			ID:                                     dbPowerConfig.ID,
-			Version:                                dbPowerConfig.Version.String,
-			BatteryCriticalLevelVoltage:            dbPowerConfig.BatteryCriticalLevelVoltage,
-			SafetyCutOutVoltage:                    dbPowerConfig.SafetyCutOutVoltage,
-			SleepTimerEventDrivenInterval:          dbPowerConfig.SleepTimerEventDrivenInterval,
-			SleepTimerEventDrivenPeriod:            dbPowerConfig.SleepTimerEventDrivenPeriod,
-			SleepTimerInactivityAfterSleepInterval: dbPowerConfig.SleepTimerInactivityAfterSleepInterval,
-			SleepTimerInactivityFallbackInterval:   dbPowerConfig.SleepTimerInactivityFallbackInterval,
-			WakeTriggerVoltageLevel:                dbPowerConfig.WakeTriggerVoltageLevel,
-		}
-
-		apiPowerConfigs = append(apiPowerConfigs, apiPowerConfig)
+		return errors.Wrap(err, "Failed to retrieve Power Config")
 	}
 
-	return c.JSON(apiPowerConfigs)
+	apiPowerConfig := PowerConfig{
+
+		ID:                                     dbPowerConfig.ID,
+		Version:                                dbPowerConfig.Version.String,
+		BatteryCriticalLevelVoltage:            dbPowerConfig.BatteryCriticalLevelVoltage,
+		SafetyCutOutVoltage:                    dbPowerConfig.SafetyCutOutVoltage,
+		SleepTimerEventDrivenInterval:          dbPowerConfig.SleepTimerEventDrivenInterval,
+		SleepTimerEventDrivenPeriod:            dbPowerConfig.SleepTimerEventDrivenPeriod,
+		SleepTimerInactivityAfterSleepInterval: dbPowerConfig.SleepTimerInactivityAfterSleepInterval,
+		SleepTimerInactivityFallbackInterval:   dbPowerConfig.SleepTimerInactivityFallbackInterval,
+		WakeTriggerVoltageLevel:                dbPowerConfig.WakeTriggerVoltageLevel,
+	}
+
+	return c.JSON(apiPowerConfig)
 
 }
 
-// GetDBCFilePathByTemplateName godoc
-// @Description  Fetches the DBC file path from the dbc_files table given a template name
+// GetDBCFileByTemplateName godoc
+// @Description  Fetches the DBC file from the dbc_files table given a template name
 // @Tags         vehicle-signal-decoding
 // @Produce      plain
-// @Success      200 {string} string "Successfully retrieved DBC file path"
+// @Success      200 {string} string "Successfully retrieved DBC file"
+// @Failure 404 "No DBC file found for the given template name."
 // @Param        template_name  path   string  true   "template name"
-// @Router       /device-config/:template_name/dbc-file-path [get]
-func (d *DeviceConfigController) GetDBCFilePathByTemplateName(c *fiber.Ctx) error {
+// @Router       /device-config/:template_name/dbc-file [get]
+func (d *DeviceConfigController) GetDBCFileByTemplateName(c *fiber.Ctx) error {
 	templateName := c.Params("template_name")
 
 	// Query the database using SQLBoiler
