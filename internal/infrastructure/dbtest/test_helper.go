@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/DIMO-Network/shared/db"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
@@ -26,7 +25,7 @@ func StartContainerDatabase(ctx context.Context, dbName string, t *testing.T, mi
 	logger := zerolog.New(os.Stdout).With().Timestamp().Logger()
 	settings := getTestDbSettings(dbName)
 	pgPort := "5432/tcp"
-	dbURL := func(port nat.Port) string {
+	dbURL := func(host string, port nat.Port) string {
 		return fmt.Sprintf("postgres://%s:%s@localhost:%s/%s?sslmode=disable", settings.DB.User, settings.DB.Password, port.Port(), settings.DB.Name)
 	}
 	cr := testcontainers.ContainerRequest{
@@ -34,7 +33,7 @@ func StartContainerDatabase(ctx context.Context, dbName string, t *testing.T, mi
 		Env:          map[string]string{"POSTGRES_USER": settings.DB.User, "POSTGRES_PASSWORD": settings.DB.Password, "POSTGRES_DB": settings.DB.Name},
 		ExposedPorts: []string{pgPort},
 		Cmd:          []string{"postgres", "-c", "fsync=off"},
-		WaitingFor:   wait.ForSQL(nat.Port(pgPort), "postgres", dbURL).Timeout(time.Second * 15),
+		WaitingFor:   wait.ForSQL(nat.Port(pgPort), "postgres", dbURL),
 	}
 
 	pgContainer, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
