@@ -47,7 +47,7 @@ func TestGetPIDsByTemplate(t *testing.T) {
 
 	t.Run("GET - PID by Template", func(t *testing.T) {
 		// Arrange: db, insert some PIDConfig data
-		samplePID := models.PIDConfig{
+		samplePID := PIDConfig{
 			Name:            "EngineTemperature",
 			Header:          "7E8",
 			Mode:            "01",
@@ -72,7 +72,7 @@ func TestGetPIDsByTemplate(t *testing.T) {
 			fmt.Println("response body: " + string(body))
 		}
 
-		pids := make([]models.PIDConfig, 0)
+		pids := make([]PIDConfig, 0)
 		err = json.Unmarshal(body, &pids)
 		assert.NoError(t, err)
 		assert.Equal(t, 1, len(pids))
