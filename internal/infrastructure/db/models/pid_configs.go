@@ -26,9 +26,9 @@ import (
 type PidConfig struct {
 	ID              int64       `boil:"id" json:"id" toml:"id" yaml:"id"`
 	TemplateName    null.String `boil:"template_name" json:"template_name,omitempty" toml:"template_name" yaml:"template_name,omitempty"`
-	Header          int         `boil:"header" json:"header" toml:"header" yaml:"header"`
-	Mode            int         `boil:"mode" json:"mode" toml:"mode" yaml:"mode"`
-	Pid             int         `boil:"pid" json:"pid" toml:"pid" yaml:"pid"`
+	Header          []byte      `boil:"header" json:"header" toml:"header" yaml:"header"`
+	Mode            []byte      `boil:"mode" json:"mode" toml:"mode" yaml:"mode"`
+	Pid             []byte      `boil:"pid" json:"pid" toml:"pid" yaml:"pid"`
 	Formula         string      `boil:"formula" json:"formula" toml:"formula" yaml:"formula"`
 	IntervalSeconds int         `boil:"interval_seconds" json:"interval_seconds" toml:"interval_seconds" yaml:"interval_seconds"`
 	Version         null.String `boil:"version" json:"version,omitempty" toml:"version" yaml:"version,omitempty"`
@@ -112,12 +112,21 @@ func (w whereHelperint64) NIN(slice []int64) qm.QueryMod {
 	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
 }
 
+type whereHelper__byte struct{ field string }
+
+func (w whereHelper__byte) EQ(x []byte) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.EQ, x) }
+func (w whereHelper__byte) NEQ(x []byte) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.NEQ, x) }
+func (w whereHelper__byte) LT(x []byte) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.LT, x) }
+func (w whereHelper__byte) LTE(x []byte) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.LTE, x) }
+func (w whereHelper__byte) GT(x []byte) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.GT, x) }
+func (w whereHelper__byte) GTE(x []byte) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
+
 var PidConfigWhere = struct {
 	ID              whereHelperint64
 	TemplateName    whereHelpernull_String
-	Header          whereHelperint
-	Mode            whereHelperint
-	Pid             whereHelperint
+	Header          whereHelper__byte
+	Mode            whereHelper__byte
+	Pid             whereHelper__byte
 	Formula         whereHelperstring
 	IntervalSeconds whereHelperint
 	Version         whereHelpernull_String
@@ -126,9 +135,9 @@ var PidConfigWhere = struct {
 }{
 	ID:              whereHelperint64{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"id\""},
 	TemplateName:    whereHelpernull_String{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"template_name\""},
-	Header:          whereHelperint{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"header\""},
-	Mode:            whereHelperint{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"mode\""},
-	Pid:             whereHelperint{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"pid\""},
+	Header:          whereHelper__byte{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"header\""},
+	Mode:            whereHelper__byte{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"mode\""},
+	Pid:             whereHelper__byte{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"pid\""},
 	Formula:         whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"formula\""},
 	IntervalSeconds: whereHelperint{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"interval_seconds\""},
 	Version:         whereHelpernull_String{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"version\""},

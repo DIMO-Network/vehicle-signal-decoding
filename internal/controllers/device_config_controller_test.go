@@ -13,9 +13,10 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
+	"github.com/volatiletech/sqlboiler/boil"
 )
 
-const migrationsDirRelPath = "../../migrations"
+const migrationsDirRelPath = "../infrastructure/db/migrations"
 
 func TestGetPIDsByTemplate(t *testing.T) {
 
@@ -37,19 +38,17 @@ func TestGetPIDsByTemplate(t *testing.T) {
 
 	// Insert test data into database
 	templateName := "exampleTemplate"
-	samplePID := PIDConfig{
+	pc := PIDConfig{
 		ID:              1,
-		Header:          "7E8",
-		Mode:            "01",
-		Pid:             "05",
+		Header:          []byte("7E8"),
+		Mode:            []byte("01"),
+		Pid:             []byte("05"),
 		Formula:         "A*5",
 		IntervalSeconds: 60,
 		Version:         "1.0",
 	}
 
-	_, err := pdb.DBS().Writer.ExecContext(ctx,
-		`INSERT INTO pid_config (id, header, mode, pid, formula, interval_seconds, version, template_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-		samplePID.ID, samplePID.Header, samplePID.Mode, samplePID.Pid, samplePID.Formula, samplePID.IntervalSeconds, samplePID.Version, templateName)
+	err := pc.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
 
 	c := NewDeviceConfigController(&config.Settings{Port: "3000"}, &logger, pdb.DBS().Reader.DB)
 	app := fiber.New()
@@ -71,7 +70,13 @@ func TestGetPIDsByTemplate(t *testing.T) {
 		err = json.Unmarshal(body, &pids)
 		assert.NoError(t, err)
 		assert.Equal(t, 1, len(pids))
-		assert.Equal(t, samplePID.ID, pids[0].ID)
+		assert.Equal(t, pc.ID, pids[0].ID)
+		assert.Equal(t, pc.Header, pids[0].Header)
+		assert.Equal(t, pc.Mode, pids[0].Mode)
+		assert.Equal(t, pc.Pid, pids[0].Pid)
+		assert.Equal(t, pc.Formula, pids[0].Formula)
+		assert.Equal(t, pc.IntervalSeconds, pids[0].IntervalSeconds)
+		assert.Equal(t, pc.Version, pids[0].Version)
 
 		// Teardown: cleanup after test
 		test.TruncateTables(pdb.DBS().Writer.DB, t)

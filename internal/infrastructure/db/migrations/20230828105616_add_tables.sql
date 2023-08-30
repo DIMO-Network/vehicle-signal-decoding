@@ -31,9 +31,9 @@ CREATE TABLE IF NOT EXISTS templates (
 CREATE TABLE IF NOT EXISTS pid_configs (
     id BIGSERIAL,
     template_name text REFERENCES templates(template_name),
-    header INTEGER NOT NULL,
-    mode INTEGER NOT NULL,
-    pid INTEGER NOT NULL,
+    header byteA NOT NULL,
+    mode byteA NOT NULL,
+    pid byteA NOT NULL,
     formula text NOT NULL,
     interval_seconds INTEGER NOT NULL,
     version text,
