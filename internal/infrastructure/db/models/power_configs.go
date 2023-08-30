@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/friendsofgo/errors"
-	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -24,18 +23,18 @@ import (
 
 // PowerConfig is an object representing the database table.
 type PowerConfig struct {
-	ID                                     int64       `boil:"id" json:"id" toml:"id" yaml:"id"`
-	Version                                null.String `boil:"version" json:"version,omitempty" toml:"version" yaml:"version,omitempty"`
-	TemplateName                           string      `boil:"template_name" json:"template_name" toml:"template_name" yaml:"template_name"`
-	BatteryCriticalLevelVoltage            string      `boil:"battery_critical_level_voltage" json:"battery_critical_level_voltage" toml:"battery_critical_level_voltage" yaml:"battery_critical_level_voltage"`
-	SafetyCutOutVoltage                    string      `boil:"safety_cut_out_voltage" json:"safety_cut_out_voltage" toml:"safety_cut_out_voltage" yaml:"safety_cut_out_voltage"`
-	SleepTimerEventDrivenInterval          string      `boil:"sleep_timer_event_driven_interval" json:"sleep_timer_event_driven_interval" toml:"sleep_timer_event_driven_interval" yaml:"sleep_timer_event_driven_interval"`
-	SleepTimerEventDrivenPeriod            string      `boil:"sleep_timer_event_driven_period" json:"sleep_timer_event_driven_period" toml:"sleep_timer_event_driven_period" yaml:"sleep_timer_event_driven_period"`
-	SleepTimerInactivityAfterSleepInterval string      `boil:"sleep_timer_inactivity_after_sleep_interval" json:"sleep_timer_inactivity_after_sleep_interval" toml:"sleep_timer_inactivity_after_sleep_interval" yaml:"sleep_timer_inactivity_after_sleep_interval"`
-	SleepTimerInactivityFallbackInterval   string      `boil:"sleep_timer_inactivity_fallback_interval" json:"sleep_timer_inactivity_fallback_interval" toml:"sleep_timer_inactivity_fallback_interval" yaml:"sleep_timer_inactivity_fallback_interval"`
-	WakeTriggerVoltageLevel                string      `boil:"wake_trigger_voltage_level" json:"wake_trigger_voltage_level" toml:"wake_trigger_voltage_level" yaml:"wake_trigger_voltage_level"`
-	CreatedAt                              time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	UpdatedAt                              time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	ID                                     int64     `boil:"id" json:"id" toml:"id" yaml:"id"`
+	Version                                string    `boil:"version" json:"version" toml:"version" yaml:"version"`
+	TemplateName                           string    `boil:"template_name" json:"template_name" toml:"template_name" yaml:"template_name"`
+	BatteryCriticalLevelVoltage            string    `boil:"battery_critical_level_voltage" json:"battery_critical_level_voltage" toml:"battery_critical_level_voltage" yaml:"battery_critical_level_voltage"`
+	SafetyCutOutVoltage                    string    `boil:"safety_cut_out_voltage" json:"safety_cut_out_voltage" toml:"safety_cut_out_voltage" yaml:"safety_cut_out_voltage"`
+	SleepTimerEventDrivenInterval          string    `boil:"sleep_timer_event_driven_interval" json:"sleep_timer_event_driven_interval" toml:"sleep_timer_event_driven_interval" yaml:"sleep_timer_event_driven_interval"`
+	SleepTimerEventDrivenPeriod            string    `boil:"sleep_timer_event_driven_period" json:"sleep_timer_event_driven_period" toml:"sleep_timer_event_driven_period" yaml:"sleep_timer_event_driven_period"`
+	SleepTimerInactivityAfterSleepInterval string    `boil:"sleep_timer_inactivity_after_sleep_interval" json:"sleep_timer_inactivity_after_sleep_interval" toml:"sleep_timer_inactivity_after_sleep_interval" yaml:"sleep_timer_inactivity_after_sleep_interval"`
+	SleepTimerInactivityFallbackInterval   string    `boil:"sleep_timer_inactivity_fallback_interval" json:"sleep_timer_inactivity_fallback_interval" toml:"sleep_timer_inactivity_fallback_interval" yaml:"sleep_timer_inactivity_fallback_interval"`
+	WakeTriggerVoltageLevel                string    `boil:"wake_trigger_voltage_level" json:"wake_trigger_voltage_level" toml:"wake_trigger_voltage_level" yaml:"wake_trigger_voltage_level"`
+	CreatedAt                              time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UpdatedAt                              time.Time `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
 
 	R *powerConfigR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L powerConfigL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -101,7 +100,7 @@ var PowerConfigTableColumns = struct {
 
 var PowerConfigWhere = struct {
 	ID                                     whereHelperint64
-	Version                                whereHelpernull_String
+	Version                                whereHelperstring
 	TemplateName                           whereHelperstring
 	BatteryCriticalLevelVoltage            whereHelperstring
 	SafetyCutOutVoltage                    whereHelperstring
@@ -114,7 +113,7 @@ var PowerConfigWhere = struct {
 	UpdatedAt                              whereHelpertime_Time
 }{
 	ID:                                     whereHelperint64{field: "\"vehicle_signal_decoding_api\".\"power_configs\".\"id\""},
-	Version:                                whereHelpernull_String{field: "\"vehicle_signal_decoding_api\".\"power_configs\".\"version\""},
+	Version:                                whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"power_configs\".\"version\""},
 	TemplateName:                           whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"power_configs\".\"template_name\""},
 	BatteryCriticalLevelVoltage:            whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"power_configs\".\"battery_critical_level_voltage\""},
 	SafetyCutOutVoltage:                    whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"power_configs\".\"safety_cut_out_voltage\""},
@@ -156,8 +155,8 @@ type powerConfigL struct{}
 
 var (
 	powerConfigAllColumns            = []string{"id", "version", "template_name", "battery_critical_level_voltage", "safety_cut_out_voltage", "sleep_timer_event_driven_interval", "sleep_timer_event_driven_period", "sleep_timer_inactivity_after_sleep_interval", "sleep_timer_inactivity_fallback_interval", "wake_trigger_voltage_level", "created_at", "updated_at"}
-	powerConfigColumnsWithoutDefault = []string{"template_name", "battery_critical_level_voltage", "safety_cut_out_voltage", "sleep_timer_event_driven_interval", "sleep_timer_event_driven_period", "sleep_timer_inactivity_after_sleep_interval", "sleep_timer_inactivity_fallback_interval", "wake_trigger_voltage_level"}
-	powerConfigColumnsWithDefault    = []string{"id", "version", "created_at", "updated_at"}
+	powerConfigColumnsWithoutDefault = []string{"version", "template_name", "battery_critical_level_voltage", "safety_cut_out_voltage", "sleep_timer_event_driven_interval", "sleep_timer_event_driven_period", "sleep_timer_inactivity_after_sleep_interval", "sleep_timer_inactivity_fallback_interval", "wake_trigger_voltage_level"}
+	powerConfigColumnsWithDefault    = []string{"id", "created_at", "updated_at"}
 	powerConfigPrimaryKeyColumns     = []string{"template_name"}
 	powerConfigGeneratedColumns      = []string{}
 )

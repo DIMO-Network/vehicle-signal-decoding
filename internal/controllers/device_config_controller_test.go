@@ -4,12 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"io"
 	"os"
 	"testing"
 
-	"github.com/volatiletech/null/v8"
+	"github.com/stretchr/testify/require"
+
 	"github.com/volatiletech/sqlboiler/v4/boil"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
@@ -40,19 +40,26 @@ func TestGetPIDsByTemplate(t *testing.T) {
 		}
 	}()
 
-	// Insert test data into database
-	templateName := "exampleTemplate"
+	template := models.Template{
+		TemplateName: "exampleTemplate",
+		// etc
+	}
+	err := template.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err)
+
 	pc := models.PidConfig{
 		ID:              1,
+		TemplateName:    "exampleTemplate",
 		Header:          []byte("7E8"),
 		Mode:            []byte("01"),
 		Pid:             []byte("05"),
 		Formula:         "A*5",
 		IntervalSeconds: 60,
-		Version:         null.StringFrom("1.0"),
+		Version:         "1.0",
 	}
 
-	err := pc.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+	errr := pc.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, errr)
 
 	c := NewDeviceConfigController(&config.Settings{Port: "3000"}, &logger, pdb.DBS().Reader.DB)
 	app := fiber.New()
@@ -61,7 +68,7 @@ func TestGetPIDsByTemplate(t *testing.T) {
 	t.Run("GET - PID by Template", func(t *testing.T) {
 
 		// Act: make the request
-		request := test.BuildRequest("GET", "/device-config/pid/"+templateName, "")
+		request := test.BuildRequest("GET", "/device-config/pid/"+template.TemplateName, "")
 		response, _ := app.Test(request)
 		body, _ := io.ReadAll(response.Body)
 
@@ -73,6 +80,9 @@ func TestGetPIDsByTemplate(t *testing.T) {
 		pids := make([]PIDConfig, 0)
 		err = json.Unmarshal(body, &pids)
 		assert.NoError(t, err)
+
+		fmt.Printf("Received PIDs: %v\n", pids)
+
 		require.Equal(t, 1, len(pids))
 		assert.Equal(t, pc.ID, pids[0].ID)
 		assert.Equal(t, pc.Header, pids[0].Header)

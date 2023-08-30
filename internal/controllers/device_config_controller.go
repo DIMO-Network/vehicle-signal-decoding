@@ -132,7 +132,7 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 
 	// Convert SQLBoiler model
 	pids := make([]PIDConfig, len(pidConfigs))
-	for _, pidConfig := range pidConfigs {
+	for i, pidConfig := range pidConfigs {
 		pid := PIDConfig{
 			ID:              pidConfig.ID,
 			Header:          pidConfig.Header,
@@ -140,9 +140,9 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 			Pid:             pidConfig.Pid,
 			Formula:         pidConfig.Formula,
 			IntervalSeconds: pidConfig.IntervalSeconds,
-			Version:         pidConfig.Version.String,
+			Version:         pidConfig.Version,
 		}
-		pids = append(pids, pid)
+		pids[i] = pid
 	}
 
 	return c.JSON(pids)
@@ -175,7 +175,7 @@ func (d *DeviceConfigController) GetPowerByTemplate(c *fiber.Ctx) error {
 	apiPowerConfig := PowerConfig{
 
 		ID:                                     dbPowerConfig.ID,
-		Version:                                dbPowerConfig.Version.String,
+		Version:                                dbPowerConfig.Version,
 		BatteryCriticalLevelVoltage:            dbPowerConfig.BatteryCriticalLevelVoltage,
 		SafetyCutOutVoltage:                    dbPowerConfig.SafetyCutOutVoltage,
 		SleepTimerEventDrivenInterval:          dbPowerConfig.SleepTimerEventDrivenInterval,

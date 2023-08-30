@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/friendsofgo/errors"
-	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -24,11 +23,11 @@ import (
 
 // DBCFile is an object representing the database table.
 type DBCFile struct {
-	DBCFile      string      `boil:"dbc_file" json:"dbc_file" toml:"dbc_file" yaml:"dbc_file"`
-	TemplateName string      `boil:"template_name" json:"template_name" toml:"template_name" yaml:"template_name"`
-	Version      null.String `boil:"version" json:"version,omitempty" toml:"version" yaml:"version,omitempty"`
-	CreatedAt    time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	UpdatedAt    time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	DBCFile      string    `boil:"dbc_file" json:"dbc_file" toml:"dbc_file" yaml:"dbc_file"`
+	TemplateName string    `boil:"template_name" json:"template_name" toml:"template_name" yaml:"template_name"`
+	Version      string    `boil:"version" json:"version" toml:"version" yaml:"version"`
+	CreatedAt    time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UpdatedAt    time.Time `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
 
 	R *dbcFileR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L dbcFileL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -67,13 +66,13 @@ var DBCFileTableColumns = struct {
 var DBCFileWhere = struct {
 	DBCFile      whereHelperstring
 	TemplateName whereHelperstring
-	Version      whereHelpernull_String
+	Version      whereHelperstring
 	CreatedAt    whereHelpertime_Time
 	UpdatedAt    whereHelpertime_Time
 }{
 	DBCFile:      whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"dbc_files\".\"dbc_file\""},
 	TemplateName: whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"dbc_files\".\"template_name\""},
-	Version:      whereHelpernull_String{field: "\"vehicle_signal_decoding_api\".\"dbc_files\".\"version\""},
+	Version:      whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"dbc_files\".\"version\""},
 	CreatedAt:    whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"dbc_files\".\"created_at\""},
 	UpdatedAt:    whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"dbc_files\".\"updated_at\""},
 }
@@ -107,8 +106,8 @@ type dbcFileL struct{}
 
 var (
 	dbcFileAllColumns            = []string{"dbc_file", "template_name", "version", "created_at", "updated_at"}
-	dbcFileColumnsWithoutDefault = []string{"dbc_file", "template_name"}
-	dbcFileColumnsWithDefault    = []string{"version", "created_at", "updated_at"}
+	dbcFileColumnsWithoutDefault = []string{"dbc_file", "template_name", "version"}
+	dbcFileColumnsWithDefault    = []string{"created_at", "updated_at"}
 	dbcFilePrimaryKeyColumns     = []string{"template_name"}
 	dbcFileGeneratedColumns      = []string{}
 )

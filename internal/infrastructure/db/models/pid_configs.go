@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/friendsofgo/errors"
-	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -24,16 +23,16 @@ import (
 
 // PidConfig is an object representing the database table.
 type PidConfig struct {
-	ID              int64       `boil:"id" json:"id" toml:"id" yaml:"id"`
-	TemplateName    string      `boil:"template_name" json:"template_name" toml:"template_name" yaml:"template_name"`
-	Header          []byte      `boil:"header" json:"header" toml:"header" yaml:"header"`
-	Mode            []byte      `boil:"mode" json:"mode" toml:"mode" yaml:"mode"`
-	Pid             []byte      `boil:"pid" json:"pid" toml:"pid" yaml:"pid"`
-	Formula         string      `boil:"formula" json:"formula" toml:"formula" yaml:"formula"`
-	IntervalSeconds int         `boil:"interval_seconds" json:"interval_seconds" toml:"interval_seconds" yaml:"interval_seconds"`
-	Version         null.String `boil:"version" json:"version,omitempty" toml:"version" yaml:"version,omitempty"`
-	CreatedAt       time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	UpdatedAt       time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	ID              int64     `boil:"id" json:"id" toml:"id" yaml:"id"`
+	TemplateName    string    `boil:"template_name" json:"template_name" toml:"template_name" yaml:"template_name"`
+	Header          []byte    `boil:"header" json:"header" toml:"header" yaml:"header"`
+	Mode            []byte    `boil:"mode" json:"mode" toml:"mode" yaml:"mode"`
+	Pid             []byte    `boil:"pid" json:"pid" toml:"pid" yaml:"pid"`
+	Formula         string    `boil:"formula" json:"formula" toml:"formula" yaml:"formula"`
+	IntervalSeconds int       `boil:"interval_seconds" json:"interval_seconds" toml:"interval_seconds" yaml:"interval_seconds"`
+	Version         string    `boil:"version" json:"version" toml:"version" yaml:"version"`
+	CreatedAt       time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UpdatedAt       time.Time `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
 
 	R *pidConfigR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L pidConfigL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -129,7 +128,7 @@ var PidConfigWhere = struct {
 	Pid             whereHelper__byte
 	Formula         whereHelperstring
 	IntervalSeconds whereHelperint
-	Version         whereHelpernull_String
+	Version         whereHelperstring
 	CreatedAt       whereHelpertime_Time
 	UpdatedAt       whereHelpertime_Time
 }{
@@ -140,7 +139,7 @@ var PidConfigWhere = struct {
 	Pid:             whereHelper__byte{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"pid\""},
 	Formula:         whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"formula\""},
 	IntervalSeconds: whereHelperint{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"interval_seconds\""},
-	Version:         whereHelpernull_String{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"version\""},
+	Version:         whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"version\""},
 	CreatedAt:       whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"created_at\""},
 	UpdatedAt:       whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"updated_at\""},
 }
@@ -174,8 +173,8 @@ type pidConfigL struct{}
 
 var (
 	pidConfigAllColumns            = []string{"id", "template_name", "header", "mode", "pid", "formula", "interval_seconds", "version", "created_at", "updated_at"}
-	pidConfigColumnsWithoutDefault = []string{"template_name", "header", "mode", "pid", "formula", "interval_seconds"}
-	pidConfigColumnsWithDefault    = []string{"id", "version", "created_at", "updated_at"}
+	pidConfigColumnsWithoutDefault = []string{"template_name", "header", "mode", "pid", "formula", "interval_seconds", "version"}
+	pidConfigColumnsWithDefault    = []string{"id", "created_at", "updated_at"}
 	pidConfigPrimaryKeyColumns     = []string{"id"}
 	pidConfigGeneratedColumns      = []string{}
 )
