@@ -892,7 +892,7 @@ func (templateL) LoadTemplateNamePidConfigs(ctx context.Context, e boil.ContextE
 			}
 
 			for _, a := range args {
-				if queries.Equal(a, obj.TemplateName) {
+				if a == obj.TemplateName {
 					continue Outer
 				}
 			}
@@ -950,7 +950,7 @@ func (templateL) LoadTemplateNamePidConfigs(ctx context.Context, e boil.ContextE
 
 	for _, foreign := range resultSlice {
 		for _, local := range slice {
-			if queries.Equal(local.TemplateName, foreign.TemplateName) {
+			if local.TemplateName == foreign.TemplateName {
 				local.R.TemplateNamePidConfigs = append(local.R.TemplateNamePidConfigs, foreign)
 				if foreign.R == nil {
 					foreign.R = &pidConfigR{}
@@ -1006,7 +1006,7 @@ func (templateL) LoadTemplateNameTemplateVehicles(ctx context.Context, e boil.Co
 			}
 
 			for _, a := range args {
-				if queries.Equal(a, obj.TemplateName) {
+				if a == obj.TemplateName {
 					continue Outer
 				}
 			}
@@ -1064,7 +1064,7 @@ func (templateL) LoadTemplateNameTemplateVehicles(ctx context.Context, e boil.Co
 
 	for _, foreign := range resultSlice {
 		for _, local := range slice {
-			if queries.Equal(local.TemplateName, foreign.TemplateName) {
+			if local.TemplateName == foreign.TemplateName {
 				local.R.TemplateNameTemplateVehicles = append(local.R.TemplateNameTemplateVehicles, foreign)
 				if foreign.R == nil {
 					foreign.R = &templateVehicleR{}
@@ -1266,7 +1266,7 @@ func (o *Template) AddTemplateNamePidConfigs(ctx context.Context, exec boil.Cont
 	var err error
 	for _, rel := range related {
 		if insert {
-			queries.Assign(&rel.TemplateName, o.TemplateName)
+			rel.TemplateName = o.TemplateName
 			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
 				return errors.Wrap(err, "failed to insert into foreign table")
 			}
@@ -1287,7 +1287,7 @@ func (o *Template) AddTemplateNamePidConfigs(ctx context.Context, exec boil.Cont
 				return errors.Wrap(err, "failed to update foreign table")
 			}
 
-			queries.Assign(&rel.TemplateName, o.TemplateName)
+			rel.TemplateName = o.TemplateName
 		}
 	}
 
@@ -1311,80 +1311,6 @@ func (o *Template) AddTemplateNamePidConfigs(ctx context.Context, exec boil.Cont
 	return nil
 }
 
-// SetTemplateNamePidConfigs removes all previously related items of the
-// template replacing them completely with the passed
-// in related items, optionally inserting them as new records.
-// Sets o.R.TemplateNameTemplate's TemplateNamePidConfigs accordingly.
-// Replaces o.R.TemplateNamePidConfigs with related.
-// Sets related.R.TemplateNameTemplate's TemplateNamePidConfigs accordingly.
-func (o *Template) SetTemplateNamePidConfigs(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*PidConfig) error {
-	query := "update \"vehicle_signal_decoding_api\".\"pid_configs\" set \"template_name\" = null where \"template_name\" = $1"
-	values := []interface{}{o.TemplateName}
-	if boil.IsDebug(ctx) {
-		writer := boil.DebugWriterFrom(ctx)
-		fmt.Fprintln(writer, query)
-		fmt.Fprintln(writer, values)
-	}
-	_, err := exec.ExecContext(ctx, query, values...)
-	if err != nil {
-		return errors.Wrap(err, "failed to remove relationships before set")
-	}
-
-	if o.R != nil {
-		for _, rel := range o.R.TemplateNamePidConfigs {
-			queries.SetScanner(&rel.TemplateName, nil)
-			if rel.R == nil {
-				continue
-			}
-
-			rel.R.TemplateNameTemplate = nil
-		}
-		o.R.TemplateNamePidConfigs = nil
-	}
-
-	return o.AddTemplateNamePidConfigs(ctx, exec, insert, related...)
-}
-
-// RemoveTemplateNamePidConfigs relationships from objects passed in.
-// Removes related items from R.TemplateNamePidConfigs (uses pointer comparison, removal does not keep order)
-// Sets related.R.TemplateNameTemplate.
-func (o *Template) RemoveTemplateNamePidConfigs(ctx context.Context, exec boil.ContextExecutor, related ...*PidConfig) error {
-	if len(related) == 0 {
-		return nil
-	}
-
-	var err error
-	for _, rel := range related {
-		queries.SetScanner(&rel.TemplateName, nil)
-		if rel.R != nil {
-			rel.R.TemplateNameTemplate = nil
-		}
-		if _, err = rel.Update(ctx, exec, boil.Whitelist("template_name")); err != nil {
-			return err
-		}
-	}
-	if o.R == nil {
-		return nil
-	}
-
-	for _, rel := range related {
-		for i, ri := range o.R.TemplateNamePidConfigs {
-			if rel != ri {
-				continue
-			}
-
-			ln := len(o.R.TemplateNamePidConfigs)
-			if ln > 1 && i < ln-1 {
-				o.R.TemplateNamePidConfigs[i] = o.R.TemplateNamePidConfigs[ln-1]
-			}
-			o.R.TemplateNamePidConfigs = o.R.TemplateNamePidConfigs[:ln-1]
-			break
-		}
-	}
-
-	return nil
-}
-
 // AddTemplateNameTemplateVehicles adds the given related objects to the existing relationships
 // of the template, optionally inserting them as new records.
 // Appends related to o.R.TemplateNameTemplateVehicles.
@@ -1393,7 +1319,7 @@ func (o *Template) AddTemplateNameTemplateVehicles(ctx context.Context, exec boi
 	var err error
 	for _, rel := range related {
 		if insert {
-			queries.Assign(&rel.TemplateName, o.TemplateName)
+			rel.TemplateName = o.TemplateName
 			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
 				return errors.Wrap(err, "failed to insert into foreign table")
 			}
@@ -1414,7 +1340,7 @@ func (o *Template) AddTemplateNameTemplateVehicles(ctx context.Context, exec boi
 				return errors.Wrap(err, "failed to update foreign table")
 			}
 
-			queries.Assign(&rel.TemplateName, o.TemplateName)
+			rel.TemplateName = o.TemplateName
 		}
 	}
 
@@ -1435,80 +1361,6 @@ func (o *Template) AddTemplateNameTemplateVehicles(ctx context.Context, exec boi
 			rel.R.TemplateNameTemplate = o
 		}
 	}
-	return nil
-}
-
-// SetTemplateNameTemplateVehicles removes all previously related items of the
-// template replacing them completely with the passed
-// in related items, optionally inserting them as new records.
-// Sets o.R.TemplateNameTemplate's TemplateNameTemplateVehicles accordingly.
-// Replaces o.R.TemplateNameTemplateVehicles with related.
-// Sets related.R.TemplateNameTemplate's TemplateNameTemplateVehicles accordingly.
-func (o *Template) SetTemplateNameTemplateVehicles(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*TemplateVehicle) error {
-	query := "update \"vehicle_signal_decoding_api\".\"template_vehicles\" set \"template_name\" = null where \"template_name\" = $1"
-	values := []interface{}{o.TemplateName}
-	if boil.IsDebug(ctx) {
-		writer := boil.DebugWriterFrom(ctx)
-		fmt.Fprintln(writer, query)
-		fmt.Fprintln(writer, values)
-	}
-	_, err := exec.ExecContext(ctx, query, values...)
-	if err != nil {
-		return errors.Wrap(err, "failed to remove relationships before set")
-	}
-
-	if o.R != nil {
-		for _, rel := range o.R.TemplateNameTemplateVehicles {
-			queries.SetScanner(&rel.TemplateName, nil)
-			if rel.R == nil {
-				continue
-			}
-
-			rel.R.TemplateNameTemplate = nil
-		}
-		o.R.TemplateNameTemplateVehicles = nil
-	}
-
-	return o.AddTemplateNameTemplateVehicles(ctx, exec, insert, related...)
-}
-
-// RemoveTemplateNameTemplateVehicles relationships from objects passed in.
-// Removes related items from R.TemplateNameTemplateVehicles (uses pointer comparison, removal does not keep order)
-// Sets related.R.TemplateNameTemplate.
-func (o *Template) RemoveTemplateNameTemplateVehicles(ctx context.Context, exec boil.ContextExecutor, related ...*TemplateVehicle) error {
-	if len(related) == 0 {
-		return nil
-	}
-
-	var err error
-	for _, rel := range related {
-		queries.SetScanner(&rel.TemplateName, nil)
-		if rel.R != nil {
-			rel.R.TemplateNameTemplate = nil
-		}
-		if _, err = rel.Update(ctx, exec, boil.Whitelist("template_name")); err != nil {
-			return err
-		}
-	}
-	if o.R == nil {
-		return nil
-	}
-
-	for _, rel := range related {
-		for i, ri := range o.R.TemplateNameTemplateVehicles {
-			if rel != ri {
-				continue
-			}
-
-			ln := len(o.R.TemplateNameTemplateVehicles)
-			if ln > 1 && i < ln-1 {
-				o.R.TemplateNameTemplateVehicles[i] = o.R.TemplateNameTemplateVehicles[ln-1]
-			}
-			o.R.TemplateNameTemplateVehicles = o.R.TemplateNameTemplateVehicles[:ln-1]
-			break
-		}
-	}
-
 	return nil
 }
 

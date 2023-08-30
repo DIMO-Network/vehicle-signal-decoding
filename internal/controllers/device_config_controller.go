@@ -12,7 +12,6 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
-	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
@@ -122,7 +121,7 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 
 	/// Query the database to get the PIDs based on the template name using SQLBoiler
 	pidConfigs, err := models.PidConfigs(
-		models.PidConfigWhere.TemplateName.EQ(null.StringFrom(templateName)),
+		models.PidConfigWhere.TemplateName.EQ(templateName),
 	).All(c.Context(), d.db)
 
 	// Error handling

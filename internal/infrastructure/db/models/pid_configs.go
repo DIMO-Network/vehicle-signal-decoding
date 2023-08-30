@@ -25,7 +25,7 @@ import (
 // PidConfig is an object representing the database table.
 type PidConfig struct {
 	ID              int64       `boil:"id" json:"id" toml:"id" yaml:"id"`
-	TemplateName    null.String `boil:"template_name" json:"template_name,omitempty" toml:"template_name" yaml:"template_name,omitempty"`
+	TemplateName    string      `boil:"template_name" json:"template_name" toml:"template_name" yaml:"template_name"`
 	Header          []byte      `boil:"header" json:"header" toml:"header" yaml:"header"`
 	Mode            []byte      `boil:"mode" json:"mode" toml:"mode" yaml:"mode"`
 	Pid             []byte      `boil:"pid" json:"pid" toml:"pid" yaml:"pid"`
@@ -123,7 +123,7 @@ func (w whereHelper__byte) GTE(x []byte) qm.QueryMod { return qmhelper.Where(w.f
 
 var PidConfigWhere = struct {
 	ID              whereHelperint64
-	TemplateName    whereHelpernull_String
+	TemplateName    whereHelperstring
 	Header          whereHelper__byte
 	Mode            whereHelper__byte
 	Pid             whereHelper__byte
@@ -134,7 +134,7 @@ var PidConfigWhere = struct {
 	UpdatedAt       whereHelpertime_Time
 }{
 	ID:              whereHelperint64{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"id\""},
-	TemplateName:    whereHelpernull_String{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"template_name\""},
+	TemplateName:    whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"template_name\""},
 	Header:          whereHelper__byte{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"header\""},
 	Mode:            whereHelper__byte{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"mode\""},
 	Pid:             whereHelper__byte{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"pid\""},
@@ -174,8 +174,8 @@ type pidConfigL struct{}
 
 var (
 	pidConfigAllColumns            = []string{"id", "template_name", "header", "mode", "pid", "formula", "interval_seconds", "version", "created_at", "updated_at"}
-	pidConfigColumnsWithoutDefault = []string{"header", "mode", "pid", "formula", "interval_seconds"}
-	pidConfigColumnsWithDefault    = []string{"id", "template_name", "version", "created_at", "updated_at"}
+	pidConfigColumnsWithoutDefault = []string{"template_name", "header", "mode", "pid", "formula", "interval_seconds"}
+	pidConfigColumnsWithDefault    = []string{"id", "version", "created_at", "updated_at"}
 	pidConfigPrimaryKeyColumns     = []string{"id"}
 	pidConfigGeneratedColumns      = []string{}
 )
@@ -502,9 +502,7 @@ func (pidConfigL) LoadTemplateNameTemplate(ctx context.Context, e boil.ContextEx
 		if object.R == nil {
 			object.R = &pidConfigR{}
 		}
-		if !queries.IsNil(object.TemplateName) {
-			args = append(args, object.TemplateName)
-		}
+		args = append(args, object.TemplateName)
 
 	} else {
 	Outer:
@@ -514,14 +512,12 @@ func (pidConfigL) LoadTemplateNameTemplate(ctx context.Context, e boil.ContextEx
 			}
 
 			for _, a := range args {
-				if queries.Equal(a, obj.TemplateName) {
+				if a == obj.TemplateName {
 					continue Outer
 				}
 			}
 
-			if !queries.IsNil(obj.TemplateName) {
-				args = append(args, obj.TemplateName)
-			}
+			args = append(args, obj.TemplateName)
 
 		}
 	}
@@ -579,7 +575,7 @@ func (pidConfigL) LoadTemplateNameTemplate(ctx context.Context, e boil.ContextEx
 
 	for _, local := range slice {
 		for _, foreign := range resultSlice {
-			if queries.Equal(local.TemplateName, foreign.TemplateName) {
+			if local.TemplateName == foreign.TemplateName {
 				local.R.TemplateNameTemplate = foreign
 				if foreign.R == nil {
 					foreign.R = &templateR{}
@@ -620,7 +616,7 @@ func (o *PidConfig) SetTemplateNameTemplate(ctx context.Context, exec boil.Conte
 		return errors.Wrap(err, "failed to update local table")
 	}
 
-	queries.Assign(&o.TemplateName, related.TemplateName)
+	o.TemplateName = related.TemplateName
 	if o.R == nil {
 		o.R = &pidConfigR{
 			TemplateNameTemplate: related,
@@ -637,39 +633,6 @@ func (o *PidConfig) SetTemplateNameTemplate(ctx context.Context, exec boil.Conte
 		related.R.TemplateNamePidConfigs = append(related.R.TemplateNamePidConfigs, o)
 	}
 
-	return nil
-}
-
-// RemoveTemplateNameTemplate relationship.
-// Sets o.R.TemplateNameTemplate to nil.
-// Removes o from all passed in related items' relationships struct.
-func (o *PidConfig) RemoveTemplateNameTemplate(ctx context.Context, exec boil.ContextExecutor, related *Template) error {
-	var err error
-
-	queries.SetScanner(&o.TemplateName, nil)
-	if _, err = o.Update(ctx, exec, boil.Whitelist("template_name")); err != nil {
-		return errors.Wrap(err, "failed to update local table")
-	}
-
-	if o.R != nil {
-		o.R.TemplateNameTemplate = nil
-	}
-	if related == nil || related.R == nil {
-		return nil
-	}
-
-	for i, ri := range related.R.TemplateNamePidConfigs {
-		if queries.Equal(o.TemplateName, ri.TemplateName) {
-			continue
-		}
-
-		ln := len(related.R.TemplateNamePidConfigs)
-		if ln > 1 && i < ln-1 {
-			related.R.TemplateNamePidConfigs[i] = related.R.TemplateNamePidConfigs[ln-1]
-		}
-		related.R.TemplateNamePidConfigs = related.R.TemplateNamePidConfigs[:ln-1]
-		break
-	}
 	return nil
 }
 

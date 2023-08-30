@@ -9,11 +9,12 @@ import (
 	"testing"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/test"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
-	"github.com/volatiletech/sqlboiler/boil"
+	"github.com/volatiletech/sqlboiler/v4"
 )
 
 const migrationsDirRelPath = "../infrastructure/db/migrations"
@@ -38,7 +39,7 @@ func TestGetPIDsByTemplate(t *testing.T) {
 
 	// Insert test data into database
 	templateName := "exampleTemplate"
-	pc := PIDConfig{
+	pc := models.PidConfig{
 		ID:              1,
 		Header:          []byte("7E8"),
 		Mode:            []byte("01"),

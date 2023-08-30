@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/friendsofgo/errors"
-	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -26,7 +25,7 @@ import (
 // TemplateVehicle is an object representing the database table.
 type TemplateVehicle struct {
 	MakeSlug       string            `boil:"make_slug" json:"make_slug" toml:"make_slug" yaml:"make_slug"`
-	TemplateName   null.String       `boil:"template_name" json:"template_name,omitempty" toml:"template_name" yaml:"template_name,omitempty"`
+	TemplateName   string            `boil:"template_name" json:"template_name" toml:"template_name" yaml:"template_name"`
 	YearStart      int               `boil:"year_start" json:"year_start" toml:"year_start" yaml:"year_start"`
 	YearEnd        int               `boil:"year_end" json:"year_end" toml:"year_end" yaml:"year_end"`
 	ModelWhitelist types.StringArray `boil:"model_whitelist" json:"model_whitelist,omitempty" toml:"model_whitelist" yaml:"model_whitelist,omitempty"`
@@ -103,7 +102,7 @@ func (w whereHelpertypes_StringArray) IsNotNull() qm.QueryMod {
 
 var TemplateVehicleWhere = struct {
 	MakeSlug       whereHelperstring
-	TemplateName   whereHelpernull_String
+	TemplateName   whereHelperstring
 	YearStart      whereHelperint
 	YearEnd        whereHelperint
 	ModelWhitelist whereHelpertypes_StringArray
@@ -111,7 +110,7 @@ var TemplateVehicleWhere = struct {
 	UpdatedAt      whereHelpertime_Time
 }{
 	MakeSlug:       whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"template_vehicles\".\"make_slug\""},
-	TemplateName:   whereHelpernull_String{field: "\"vehicle_signal_decoding_api\".\"template_vehicles\".\"template_name\""},
+	TemplateName:   whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"template_vehicles\".\"template_name\""},
 	YearStart:      whereHelperint{field: "\"vehicle_signal_decoding_api\".\"template_vehicles\".\"year_start\""},
 	YearEnd:        whereHelperint{field: "\"vehicle_signal_decoding_api\".\"template_vehicles\".\"year_end\""},
 	ModelWhitelist: whereHelpertypes_StringArray{field: "\"vehicle_signal_decoding_api\".\"template_vehicles\".\"model_whitelist\""},
@@ -148,8 +147,8 @@ type templateVehicleL struct{}
 
 var (
 	templateVehicleAllColumns            = []string{"make_slug", "template_name", "year_start", "year_end", "model_whitelist", "created_at", "updated_at"}
-	templateVehicleColumnsWithoutDefault = []string{"make_slug", "year_start", "year_end"}
-	templateVehicleColumnsWithDefault    = []string{"template_name", "model_whitelist", "created_at", "updated_at"}
+	templateVehicleColumnsWithoutDefault = []string{"make_slug", "template_name", "year_start", "year_end"}
+	templateVehicleColumnsWithDefault    = []string{"model_whitelist", "created_at", "updated_at"}
 	templateVehiclePrimaryKeyColumns     = []string{"make_slug", "year_start", "year_end"}
 	templateVehicleGeneratedColumns      = []string{}
 )
@@ -476,9 +475,7 @@ func (templateVehicleL) LoadTemplateNameTemplate(ctx context.Context, e boil.Con
 		if object.R == nil {
 			object.R = &templateVehicleR{}
 		}
-		if !queries.IsNil(object.TemplateName) {
-			args = append(args, object.TemplateName)
-		}
+		args = append(args, object.TemplateName)
 
 	} else {
 	Outer:
@@ -488,14 +485,12 @@ func (templateVehicleL) LoadTemplateNameTemplate(ctx context.Context, e boil.Con
 			}
 
 			for _, a := range args {
-				if queries.Equal(a, obj.TemplateName) {
+				if a == obj.TemplateName {
 					continue Outer
 				}
 			}
 
-			if !queries.IsNil(obj.TemplateName) {
-				args = append(args, obj.TemplateName)
-			}
+			args = append(args, obj.TemplateName)
 
 		}
 	}
@@ -553,7 +548,7 @@ func (templateVehicleL) LoadTemplateNameTemplate(ctx context.Context, e boil.Con
 
 	for _, local := range slice {
 		for _, foreign := range resultSlice {
-			if queries.Equal(local.TemplateName, foreign.TemplateName) {
+			if local.TemplateName == foreign.TemplateName {
 				local.R.TemplateNameTemplate = foreign
 				if foreign.R == nil {
 					foreign.R = &templateR{}
@@ -594,7 +589,7 @@ func (o *TemplateVehicle) SetTemplateNameTemplate(ctx context.Context, exec boil
 		return errors.Wrap(err, "failed to update local table")
 	}
 
-	queries.Assign(&o.TemplateName, related.TemplateName)
+	o.TemplateName = related.TemplateName
 	if o.R == nil {
 		o.R = &templateVehicleR{
 			TemplateNameTemplate: related,
@@ -611,39 +606,6 @@ func (o *TemplateVehicle) SetTemplateNameTemplate(ctx context.Context, exec boil
 		related.R.TemplateNameTemplateVehicles = append(related.R.TemplateNameTemplateVehicles, o)
 	}
 
-	return nil
-}
-
-// RemoveTemplateNameTemplate relationship.
-// Sets o.R.TemplateNameTemplate to nil.
-// Removes o from all passed in related items' relationships struct.
-func (o *TemplateVehicle) RemoveTemplateNameTemplate(ctx context.Context, exec boil.ContextExecutor, related *Template) error {
-	var err error
-
-	queries.SetScanner(&o.TemplateName, nil)
-	if _, err = o.Update(ctx, exec, boil.Whitelist("template_name")); err != nil {
-		return errors.Wrap(err, "failed to update local table")
-	}
-
-	if o.R != nil {
-		o.R.TemplateNameTemplate = nil
-	}
-	if related == nil || related.R == nil {
-		return nil
-	}
-
-	for i, ri := range related.R.TemplateNameTemplateVehicles {
-		if queries.Equal(o.TemplateName, ri.TemplateName) {
-			continue
-		}
-
-		ln := len(related.R.TemplateNameTemplateVehicles)
-		if ln > 1 && i < ln-1 {
-			related.R.TemplateNameTemplateVehicles[i] = related.R.TemplateNameTemplateVehicles[ln-1]
-		}
-		related.R.TemplateNameTemplateVehicles = related.R.TemplateNameTemplateVehicles[:ln-1]
-		break
-	}
 	return nil
 }
 
