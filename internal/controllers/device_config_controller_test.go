@@ -72,5 +72,9 @@ func TestGetPIDsByTemplate(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, 1, len(pids))
 		assert.Equal(t, samplePID.ID, pids[0].ID)
+
+		// Teardown: cleanup after test
+		test.TruncateTables(pdb.DBS().Writer.DB, t)
+
 	})
 }
