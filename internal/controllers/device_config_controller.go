@@ -9,7 +9,7 @@ import (
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 	"github.com/gofiber/fiber/v2"
-	_ "github.com/lib/pq"
+	_ "github.com/lib/pq" //nolint
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -117,21 +117,21 @@ type PowerConfig struct {
 // @Router       /device-config/:template_name/pids [get]
 func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 	templateName := c.Params("template_name")
-	var pids []PIDConfig
 
 	/// Query the database to get the PIDs based on the template name using SQLBoiler
 	pidConfigs, err := models.PidConfigs(
 		models.PidConfigWhere.TemplateName.EQ(templateName),
 	).All(c.Context(), d.db)
 
-	// Error handling
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return fiber.NewError(fiber.StatusNotFound, "No PID data found for the given template name.")
 		}
 		return errors.Wrap(err, "Failed to retrieve PID Configs")
 	}
+
 	// Convert SQLBoiler model
+	pids := make([]PIDConfig, len(pidConfigs))
 	for _, pidConfig := range pidConfigs {
 		pid := PIDConfig{
 			ID:              pidConfig.ID,

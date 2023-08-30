@@ -4,9 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/stretchr/testify/require"
 	"io"
 	"os"
 	"testing"
+
+	"github.com/volatiletech/null/v8"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
@@ -14,7 +18,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
-	"github.com/volatiletech/sqlboiler/v4"
 )
 
 const migrationsDirRelPath = "../infrastructure/db/migrations"
@@ -46,7 +49,7 @@ func TestGetPIDsByTemplate(t *testing.T) {
 		Pid:             []byte("05"),
 		Formula:         "A*5",
 		IntervalSeconds: 60,
-		Version:         "1.0",
+		Version:         null.StringFrom("1.0"),
 	}
 
 	err := pc.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
@@ -70,7 +73,7 @@ func TestGetPIDsByTemplate(t *testing.T) {
 		pids := make([]PIDConfig, 0)
 		err = json.Unmarshal(body, &pids)
 		assert.NoError(t, err)
-		assert.Equal(t, 1, len(pids))
+		require.Equal(t, 1, len(pids))
 		assert.Equal(t, pc.ID, pids[0].ID)
 		assert.Equal(t, pc.Header, pids[0].Header)
 		assert.Equal(t, pc.Mode, pids[0].Mode)
