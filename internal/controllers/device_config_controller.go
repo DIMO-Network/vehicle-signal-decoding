@@ -80,16 +80,14 @@ func getConfigurationVersion(configType string, templateName string, db *sql.DB)
 }
 
 type PIDConfig struct {
-	ID              int64     `json:"id"`
-	TemplateName    string    `json:"template_name,omitempty"`
-	Header          []byte    `json:"header"`
-	Mode            []byte    `json:"mode"`
-	Pid             []byte    `json:"pid"`
-	Formula         string    `json:"formula"`
-	IntervalSeconds int       `json:"interval_seconds"`
-	Version         string    `json:"version,omitempty"`
-	CreatedAt       time.Time `json:"created_at"`
-	UpdatedAt       time.Time `json:"updated_at"`
+	ID              int64  `json:"id"`
+	TemplateName    string `json:"template_name,omitempty"`
+	Header          []byte `json:"header"`
+	Mode            []byte `json:"mode"`
+	Pid             []byte `json:"pid"`
+	Formula         string `json:"formula"`
+	IntervalSeconds int    `json:"interval_seconds"`
+	Version         string `json:"version,omitempty"`
 }
 
 type PowerConfig struct {
