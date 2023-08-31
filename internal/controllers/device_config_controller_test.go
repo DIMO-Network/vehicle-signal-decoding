@@ -97,3 +97,120 @@ func TestGetPIDsByTemplate(t *testing.T) {
 
 	})
 }
+
+func TestGetPowerByTemplate(t *testing.T) {
+	// Arrange: db and route setup
+	logger := zerolog.New(os.Stdout).With().
+		Timestamp().
+		Str("app", "vehicle-signal-decoding").
+		Logger()
+
+	ctx := context.Background()
+
+	// Start test database in a Docker container
+	pdb, container := test.StartContainerDatabase(ctx, t, migrationsDirRelPath)
+	defer func() {
+		if err := container.Terminate(ctx); err != nil {
+			t.Fatal(err)
+		}
+	}()
+
+	template := models.Template{
+		TemplateName: "examplePowerTemplate",
+		// etc
+	}
+	err := template.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err)
+
+	pc := models.PowerConfig{
+		ID:           1,
+		TemplateName: "examplePowerTemplate",
+		Version:      "1.0",
+		//etc
+	}
+
+	err = pc.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err)
+
+	c := NewDeviceConfigController(&config.Settings{Port: "3000"}, &logger, pdb.DBS().Reader.DB)
+	app := fiber.New()
+	app.Get("/device-config/power/:template_name", c.GetPowerByTemplate)
+
+	t.Run("GET - Power by Template", func(t *testing.T) {
+		// Act: make the request
+		request := test.BuildRequest("GET", "/device-config/power/"+template.TemplateName, "")
+		response, _ := app.Test(request)
+		body, _ := io.ReadAll(response.Body)
+
+		// Assert: check the results
+		if assert.Equal(t, fiber.StatusOK, response.StatusCode) == false {
+			fmt.Println("response body: " + string(body))
+		}
+
+		var powerConfig PowerConfig
+		err = json.Unmarshal(body, &powerConfig)
+		assert.NoError(t, err)
+
+		fmt.Printf("Received PowerConfig: %v\n", powerConfig)
+
+		assert.Equal(t, pc.ID, powerConfig.ID)
+		assert.Equal(t, pc.Version, powerConfig.Version)
+		// assert other fields here
+
+		// Teardown: cleanup after test
+		test.TruncateTables(pdb.DBS().Writer.DB, t)
+	})
+}
+func TestGetDBCFileByTemplateName(t *testing.T) {
+	// Arrange: db and route setup
+	logger := zerolog.New(os.Stdout).With().
+		Timestamp().
+		Str("app", "vehicle-signal-decoding").
+		Logger()
+
+	ctx := context.Background()
+
+	// Spin up test database in a Docker container
+	pdb, container := test.StartContainerDatabase(ctx, t, migrationsDirRelPath)
+	defer func() {
+		if err := container.Terminate(ctx); err != nil {
+			t.Fatal(err)
+		}
+	}()
+
+	template := models.Template{
+		TemplateName: "exampleDBCFileTemplate",
+		// etc
+	}
+	err := template.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err)
+
+	dbcf := models.DBCFile{
+		TemplateName: "exampleDBCFileTemplate",
+		DBCFile:      "ThisIsTheDBCFileContent",
+	}
+
+	err = dbcf.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err)
+
+	c := NewDeviceConfigController(&config.Settings{Port: "3000"}, &logger, pdb.DBS().Reader.DB)
+	app := fiber.New()
+	app.Get("/device-config/dbc/:template_name", c.GetDBCFileByTemplateName)
+
+	t.Run("GET - DBCFile by TemplateName", func(t *testing.T) {
+		// Act: make the request
+		request := test.BuildRequest("GET", "/device-config/dbc/"+template.TemplateName, "")
+		response, _ := app.Test(request)
+		body, _ := io.ReadAll(response.Body)
+
+		// Assert: check the results
+		if assert.Equal(t, fiber.StatusOK, response.StatusCode) == false {
+			fmt.Println("response body: " + string(body))
+		}
+
+		assert.Equal(t, dbcf.DBCFile, string(body))
+
+		// Teardown: cleanup after test
+		test.TruncateTables(pdb.DBS().Writer.DB, t)
+	})
+}
