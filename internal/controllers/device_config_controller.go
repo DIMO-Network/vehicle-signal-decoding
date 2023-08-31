@@ -12,6 +12,7 @@ import (
 	_ "github.com/lib/pq" //nolint
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
@@ -28,15 +29,6 @@ func NewDeviceConfigController(settings *config.Settings, logger *zerolog.Logger
 		log:      logger,
 		db:       database,
 	}
-}
-
-// InitializeDatabaseConnection connect to postgres driver
-func InitializeDatabaseConnection(connStr string) (*sql.DB, error) {
-	db, err := sql.Open("postgres", connStr)
-	if err != nil {
-		return nil, err
-	}
-	return db, db.Ping()
 }
 
 // resolveTemplateName retrieves associated template and parent given a serial
@@ -69,13 +61,37 @@ func resolveTemplateName(serial string, db *sql.DB) (string, string, error) {
 	return template.TemplateName, parentTemplateName, nil
 }
 
-func getConfigurationVersion(configType string, templateName string, db *sql.DB) (string, error) {
-	query := fmt.Sprintf("SELECT version FROM %s_configs WHERE template_name = $1", configType)
+func getConfigurationVersion(configType string, templateName string, db boil.ContextExecutor) (string, error) {
+	var err error
 	var version string
-	err := db.QueryRow(query, templateName).Scan(&version)
+
+	switch configType {
+	case "pid":
+		pid, err := models.PidConfigs(models.PidConfigWhere.TemplateName.EQ(templateName)).One(context.Background(), db)
+		if err == nil {
+			version = pid.Version
+		}
+	case "power":
+		power, err := models.PowerConfigs(models.PowerConfigWhere.TemplateName.EQ(templateName)).One(context.Background(), db)
+		if err == nil {
+			version = power.Version
+		}
+	case "dbc":
+		dbc, err := models.DBCFiles(models.DBCFileWhere.TemplateName.EQ(templateName)).One(context.Background(), db)
+		if err == nil {
+			version = dbc.Version
+		}
+	default:
+		return "", fmt.Errorf("Unknown config type: %s", configType)
+	}
+
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return "", fmt.Errorf("No version found for config type: %s, and template name: %s", configType, templateName)
+		}
 		return "", err
 	}
+
 	return version, nil
 }
 
@@ -212,7 +228,12 @@ func (d *DeviceConfigController) GetDBCFileByTemplateName(c *fiber.Ctx) error {
 	}
 
 	// Return the DBC file itself
-	return c.Status(fiber.StatusOK).SendString(dbResult.DBCFile)
+	if c.Accepts("text/plain") == "text/plain" {
+		c.Status(fiber.StatusOK).Set("Content-Type", "text/plain")
+		return c.SendString(dbResult.DBCFile)
+	}
+	return c.Status(fiber.StatusNotAcceptable).SendString("Not Acceptable")
+
 }
 
 // GetConfigURLs godoc

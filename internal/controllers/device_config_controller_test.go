@@ -63,12 +63,12 @@ func TestGetPIDsByTemplate(t *testing.T) {
 
 	c := NewDeviceConfigController(&config.Settings{Port: "3000"}, &logger, pdb.DBS().Reader.DB)
 	app := fiber.New()
-	app.Get("/device-config/pid/:template_name", c.GetPIDsByTemplate)
+	app.Get("/device-config/:template_name/pids", c.GetPIDsByTemplate)
 
 	t.Run("GET - PID by Template", func(t *testing.T) {
 
 		// Act: make the request
-		request := test.BuildRequest("GET", "/device-config/pid/"+template.TemplateName, "")
+		request := test.BuildRequest("GET", "/device-config/"+template.TemplateName+"/pids", "")
 		response, _ := app.Test(request)
 		body, _ := io.ReadAll(response.Body)
 
@@ -134,11 +134,11 @@ func TestGetPowerByTemplate(t *testing.T) {
 
 	c := NewDeviceConfigController(&config.Settings{Port: "3000"}, &logger, pdb.DBS().Reader.DB)
 	app := fiber.New()
-	app.Get("/device-config/power/:template_name", c.GetPowerByTemplate)
+	app.Get("/device-config/:template_name/powerConfigs", c.GetPowerByTemplate)
 
 	t.Run("GET - Power by Template", func(t *testing.T) {
 		// Act: make the request
-		request := test.BuildRequest("GET", "/device-config/power/"+template.TemplateName, "")
+		request := test.BuildRequest("GET", "/device-config/"+template.TemplateName+"/powerConfigs", "")
 		response, _ := app.Test(request)
 		body, _ := io.ReadAll(response.Body)
 
@@ -195,11 +195,11 @@ func TestGetDBCFileByTemplateName(t *testing.T) {
 
 	c := NewDeviceConfigController(&config.Settings{Port: "3000"}, &logger, pdb.DBS().Reader.DB)
 	app := fiber.New()
-	app.Get("/device-config/dbc/:template_name", c.GetDBCFileByTemplateName)
+	app.Get("/device-config/:template_name/dbc-file", c.GetDBCFileByTemplateName)
 
 	t.Run("GET - DBCFile by TemplateName", func(t *testing.T) {
 		// Act: make the request
-		request := test.BuildRequest("GET", "/device-config/dbc/"+template.TemplateName, "")
+		request := test.BuildRequest("GET", "/device-config/"+template.TemplateName+"/dbc-file", "")
 		response, _ := app.Test(request)
 		body, _ := io.ReadAll(response.Body)
 
