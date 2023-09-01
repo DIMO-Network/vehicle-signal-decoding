@@ -16,7 +16,7 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/device-config/{vin}/dbc": {
+        "/device-config/:vin/dbc": {
             "get": {
                 "description": "Retrieve the URL pointing to the DBC file for a given VIN",
                 "produces": [
@@ -44,7 +44,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/device-config/{vin}/pid": {
+        "/device-config/:vin/pid": {
             "get": {
                 "description": "Retrieve the PID configuration based on a given VIN",
                 "produces": [
@@ -72,7 +72,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/device-config/{vin}/power": {
+        "/device-config/:vin/power": {
             "get": {
                 "description": "Retrieve the power configuration based on a given VIN",
                 "produces": [
@@ -95,6 +95,37 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/controllers.PowerConfig"
+                        }
+                    }
+                }
+            }
+        },
+        "/device-config/:vin/urls": {
+            "get": {
+                "description": "Retrieve the URLs for PID, Power, and DBC configuration based on a given VIN",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "vehicle-signal-decoding"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "vehicle identification number (VIN)",
+                        "name": "vin",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     }
                 }
