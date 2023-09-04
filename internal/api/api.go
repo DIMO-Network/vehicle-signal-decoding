@@ -82,6 +82,7 @@ func startVehicleSignalConsumer(logger zerolog.Logger, settings *config.Settings
 }
 
 func startMonitoringServer(logger zerolog.Logger, settings *config.Settings) {
+	logger = logger.With().Str("fiber-app", "monitoring").Logger()
 	monApp := fiber.New(fiber.Config{
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			return ErrorHandler(c, err, logger)
@@ -120,6 +121,10 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 		StackTraceHandler: nil,
 	}))
 	app.Use(cors.New())
+
+	app.Get("/health", func(c *fiber.Ctx) error {
+		return c.Status(fiber.StatusOK).SendString("healthy")
+	})
 
 	deviceConfigController := controllers.NewDeviceConfigController(settings, &logger, database.DBS().Reader.DB)
 
