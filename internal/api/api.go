@@ -88,6 +88,9 @@ func startMonitoringServer(logger zerolog.Logger, settings *config.Settings) {
 		},
 		DisableStartupMessage: true,
 	})
+	monApp.Get("/health", func(c *fiber.Ctx) error {
+		return c.Status(fiber.StatusOK).SendString("healthy")
+	})
 	monApp.Get("/metrics", adaptor.HTTPHandler(promhttp.Handler()))
 
 	go func() {
@@ -119,10 +122,6 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 	app.Use(cors.New())
 
 	deviceConfigController := controllers.NewDeviceConfigController(settings, &logger, database.DBS().Reader.DB)
-
-	app.Get("/health", func(c *fiber.Ctx) error {
-		return c.Status(fiber.StatusOK).SendString("healthy")
-	})
 
 	v1 := app.Group("/v1")
 
