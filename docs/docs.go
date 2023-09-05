@@ -16,11 +16,11 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/device-config/:vin/dbc": {
+        "/device-config/:template_name/dbc-file": {
             "get": {
-                "description": "Retrieve the URL pointing to the DBC file for a given VIN",
+                "description": "Fetches the DBC file from the dbc_files table given a template name",
                 "produces": [
-                    "application/json"
+                    "text/plain"
                 ],
                 "tags": [
                     "vehicle-signal-decoding"
@@ -28,25 +28,28 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "vehicle identification number (VIN)",
-                        "name": "vin",
+                        "description": "template name",
+                        "name": "template_name",
                         "in": "path",
                         "required": true
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Successfully retrieved DBC file",
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    "404": {
+                        "description": "No DBC file found for the given template name."
                     }
                 }
             }
         },
-        "/device-config/:vin/pid": {
+        "/device-config/:template_name/pids": {
             "get": {
-                "description": "Retrieve the PID configuration based on a given VIN",
+                "description": "Retrieves a list of PID configurations from the database given a template name",
                 "produces": [
                     "application/json"
                 ],
@@ -56,25 +59,31 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "vehicle identification number (VIN)",
-                        "name": "vin",
+                        "description": "template name",
+                        "name": "template_name",
                         "in": "path",
                         "required": true
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Successfully retrieved PID Configurations",
                         "schema": {
-                            "$ref": "#/definitions/controllers.PIDConfig"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/controllers.PIDConfig"
+                            }
                         }
+                    },
+                    "404": {
+                        "description": "No PID Config data found for the given template name."
                     }
                 }
             }
         },
-        "/device-config/:vin/power": {
+        "/device-config/:template_name/power": {
             "get": {
-                "description": "Retrieve the power configuration based on a given VIN",
+                "description": "Fetches the power configurations from power_configs table given a template name",
                 "produces": [
                     "application/json"
                 ],
@@ -84,18 +93,21 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "vehicle identification number (VIN)",
-                        "name": "vin",
+                        "description": "template name",
+                        "name": "template_name",
                         "in": "path",
                         "required": true
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Successfully retrieved Power Configurations",
                         "schema": {
                             "$ref": "#/definitions/controllers.PowerConfig"
                         }
+                    },
+                    "404": {
+                        "description": "No Power Config data found for the given template name."
                     }
                 }
             }
@@ -140,85 +152,75 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "header": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "id": {
                     "type": "integer"
                 },
-                "intervalSeconds": {
+                "interval_seconds": {
                     "type": "integer"
                 },
                 "mode": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
                 },
                 "pid": {
-                    "type": "integer"
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "template_name": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "string"
                 }
             }
         },
         "controllers.PowerConfig": {
             "type": "object",
             "properties": {
-                "battery": {
-                    "type": "object",
-                    "properties": {
-                        "critical_level": {
-                            "type": "object",
-                            "properties": {
-                                "voltage": {
-                                    "type": "string"
-                                }
-                            }
-                        }
-                    }
+                "battery_critical_level_voltage": {
+                    "type": "string"
                 },
-                "safety_cut-out": {
-                    "type": "object",
-                    "properties": {
-                        "voltage": {
-                            "type": "string"
-                        }
-                    }
+                "created_at": {
+                    "type": "string"
                 },
-                "sleep_timer": {
-                    "type": "object",
-                    "properties": {
-                        "event_driven": {
-                            "type": "object",
-                            "properties": {
-                                "interval": {
-                                    "type": "string"
-                                },
-                                "period": {
-                                    "type": "string"
-                                }
-                            }
-                        },
-                        "inactivity_after_sleep": {
-                            "type": "object",
-                            "properties": {
-                                "interval": {
-                                    "type": "string"
-                                }
-                            }
-                        },
-                        "inactivity_fallback": {
-                            "type": "object",
-                            "properties": {
-                                "interval": {
-                                    "type": "string"
-                                }
-                            }
-                        }
-                    }
+                "id": {
+                    "type": "integer"
                 },
-                "wake_trigger": {
-                    "type": "object",
-                    "properties": {
-                        "voltage_level": {
-                            "type": "string"
-                        }
-                    }
+                "safety_cut_out_voltage": {
+                    "type": "string"
+                },
+                "sleep_timer_event_driven_interval": {
+                    "type": "string"
+                },
+                "sleep_timer_event_driven_period": {
+                    "type": "string"
+                },
+                "sleep_timer_inactivity_after_sleep_interval": {
+                    "type": "string"
+                },
+                "sleep_timer_inactivity_fallback_interval": {
+                    "type": "string"
+                },
+                "template_name": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "string"
+                },
+                "wake_trigger_voltage_level": {
+                    "type": "string"
                 }
             }
         }
