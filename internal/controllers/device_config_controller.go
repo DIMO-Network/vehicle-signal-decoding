@@ -4,16 +4,20 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
+	"github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
 	"github.com/gofiber/fiber/v2"
 	_ "github.com/lib/pq" //nolint
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 )
 
 type DeviceConfigController struct {
@@ -121,6 +125,18 @@ type PowerConfig struct {
 	UpdatedAt                              time.Time `json:"updated_at"`
 }
 
+// ProtobufToJSON converts a Protobuf message to its JSON representation.
+func ProtobufToJSON(message proto.Message) (string, error) {
+	marshaler := protojson.MarshalOptions{
+		UseProtoNames: true,
+	}
+	bytes, err := marshaler.Marshal(message)
+	if err != nil {
+		return "", err
+	}
+	return string(bytes), nil
+}
+
 // GetPIDsByTemplate godoc
 // @Description  Retrieves a list of PID configurations from the database given a template name
 // @Tags         vehicle-signal-decoding
@@ -144,7 +160,40 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 		return errors.Wrap(err, "Failed to retrieve PID Configs")
 	}
 
-	// Convert SQLBoiler model
+	acceptHeader := c.Get("Accept", "application/json")
+
+	if acceptHeader == "application/x-protobuf" {
+		protoPIDs := &grpc.PIDConfigList{}
+		for _, pidConfig := range pidConfigs {
+			pid := &grpc.PIDConfig{
+				ID:              pidConfig.ID,
+				Header:          pidConfig.Header,
+				Mode:            pidConfig.Mode,
+				Pid:             pidConfig.Pid,
+				Formula:         pidConfig.Formula,
+				IntervalSeconds: int32(pidConfig.IntervalSeconds),
+				Version:         pidConfig.Version,
+			}
+			protoPIDs.Items = append(protoPIDs.Items, pid)
+		}
+
+		out, err := proto.Marshal(protoPIDs)
+		if err != nil {
+			return errors.Wrap(err, "Failed to serialize to protobuf")
+		}
+
+		// Debugging
+		jsonStr, err := ProtobufToJSON(protoPIDs)
+		if err != nil {
+			log.Printf("Failed to convert Protobuf to JSON: %v", err)
+		} else {
+			log.Printf("Protobuf as JSON: %s", jsonStr)
+		}
+
+		c.Set("Content-Type", "application/x-protobuf")
+
+		return c.Send(out)
+	}
 	pids := make([]PIDConfig, len(pidConfigs))
 	for i, pidConfig := range pidConfigs {
 		pid := PIDConfig{
@@ -158,8 +207,8 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 		}
 		pids[i] = pid
 	}
-
 	return c.JSON(pids)
+
 }
 
 // GetPowerByTemplate godoc
