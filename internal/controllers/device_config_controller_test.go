@@ -99,6 +99,7 @@ func TestGetPIDsByTemplate(t *testing.T) {
 }
 
 func TestGetDeviceSettingsByTemplate(t *testing.T) {
+
 	// Arrange: db and route setup
 	logger := zerolog.New(os.Stdout).With().
 		Timestamp().
@@ -107,7 +108,7 @@ func TestGetDeviceSettingsByTemplate(t *testing.T) {
 
 	ctx := context.Background()
 
-	// Start test database in a Docker container
+	// Spin up test database in a Docker container
 	pdb, container := test.StartContainerDatabase(ctx, t, migrationsDirRelPath)
 	defer func() {
 		if err := container.Terminate(ctx); err != nil {
@@ -116,29 +117,32 @@ func TestGetDeviceSettingsByTemplate(t *testing.T) {
 	}()
 
 	template := models.Template{
-		TemplateName: "exampleDeviceSettingsTemplate",
-		// etc
+		TemplateName: "testTemplate",
 	}
-	err := template.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+	err := template.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	assert.NoError(t, err)
 
-	pc := models.PowerConfig{
-		ID:           1,
-		TemplateName: "exampleDeviceSettings",
-		Version:      "1.0",
+	ds := models.DeviceSetting{
+		ID:                            1,
+		TemplateName:                  "testTemplate",
+		Version:                       "1.0",
+		BatteryCriticalLevelVoltage:   "3.2V",
+		SafetyCutOutVoltage:           "2.8V",
+		SleepTimerEventDrivenInterval: "5s",
 		//etc
 	}
 
-	err = pc.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+	err = ds.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	assert.NoError(t, err)
 
 	c := NewDeviceConfigController(&config.Settings{Port: "3000"}, &logger, pdb.DBS().Reader.DB)
 	app := fiber.New()
-	app.Get("/device-config/:template_name/deviceSettings", c.GetDeviceSettingsByTemplate)
+	app.Get("/device-config/:template_name", c.GetDeviceSettingsByTemplate)
 
 	t.Run("GET - Device Settings by Template", func(t *testing.T) {
+
 		// Act: make the request
-		request := test.BuildRequest("GET", "/device-config/"+template.TemplateName+"/deviceSettings", "")
+		request := test.BuildRequest("GET", "/device-config/"+template.TemplateName, "")
 		response, _ := app.Test(request)
 		body, _ := io.ReadAll(response.Body)
 
@@ -147,20 +151,22 @@ func TestGetDeviceSettingsByTemplate(t *testing.T) {
 			fmt.Println("response body: " + string(body))
 		}
 
-		var deviceSettings DeviceSetting
-		err = json.Unmarshal(body, &deviceSettings)
+		var receivedDS DeviceSetting
+		err = json.Unmarshal(body, &receivedDS)
 		assert.NoError(t, err)
 
-		fmt.Printf("Received PowerConfig: %v\n", deviceSettings)
-
-		assert.Equal(t, pc.ID, deviceSettings.ID)
-		assert.Equal(t, pc.Version, deviceSettings.Version)
-		// assert other fields here
+		assert.Equal(t, ds.ID, receivedDS.ID)
+		assert.Equal(t, ds.Version, receivedDS.Version)
+		assert.Equal(t, ds.BatteryCriticalLevelVoltage, receivedDS.BatteryCriticalLevelVoltage)
+		assert.Equal(t, ds.SafetyCutOutVoltage, receivedDS.SafetyCutOutVoltage)
+		assert.Equal(t, ds.SleepTimerEventDrivenInterval, receivedDS.SleepTimerEventDrivenInterval)
 
 		// Teardown: cleanup after test
 		test.TruncateTables(pdb.DBS().Writer.DB, t)
+
 	})
 }
+
 func TestGetDBCFileByTemplateName(t *testing.T) {
 	// Arrange: db and route setup
 	logger := zerolog.New(os.Stdout).With().
