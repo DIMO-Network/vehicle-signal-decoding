@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS pid_configs (
     formula text NOT NULL,
     interval_seconds INTEGER NOT NULL,
     version text NOT NULL,
+    protocol text NOT NULL,
     created_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
 

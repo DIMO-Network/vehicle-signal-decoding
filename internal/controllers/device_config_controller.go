@@ -109,6 +109,7 @@ type PIDConfig struct {
 	Formula         string `json:"formula"`
 	IntervalSeconds int    `json:"interval_seconds"`
 	Version         string `json:"version,omitempty"`
+	Protocol        string `json:"protocol,omitempty"`
 }
 
 type DeviceSetting struct {
@@ -198,6 +199,7 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 				Formula:         pidConfig.Formula,
 				IntervalSeconds: int32(pidConfig.IntervalSeconds),
 				Version:         pidConfig.Version,
+				Protocol:        pidConfig.Protocol,
 			}
 			protoPIDs.Requests = append(protoPIDs.Requests, pid)
 		}
@@ -229,6 +231,7 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 			Formula:         pidConfig.Formula,
 			IntervalSeconds: pidConfig.IntervalSeconds,
 			Version:         pidConfig.Version,
+			Protocol:        pidConfig.Protocol,
 		}
 		pids[i] = pid
 	}

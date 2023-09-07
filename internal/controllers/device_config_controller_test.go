@@ -56,6 +56,7 @@ func TestGetPIDsByTemplate(t *testing.T) {
 		Formula:         "A*5",
 		IntervalSeconds: 60,
 		Version:         "1.0",
+		Protocol:        "CAN 11",
 	}
 
 	errr := pc.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
@@ -91,6 +92,7 @@ func TestGetPIDsByTemplate(t *testing.T) {
 		assert.Equal(t, pc.Formula, pids[0].Formula)
 		assert.Equal(t, pc.IntervalSeconds, pids[0].IntervalSeconds)
 		assert.Equal(t, pc.Version, pids[0].Version)
+		assert.Equal(t, pc.Protocol, pids[0].Protocol)
 
 		// Teardown: cleanup after test
 		test.TruncateTables(pdb.DBS().Writer.DB, t)

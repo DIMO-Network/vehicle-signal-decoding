@@ -31,6 +31,7 @@ type PidConfig struct {
 	Formula         string    `boil:"formula" json:"formula" toml:"formula" yaml:"formula"`
 	IntervalSeconds int       `boil:"interval_seconds" json:"interval_seconds" toml:"interval_seconds" yaml:"interval_seconds"`
 	Version         string    `boil:"version" json:"version" toml:"version" yaml:"version"`
+	Protocol        string    `boil:"protocol" json:"protocol" toml:"protocol" yaml:"protocol"`
 	CreatedAt       time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 	UpdatedAt       time.Time `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
 
@@ -47,6 +48,7 @@ var PidConfigColumns = struct {
 	Formula         string
 	IntervalSeconds string
 	Version         string
+	Protocol        string
 	CreatedAt       string
 	UpdatedAt       string
 }{
@@ -58,6 +60,7 @@ var PidConfigColumns = struct {
 	Formula:         "formula",
 	IntervalSeconds: "interval_seconds",
 	Version:         "version",
+	Protocol:        "protocol",
 	CreatedAt:       "created_at",
 	UpdatedAt:       "updated_at",
 }
@@ -71,6 +74,7 @@ var PidConfigTableColumns = struct {
 	Formula         string
 	IntervalSeconds string
 	Version         string
+	Protocol        string
 	CreatedAt       string
 	UpdatedAt       string
 }{
@@ -82,6 +86,7 @@ var PidConfigTableColumns = struct {
 	Formula:         "pid_configs.formula",
 	IntervalSeconds: "pid_configs.interval_seconds",
 	Version:         "pid_configs.version",
+	Protocol:        "pid_configs.protocol",
 	CreatedAt:       "pid_configs.created_at",
 	UpdatedAt:       "pid_configs.updated_at",
 }
@@ -106,6 +111,7 @@ var PidConfigWhere = struct {
 	Formula         whereHelperstring
 	IntervalSeconds whereHelperint
 	Version         whereHelperstring
+	Protocol        whereHelperstring
 	CreatedAt       whereHelpertime_Time
 	UpdatedAt       whereHelpertime_Time
 }{
@@ -117,6 +123,7 @@ var PidConfigWhere = struct {
 	Formula:         whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"formula\""},
 	IntervalSeconds: whereHelperint{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"interval_seconds\""},
 	Version:         whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"version\""},
+	Protocol:        whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"protocol\""},
 	CreatedAt:       whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"created_at\""},
 	UpdatedAt:       whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"updated_at\""},
 }
@@ -149,8 +156,8 @@ func (r *pidConfigR) GetTemplateNameTemplate() *Template {
 type pidConfigL struct{}
 
 var (
-	pidConfigAllColumns            = []string{"id", "template_name", "header", "mode", "pid", "formula", "interval_seconds", "version", "created_at", "updated_at"}
-	pidConfigColumnsWithoutDefault = []string{"template_name", "header", "mode", "pid", "formula", "interval_seconds", "version"}
+	pidConfigAllColumns            = []string{"id", "template_name", "header", "mode", "pid", "formula", "interval_seconds", "version", "protocol", "created_at", "updated_at"}
+	pidConfigColumnsWithoutDefault = []string{"template_name", "header", "mode", "pid", "formula", "interval_seconds", "version", "protocol"}
 	pidConfigColumnsWithDefault    = []string{"id", "created_at", "updated_at"}
 	pidConfigPrimaryKeyColumns     = []string{"id"}
 	pidConfigGeneratedColumns      = []string{}

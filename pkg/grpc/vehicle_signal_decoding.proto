@@ -15,6 +15,7 @@ message PIDConfig {
     string Formula = 5;
     int32 IntervalSeconds = 6;
     string Version = 7;
+    string Protocol = 8;
 }
 message PIDRequests {
   string templateName = 1;
