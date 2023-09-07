@@ -82,13 +82,13 @@ var TemplateWhere = struct {
 var TemplateRels = struct {
 	TemplateTemplateType         string
 	TemplateNameDBCFile          string
-	TemplateNamePowerConfig      string
+	TemplateNameDeviceSetting    string
 	TemplateNamePidConfigs       string
 	TemplateNameTemplateVehicles string
 }{
 	TemplateTemplateType:         "TemplateTemplateType",
 	TemplateNameDBCFile:          "TemplateNameDBCFile",
-	TemplateNamePowerConfig:      "TemplateNamePowerConfig",
+	TemplateNameDeviceSetting:    "TemplateNameDeviceSetting",
 	TemplateNamePidConfigs:       "TemplateNamePidConfigs",
 	TemplateNameTemplateVehicles: "TemplateNameTemplateVehicles",
 }
@@ -97,7 +97,7 @@ var TemplateRels = struct {
 type templateR struct {
 	TemplateTemplateType         *TemplateType        `boil:"TemplateTemplateType" json:"TemplateTemplateType" toml:"TemplateTemplateType" yaml:"TemplateTemplateType"`
 	TemplateNameDBCFile          *DBCFile             `boil:"TemplateNameDBCFile" json:"TemplateNameDBCFile" toml:"TemplateNameDBCFile" yaml:"TemplateNameDBCFile"`
-	TemplateNamePowerConfig      *PowerConfig         `boil:"TemplateNamePowerConfig" json:"TemplateNamePowerConfig" toml:"TemplateNamePowerConfig" yaml:"TemplateNamePowerConfig"`
+	TemplateNameDeviceSetting    *DeviceSetting       `boil:"TemplateNameDeviceSetting" json:"TemplateNameDeviceSetting" toml:"TemplateNameDeviceSetting" yaml:"TemplateNameDeviceSetting"`
 	TemplateNamePidConfigs       PidConfigSlice       `boil:"TemplateNamePidConfigs" json:"TemplateNamePidConfigs" toml:"TemplateNamePidConfigs" yaml:"TemplateNamePidConfigs"`
 	TemplateNameTemplateVehicles TemplateVehicleSlice `boil:"TemplateNameTemplateVehicles" json:"TemplateNameTemplateVehicles" toml:"TemplateNameTemplateVehicles" yaml:"TemplateNameTemplateVehicles"`
 }
@@ -121,11 +121,11 @@ func (r *templateR) GetTemplateNameDBCFile() *DBCFile {
 	return r.TemplateNameDBCFile
 }
 
-func (r *templateR) GetTemplateNamePowerConfig() *PowerConfig {
+func (r *templateR) GetTemplateNameDeviceSetting() *DeviceSetting {
 	if r == nil {
 		return nil
 	}
-	return r.TemplateNamePowerConfig
+	return r.TemplateNameDeviceSetting
 }
 
 func (r *templateR) GetTemplateNamePidConfigs() PidConfigSlice {
@@ -453,15 +453,15 @@ func (o *Template) TemplateNameDBCFile(mods ...qm.QueryMod) dbcFileQuery {
 	return DBCFiles(queryMods...)
 }
 
-// TemplateNamePowerConfig pointed to by the foreign key.
-func (o *Template) TemplateNamePowerConfig(mods ...qm.QueryMod) powerConfigQuery {
+// TemplateNameDeviceSetting pointed to by the foreign key.
+func (o *Template) TemplateNameDeviceSetting(mods ...qm.QueryMod) deviceSettingQuery {
 	queryMods := []qm.QueryMod{
 		qm.Where("\"template_name\" = ?", o.TemplateName),
 	}
 
 	queryMods = append(queryMods, mods...)
 
-	return PowerConfigs(queryMods...)
+	return DeviceSettings(queryMods...)
 }
 
 // TemplateNamePidConfigs retrieves all the pid_config's PidConfigs with an executor via template_name column.
@@ -733,9 +733,9 @@ func (templateL) LoadTemplateNameDBCFile(ctx context.Context, e boil.ContextExec
 	return nil
 }
 
-// LoadTemplateNamePowerConfig allows an eager lookup of values, cached into the
+// LoadTemplateNameDeviceSetting allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for a 1-1 relationship.
-func (templateL) LoadTemplateNamePowerConfig(ctx context.Context, e boil.ContextExecutor, singular bool, maybeTemplate interface{}, mods queries.Applicator) error {
+func (templateL) LoadTemplateNameDeviceSetting(ctx context.Context, e boil.ContextExecutor, singular bool, maybeTemplate interface{}, mods queries.Applicator) error {
 	var slice []*Template
 	var object *Template
 
@@ -789,8 +789,8 @@ func (templateL) LoadTemplateNamePowerConfig(ctx context.Context, e boil.Context
 	}
 
 	query := NewQuery(
-		qm.From(`vehicle_signal_decoding_api.power_configs`),
-		qm.WhereIn(`vehicle_signal_decoding_api.power_configs.template_name in ?`, args...),
+		qm.From(`vehicle_signal_decoding_api.device_settings`),
+		qm.WhereIn(`vehicle_signal_decoding_api.device_settings.template_name in ?`, args...),
 	)
 	if mods != nil {
 		mods.Apply(query)
@@ -798,22 +798,22 @@ func (templateL) LoadTemplateNamePowerConfig(ctx context.Context, e boil.Context
 
 	results, err := query.QueryContext(ctx, e)
 	if err != nil {
-		return errors.Wrap(err, "failed to eager load PowerConfig")
+		return errors.Wrap(err, "failed to eager load DeviceSetting")
 	}
 
-	var resultSlice []*PowerConfig
+	var resultSlice []*DeviceSetting
 	if err = queries.Bind(results, &resultSlice); err != nil {
-		return errors.Wrap(err, "failed to bind eager loaded slice PowerConfig")
+		return errors.Wrap(err, "failed to bind eager loaded slice DeviceSetting")
 	}
 
 	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results of eager load for power_configs")
+		return errors.Wrap(err, "failed to close results of eager load for device_settings")
 	}
 	if err = results.Err(); err != nil {
-		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for power_configs")
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for device_settings")
 	}
 
-	if len(powerConfigAfterSelectHooks) != 0 {
+	if len(deviceSettingAfterSelectHooks) != 0 {
 		for _, obj := range resultSlice {
 			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
 				return err
@@ -827,9 +827,9 @@ func (templateL) LoadTemplateNamePowerConfig(ctx context.Context, e boil.Context
 
 	if singular {
 		foreign := resultSlice[0]
-		object.R.TemplateNamePowerConfig = foreign
+		object.R.TemplateNameDeviceSetting = foreign
 		if foreign.R == nil {
-			foreign.R = &powerConfigR{}
+			foreign.R = &deviceSettingR{}
 		}
 		foreign.R.TemplateNameTemplate = object
 	}
@@ -837,9 +837,9 @@ func (templateL) LoadTemplateNamePowerConfig(ctx context.Context, e boil.Context
 	for _, local := range slice {
 		for _, foreign := range resultSlice {
 			if local.TemplateName == foreign.TemplateName {
-				local.R.TemplateNamePowerConfig = foreign
+				local.R.TemplateNameDeviceSetting = foreign
 				if foreign.R == nil {
-					foreign.R = &powerConfigR{}
+					foreign.R = &deviceSettingR{}
 				}
 				foreign.R.TemplateNameTemplate = local
 				break
@@ -1208,10 +1208,10 @@ func (o *Template) SetTemplateNameDBCFile(ctx context.Context, exec boil.Context
 	return nil
 }
 
-// SetTemplateNamePowerConfig of the template to the related item.
-// Sets o.R.TemplateNamePowerConfig to related.
+// SetTemplateNameDeviceSetting of the template to the related item.
+// Sets o.R.TemplateNameDeviceSetting to related.
 // Adds o to related.R.TemplateNameTemplate.
-func (o *Template) SetTemplateNamePowerConfig(ctx context.Context, exec boil.ContextExecutor, insert bool, related *PowerConfig) error {
+func (o *Template) SetTemplateNameDeviceSetting(ctx context.Context, exec boil.ContextExecutor, insert bool, related *DeviceSetting) error {
 	var err error
 
 	if insert {
@@ -1222,9 +1222,9 @@ func (o *Template) SetTemplateNamePowerConfig(ctx context.Context, exec boil.Con
 		}
 	} else {
 		updateQuery := fmt.Sprintf(
-			"UPDATE \"vehicle_signal_decoding_api\".\"power_configs\" SET %s WHERE %s",
+			"UPDATE \"vehicle_signal_decoding_api\".\"device_settings\" SET %s WHERE %s",
 			strmangle.SetParamNames("\"", "\"", 1, []string{"template_name"}),
-			strmangle.WhereClause("\"", "\"", 2, powerConfigPrimaryKeyColumns),
+			strmangle.WhereClause("\"", "\"", 2, deviceSettingPrimaryKeyColumns),
 		)
 		values := []interface{}{o.TemplateName, related.TemplateName}
 
@@ -1242,14 +1242,14 @@ func (o *Template) SetTemplateNamePowerConfig(ctx context.Context, exec boil.Con
 
 	if o.R == nil {
 		o.R = &templateR{
-			TemplateNamePowerConfig: related,
+			TemplateNameDeviceSetting: related,
 		}
 	} else {
-		o.R.TemplateNamePowerConfig = related
+		o.R.TemplateNameDeviceSetting = related
 	}
 
 	if related.R == nil {
-		related.R = &powerConfigR{
+		related.R = &deviceSettingR{
 			TemplateNameTemplate: o,
 		}
 	} else {

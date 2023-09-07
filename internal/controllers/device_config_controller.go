@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"database/sql"
+	"encoding/binary"
 	"fmt"
 	"log"
 	"time"
@@ -75,10 +76,10 @@ func getConfigurationVersion(configType string, templateName string, db boil.Con
 		if err == nil {
 			version = pid.Version
 		}
-	case "power":
-		power, err := models.PowerConfigs(models.PowerConfigWhere.TemplateName.EQ(templateName)).One(context.Background(), db)
+	case "deviceSettings":
+		deviceSettings, err := models.DeviceSettings(models.DeviceSettingWhere.TemplateName.EQ(templateName)).One(context.Background(), db)
 		if err == nil {
-			version = power.Version
+			version = deviceSettings.Version
 		}
 	case "dbc":
 		dbc, err := models.DBCFiles(models.DBCFileWhere.TemplateName.EQ(templateName)).One(context.Background(), db)
@@ -110,7 +111,7 @@ type PIDConfig struct {
 	Version         string `json:"version,omitempty"`
 }
 
-type PowerConfig struct {
+type DeviceSetting struct {
 	ID                                     int64     `json:"id"`
 	Version                                string    `json:"version,omitempty"`
 	TemplateName                           string    `json:"template_name"`
@@ -135,6 +136,12 @@ func ProtobufToJSON(message proto.Message) (string, error) {
 		return "", err
 	}
 	return string(bytes), nil
+}
+func bytesToUint32(b []byte) (uint32, error) {
+	if len(b) != 4 {
+		return 0, errors.New("invalid length for uint32 conversion")
+	}
+	return binary.LittleEndian.Uint32(b), nil
 }
 
 // GetPIDsByTemplate godoc
@@ -163,18 +170,36 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 	acceptHeader := c.Get("Accept", "application/json")
 
 	if acceptHeader == "application/x-protobuf" {
-		protoPIDs := &grpc.PIDConfigList{}
+		protoPIDs := &grpc.PIDRequests{
+			TemplateName: templateName,
+			Version:      "",
+		}
+
 		for _, pidConfig := range pidConfigs {
+			headerUint32, err := bytesToUint32(pidConfig.Header)
+			if err != nil {
+				continue
+			}
+
+			modeUint32, err := bytesToUint32(pidConfig.Mode)
+			if err != nil {
+				continue
+			}
+
+			pidUint32, err := bytesToUint32(pidConfig.Pid)
+			if err != nil {
+				continue
+			}
 			pid := &grpc.PIDConfig{
-				ID:              pidConfig.ID,
-				Header:          pidConfig.Header,
-				Mode:            pidConfig.Mode,
-				Pid:             pidConfig.Pid,
+				Name:            pidConfig.TemplateName,
+				Header:          headerUint32,
+				Mode:            modeUint32,
+				Pid:             pidUint32,
 				Formula:         pidConfig.Formula,
 				IntervalSeconds: int32(pidConfig.IntervalSeconds),
 				Version:         pidConfig.Version,
 			}
-			protoPIDs.Items = append(protoPIDs.Items, pid)
+			protoPIDs.Requests = append(protoPIDs.Requests, pid)
 		}
 
 		out, err := proto.Marshal(protoPIDs)
@@ -211,44 +236,44 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 
 }
 
-// GetPowerByTemplate godoc
-// @Description  Fetches the power configurations from power_configs table given a template name
+// GetDeviceSettingsByTemplate godoc
+// @Description  Fetches the device settings configurations from device_settings table given a template name
 // @Tags         vehicle-signal-decoding
 // @Produce      json
-// @Success      200 {object} PowerConfig "Successfully retrieved Power Configurations"
-// @Failure 404 "No Power Config data found for the given template name."
+// @Success      200 {object} DeviceSettings "Successfully retrieved Device Settings"
+// @Failure 404 "No Device Settings data found for the given template name."
 // @Param        template_name  path   string  true   "template name"
-// @Router       /device-config/:template_name/power [get]
-func (d *DeviceConfigController) GetPowerByTemplate(c *fiber.Ctx) error {
+// @Router       /device-config/:template_name/deviceSettings [get]
+func (d *DeviceConfigController) GetDeviceSettingsByTemplate(c *fiber.Ctx) error {
 	templateName := c.Params("template_name")
 
-	// Query the database to get the PowerConfigs based on the template name using SQLBoiler
-	dbPowerConfig, err := models.PowerConfigs(
-		models.PowerConfigWhere.TemplateName.EQ(templateName),
+	// Query the database to get the Device Settings based on the template name using SQLBoiler
+	dbDeviceSettings, err := models.DeviceSettings(
+		models.DeviceSettingWhere.TemplateName.EQ(templateName),
 	).One(c.Context(), d.db)
 
 	// Error handling
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return fiber.NewError(fiber.StatusNotFound, "No Power Config data found for the given template name.")
+			return fiber.NewError(fiber.StatusNotFound, "No Device Settings data found for the given template name.")
 		}
-		return errors.Wrap(err, "Failed to retrieve Power Config")
+		return errors.Wrap(err, "Failed to retrieve Device Settings")
 	}
 
-	apiPowerConfig := PowerConfig{
+	apiDeviceSettings := DeviceSetting{
 
-		ID:                                     dbPowerConfig.ID,
-		Version:                                dbPowerConfig.Version,
-		BatteryCriticalLevelVoltage:            dbPowerConfig.BatteryCriticalLevelVoltage,
-		SafetyCutOutVoltage:                    dbPowerConfig.SafetyCutOutVoltage,
-		SleepTimerEventDrivenInterval:          dbPowerConfig.SleepTimerEventDrivenInterval,
-		SleepTimerEventDrivenPeriod:            dbPowerConfig.SleepTimerEventDrivenPeriod,
-		SleepTimerInactivityAfterSleepInterval: dbPowerConfig.SleepTimerInactivityAfterSleepInterval,
-		SleepTimerInactivityFallbackInterval:   dbPowerConfig.SleepTimerInactivityFallbackInterval,
-		WakeTriggerVoltageLevel:                dbPowerConfig.WakeTriggerVoltageLevel,
+		ID:                                     dbDeviceSettings.ID,
+		Version:                                dbDeviceSettings.Version,
+		BatteryCriticalLevelVoltage:            dbDeviceSettings.BatteryCriticalLevelVoltage,
+		SafetyCutOutVoltage:                    dbDeviceSettings.SafetyCutOutVoltage,
+		SleepTimerEventDrivenInterval:          dbDeviceSettings.SleepTimerEventDrivenInterval,
+		SleepTimerEventDrivenPeriod:            dbDeviceSettings.SleepTimerEventDrivenPeriod,
+		SleepTimerInactivityAfterSleepInterval: dbDeviceSettings.SleepTimerInactivityAfterSleepInterval,
+		SleepTimerInactivityFallbackInterval:   dbDeviceSettings.SleepTimerInactivityFallbackInterval,
+		WakeTriggerVoltageLevel:                dbDeviceSettings.WakeTriggerVoltageLevel,
 	}
 
-	return c.JSON(apiPowerConfig)
+	return c.JSON(apiDeviceSettings)
 
 }
 
@@ -286,7 +311,7 @@ func (d *DeviceConfigController) GetDBCFileByTemplateName(c *fiber.Ctx) error {
 }
 
 // GetConfigURLs godoc
-// @Description  Retrieve the URLs for PID, Power, and DBC configuration based on a given VIN
+// @Description  Retrieve the URLs for PID, DeviceSettings, and DBC configuration based on a given VIN
 // @Tags         vehicle-signal-decoding
 // @Produce      json
 // @Success      200 {object} map[string]string
@@ -305,10 +330,10 @@ func (d *DeviceConfigController) GetConfigURLs(c *fiber.Ctx) error {
 	}
 
 	pidTemplateName := templateName
-	powerTemplateName := parentTemplateName
+	deviceSettingTemplateName := parentTemplateName
 
-	if powerTemplateName == "" {
-		powerTemplateName = templateName
+	if deviceSettingTemplateName == "" {
+		deviceSettingTemplateName = templateName
 	}
 
 	//Versioning
@@ -320,22 +345,22 @@ func (d *DeviceConfigController) GetConfigURLs(c *fiber.Ctx) error {
 		})
 	}
 
-	powerVersion, err := getConfigurationVersion("power", powerTemplateName, d.db)
+	deviceSettingVersion, err := getConfigurationVersion("deviceSetting", deviceSettingTemplateName, d.db)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": fmt.Sprintf("Failed to retrieve Power version for template: %s", powerTemplateName),
+			"error": fmt.Sprintf("Failed to retrieve Device Setting version for template: %s", deviceSettingTemplateName),
 		})
 	}
 
 	pidURL := fmt.Sprintf("%s/device-config/pid/%s", baseURL, pidTemplateName)
-	powerURL := fmt.Sprintf("%s/device-config/power/%s", baseURL, powerTemplateName)
+	deviceSettingURL := fmt.Sprintf("%s/device-config/deviceSetting/%s", baseURL, deviceSettingTemplateName)
 	dbcURL := fmt.Sprintf("%s/device-config/dbc/%s", baseURL, pidTemplateName)
 
 	return c.JSON(fiber.Map{
-		"pidUrl":       pidURL,
-		"powerUrl":     powerURL,
-		"dbcURL":       dbcURL, //TODO: implement
-		"pidVersion":   pidVersion,
-		"powerVersion": powerVersion,
+		"pidUrl":               pidURL,
+		"deviceSettingUrl":     deviceSettingURL,
+		"dbcURL":               dbcURL,
+		"pidVersion":           pidVersion,
+		"deviceSettingVersion": deviceSettingVersion,
 	})
 }

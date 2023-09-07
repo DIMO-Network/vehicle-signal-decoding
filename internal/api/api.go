@@ -135,7 +135,7 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 	v1.Get("/device-config/:vin/urls", deviceConfigController.GetConfigURLs)
 
 	v1.Get("/device-config/:template_name/pids", deviceConfigController.GetPIDsByTemplate)
-	v1.Get("/device-config/:template_name/powerConfigs", deviceConfigController.GetPowerByTemplate)
+	v1.Get("/device-config/:template_name/deviceSettings", deviceConfigController.GetDeviceSettingsByTemplate)
 	v1.Get("/device-config/:template_name/dbc-file", deviceConfigController.GetDBCFileByTemplateName)
 
 	go func() {

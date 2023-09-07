@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS pid_configs (
 
     CONSTRAINT pid_configs_pkey PRIMARY KEY (id)
 );
-CREATE TABLE IF NOT EXISTS power_configs (
+CREATE TABLE IF NOT EXISTS device_settings (
     id BIGSERIAL,
     version text NOT NULL,
     template_name text REFERENCES templates(template_name) NOT NULL,
@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS power_configs (
     created_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT power_configs_pkey PRIMARY KEY (template_name)
+    CONSTRAINT device_settings_pkey PRIMARY KEY (template_name)
 );
 CREATE TABLE IF NOT EXISTS template_vehicles (
     make_slug text,
@@ -88,7 +88,7 @@ SELECT 'down SQL query';
 
 DROP TABLE serial_to_template_overrides;
 DROP TABLE pid_configs;
-DROP TABLE power_configs;
+DROP TABLE device_settings;
 DROP TABLE template_vehicles;
 DROP TABLE dbc_files;
 DROP TABLE templates;

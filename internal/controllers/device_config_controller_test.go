@@ -98,7 +98,7 @@ func TestGetPIDsByTemplate(t *testing.T) {
 	})
 }
 
-func TestGetPowerByTemplate(t *testing.T) {
+func TestGetDeviceSettingsByTemplate(t *testing.T) {
 	// Arrange: db and route setup
 	logger := zerolog.New(os.Stdout).With().
 		Timestamp().
@@ -116,7 +116,7 @@ func TestGetPowerByTemplate(t *testing.T) {
 	}()
 
 	template := models.Template{
-		TemplateName: "examplePowerTemplate",
+		TemplateName: "exampleDeviceSettingsTemplate",
 		// etc
 	}
 	err := template.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
@@ -124,7 +124,7 @@ func TestGetPowerByTemplate(t *testing.T) {
 
 	pc := models.PowerConfig{
 		ID:           1,
-		TemplateName: "examplePowerTemplate",
+		TemplateName: "exampleDeviceSettings",
 		Version:      "1.0",
 		//etc
 	}
@@ -134,11 +134,11 @@ func TestGetPowerByTemplate(t *testing.T) {
 
 	c := NewDeviceConfigController(&config.Settings{Port: "3000"}, &logger, pdb.DBS().Reader.DB)
 	app := fiber.New()
-	app.Get("/device-config/:template_name/powerConfigs", c.GetPowerByTemplate)
+	app.Get("/device-config/:template_name/deviceSettings", c.GetDeviceSettingsByTemplate)
 
-	t.Run("GET - Power by Template", func(t *testing.T) {
+	t.Run("GET - Device Settings by Template", func(t *testing.T) {
 		// Act: make the request
-		request := test.BuildRequest("GET", "/device-config/"+template.TemplateName+"/powerConfigs", "")
+		request := test.BuildRequest("GET", "/device-config/"+template.TemplateName+"/deviceSettings", "")
 		response, _ := app.Test(request)
 		body, _ := io.ReadAll(response.Body)
 
@@ -147,14 +147,14 @@ func TestGetPowerByTemplate(t *testing.T) {
 			fmt.Println("response body: " + string(body))
 		}
 
-		var powerConfig PowerConfig
-		err = json.Unmarshal(body, &powerConfig)
+		var deviceSettings DeviceSetting
+		err = json.Unmarshal(body, &deviceSettings)
 		assert.NoError(t, err)
 
-		fmt.Printf("Received PowerConfig: %v\n", powerConfig)
+		fmt.Printf("Received PowerConfig: %v\n", deviceSettings)
 
-		assert.Equal(t, pc.ID, powerConfig.ID)
-		assert.Equal(t, pc.Version, powerConfig.Version)
+		assert.Equal(t, pc.ID, deviceSettings.ID)
+		assert.Equal(t, pc.Version, deviceSettings.Version)
 		// assert other fields here
 
 		// Teardown: cleanup after test

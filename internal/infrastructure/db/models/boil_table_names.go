@@ -6,8 +6,8 @@ package models
 var TableNames = struct {
 	DBCCodes                  string
 	DBCFiles                  string
+	DeviceSettings            string
 	PidConfigs                string
-	PowerConfigs              string
 	SerialToTemplateOverrides string
 	TemplateTypes             string
 	TemplateVehicles          string
@@ -16,8 +16,8 @@ var TableNames = struct {
 }{
 	DBCCodes:                  "dbc_codes",
 	DBCFiles:                  "dbc_files",
+	DeviceSettings:            "device_settings",
 	PidConfigs:                "pid_configs",
-	PowerConfigs:              "power_configs",
 	SerialToTemplateOverrides: "serial_to_template_overrides",
 	TemplateTypes:             "template_types",
 	TemplateVehicles:          "template_vehicles",
