@@ -21,7 +21,7 @@ env:
   DBC_DECODING_TOPIC: topic.dbc.decoding
   DEVICE_GRPC_ADDR: devices-api-prod:8086
 ingress:
-  enabled: false
+  enabled: true
   className: nginx
   annotations:
     nginx.ingress.kubernetes.io/auth-tls-secret: ingress/cf-origin-ca
