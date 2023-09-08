@@ -7,11 +7,11 @@
     },
     "basePath": "/v1",
     "paths": {
-        "/device-config/:vin/dbc": {
+        "/device-config/:template_name/dbc-file": {
             "get": {
-                "description": "Retrieve the URL pointing to the DBC file for a given VIN",
+                "description": "Fetches the DBC file from the dbc_files table given a template name",
                 "produces": [
-                    "application/json"
+                    "text/plain"
                 ],
                 "tags": [
                     "vehicle-signal-decoding"
@@ -19,25 +19,28 @@
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "vehicle identification number (VIN)",
-                        "name": "vin",
+                        "description": "template name",
+                        "name": "template_name",
                         "in": "path",
                         "required": true
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Successfully retrieved DBC file",
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    "404": {
+                        "description": "No DBC file found for the given template name."
                     }
                 }
             }
         },
-        "/device-config/:vin/pid": {
+        "/device-config/:template_name/deviceSettings": {
             "get": {
-                "description": "Retrieve the PID configuration based on a given VIN",
+                "description": "Fetches the device settings configurations from device_settings table given a template name",
                 "produces": [
                     "application/json"
                 ],
@@ -47,25 +50,28 @@
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "vehicle identification number (VIN)",
-                        "name": "vin",
+                        "description": "template name",
+                        "name": "template_name",
                         "in": "path",
                         "required": true
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Successfully retrieved Device Settings",
                         "schema": {
-                            "$ref": "#/definitions/controllers.PIDConfig"
+                            "$ref": "#/definitions/controllers.DeviceSetting"
                         }
+                    },
+                    "404": {
+                        "description": "No Device Settings data found for the given template name."
                     }
                 }
             }
         },
-        "/device-config/:vin/power": {
+        "/device-config/:template_name/pids": {
             "get": {
-                "description": "Retrieve the power configuration based on a given VIN",
+                "description": "Retrieves a list of PID configurations from the database given a template name",
                 "produces": [
                     "application/json"
                 ],
@@ -75,25 +81,31 @@
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "vehicle identification number (VIN)",
-                        "name": "vin",
+                        "description": "template name",
+                        "name": "template_name",
                         "in": "path",
                         "required": true
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Successfully retrieved PID Configurations",
                         "schema": {
-                            "$ref": "#/definitions/controllers.PowerConfig"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/controllers.PIDConfig"
+                            }
                         }
+                    },
+                    "404": {
+                        "description": "No PID Config data found for the given template name."
                     }
                 }
             }
         },
         "/device-config/:vin/urls": {
             "get": {
-                "description": "Retrieve the URLs for PID, Power, and DBC configuration based on a given VIN",
+                "description": "Retrieve the URLs for PID, DeviceSettings, and DBC configuration based on a given VIN",
                 "produces": [
                     "application/json"
                 ],
@@ -124,6 +136,44 @@
         }
     },
     "definitions": {
+        "controllers.DeviceSetting": {
+            "type": "object",
+            "properties": {
+                "battery_critical_level_voltage": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "safety_cut_out_voltage": {
+                    "type": "string"
+                },
+                "sleep_timer_event_driven_interval": {
+                    "type": "string"
+                },
+                "sleep_timer_event_driven_period": {
+                    "type": "string"
+                },
+                "sleep_timer_inactivity_after_sleep_interval": {
+                    "type": "string"
+                },
+                "sleep_timer_inactivity_fallback_interval": {
+                    "type": "string"
+                },
+                "template_name": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "wake_trigger_voltage_level": {
+                    "type": "string"
+                }
+            }
+        },
         "controllers.PIDConfig": {
             "type": "object",
             "properties": {
@@ -131,85 +181,34 @@
                     "type": "string"
                 },
                 "header": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "id": {
                     "type": "integer"
                 },
-                "intervalSeconds": {
+                "interval_seconds": {
                     "type": "integer"
                 },
                 "mode": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
                 },
                 "pid": {
-                    "type": "integer"
-                }
-            }
-        },
-        "controllers.PowerConfig": {
-            "type": "object",
-            "properties": {
-                "battery": {
-                    "type": "object",
-                    "properties": {
-                        "critical_level": {
-                            "type": "object",
-                            "properties": {
-                                "voltage": {
-                                    "type": "string"
-                                }
-                            }
-                        }
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
                     }
                 },
-                "safety_cut-out": {
-                    "type": "object",
-                    "properties": {
-                        "voltage": {
-                            "type": "string"
-                        }
-                    }
+                "protocol": {
+                    "type": "string"
                 },
-                "sleep_timer": {
-                    "type": "object",
-                    "properties": {
-                        "event_driven": {
-                            "type": "object",
-                            "properties": {
-                                "interval": {
-                                    "type": "string"
-                                },
-                                "period": {
-                                    "type": "string"
-                                }
-                            }
-                        },
-                        "inactivity_after_sleep": {
-                            "type": "object",
-                            "properties": {
-                                "interval": {
-                                    "type": "string"
-                                }
-                            }
-                        },
-                        "inactivity_fallback": {
-                            "type": "object",
-                            "properties": {
-                                "interval": {
-                                    "type": "string"
-                                }
-                            }
-                        }
-                    }
-                },
-                "wake_trigger": {
-                    "type": "object",
-                    "properties": {
-                        "voltage_level": {
-                            "type": "string"
-                        }
-                    }
+                "template_name": {
+                    "type": "string"
                 }
             }
         }

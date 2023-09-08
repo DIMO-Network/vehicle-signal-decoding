@@ -42,6 +42,7 @@ func TestGetPIDsByTemplate(t *testing.T) {
 
 	template := models.Template{
 		TemplateName: "exampleTemplate",
+		Version:      "1.0",
 		// etc
 	}
 	err := template.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
@@ -55,7 +56,7 @@ func TestGetPIDsByTemplate(t *testing.T) {
 		Pid:             []byte("05"),
 		Formula:         "A*5",
 		IntervalSeconds: 60,
-		Version:         "1.0",
+		Protocol:        "CAN 11",
 	}
 
 	errr := pc.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
@@ -90,7 +91,12 @@ func TestGetPIDsByTemplate(t *testing.T) {
 		assert.Equal(t, pc.Pid, pids[0].Pid)
 		assert.Equal(t, pc.Formula, pids[0].Formula)
 		assert.Equal(t, pc.IntervalSeconds, pids[0].IntervalSeconds)
-		assert.Equal(t, pc.Version, pids[0].Version)
+		assert.Equal(t, pc.Protocol, pids[0].Protocol)
+
+		// Testing Version
+		templateFromDB, err := models.Templates(models.TemplateWhere.TemplateName.EQ(template.TemplateName)).One(context.Background(), pdb.DBS().Reader.DB)
+		assert.NoError(t, err)
+		assert.Equal(t, template.Version, templateFromDB.Version)
 
 		// Teardown: cleanup after test
 		test.TruncateTables(pdb.DBS().Writer.DB, t)
@@ -98,7 +104,8 @@ func TestGetPIDsByTemplate(t *testing.T) {
 	})
 }
 
-func TestGetPowerByTemplate(t *testing.T) {
+func TestGetDeviceSettingsByTemplate(t *testing.T) {
+
 	// Arrange: db and route setup
 	logger := zerolog.New(os.Stdout).With().
 		Timestamp().
@@ -107,7 +114,7 @@ func TestGetPowerByTemplate(t *testing.T) {
 
 	ctx := context.Background()
 
-	// Start test database in a Docker container
+	// Spin up test database in a Docker container
 	pdb, container := test.StartContainerDatabase(ctx, t, migrationsDirRelPath)
 	defer func() {
 		if err := container.Terminate(ctx); err != nil {
@@ -116,29 +123,32 @@ func TestGetPowerByTemplate(t *testing.T) {
 	}()
 
 	template := models.Template{
-		TemplateName: "examplePowerTemplate",
-		// etc
+		TemplateName: "testTemplate",
+		Version:      "2.0",
 	}
-	err := template.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+	err := template.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	assert.NoError(t, err)
 
-	pc := models.PowerConfig{
-		ID:           1,
-		TemplateName: "examplePowerTemplate",
-		Version:      "1.0",
+	ds := models.DeviceSetting{
+		ID:                            1,
+		TemplateName:                  "testTemplate",
+		BatteryCriticalLevelVoltage:   "3.2V",
+		SafetyCutOutVoltage:           "2.8V",
+		SleepTimerEventDrivenInterval: "5s",
 		//etc
 	}
 
-	err = pc.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+	err = ds.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	assert.NoError(t, err)
 
 	c := NewDeviceConfigController(&config.Settings{Port: "3000"}, &logger, pdb.DBS().Reader.DB)
 	app := fiber.New()
-	app.Get("/device-config/:template_name/powerConfigs", c.GetPowerByTemplate)
+	app.Get("/device-config/:template_name", c.GetDeviceSettingsByTemplate)
 
-	t.Run("GET - Power by Template", func(t *testing.T) {
+	t.Run("GET - Device Settings by Template", func(t *testing.T) {
+
 		// Act: make the request
-		request := test.BuildRequest("GET", "/device-config/"+template.TemplateName+"/powerConfigs", "")
+		request := test.BuildRequest("GET", "/device-config/"+template.TemplateName, "")
 		response, _ := app.Test(request)
 		body, _ := io.ReadAll(response.Body)
 
@@ -147,20 +157,27 @@ func TestGetPowerByTemplate(t *testing.T) {
 			fmt.Println("response body: " + string(body))
 		}
 
-		var powerConfig PowerConfig
-		err = json.Unmarshal(body, &powerConfig)
+		var receivedDS DeviceSetting
+		err = json.Unmarshal(body, &receivedDS)
 		assert.NoError(t, err)
 
-		fmt.Printf("Received PowerConfig: %v\n", powerConfig)
+		assert.Equal(t, ds.ID, receivedDS.ID)
 
-		assert.Equal(t, pc.ID, powerConfig.ID)
-		assert.Equal(t, pc.Version, powerConfig.Version)
-		// assert other fields here
+		assert.Equal(t, ds.BatteryCriticalLevelVoltage, receivedDS.BatteryCriticalLevelVoltage)
+		assert.Equal(t, ds.SafetyCutOutVoltage, receivedDS.SafetyCutOutVoltage)
+		assert.Equal(t, ds.SleepTimerEventDrivenInterval, receivedDS.SleepTimerEventDrivenInterval)
+
+		// Testing Version
+		templateFromDB, err := models.Templates(models.TemplateWhere.TemplateName.EQ(template.TemplateName)).One(context.Background(), pdb.DBS().Reader.DB)
+		assert.NoError(t, err)
+		assert.Equal(t, template.Version, templateFromDB.Version)
 
 		// Teardown: cleanup after test
 		test.TruncateTables(pdb.DBS().Writer.DB, t)
+
 	})
 }
+
 func TestGetDBCFileByTemplateName(t *testing.T) {
 	// Arrange: db and route setup
 	logger := zerolog.New(os.Stdout).With().
@@ -180,6 +197,7 @@ func TestGetDBCFileByTemplateName(t *testing.T) {
 
 	template := models.Template{
 		TemplateName: "exampleDBCFileTemplate",
+		Version:      "3.0",
 		// etc
 	}
 	err := template.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
@@ -209,6 +227,11 @@ func TestGetDBCFileByTemplateName(t *testing.T) {
 		}
 
 		assert.Equal(t, dbcf.DBCFile, string(body))
+
+		// Testing Version
+		templateFromDB, err := models.Templates(models.TemplateWhere.TemplateName.EQ(template.TemplateName)).One(context.Background(), pdb.DBS().Reader.DB)
+		assert.NoError(t, err)
+		assert.Equal(t, template.Version, templateFromDB.Version)
 
 		// Teardown: cleanup after test
 		test.TruncateTables(pdb.DBS().Writer.DB, t)

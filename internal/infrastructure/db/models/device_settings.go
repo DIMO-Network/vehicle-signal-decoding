@@ -21,10 +21,9 @@ import (
 	"github.com/volatiletech/strmangle"
 )
 
-// PowerConfig is an object representing the database table.
-type PowerConfig struct {
+// DeviceSetting is an object representing the database table.
+type DeviceSetting struct {
 	ID                                     int64     `boil:"id" json:"id" toml:"id" yaml:"id"`
-	Version                                string    `boil:"version" json:"version" toml:"version" yaml:"version"`
 	TemplateName                           string    `boil:"template_name" json:"template_name" toml:"template_name" yaml:"template_name"`
 	BatteryCriticalLevelVoltage            string    `boil:"battery_critical_level_voltage" json:"battery_critical_level_voltage" toml:"battery_critical_level_voltage" yaml:"battery_critical_level_voltage"`
 	SafetyCutOutVoltage                    string    `boil:"safety_cut_out_voltage" json:"safety_cut_out_voltage" toml:"safety_cut_out_voltage" yaml:"safety_cut_out_voltage"`
@@ -36,13 +35,12 @@ type PowerConfig struct {
 	CreatedAt                              time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 	UpdatedAt                              time.Time `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
 
-	R *powerConfigR `boil:"-" json:"-" toml:"-" yaml:"-"`
-	L powerConfigL  `boil:"-" json:"-" toml:"-" yaml:"-"`
+	R *deviceSettingR `boil:"-" json:"-" toml:"-" yaml:"-"`
+	L deviceSettingL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
-var PowerConfigColumns = struct {
+var DeviceSettingColumns = struct {
 	ID                                     string
-	Version                                string
 	TemplateName                           string
 	BatteryCriticalLevelVoltage            string
 	SafetyCutOutVoltage                    string
@@ -55,7 +53,6 @@ var PowerConfigColumns = struct {
 	UpdatedAt                              string
 }{
 	ID:                                     "id",
-	Version:                                "version",
 	TemplateName:                           "template_name",
 	BatteryCriticalLevelVoltage:            "battery_critical_level_voltage",
 	SafetyCutOutVoltage:                    "safety_cut_out_voltage",
@@ -68,9 +65,8 @@ var PowerConfigColumns = struct {
 	UpdatedAt:                              "updated_at",
 }
 
-var PowerConfigTableColumns = struct {
+var DeviceSettingTableColumns = struct {
 	ID                                     string
-	Version                                string
 	TemplateName                           string
 	BatteryCriticalLevelVoltage            string
 	SafetyCutOutVoltage                    string
@@ -82,25 +78,46 @@ var PowerConfigTableColumns = struct {
 	CreatedAt                              string
 	UpdatedAt                              string
 }{
-	ID:                                     "power_configs.id",
-	Version:                                "power_configs.version",
-	TemplateName:                           "power_configs.template_name",
-	BatteryCriticalLevelVoltage:            "power_configs.battery_critical_level_voltage",
-	SafetyCutOutVoltage:                    "power_configs.safety_cut_out_voltage",
-	SleepTimerEventDrivenInterval:          "power_configs.sleep_timer_event_driven_interval",
-	SleepTimerEventDrivenPeriod:            "power_configs.sleep_timer_event_driven_period",
-	SleepTimerInactivityAfterSleepInterval: "power_configs.sleep_timer_inactivity_after_sleep_interval",
-	SleepTimerInactivityFallbackInterval:   "power_configs.sleep_timer_inactivity_fallback_interval",
-	WakeTriggerVoltageLevel:                "power_configs.wake_trigger_voltage_level",
-	CreatedAt:                              "power_configs.created_at",
-	UpdatedAt:                              "power_configs.updated_at",
+	ID:                                     "device_settings.id",
+	TemplateName:                           "device_settings.template_name",
+	BatteryCriticalLevelVoltage:            "device_settings.battery_critical_level_voltage",
+	SafetyCutOutVoltage:                    "device_settings.safety_cut_out_voltage",
+	SleepTimerEventDrivenInterval:          "device_settings.sleep_timer_event_driven_interval",
+	SleepTimerEventDrivenPeriod:            "device_settings.sleep_timer_event_driven_period",
+	SleepTimerInactivityAfterSleepInterval: "device_settings.sleep_timer_inactivity_after_sleep_interval",
+	SleepTimerInactivityFallbackInterval:   "device_settings.sleep_timer_inactivity_fallback_interval",
+	WakeTriggerVoltageLevel:                "device_settings.wake_trigger_voltage_level",
+	CreatedAt:                              "device_settings.created_at",
+	UpdatedAt:                              "device_settings.updated_at",
 }
 
 // Generated where
 
-var PowerConfigWhere = struct {
+type whereHelperint64 struct{ field string }
+
+func (w whereHelperint64) EQ(x int64) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.EQ, x) }
+func (w whereHelperint64) NEQ(x int64) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.NEQ, x) }
+func (w whereHelperint64) LT(x int64) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.LT, x) }
+func (w whereHelperint64) LTE(x int64) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.LTE, x) }
+func (w whereHelperint64) GT(x int64) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.GT, x) }
+func (w whereHelperint64) GTE(x int64) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
+func (w whereHelperint64) IN(slice []int64) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
+}
+func (w whereHelperint64) NIN(slice []int64) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
+}
+
+var DeviceSettingWhere = struct {
 	ID                                     whereHelperint64
-	Version                                whereHelperstring
 	TemplateName                           whereHelperstring
 	BatteryCriticalLevelVoltage            whereHelperstring
 	SafetyCutOutVoltage                    whereHelperstring
@@ -112,78 +129,77 @@ var PowerConfigWhere = struct {
 	CreatedAt                              whereHelpertime_Time
 	UpdatedAt                              whereHelpertime_Time
 }{
-	ID:                                     whereHelperint64{field: "\"vehicle_signal_decoding_api\".\"power_configs\".\"id\""},
-	Version:                                whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"power_configs\".\"version\""},
-	TemplateName:                           whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"power_configs\".\"template_name\""},
-	BatteryCriticalLevelVoltage:            whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"power_configs\".\"battery_critical_level_voltage\""},
-	SafetyCutOutVoltage:                    whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"power_configs\".\"safety_cut_out_voltage\""},
-	SleepTimerEventDrivenInterval:          whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"power_configs\".\"sleep_timer_event_driven_interval\""},
-	SleepTimerEventDrivenPeriod:            whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"power_configs\".\"sleep_timer_event_driven_period\""},
-	SleepTimerInactivityAfterSleepInterval: whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"power_configs\".\"sleep_timer_inactivity_after_sleep_interval\""},
-	SleepTimerInactivityFallbackInterval:   whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"power_configs\".\"sleep_timer_inactivity_fallback_interval\""},
-	WakeTriggerVoltageLevel:                whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"power_configs\".\"wake_trigger_voltage_level\""},
-	CreatedAt:                              whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"power_configs\".\"created_at\""},
-	UpdatedAt:                              whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"power_configs\".\"updated_at\""},
+	ID:                                     whereHelperint64{field: "\"vehicle_signal_decoding_api\".\"device_settings\".\"id\""},
+	TemplateName:                           whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"device_settings\".\"template_name\""},
+	BatteryCriticalLevelVoltage:            whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"device_settings\".\"battery_critical_level_voltage\""},
+	SafetyCutOutVoltage:                    whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"device_settings\".\"safety_cut_out_voltage\""},
+	SleepTimerEventDrivenInterval:          whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"device_settings\".\"sleep_timer_event_driven_interval\""},
+	SleepTimerEventDrivenPeriod:            whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"device_settings\".\"sleep_timer_event_driven_period\""},
+	SleepTimerInactivityAfterSleepInterval: whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"device_settings\".\"sleep_timer_inactivity_after_sleep_interval\""},
+	SleepTimerInactivityFallbackInterval:   whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"device_settings\".\"sleep_timer_inactivity_fallback_interval\""},
+	WakeTriggerVoltageLevel:                whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"device_settings\".\"wake_trigger_voltage_level\""},
+	CreatedAt:                              whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"device_settings\".\"created_at\""},
+	UpdatedAt:                              whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"device_settings\".\"updated_at\""},
 }
 
-// PowerConfigRels is where relationship names are stored.
-var PowerConfigRels = struct {
+// DeviceSettingRels is where relationship names are stored.
+var DeviceSettingRels = struct {
 	TemplateNameTemplate string
 }{
 	TemplateNameTemplate: "TemplateNameTemplate",
 }
 
-// powerConfigR is where relationships are stored.
-type powerConfigR struct {
+// deviceSettingR is where relationships are stored.
+type deviceSettingR struct {
 	TemplateNameTemplate *Template `boil:"TemplateNameTemplate" json:"TemplateNameTemplate" toml:"TemplateNameTemplate" yaml:"TemplateNameTemplate"`
 }
 
 // NewStruct creates a new relationship struct
-func (*powerConfigR) NewStruct() *powerConfigR {
-	return &powerConfigR{}
+func (*deviceSettingR) NewStruct() *deviceSettingR {
+	return &deviceSettingR{}
 }
 
-func (r *powerConfigR) GetTemplateNameTemplate() *Template {
+func (r *deviceSettingR) GetTemplateNameTemplate() *Template {
 	if r == nil {
 		return nil
 	}
 	return r.TemplateNameTemplate
 }
 
-// powerConfigL is where Load methods for each relationship are stored.
-type powerConfigL struct{}
+// deviceSettingL is where Load methods for each relationship are stored.
+type deviceSettingL struct{}
 
 var (
-	powerConfigAllColumns            = []string{"id", "version", "template_name", "battery_critical_level_voltage", "safety_cut_out_voltage", "sleep_timer_event_driven_interval", "sleep_timer_event_driven_period", "sleep_timer_inactivity_after_sleep_interval", "sleep_timer_inactivity_fallback_interval", "wake_trigger_voltage_level", "created_at", "updated_at"}
-	powerConfigColumnsWithoutDefault = []string{"version", "template_name", "battery_critical_level_voltage", "safety_cut_out_voltage", "sleep_timer_event_driven_interval", "sleep_timer_event_driven_period", "sleep_timer_inactivity_after_sleep_interval", "sleep_timer_inactivity_fallback_interval", "wake_trigger_voltage_level"}
-	powerConfigColumnsWithDefault    = []string{"id", "created_at", "updated_at"}
-	powerConfigPrimaryKeyColumns     = []string{"template_name"}
-	powerConfigGeneratedColumns      = []string{}
+	deviceSettingAllColumns            = []string{"id", "template_name", "battery_critical_level_voltage", "safety_cut_out_voltage", "sleep_timer_event_driven_interval", "sleep_timer_event_driven_period", "sleep_timer_inactivity_after_sleep_interval", "sleep_timer_inactivity_fallback_interval", "wake_trigger_voltage_level", "created_at", "updated_at"}
+	deviceSettingColumnsWithoutDefault = []string{"template_name", "battery_critical_level_voltage", "safety_cut_out_voltage", "sleep_timer_event_driven_interval", "sleep_timer_event_driven_period", "sleep_timer_inactivity_after_sleep_interval", "sleep_timer_inactivity_fallback_interval", "wake_trigger_voltage_level"}
+	deviceSettingColumnsWithDefault    = []string{"id", "created_at", "updated_at"}
+	deviceSettingPrimaryKeyColumns     = []string{"template_name"}
+	deviceSettingGeneratedColumns      = []string{}
 )
 
 type (
-	// PowerConfigSlice is an alias for a slice of pointers to PowerConfig.
-	// This should almost always be used instead of []PowerConfig.
-	PowerConfigSlice []*PowerConfig
-	// PowerConfigHook is the signature for custom PowerConfig hook methods
-	PowerConfigHook func(context.Context, boil.ContextExecutor, *PowerConfig) error
+	// DeviceSettingSlice is an alias for a slice of pointers to DeviceSetting.
+	// This should almost always be used instead of []DeviceSetting.
+	DeviceSettingSlice []*DeviceSetting
+	// DeviceSettingHook is the signature for custom DeviceSetting hook methods
+	DeviceSettingHook func(context.Context, boil.ContextExecutor, *DeviceSetting) error
 
-	powerConfigQuery struct {
+	deviceSettingQuery struct {
 		*queries.Query
 	}
 )
 
 // Cache for insert, update and upsert
 var (
-	powerConfigType                 = reflect.TypeOf(&PowerConfig{})
-	powerConfigMapping              = queries.MakeStructMapping(powerConfigType)
-	powerConfigPrimaryKeyMapping, _ = queries.BindMapping(powerConfigType, powerConfigMapping, powerConfigPrimaryKeyColumns)
-	powerConfigInsertCacheMut       sync.RWMutex
-	powerConfigInsertCache          = make(map[string]insertCache)
-	powerConfigUpdateCacheMut       sync.RWMutex
-	powerConfigUpdateCache          = make(map[string]updateCache)
-	powerConfigUpsertCacheMut       sync.RWMutex
-	powerConfigUpsertCache          = make(map[string]insertCache)
+	deviceSettingType                 = reflect.TypeOf(&DeviceSetting{})
+	deviceSettingMapping              = queries.MakeStructMapping(deviceSettingType)
+	deviceSettingPrimaryKeyMapping, _ = queries.BindMapping(deviceSettingType, deviceSettingMapping, deviceSettingPrimaryKeyColumns)
+	deviceSettingInsertCacheMut       sync.RWMutex
+	deviceSettingInsertCache          = make(map[string]insertCache)
+	deviceSettingUpdateCacheMut       sync.RWMutex
+	deviceSettingUpdateCache          = make(map[string]updateCache)
+	deviceSettingUpsertCacheMut       sync.RWMutex
+	deviceSettingUpsertCache          = make(map[string]insertCache)
 )
 
 var (
@@ -194,27 +210,27 @@ var (
 	_ = qmhelper.Where
 )
 
-var powerConfigAfterSelectHooks []PowerConfigHook
+var deviceSettingAfterSelectHooks []DeviceSettingHook
 
-var powerConfigBeforeInsertHooks []PowerConfigHook
-var powerConfigAfterInsertHooks []PowerConfigHook
+var deviceSettingBeforeInsertHooks []DeviceSettingHook
+var deviceSettingAfterInsertHooks []DeviceSettingHook
 
-var powerConfigBeforeUpdateHooks []PowerConfigHook
-var powerConfigAfterUpdateHooks []PowerConfigHook
+var deviceSettingBeforeUpdateHooks []DeviceSettingHook
+var deviceSettingAfterUpdateHooks []DeviceSettingHook
 
-var powerConfigBeforeDeleteHooks []PowerConfigHook
-var powerConfigAfterDeleteHooks []PowerConfigHook
+var deviceSettingBeforeDeleteHooks []DeviceSettingHook
+var deviceSettingAfterDeleteHooks []DeviceSettingHook
 
-var powerConfigBeforeUpsertHooks []PowerConfigHook
-var powerConfigAfterUpsertHooks []PowerConfigHook
+var deviceSettingBeforeUpsertHooks []DeviceSettingHook
+var deviceSettingAfterUpsertHooks []DeviceSettingHook
 
 // doAfterSelectHooks executes all "after Select" hooks.
-func (o *PowerConfig) doAfterSelectHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *DeviceSetting) doAfterSelectHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range powerConfigAfterSelectHooks {
+	for _, hook := range deviceSettingAfterSelectHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -224,12 +240,12 @@ func (o *PowerConfig) doAfterSelectHooks(ctx context.Context, exec boil.ContextE
 }
 
 // doBeforeInsertHooks executes all "before insert" hooks.
-func (o *PowerConfig) doBeforeInsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *DeviceSetting) doBeforeInsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range powerConfigBeforeInsertHooks {
+	for _, hook := range deviceSettingBeforeInsertHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -239,12 +255,12 @@ func (o *PowerConfig) doBeforeInsertHooks(ctx context.Context, exec boil.Context
 }
 
 // doAfterInsertHooks executes all "after Insert" hooks.
-func (o *PowerConfig) doAfterInsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *DeviceSetting) doAfterInsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range powerConfigAfterInsertHooks {
+	for _, hook := range deviceSettingAfterInsertHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -254,12 +270,12 @@ func (o *PowerConfig) doAfterInsertHooks(ctx context.Context, exec boil.ContextE
 }
 
 // doBeforeUpdateHooks executes all "before Update" hooks.
-func (o *PowerConfig) doBeforeUpdateHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *DeviceSetting) doBeforeUpdateHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range powerConfigBeforeUpdateHooks {
+	for _, hook := range deviceSettingBeforeUpdateHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -269,12 +285,12 @@ func (o *PowerConfig) doBeforeUpdateHooks(ctx context.Context, exec boil.Context
 }
 
 // doAfterUpdateHooks executes all "after Update" hooks.
-func (o *PowerConfig) doAfterUpdateHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *DeviceSetting) doAfterUpdateHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range powerConfigAfterUpdateHooks {
+	for _, hook := range deviceSettingAfterUpdateHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -284,12 +300,12 @@ func (o *PowerConfig) doAfterUpdateHooks(ctx context.Context, exec boil.ContextE
 }
 
 // doBeforeDeleteHooks executes all "before Delete" hooks.
-func (o *PowerConfig) doBeforeDeleteHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *DeviceSetting) doBeforeDeleteHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range powerConfigBeforeDeleteHooks {
+	for _, hook := range deviceSettingBeforeDeleteHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -299,12 +315,12 @@ func (o *PowerConfig) doBeforeDeleteHooks(ctx context.Context, exec boil.Context
 }
 
 // doAfterDeleteHooks executes all "after Delete" hooks.
-func (o *PowerConfig) doAfterDeleteHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *DeviceSetting) doAfterDeleteHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range powerConfigAfterDeleteHooks {
+	for _, hook := range deviceSettingAfterDeleteHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -314,12 +330,12 @@ func (o *PowerConfig) doAfterDeleteHooks(ctx context.Context, exec boil.ContextE
 }
 
 // doBeforeUpsertHooks executes all "before Upsert" hooks.
-func (o *PowerConfig) doBeforeUpsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *DeviceSetting) doBeforeUpsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range powerConfigBeforeUpsertHooks {
+	for _, hook := range deviceSettingBeforeUpsertHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -329,12 +345,12 @@ func (o *PowerConfig) doBeforeUpsertHooks(ctx context.Context, exec boil.Context
 }
 
 // doAfterUpsertHooks executes all "after Upsert" hooks.
-func (o *PowerConfig) doAfterUpsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *DeviceSetting) doAfterUpsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range powerConfigAfterUpsertHooks {
+	for _, hook := range deviceSettingAfterUpsertHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -343,33 +359,33 @@ func (o *PowerConfig) doAfterUpsertHooks(ctx context.Context, exec boil.ContextE
 	return nil
 }
 
-// AddPowerConfigHook registers your hook function for all future operations.
-func AddPowerConfigHook(hookPoint boil.HookPoint, powerConfigHook PowerConfigHook) {
+// AddDeviceSettingHook registers your hook function for all future operations.
+func AddDeviceSettingHook(hookPoint boil.HookPoint, deviceSettingHook DeviceSettingHook) {
 	switch hookPoint {
 	case boil.AfterSelectHook:
-		powerConfigAfterSelectHooks = append(powerConfigAfterSelectHooks, powerConfigHook)
+		deviceSettingAfterSelectHooks = append(deviceSettingAfterSelectHooks, deviceSettingHook)
 	case boil.BeforeInsertHook:
-		powerConfigBeforeInsertHooks = append(powerConfigBeforeInsertHooks, powerConfigHook)
+		deviceSettingBeforeInsertHooks = append(deviceSettingBeforeInsertHooks, deviceSettingHook)
 	case boil.AfterInsertHook:
-		powerConfigAfterInsertHooks = append(powerConfigAfterInsertHooks, powerConfigHook)
+		deviceSettingAfterInsertHooks = append(deviceSettingAfterInsertHooks, deviceSettingHook)
 	case boil.BeforeUpdateHook:
-		powerConfigBeforeUpdateHooks = append(powerConfigBeforeUpdateHooks, powerConfigHook)
+		deviceSettingBeforeUpdateHooks = append(deviceSettingBeforeUpdateHooks, deviceSettingHook)
 	case boil.AfterUpdateHook:
-		powerConfigAfterUpdateHooks = append(powerConfigAfterUpdateHooks, powerConfigHook)
+		deviceSettingAfterUpdateHooks = append(deviceSettingAfterUpdateHooks, deviceSettingHook)
 	case boil.BeforeDeleteHook:
-		powerConfigBeforeDeleteHooks = append(powerConfigBeforeDeleteHooks, powerConfigHook)
+		deviceSettingBeforeDeleteHooks = append(deviceSettingBeforeDeleteHooks, deviceSettingHook)
 	case boil.AfterDeleteHook:
-		powerConfigAfterDeleteHooks = append(powerConfigAfterDeleteHooks, powerConfigHook)
+		deviceSettingAfterDeleteHooks = append(deviceSettingAfterDeleteHooks, deviceSettingHook)
 	case boil.BeforeUpsertHook:
-		powerConfigBeforeUpsertHooks = append(powerConfigBeforeUpsertHooks, powerConfigHook)
+		deviceSettingBeforeUpsertHooks = append(deviceSettingBeforeUpsertHooks, deviceSettingHook)
 	case boil.AfterUpsertHook:
-		powerConfigAfterUpsertHooks = append(powerConfigAfterUpsertHooks, powerConfigHook)
+		deviceSettingAfterUpsertHooks = append(deviceSettingAfterUpsertHooks, deviceSettingHook)
 	}
 }
 
-// One returns a single powerConfig record from the query.
-func (q powerConfigQuery) One(ctx context.Context, exec boil.ContextExecutor) (*PowerConfig, error) {
-	o := &PowerConfig{}
+// One returns a single deviceSetting record from the query.
+func (q deviceSettingQuery) One(ctx context.Context, exec boil.ContextExecutor) (*DeviceSetting, error) {
+	o := &DeviceSetting{}
 
 	queries.SetLimit(q.Query, 1)
 
@@ -378,7 +394,7 @@ func (q powerConfigQuery) One(ctx context.Context, exec boil.ContextExecutor) (*
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, sql.ErrNoRows
 		}
-		return nil, errors.Wrap(err, "models: failed to execute a one query for power_configs")
+		return nil, errors.Wrap(err, "models: failed to execute a one query for device_settings")
 	}
 
 	if err := o.doAfterSelectHooks(ctx, exec); err != nil {
@@ -388,16 +404,16 @@ func (q powerConfigQuery) One(ctx context.Context, exec boil.ContextExecutor) (*
 	return o, nil
 }
 
-// All returns all PowerConfig records from the query.
-func (q powerConfigQuery) All(ctx context.Context, exec boil.ContextExecutor) (PowerConfigSlice, error) {
-	var o []*PowerConfig
+// All returns all DeviceSetting records from the query.
+func (q deviceSettingQuery) All(ctx context.Context, exec boil.ContextExecutor) (DeviceSettingSlice, error) {
+	var o []*DeviceSetting
 
 	err := q.Bind(ctx, exec, &o)
 	if err != nil {
-		return nil, errors.Wrap(err, "models: failed to assign all query results to PowerConfig slice")
+		return nil, errors.Wrap(err, "models: failed to assign all query results to DeviceSetting slice")
 	}
 
-	if len(powerConfigAfterSelectHooks) != 0 {
+	if len(deviceSettingAfterSelectHooks) != 0 {
 		for _, obj := range o {
 			if err := obj.doAfterSelectHooks(ctx, exec); err != nil {
 				return o, err
@@ -408,8 +424,8 @@ func (q powerConfigQuery) All(ctx context.Context, exec boil.ContextExecutor) (P
 	return o, nil
 }
 
-// Count returns the count of all PowerConfig records in the query.
-func (q powerConfigQuery) Count(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
+// Count returns the count of all DeviceSetting records in the query.
+func (q deviceSettingQuery) Count(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
 	var count int64
 
 	queries.SetSelect(q.Query, nil)
@@ -417,14 +433,14 @@ func (q powerConfigQuery) Count(ctx context.Context, exec boil.ContextExecutor) 
 
 	err := q.Query.QueryRowContext(ctx, exec).Scan(&count)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to count power_configs rows")
+		return 0, errors.Wrap(err, "models: failed to count device_settings rows")
 	}
 
 	return count, nil
 }
 
 // Exists checks if the row exists in the table.
-func (q powerConfigQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (bool, error) {
+func (q deviceSettingQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (bool, error) {
 	var count int64
 
 	queries.SetSelect(q.Query, nil)
@@ -433,14 +449,14 @@ func (q powerConfigQuery) Exists(ctx context.Context, exec boil.ContextExecutor)
 
 	err := q.Query.QueryRowContext(ctx, exec).Scan(&count)
 	if err != nil {
-		return false, errors.Wrap(err, "models: failed to check if power_configs exists")
+		return false, errors.Wrap(err, "models: failed to check if device_settings exists")
 	}
 
 	return count > 0, nil
 }
 
 // TemplateNameTemplate pointed to by the foreign key.
-func (o *PowerConfig) TemplateNameTemplate(mods ...qm.QueryMod) templateQuery {
+func (o *DeviceSetting) TemplateNameTemplate(mods ...qm.QueryMod) templateQuery {
 	queryMods := []qm.QueryMod{
 		qm.Where("\"template_name\" = ?", o.TemplateName),
 	}
@@ -452,28 +468,28 @@ func (o *PowerConfig) TemplateNameTemplate(mods ...qm.QueryMod) templateQuery {
 
 // LoadTemplateNameTemplate allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for an N-1 relationship.
-func (powerConfigL) LoadTemplateNameTemplate(ctx context.Context, e boil.ContextExecutor, singular bool, maybePowerConfig interface{}, mods queries.Applicator) error {
-	var slice []*PowerConfig
-	var object *PowerConfig
+func (deviceSettingL) LoadTemplateNameTemplate(ctx context.Context, e boil.ContextExecutor, singular bool, maybeDeviceSetting interface{}, mods queries.Applicator) error {
+	var slice []*DeviceSetting
+	var object *DeviceSetting
 
 	if singular {
 		var ok bool
-		object, ok = maybePowerConfig.(*PowerConfig)
+		object, ok = maybeDeviceSetting.(*DeviceSetting)
 		if !ok {
-			object = new(PowerConfig)
-			ok = queries.SetFromEmbeddedStruct(&object, &maybePowerConfig)
+			object = new(DeviceSetting)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeDeviceSetting)
 			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybePowerConfig))
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeDeviceSetting))
 			}
 		}
 	} else {
-		s, ok := maybePowerConfig.(*[]*PowerConfig)
+		s, ok := maybeDeviceSetting.(*[]*DeviceSetting)
 		if ok {
 			slice = *s
 		} else {
-			ok = queries.SetFromEmbeddedStruct(&slice, maybePowerConfig)
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeDeviceSetting)
 			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybePowerConfig))
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeDeviceSetting))
 			}
 		}
 	}
@@ -481,7 +497,7 @@ func (powerConfigL) LoadTemplateNameTemplate(ctx context.Context, e boil.Context
 	args := make([]interface{}, 0, 1)
 	if singular {
 		if object.R == nil {
-			object.R = &powerConfigR{}
+			object.R = &deviceSettingR{}
 		}
 		args = append(args, object.TemplateName)
 
@@ -489,7 +505,7 @@ func (powerConfigL) LoadTemplateNameTemplate(ctx context.Context, e boil.Context
 	Outer:
 		for _, obj := range slice {
 			if obj.R == nil {
-				obj.R = &powerConfigR{}
+				obj.R = &deviceSettingR{}
 			}
 
 			for _, a := range args {
@@ -550,7 +566,7 @@ func (powerConfigL) LoadTemplateNameTemplate(ctx context.Context, e boil.Context
 		if foreign.R == nil {
 			foreign.R = &templateR{}
 		}
-		foreign.R.TemplateNamePowerConfig = object
+		foreign.R.TemplateNameDeviceSetting = object
 		return nil
 	}
 
@@ -561,7 +577,7 @@ func (powerConfigL) LoadTemplateNameTemplate(ctx context.Context, e boil.Context
 				if foreign.R == nil {
 					foreign.R = &templateR{}
 				}
-				foreign.R.TemplateNamePowerConfig = local
+				foreign.R.TemplateNameDeviceSetting = local
 				break
 			}
 		}
@@ -570,10 +586,10 @@ func (powerConfigL) LoadTemplateNameTemplate(ctx context.Context, e boil.Context
 	return nil
 }
 
-// SetTemplateNameTemplate of the powerConfig to the related item.
+// SetTemplateNameTemplate of the deviceSetting to the related item.
 // Sets o.R.TemplateNameTemplate to related.
-// Adds o to related.R.TemplateNamePowerConfig.
-func (o *PowerConfig) SetTemplateNameTemplate(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Template) error {
+// Adds o to related.R.TemplateNameDeviceSetting.
+func (o *DeviceSetting) SetTemplateNameTemplate(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Template) error {
 	var err error
 	if insert {
 		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
@@ -582,9 +598,9 @@ func (o *PowerConfig) SetTemplateNameTemplate(ctx context.Context, exec boil.Con
 	}
 
 	updateQuery := fmt.Sprintf(
-		"UPDATE \"vehicle_signal_decoding_api\".\"power_configs\" SET %s WHERE %s",
+		"UPDATE \"vehicle_signal_decoding_api\".\"device_settings\" SET %s WHERE %s",
 		strmangle.SetParamNames("\"", "\"", 1, []string{"template_name"}),
-		strmangle.WhereClause("\"", "\"", 2, powerConfigPrimaryKeyColumns),
+		strmangle.WhereClause("\"", "\"", 2, deviceSettingPrimaryKeyColumns),
 	)
 	values := []interface{}{related.TemplateName, o.TemplateName}
 
@@ -599,7 +615,7 @@ func (o *PowerConfig) SetTemplateNameTemplate(ctx context.Context, exec boil.Con
 
 	o.TemplateName = related.TemplateName
 	if o.R == nil {
-		o.R = &powerConfigR{
+		o.R = &deviceSettingR{
 			TemplateNameTemplate: related,
 		}
 	} else {
@@ -608,61 +624,61 @@ func (o *PowerConfig) SetTemplateNameTemplate(ctx context.Context, exec boil.Con
 
 	if related.R == nil {
 		related.R = &templateR{
-			TemplateNamePowerConfig: o,
+			TemplateNameDeviceSetting: o,
 		}
 	} else {
-		related.R.TemplateNamePowerConfig = o
+		related.R.TemplateNameDeviceSetting = o
 	}
 
 	return nil
 }
 
-// PowerConfigs retrieves all the records using an executor.
-func PowerConfigs(mods ...qm.QueryMod) powerConfigQuery {
-	mods = append(mods, qm.From("\"vehicle_signal_decoding_api\".\"power_configs\""))
+// DeviceSettings retrieves all the records using an executor.
+func DeviceSettings(mods ...qm.QueryMod) deviceSettingQuery {
+	mods = append(mods, qm.From("\"vehicle_signal_decoding_api\".\"device_settings\""))
 	q := NewQuery(mods...)
 	if len(queries.GetSelect(q)) == 0 {
-		queries.SetSelect(q, []string{"\"vehicle_signal_decoding_api\".\"power_configs\".*"})
+		queries.SetSelect(q, []string{"\"vehicle_signal_decoding_api\".\"device_settings\".*"})
 	}
 
-	return powerConfigQuery{q}
+	return deviceSettingQuery{q}
 }
 
-// FindPowerConfig retrieves a single record by ID with an executor.
+// FindDeviceSetting retrieves a single record by ID with an executor.
 // If selectCols is empty Find will return all columns.
-func FindPowerConfig(ctx context.Context, exec boil.ContextExecutor, templateName string, selectCols ...string) (*PowerConfig, error) {
-	powerConfigObj := &PowerConfig{}
+func FindDeviceSetting(ctx context.Context, exec boil.ContextExecutor, templateName string, selectCols ...string) (*DeviceSetting, error) {
+	deviceSettingObj := &DeviceSetting{}
 
 	sel := "*"
 	if len(selectCols) > 0 {
 		sel = strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, selectCols), ",")
 	}
 	query := fmt.Sprintf(
-		"select %s from \"vehicle_signal_decoding_api\".\"power_configs\" where \"template_name\"=$1", sel,
+		"select %s from \"vehicle_signal_decoding_api\".\"device_settings\" where \"template_name\"=$1", sel,
 	)
 
 	q := queries.Raw(query, templateName)
 
-	err := q.Bind(ctx, exec, powerConfigObj)
+	err := q.Bind(ctx, exec, deviceSettingObj)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, sql.ErrNoRows
 		}
-		return nil, errors.Wrap(err, "models: unable to select from power_configs")
+		return nil, errors.Wrap(err, "models: unable to select from device_settings")
 	}
 
-	if err = powerConfigObj.doAfterSelectHooks(ctx, exec); err != nil {
-		return powerConfigObj, err
+	if err = deviceSettingObj.doAfterSelectHooks(ctx, exec); err != nil {
+		return deviceSettingObj, err
 	}
 
-	return powerConfigObj, nil
+	return deviceSettingObj, nil
 }
 
 // Insert a single record using an executor.
 // See boil.Columns.InsertColumnSet documentation to understand column list inference for inserts.
-func (o *PowerConfig) Insert(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) error {
+func (o *DeviceSetting) Insert(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) error {
 	if o == nil {
-		return errors.New("models: no power_configs provided for insertion")
+		return errors.New("models: no device_settings provided for insertion")
 	}
 
 	var err error
@@ -681,33 +697,33 @@ func (o *PowerConfig) Insert(ctx context.Context, exec boil.ContextExecutor, col
 		return err
 	}
 
-	nzDefaults := queries.NonZeroDefaultSet(powerConfigColumnsWithDefault, o)
+	nzDefaults := queries.NonZeroDefaultSet(deviceSettingColumnsWithDefault, o)
 
 	key := makeCacheKey(columns, nzDefaults)
-	powerConfigInsertCacheMut.RLock()
-	cache, cached := powerConfigInsertCache[key]
-	powerConfigInsertCacheMut.RUnlock()
+	deviceSettingInsertCacheMut.RLock()
+	cache, cached := deviceSettingInsertCache[key]
+	deviceSettingInsertCacheMut.RUnlock()
 
 	if !cached {
 		wl, returnColumns := columns.InsertColumnSet(
-			powerConfigAllColumns,
-			powerConfigColumnsWithDefault,
-			powerConfigColumnsWithoutDefault,
+			deviceSettingAllColumns,
+			deviceSettingColumnsWithDefault,
+			deviceSettingColumnsWithoutDefault,
 			nzDefaults,
 		)
 
-		cache.valueMapping, err = queries.BindMapping(powerConfigType, powerConfigMapping, wl)
+		cache.valueMapping, err = queries.BindMapping(deviceSettingType, deviceSettingMapping, wl)
 		if err != nil {
 			return err
 		}
-		cache.retMapping, err = queries.BindMapping(powerConfigType, powerConfigMapping, returnColumns)
+		cache.retMapping, err = queries.BindMapping(deviceSettingType, deviceSettingMapping, returnColumns)
 		if err != nil {
 			return err
 		}
 		if len(wl) != 0 {
-			cache.query = fmt.Sprintf("INSERT INTO \"vehicle_signal_decoding_api\".\"power_configs\" (\"%s\") %%sVALUES (%s)%%s", strings.Join(wl, "\",\""), strmangle.Placeholders(dialect.UseIndexPlaceholders, len(wl), 1, 1))
+			cache.query = fmt.Sprintf("INSERT INTO \"vehicle_signal_decoding_api\".\"device_settings\" (\"%s\") %%sVALUES (%s)%%s", strings.Join(wl, "\",\""), strmangle.Placeholders(dialect.UseIndexPlaceholders, len(wl), 1, 1))
 		} else {
-			cache.query = "INSERT INTO \"vehicle_signal_decoding_api\".\"power_configs\" %sDEFAULT VALUES%s"
+			cache.query = "INSERT INTO \"vehicle_signal_decoding_api\".\"device_settings\" %sDEFAULT VALUES%s"
 		}
 
 		var queryOutput, queryReturning string
@@ -735,22 +751,22 @@ func (o *PowerConfig) Insert(ctx context.Context, exec boil.ContextExecutor, col
 	}
 
 	if err != nil {
-		return errors.Wrap(err, "models: unable to insert into power_configs")
+		return errors.Wrap(err, "models: unable to insert into device_settings")
 	}
 
 	if !cached {
-		powerConfigInsertCacheMut.Lock()
-		powerConfigInsertCache[key] = cache
-		powerConfigInsertCacheMut.Unlock()
+		deviceSettingInsertCacheMut.Lock()
+		deviceSettingInsertCache[key] = cache
+		deviceSettingInsertCacheMut.Unlock()
 	}
 
 	return o.doAfterInsertHooks(ctx, exec)
 }
 
-// Update uses an executor to update the PowerConfig.
+// Update uses an executor to update the DeviceSetting.
 // See boil.Columns.UpdateColumnSet documentation to understand column list inference for updates.
 // Update does not automatically update the record in case of default values. Use .Reload() to refresh the records.
-func (o *PowerConfig) Update(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) (int64, error) {
+func (o *DeviceSetting) Update(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) (int64, error) {
 	if !boil.TimestampsAreSkipped(ctx) {
 		currTime := time.Now().In(boil.GetLocation())
 
@@ -762,28 +778,28 @@ func (o *PowerConfig) Update(ctx context.Context, exec boil.ContextExecutor, col
 		return 0, err
 	}
 	key := makeCacheKey(columns, nil)
-	powerConfigUpdateCacheMut.RLock()
-	cache, cached := powerConfigUpdateCache[key]
-	powerConfigUpdateCacheMut.RUnlock()
+	deviceSettingUpdateCacheMut.RLock()
+	cache, cached := deviceSettingUpdateCache[key]
+	deviceSettingUpdateCacheMut.RUnlock()
 
 	if !cached {
 		wl := columns.UpdateColumnSet(
-			powerConfigAllColumns,
-			powerConfigPrimaryKeyColumns,
+			deviceSettingAllColumns,
+			deviceSettingPrimaryKeyColumns,
 		)
 
 		if !columns.IsWhitelist() {
 			wl = strmangle.SetComplement(wl, []string{"created_at"})
 		}
 		if len(wl) == 0 {
-			return 0, errors.New("models: unable to update power_configs, could not build whitelist")
+			return 0, errors.New("models: unable to update device_settings, could not build whitelist")
 		}
 
-		cache.query = fmt.Sprintf("UPDATE \"vehicle_signal_decoding_api\".\"power_configs\" SET %s WHERE %s",
+		cache.query = fmt.Sprintf("UPDATE \"vehicle_signal_decoding_api\".\"device_settings\" SET %s WHERE %s",
 			strmangle.SetParamNames("\"", "\"", 1, wl),
-			strmangle.WhereClause("\"", "\"", len(wl)+1, powerConfigPrimaryKeyColumns),
+			strmangle.WhereClause("\"", "\"", len(wl)+1, deviceSettingPrimaryKeyColumns),
 		)
-		cache.valueMapping, err = queries.BindMapping(powerConfigType, powerConfigMapping, append(wl, powerConfigPrimaryKeyColumns...))
+		cache.valueMapping, err = queries.BindMapping(deviceSettingType, deviceSettingMapping, append(wl, deviceSettingPrimaryKeyColumns...))
 		if err != nil {
 			return 0, err
 		}
@@ -799,42 +815,42 @@ func (o *PowerConfig) Update(ctx context.Context, exec boil.ContextExecutor, col
 	var result sql.Result
 	result, err = exec.ExecContext(ctx, cache.query, values...)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to update power_configs row")
+		return 0, errors.Wrap(err, "models: unable to update device_settings row")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to get rows affected by update for power_configs")
+		return 0, errors.Wrap(err, "models: failed to get rows affected by update for device_settings")
 	}
 
 	if !cached {
-		powerConfigUpdateCacheMut.Lock()
-		powerConfigUpdateCache[key] = cache
-		powerConfigUpdateCacheMut.Unlock()
+		deviceSettingUpdateCacheMut.Lock()
+		deviceSettingUpdateCache[key] = cache
+		deviceSettingUpdateCacheMut.Unlock()
 	}
 
 	return rowsAff, o.doAfterUpdateHooks(ctx, exec)
 }
 
 // UpdateAll updates all rows with the specified column values.
-func (q powerConfigQuery) UpdateAll(ctx context.Context, exec boil.ContextExecutor, cols M) (int64, error) {
+func (q deviceSettingQuery) UpdateAll(ctx context.Context, exec boil.ContextExecutor, cols M) (int64, error) {
 	queries.SetUpdate(q.Query, cols)
 
 	result, err := q.Query.ExecContext(ctx, exec)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to update all for power_configs")
+		return 0, errors.Wrap(err, "models: unable to update all for device_settings")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to retrieve rows affected for power_configs")
+		return 0, errors.Wrap(err, "models: unable to retrieve rows affected for device_settings")
 	}
 
 	return rowsAff, nil
 }
 
 // UpdateAll updates all rows with the specified column values, using an executor.
-func (o PowerConfigSlice) UpdateAll(ctx context.Context, exec boil.ContextExecutor, cols M) (int64, error) {
+func (o DeviceSettingSlice) UpdateAll(ctx context.Context, exec boil.ContextExecutor, cols M) (int64, error) {
 	ln := int64(len(o))
 	if ln == 0 {
 		return 0, nil
@@ -856,13 +872,13 @@ func (o PowerConfigSlice) UpdateAll(ctx context.Context, exec boil.ContextExecut
 
 	// Append all of the primary key values for each column
 	for _, obj := range o {
-		pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), powerConfigPrimaryKeyMapping)
+		pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), deviceSettingPrimaryKeyMapping)
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := fmt.Sprintf("UPDATE \"vehicle_signal_decoding_api\".\"power_configs\" SET %s WHERE %s",
+	sql := fmt.Sprintf("UPDATE \"vehicle_signal_decoding_api\".\"device_settings\" SET %s WHERE %s",
 		strmangle.SetParamNames("\"", "\"", 1, colNames),
-		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), len(colNames)+1, powerConfigPrimaryKeyColumns, len(o)))
+		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), len(colNames)+1, deviceSettingPrimaryKeyColumns, len(o)))
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -871,21 +887,21 @@ func (o PowerConfigSlice) UpdateAll(ctx context.Context, exec boil.ContextExecut
 	}
 	result, err := exec.ExecContext(ctx, sql, args...)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to update all in powerConfig slice")
+		return 0, errors.Wrap(err, "models: unable to update all in deviceSetting slice")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to retrieve rows affected all in update all powerConfig")
+		return 0, errors.Wrap(err, "models: unable to retrieve rows affected all in update all deviceSetting")
 	}
 	return rowsAff, nil
 }
 
 // Upsert attempts an insert using an executor, and does an update or ignore on conflict.
 // See boil.Columns documentation for how to properly use updateColumns and insertColumns.
-func (o *PowerConfig) Upsert(ctx context.Context, exec boil.ContextExecutor, updateOnConflict bool, conflictColumns []string, updateColumns, insertColumns boil.Columns) error {
+func (o *DeviceSetting) Upsert(ctx context.Context, exec boil.ContextExecutor, updateOnConflict bool, conflictColumns []string, updateColumns, insertColumns boil.Columns) error {
 	if o == nil {
-		return errors.New("models: no power_configs provided for upsert")
+		return errors.New("models: no device_settings provided for upsert")
 	}
 	if !boil.TimestampsAreSkipped(ctx) {
 		currTime := time.Now().In(boil.GetLocation())
@@ -900,7 +916,7 @@ func (o *PowerConfig) Upsert(ctx context.Context, exec boil.ContextExecutor, upd
 		return err
 	}
 
-	nzDefaults := queries.NonZeroDefaultSet(powerConfigColumnsWithDefault, o)
+	nzDefaults := queries.NonZeroDefaultSet(deviceSettingColumnsWithDefault, o)
 
 	// Build cache key in-line uglily - mysql vs psql problems
 	buf := strmangle.GetBuffer()
@@ -930,42 +946,42 @@ func (o *PowerConfig) Upsert(ctx context.Context, exec boil.ContextExecutor, upd
 	key := buf.String()
 	strmangle.PutBuffer(buf)
 
-	powerConfigUpsertCacheMut.RLock()
-	cache, cached := powerConfigUpsertCache[key]
-	powerConfigUpsertCacheMut.RUnlock()
+	deviceSettingUpsertCacheMut.RLock()
+	cache, cached := deviceSettingUpsertCache[key]
+	deviceSettingUpsertCacheMut.RUnlock()
 
 	var err error
 
 	if !cached {
 		insert, ret := insertColumns.InsertColumnSet(
-			powerConfigAllColumns,
-			powerConfigColumnsWithDefault,
-			powerConfigColumnsWithoutDefault,
+			deviceSettingAllColumns,
+			deviceSettingColumnsWithDefault,
+			deviceSettingColumnsWithoutDefault,
 			nzDefaults,
 		)
 
 		update := updateColumns.UpdateColumnSet(
-			powerConfigAllColumns,
-			powerConfigPrimaryKeyColumns,
+			deviceSettingAllColumns,
+			deviceSettingPrimaryKeyColumns,
 		)
 
 		if updateOnConflict && len(update) == 0 {
-			return errors.New("models: unable to upsert power_configs, could not build update column list")
+			return errors.New("models: unable to upsert device_settings, could not build update column list")
 		}
 
 		conflict := conflictColumns
 		if len(conflict) == 0 {
-			conflict = make([]string, len(powerConfigPrimaryKeyColumns))
-			copy(conflict, powerConfigPrimaryKeyColumns)
+			conflict = make([]string, len(deviceSettingPrimaryKeyColumns))
+			copy(conflict, deviceSettingPrimaryKeyColumns)
 		}
-		cache.query = buildUpsertQueryPostgres(dialect, "\"vehicle_signal_decoding_api\".\"power_configs\"", updateOnConflict, ret, update, conflict, insert)
+		cache.query = buildUpsertQueryPostgres(dialect, "\"vehicle_signal_decoding_api\".\"device_settings\"", updateOnConflict, ret, update, conflict, insert)
 
-		cache.valueMapping, err = queries.BindMapping(powerConfigType, powerConfigMapping, insert)
+		cache.valueMapping, err = queries.BindMapping(deviceSettingType, deviceSettingMapping, insert)
 		if err != nil {
 			return err
 		}
 		if len(ret) != 0 {
-			cache.retMapping, err = queries.BindMapping(powerConfigType, powerConfigMapping, ret)
+			cache.retMapping, err = queries.BindMapping(deviceSettingType, deviceSettingMapping, ret)
 			if err != nil {
 				return err
 			}
@@ -993,31 +1009,31 @@ func (o *PowerConfig) Upsert(ctx context.Context, exec boil.ContextExecutor, upd
 		_, err = exec.ExecContext(ctx, cache.query, vals...)
 	}
 	if err != nil {
-		return errors.Wrap(err, "models: unable to upsert power_configs")
+		return errors.Wrap(err, "models: unable to upsert device_settings")
 	}
 
 	if !cached {
-		powerConfigUpsertCacheMut.Lock()
-		powerConfigUpsertCache[key] = cache
-		powerConfigUpsertCacheMut.Unlock()
+		deviceSettingUpsertCacheMut.Lock()
+		deviceSettingUpsertCache[key] = cache
+		deviceSettingUpsertCacheMut.Unlock()
 	}
 
 	return o.doAfterUpsertHooks(ctx, exec)
 }
 
-// Delete deletes a single PowerConfig record with an executor.
+// Delete deletes a single DeviceSetting record with an executor.
 // Delete will match against the primary key column to find the record to delete.
-func (o *PowerConfig) Delete(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
+func (o *DeviceSetting) Delete(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
 	if o == nil {
-		return 0, errors.New("models: no PowerConfig provided for delete")
+		return 0, errors.New("models: no DeviceSetting provided for delete")
 	}
 
 	if err := o.doBeforeDeleteHooks(ctx, exec); err != nil {
 		return 0, err
 	}
 
-	args := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), powerConfigPrimaryKeyMapping)
-	sql := "DELETE FROM \"vehicle_signal_decoding_api\".\"power_configs\" WHERE \"template_name\"=$1"
+	args := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), deviceSettingPrimaryKeyMapping)
+	sql := "DELETE FROM \"vehicle_signal_decoding_api\".\"device_settings\" WHERE \"template_name\"=$1"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -1026,12 +1042,12 @@ func (o *PowerConfig) Delete(ctx context.Context, exec boil.ContextExecutor) (in
 	}
 	result, err := exec.ExecContext(ctx, sql, args...)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to delete from power_configs")
+		return 0, errors.Wrap(err, "models: unable to delete from device_settings")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to get rows affected by delete for power_configs")
+		return 0, errors.Wrap(err, "models: failed to get rows affected by delete for device_settings")
 	}
 
 	if err := o.doAfterDeleteHooks(ctx, exec); err != nil {
@@ -1042,33 +1058,33 @@ func (o *PowerConfig) Delete(ctx context.Context, exec boil.ContextExecutor) (in
 }
 
 // DeleteAll deletes all matching rows.
-func (q powerConfigQuery) DeleteAll(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
+func (q deviceSettingQuery) DeleteAll(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
 	if q.Query == nil {
-		return 0, errors.New("models: no powerConfigQuery provided for delete all")
+		return 0, errors.New("models: no deviceSettingQuery provided for delete all")
 	}
 
 	queries.SetDelete(q.Query)
 
 	result, err := q.Query.ExecContext(ctx, exec)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to delete all from power_configs")
+		return 0, errors.Wrap(err, "models: unable to delete all from device_settings")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to get rows affected by deleteall for power_configs")
+		return 0, errors.Wrap(err, "models: failed to get rows affected by deleteall for device_settings")
 	}
 
 	return rowsAff, nil
 }
 
 // DeleteAll deletes all rows in the slice, using an executor.
-func (o PowerConfigSlice) DeleteAll(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
+func (o DeviceSettingSlice) DeleteAll(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
 	if len(o) == 0 {
 		return 0, nil
 	}
 
-	if len(powerConfigBeforeDeleteHooks) != 0 {
+	if len(deviceSettingBeforeDeleteHooks) != 0 {
 		for _, obj := range o {
 			if err := obj.doBeforeDeleteHooks(ctx, exec); err != nil {
 				return 0, err
@@ -1078,12 +1094,12 @@ func (o PowerConfigSlice) DeleteAll(ctx context.Context, exec boil.ContextExecut
 
 	var args []interface{}
 	for _, obj := range o {
-		pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), powerConfigPrimaryKeyMapping)
+		pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), deviceSettingPrimaryKeyMapping)
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := "DELETE FROM \"vehicle_signal_decoding_api\".\"power_configs\" WHERE " +
-		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 1, powerConfigPrimaryKeyColumns, len(o))
+	sql := "DELETE FROM \"vehicle_signal_decoding_api\".\"device_settings\" WHERE " +
+		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 1, deviceSettingPrimaryKeyColumns, len(o))
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -1092,15 +1108,15 @@ func (o PowerConfigSlice) DeleteAll(ctx context.Context, exec boil.ContextExecut
 	}
 	result, err := exec.ExecContext(ctx, sql, args...)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to delete all from powerConfig slice")
+		return 0, errors.Wrap(err, "models: unable to delete all from deviceSetting slice")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to get rows affected by deleteall for power_configs")
+		return 0, errors.Wrap(err, "models: failed to get rows affected by deleteall for device_settings")
 	}
 
-	if len(powerConfigAfterDeleteHooks) != 0 {
+	if len(deviceSettingAfterDeleteHooks) != 0 {
 		for _, obj := range o {
 			if err := obj.doAfterDeleteHooks(ctx, exec); err != nil {
 				return 0, err
@@ -1113,8 +1129,8 @@ func (o PowerConfigSlice) DeleteAll(ctx context.Context, exec boil.ContextExecut
 
 // Reload refetches the object from the database
 // using the primary keys with an executor.
-func (o *PowerConfig) Reload(ctx context.Context, exec boil.ContextExecutor) error {
-	ret, err := FindPowerConfig(ctx, exec, o.TemplateName)
+func (o *DeviceSetting) Reload(ctx context.Context, exec boil.ContextExecutor) error {
+	ret, err := FindDeviceSetting(ctx, exec, o.TemplateName)
 	if err != nil {
 		return err
 	}
@@ -1125,26 +1141,26 @@ func (o *PowerConfig) Reload(ctx context.Context, exec boil.ContextExecutor) err
 
 // ReloadAll refetches every row with matching primary key column values
 // and overwrites the original object slice with the newly updated slice.
-func (o *PowerConfigSlice) ReloadAll(ctx context.Context, exec boil.ContextExecutor) error {
+func (o *DeviceSettingSlice) ReloadAll(ctx context.Context, exec boil.ContextExecutor) error {
 	if o == nil || len(*o) == 0 {
 		return nil
 	}
 
-	slice := PowerConfigSlice{}
+	slice := DeviceSettingSlice{}
 	var args []interface{}
 	for _, obj := range *o {
-		pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), powerConfigPrimaryKeyMapping)
+		pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), deviceSettingPrimaryKeyMapping)
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := "SELECT \"vehicle_signal_decoding_api\".\"power_configs\".* FROM \"vehicle_signal_decoding_api\".\"power_configs\" WHERE " +
-		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 1, powerConfigPrimaryKeyColumns, len(*o))
+	sql := "SELECT \"vehicle_signal_decoding_api\".\"device_settings\".* FROM \"vehicle_signal_decoding_api\".\"device_settings\" WHERE " +
+		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 1, deviceSettingPrimaryKeyColumns, len(*o))
 
 	q := queries.Raw(sql, args...)
 
 	err := q.Bind(ctx, exec, &slice)
 	if err != nil {
-		return errors.Wrap(err, "models: unable to reload all in PowerConfigSlice")
+		return errors.Wrap(err, "models: unable to reload all in DeviceSettingSlice")
 	}
 
 	*o = slice
@@ -1152,10 +1168,10 @@ func (o *PowerConfigSlice) ReloadAll(ctx context.Context, exec boil.ContextExecu
 	return nil
 }
 
-// PowerConfigExists checks if the PowerConfig row exists.
-func PowerConfigExists(ctx context.Context, exec boil.ContextExecutor, templateName string) (bool, error) {
+// DeviceSettingExists checks if the DeviceSetting row exists.
+func DeviceSettingExists(ctx context.Context, exec boil.ContextExecutor, templateName string) (bool, error) {
 	var exists bool
-	sql := "select exists(select 1 from \"vehicle_signal_decoding_api\".\"power_configs\" where \"template_name\"=$1 limit 1)"
+	sql := "select exists(select 1 from \"vehicle_signal_decoding_api\".\"device_settings\" where \"template_name\"=$1 limit 1)"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -1166,13 +1182,13 @@ func PowerConfigExists(ctx context.Context, exec boil.ContextExecutor, templateN
 
 	err := row.Scan(&exists)
 	if err != nil {
-		return false, errors.Wrap(err, "models: unable to check if power_configs exists")
+		return false, errors.Wrap(err, "models: unable to check if device_settings exists")
 	}
 
 	return exists, nil
 }
 
-// Exists checks if the PowerConfig row exists.
-func (o *PowerConfig) Exists(ctx context.Context, exec boil.ContextExecutor) (bool, error) {
-	return PowerConfigExists(ctx, exec, o.TemplateName)
+// Exists checks if the DeviceSetting row exists.
+func (o *DeviceSetting) Exists(ctx context.Context, exec boil.ContextExecutor) (bool, error) {
+	return DeviceSettingExists(ctx, exec, o.TemplateName)
 }

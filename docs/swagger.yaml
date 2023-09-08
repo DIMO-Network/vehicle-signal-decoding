@@ -1,124 +1,129 @@
 basePath: /v1
 definitions:
+  controllers.DeviceSetting:
+    properties:
+      battery_critical_level_voltage:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      safety_cut_out_voltage:
+        type: string
+      sleep_timer_event_driven_interval:
+        type: string
+      sleep_timer_event_driven_period:
+        type: string
+      sleep_timer_inactivity_after_sleep_interval:
+        type: string
+      sleep_timer_inactivity_fallback_interval:
+        type: string
+      template_name:
+        type: string
+      updated_at:
+        type: string
+      wake_trigger_voltage_level:
+        type: string
+    type: object
   controllers.PIDConfig:
     properties:
       formula:
         type: string
       header:
+        items:
+          type: integer
+        type: array
+      id:
         type: integer
-      intervalSeconds:
+      interval_seconds:
         type: integer
       mode:
-        type: integer
-      name:
-        type: string
+        items:
+          type: integer
+        type: array
       pid:
-        type: integer
-    type: object
-  controllers.PowerConfig:
-    properties:
-      battery:
-        properties:
-          critical_level:
-            properties:
-              voltage:
-                type: string
-            type: object
-        type: object
-      safety_cut-out:
-        properties:
-          voltage:
-            type: string
-        type: object
-      sleep_timer:
-        properties:
-          event_driven:
-            properties:
-              interval:
-                type: string
-              period:
-                type: string
-            type: object
-          inactivity_after_sleep:
-            properties:
-              interval:
-                type: string
-            type: object
-          inactivity_fallback:
-            properties:
-              interval:
-                type: string
-            type: object
-        type: object
-      wake_trigger:
-        properties:
-          voltage_level:
-            type: string
-        type: object
+        items:
+          type: integer
+        type: array
+      protocol:
+        type: string
+      template_name:
+        type: string
     type: object
 info:
   contact: {}
   title: DIMO Vehicle-Signal-Decoding
   version: "1.0"
 paths:
-  /device-config/:vin/dbc:
+  /device-config/:template_name/dbc-file:
     get:
-      description: Retrieve the URL pointing to the DBC file for a given VIN
+      description: Fetches the DBC file from the dbc_files table given a template
+        name
       parameters:
-      - description: vehicle identification number (VIN)
+      - description: template name
         in: path
-        name: vin
+        name: template_name
         required: true
         type: string
       produces:
-      - application/json
+      - text/plain
       responses:
         "200":
-          description: OK
+          description: Successfully retrieved DBC file
           schema:
             type: string
+        "404":
+          description: No DBC file found for the given template name.
       tags:
       - vehicle-signal-decoding
-  /device-config/:vin/pid:
+  /device-config/:template_name/deviceSettings:
     get:
-      description: Retrieve the PID configuration based on a given VIN
+      description: Fetches the device settings configurations from device_settings
+        table given a template name
       parameters:
-      - description: vehicle identification number (VIN)
+      - description: template name
         in: path
-        name: vin
+        name: template_name
         required: true
         type: string
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Successfully retrieved Device Settings
           schema:
-            $ref: '#/definitions/controllers.PIDConfig'
+            $ref: '#/definitions/controllers.DeviceSetting'
+        "404":
+          description: No Device Settings data found for the given template name.
       tags:
       - vehicle-signal-decoding
-  /device-config/:vin/power:
+  /device-config/:template_name/pids:
     get:
-      description: Retrieve the power configuration based on a given VIN
+      description: Retrieves a list of PID configurations from the database given
+        a template name
       parameters:
-      - description: vehicle identification number (VIN)
+      - description: template name
         in: path
-        name: vin
+        name: template_name
         required: true
         type: string
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Successfully retrieved PID Configurations
           schema:
-            $ref: '#/definitions/controllers.PowerConfig'
+            items:
+              $ref: '#/definitions/controllers.PIDConfig'
+            type: array
+        "404":
+          description: No PID Config data found for the given template name.
       tags:
       - vehicle-signal-decoding
   /device-config/:vin/urls:
     get:
-      description: Retrieve the URLs for PID, Power, and DBC configuration based on
-        a given VIN
+      description: Retrieve the URLs for PID, DeviceSettings, and DBC configuration
+        based on a given VIN
       parameters:
       - description: vehicle identification number (VIN)
         in: path

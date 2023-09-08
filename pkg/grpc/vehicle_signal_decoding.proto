@@ -7,6 +7,22 @@ option go_package = "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc";
 
 package grpc;
 
+message PIDConfig {
+    string name = 1;
+    uint32 header = 2;
+    uint32 mode = 3;
+    uint32 pid = 4;
+    string formula = 5;
+    int32 interval_seconds = 6;
+    string version = 7;
+    string protocol = 8;
+}
+message PIDRequests {
+  string template_name = 1;
+  string version = 2;
+  repeated PIDConfig requests = 3;
+}
+
 message CreateDBCCodeRequest {
   string name = 1;
   string dbc_contents = 2;
