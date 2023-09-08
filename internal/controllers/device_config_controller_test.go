@@ -42,6 +42,7 @@ func TestGetPIDsByTemplate(t *testing.T) {
 
 	template := models.Template{
 		TemplateName: "exampleTemplate",
+		Version:      "1.0",
 		// etc
 	}
 	err := template.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
@@ -55,7 +56,6 @@ func TestGetPIDsByTemplate(t *testing.T) {
 		Pid:             []byte("05"),
 		Formula:         "A*5",
 		IntervalSeconds: 60,
-		Version:         "1.0",
 		Protocol:        "CAN 11",
 	}
 
@@ -91,8 +91,12 @@ func TestGetPIDsByTemplate(t *testing.T) {
 		assert.Equal(t, pc.Pid, pids[0].Pid)
 		assert.Equal(t, pc.Formula, pids[0].Formula)
 		assert.Equal(t, pc.IntervalSeconds, pids[0].IntervalSeconds)
-		assert.Equal(t, pc.Version, pids[0].Version)
 		assert.Equal(t, pc.Protocol, pids[0].Protocol)
+
+		// Testing Version
+		templateFromDB, err := models.Templates(models.TemplateWhere.TemplateName.EQ(template.TemplateName)).One(context.Background(), pdb.DBS().Reader.DB)
+		assert.NoError(t, err)
+		assert.Equal(t, template.Version, templateFromDB.Version)
 
 		// Teardown: cleanup after test
 		test.TruncateTables(pdb.DBS().Writer.DB, t)
@@ -120,6 +124,7 @@ func TestGetDeviceSettingsByTemplate(t *testing.T) {
 
 	template := models.Template{
 		TemplateName: "testTemplate",
+		Version:      "2.0",
 	}
 	err := template.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	assert.NoError(t, err)
@@ -127,7 +132,6 @@ func TestGetDeviceSettingsByTemplate(t *testing.T) {
 	ds := models.DeviceSetting{
 		ID:                            1,
 		TemplateName:                  "testTemplate",
-		Version:                       "1.0",
 		BatteryCriticalLevelVoltage:   "3.2V",
 		SafetyCutOutVoltage:           "2.8V",
 		SleepTimerEventDrivenInterval: "5s",
@@ -158,10 +162,15 @@ func TestGetDeviceSettingsByTemplate(t *testing.T) {
 		assert.NoError(t, err)
 
 		assert.Equal(t, ds.ID, receivedDS.ID)
-		assert.Equal(t, ds.Version, receivedDS.Version)
+
 		assert.Equal(t, ds.BatteryCriticalLevelVoltage, receivedDS.BatteryCriticalLevelVoltage)
 		assert.Equal(t, ds.SafetyCutOutVoltage, receivedDS.SafetyCutOutVoltage)
 		assert.Equal(t, ds.SleepTimerEventDrivenInterval, receivedDS.SleepTimerEventDrivenInterval)
+
+		// Testing Version
+		templateFromDB, err := models.Templates(models.TemplateWhere.TemplateName.EQ(template.TemplateName)).One(context.Background(), pdb.DBS().Reader.DB)
+		assert.NoError(t, err)
+		assert.Equal(t, template.Version, templateFromDB.Version)
 
 		// Teardown: cleanup after test
 		test.TruncateTables(pdb.DBS().Writer.DB, t)
@@ -188,6 +197,7 @@ func TestGetDBCFileByTemplateName(t *testing.T) {
 
 	template := models.Template{
 		TemplateName: "exampleDBCFileTemplate",
+		Version:      "3.0",
 		// etc
 	}
 	err := template.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
@@ -217,6 +227,11 @@ func TestGetDBCFileByTemplateName(t *testing.T) {
 		}
 
 		assert.Equal(t, dbcf.DBCFile, string(body))
+
+		// Testing Version
+		templateFromDB, err := models.Templates(models.TemplateWhere.TemplateName.EQ(template.TemplateName)).One(context.Background(), pdb.DBS().Reader.DB)
+		assert.NoError(t, err)
+		assert.Equal(t, template.Version, templateFromDB.Version)
 
 		// Teardown: cleanup after test
 		test.TruncateTables(pdb.DBS().Writer.DB, t)

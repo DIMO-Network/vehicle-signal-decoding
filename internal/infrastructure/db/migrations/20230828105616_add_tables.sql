@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS templates (
     template_name text NOT NULL, 
     parent_template_name text DEFAULT NULL,
     template_type text REFERENCES template_types(type_name),
+    version text NOT NULL,
     created_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
@@ -36,7 +37,6 @@ CREATE TABLE IF NOT EXISTS pid_configs (
     pid byteA NOT NULL,
     formula text NOT NULL,
     interval_seconds INTEGER NOT NULL,
-    version text NOT NULL,
     protocol text NOT NULL,
     created_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -45,7 +45,6 @@ CREATE TABLE IF NOT EXISTS pid_configs (
 );
 CREATE TABLE IF NOT EXISTS device_settings (
     id BIGSERIAL,
-    version text NOT NULL,
     template_name text REFERENCES templates(template_name) NOT NULL,
     battery_critical_level_voltage text NOT NULL,
     safety_cut_out_voltage text NOT NULL,
@@ -74,7 +73,6 @@ CREATE TABLE IF NOT EXISTS template_vehicles (
 CREATE TABLE IF NOT EXISTS dbc_files (
     dbc_file text NOT NULL,
     template_name text REFERENCES templates(template_name) NOT NULL,
-    version text NOT NULL,
     created_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
 

@@ -27,6 +27,7 @@ type Template struct {
 	TemplateName       string      `boil:"template_name" json:"template_name" toml:"template_name" yaml:"template_name"`
 	ParentTemplateName null.String `boil:"parent_template_name" json:"parent_template_name,omitempty" toml:"parent_template_name" yaml:"parent_template_name,omitempty"`
 	TemplateType       null.String `boil:"template_type" json:"template_type,omitempty" toml:"template_type" yaml:"template_type,omitempty"`
+	Version            string      `boil:"version" json:"version" toml:"version" yaml:"version"`
 	CreatedAt          time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 	UpdatedAt          time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
 
@@ -38,12 +39,14 @@ var TemplateColumns = struct {
 	TemplateName       string
 	ParentTemplateName string
 	TemplateType       string
+	Version            string
 	CreatedAt          string
 	UpdatedAt          string
 }{
 	TemplateName:       "template_name",
 	ParentTemplateName: "parent_template_name",
 	TemplateType:       "template_type",
+	Version:            "version",
 	CreatedAt:          "created_at",
 	UpdatedAt:          "updated_at",
 }
@@ -52,12 +55,14 @@ var TemplateTableColumns = struct {
 	TemplateName       string
 	ParentTemplateName string
 	TemplateType       string
+	Version            string
 	CreatedAt          string
 	UpdatedAt          string
 }{
 	TemplateName:       "templates.template_name",
 	ParentTemplateName: "templates.parent_template_name",
 	TemplateType:       "templates.template_type",
+	Version:            "templates.version",
 	CreatedAt:          "templates.created_at",
 	UpdatedAt:          "templates.updated_at",
 }
@@ -68,12 +73,14 @@ var TemplateWhere = struct {
 	TemplateName       whereHelperstring
 	ParentTemplateName whereHelpernull_String
 	TemplateType       whereHelpernull_String
+	Version            whereHelperstring
 	CreatedAt          whereHelpertime_Time
 	UpdatedAt          whereHelpertime_Time
 }{
 	TemplateName:       whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"templates\".\"template_name\""},
 	ParentTemplateName: whereHelpernull_String{field: "\"vehicle_signal_decoding_api\".\"templates\".\"parent_template_name\""},
 	TemplateType:       whereHelpernull_String{field: "\"vehicle_signal_decoding_api\".\"templates\".\"template_type\""},
+	Version:            whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"templates\".\"version\""},
 	CreatedAt:          whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"templates\".\"created_at\""},
 	UpdatedAt:          whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"templates\".\"updated_at\""},
 }
@@ -146,8 +153,8 @@ func (r *templateR) GetTemplateNameTemplateVehicles() TemplateVehicleSlice {
 type templateL struct{}
 
 var (
-	templateAllColumns            = []string{"template_name", "parent_template_name", "template_type", "created_at", "updated_at"}
-	templateColumnsWithoutDefault = []string{"template_name"}
+	templateAllColumns            = []string{"template_name", "parent_template_name", "template_type", "version", "created_at", "updated_at"}
+	templateColumnsWithoutDefault = []string{"template_name", "version"}
 	templateColumnsWithDefault    = []string{"parent_template_name", "template_type", "created_at", "updated_at"}
 	templatePrimaryKeyColumns     = []string{"template_name"}
 	templateGeneratedColumns      = []string{}

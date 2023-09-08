@@ -66,38 +66,15 @@ func resolveTemplateName(serial string, db *sql.DB) (string, string, error) {
 	return template.TemplateName, parentTemplateName, nil
 }
 
-func getConfigurationVersion(configType string, templateName string, db boil.ContextExecutor) (string, error) {
-	var err error
-	var version string
-
-	switch configType {
-	case "pid":
-		pid, err := models.PidConfigs(models.PidConfigWhere.TemplateName.EQ(templateName)).One(context.Background(), db)
-		if err == nil {
-			version = pid.Version
-		}
-	case "deviceSettings":
-		deviceSettings, err := models.DeviceSettings(models.DeviceSettingWhere.TemplateName.EQ(templateName)).One(context.Background(), db)
-		if err == nil {
-			version = deviceSettings.Version
-		}
-	case "dbc":
-		dbc, err := models.DBCFiles(models.DBCFileWhere.TemplateName.EQ(templateName)).One(context.Background(), db)
-		if err == nil {
-			version = dbc.Version
-		}
-	default:
-		return "", fmt.Errorf("Unknown config type: %s", configType)
-	}
-
+func getVersionByTemplateName(templateName string, db boil.ContextExecutor) (string, error) {
+	template, err := models.Templates(models.TemplateWhere.TemplateName.EQ(templateName)).One(context.Background(), db)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return "", fmt.Errorf("No version found for config type: %s, and template name: %s", configType, templateName)
+			return "", fmt.Errorf("No version found for template name: %s", templateName)
 		}
 		return "", err
 	}
-
-	return version, nil
+	return template.Version, nil
 }
 
 type PIDConfig struct {
@@ -108,13 +85,11 @@ type PIDConfig struct {
 	Pid             []byte `json:"pid"`
 	Formula         string `json:"formula"`
 	IntervalSeconds int    `json:"interval_seconds"`
-	Version         string `json:"version,omitempty"`
 	Protocol        string `json:"protocol,omitempty"`
 }
 
 type DeviceSetting struct {
 	ID                                     int64     `json:"id"`
-	Version                                string    `json:"version,omitempty"`
 	TemplateName                           string    `json:"template_name"`
 	BatteryCriticalLevelVoltage            string    `json:"battery_critical_level_voltage"`
 	SafetyCutOutVoltage                    string    `json:"safety_cut_out_voltage"`
@@ -198,7 +173,6 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 				Pid:             pidUint32,
 				Formula:         pidConfig.Formula,
 				IntervalSeconds: int32(pidConfig.IntervalSeconds),
-				Version:         pidConfig.Version,
 				Protocol:        pidConfig.Protocol,
 			}
 			protoPIDs.Requests = append(protoPIDs.Requests, pid)
@@ -230,7 +204,6 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 			Pid:             pidConfig.Pid,
 			Formula:         pidConfig.Formula,
 			IntervalSeconds: pidConfig.IntervalSeconds,
-			Version:         pidConfig.Version,
 			Protocol:        pidConfig.Protocol,
 		}
 		pids[i] = pid
@@ -266,7 +239,6 @@ func (d *DeviceConfigController) GetDeviceSettingsByTemplate(c *fiber.Ctx) error
 	apiDeviceSettings := DeviceSetting{
 
 		ID:                                     dbDeviceSettings.ID,
-		Version:                                dbDeviceSettings.Version,
 		BatteryCriticalLevelVoltage:            dbDeviceSettings.BatteryCriticalLevelVoltage,
 		SafetyCutOutVoltage:                    dbDeviceSettings.SafetyCutOutVoltage,
 		SleepTimerEventDrivenInterval:          dbDeviceSettings.SleepTimerEventDrivenInterval,
@@ -332,38 +304,23 @@ func (d *DeviceConfigController) GetConfigURLs(c *fiber.Ctx) error {
 		})
 	}
 
-	pidTemplateName := templateName
-	deviceSettingTemplateName := parentTemplateName
-
-	if deviceSettingTemplateName == "" {
-		deviceSettingTemplateName = templateName
-	}
-
 	//Versioning
 
-	pidVersion, err := getConfigurationVersion("pid", pidTemplateName, d.db)
+	version, err := getVersionByTemplateName(templateName, d.db)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": fmt.Sprintf("Failed to retrieve PID version for template: %s", pidTemplateName),
+			"error": fmt.Sprintf("Failed to retrieve version for template: %s", templateName),
 		})
 	}
 
-	deviceSettingVersion, err := getConfigurationVersion("deviceSetting", deviceSettingTemplateName, d.db)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": fmt.Sprintf("Failed to retrieve Device Setting version for template: %s", deviceSettingTemplateName),
-		})
-	}
-
-	pidURL := fmt.Sprintf("%s/device-config/pid/%s", baseURL, pidTemplateName)
-	deviceSettingURL := fmt.Sprintf("%s/device-config/deviceSetting/%s", baseURL, deviceSettingTemplateName)
-	dbcURL := fmt.Sprintf("%s/device-config/dbc/%s", baseURL, pidTemplateName)
+	pidURL := fmt.Sprintf("%s/device-config/pid/%s", baseURL, templateName)
+	deviceSettingURL := fmt.Sprintf("%s/device-config/deviceSetting/%s", baseURL, parentTemplateName)
+	dbcURL := fmt.Sprintf("%s/device-config/dbc/%s", baseURL, templateName)
 
 	return c.JSON(fiber.Map{
-		"pidUrl":               pidURL,
-		"deviceSettingUrl":     deviceSettingURL,
-		"dbcURL":               dbcURL,
-		"pidVersion":           pidVersion,
-		"deviceSettingVersion": deviceSettingVersion,
+		"pidUrl":           pidURL,
+		"deviceSettingUrl": deviceSettingURL,
+		"dbcURL":           dbcURL,
+		"Version":          version,
 	})
 }

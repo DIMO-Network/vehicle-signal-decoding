@@ -24,7 +24,6 @@ import (
 // DeviceSetting is an object representing the database table.
 type DeviceSetting struct {
 	ID                                     int64     `boil:"id" json:"id" toml:"id" yaml:"id"`
-	Version                                string    `boil:"version" json:"version" toml:"version" yaml:"version"`
 	TemplateName                           string    `boil:"template_name" json:"template_name" toml:"template_name" yaml:"template_name"`
 	BatteryCriticalLevelVoltage            string    `boil:"battery_critical_level_voltage" json:"battery_critical_level_voltage" toml:"battery_critical_level_voltage" yaml:"battery_critical_level_voltage"`
 	SafetyCutOutVoltage                    string    `boil:"safety_cut_out_voltage" json:"safety_cut_out_voltage" toml:"safety_cut_out_voltage" yaml:"safety_cut_out_voltage"`
@@ -42,7 +41,6 @@ type DeviceSetting struct {
 
 var DeviceSettingColumns = struct {
 	ID                                     string
-	Version                                string
 	TemplateName                           string
 	BatteryCriticalLevelVoltage            string
 	SafetyCutOutVoltage                    string
@@ -55,7 +53,6 @@ var DeviceSettingColumns = struct {
 	UpdatedAt                              string
 }{
 	ID:                                     "id",
-	Version:                                "version",
 	TemplateName:                           "template_name",
 	BatteryCriticalLevelVoltage:            "battery_critical_level_voltage",
 	SafetyCutOutVoltage:                    "safety_cut_out_voltage",
@@ -70,7 +67,6 @@ var DeviceSettingColumns = struct {
 
 var DeviceSettingTableColumns = struct {
 	ID                                     string
-	Version                                string
 	TemplateName                           string
 	BatteryCriticalLevelVoltage            string
 	SafetyCutOutVoltage                    string
@@ -83,7 +79,6 @@ var DeviceSettingTableColumns = struct {
 	UpdatedAt                              string
 }{
 	ID:                                     "device_settings.id",
-	Version:                                "device_settings.version",
 	TemplateName:                           "device_settings.template_name",
 	BatteryCriticalLevelVoltage:            "device_settings.battery_critical_level_voltage",
 	SafetyCutOutVoltage:                    "device_settings.safety_cut_out_voltage",
@@ -123,7 +118,6 @@ func (w whereHelperint64) NIN(slice []int64) qm.QueryMod {
 
 var DeviceSettingWhere = struct {
 	ID                                     whereHelperint64
-	Version                                whereHelperstring
 	TemplateName                           whereHelperstring
 	BatteryCriticalLevelVoltage            whereHelperstring
 	SafetyCutOutVoltage                    whereHelperstring
@@ -136,7 +130,6 @@ var DeviceSettingWhere = struct {
 	UpdatedAt                              whereHelpertime_Time
 }{
 	ID:                                     whereHelperint64{field: "\"vehicle_signal_decoding_api\".\"device_settings\".\"id\""},
-	Version:                                whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"device_settings\".\"version\""},
 	TemplateName:                           whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"device_settings\".\"template_name\""},
 	BatteryCriticalLevelVoltage:            whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"device_settings\".\"battery_critical_level_voltage\""},
 	SafetyCutOutVoltage:                    whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"device_settings\".\"safety_cut_out_voltage\""},
@@ -177,8 +170,8 @@ func (r *deviceSettingR) GetTemplateNameTemplate() *Template {
 type deviceSettingL struct{}
 
 var (
-	deviceSettingAllColumns            = []string{"id", "version", "template_name", "battery_critical_level_voltage", "safety_cut_out_voltage", "sleep_timer_event_driven_interval", "sleep_timer_event_driven_period", "sleep_timer_inactivity_after_sleep_interval", "sleep_timer_inactivity_fallback_interval", "wake_trigger_voltage_level", "created_at", "updated_at"}
-	deviceSettingColumnsWithoutDefault = []string{"version", "template_name", "battery_critical_level_voltage", "safety_cut_out_voltage", "sleep_timer_event_driven_interval", "sleep_timer_event_driven_period", "sleep_timer_inactivity_after_sleep_interval", "sleep_timer_inactivity_fallback_interval", "wake_trigger_voltage_level"}
+	deviceSettingAllColumns            = []string{"id", "template_name", "battery_critical_level_voltage", "safety_cut_out_voltage", "sleep_timer_event_driven_interval", "sleep_timer_event_driven_period", "sleep_timer_inactivity_after_sleep_interval", "sleep_timer_inactivity_fallback_interval", "wake_trigger_voltage_level", "created_at", "updated_at"}
+	deviceSettingColumnsWithoutDefault = []string{"template_name", "battery_critical_level_voltage", "safety_cut_out_voltage", "sleep_timer_event_driven_interval", "sleep_timer_event_driven_period", "sleep_timer_inactivity_after_sleep_interval", "sleep_timer_inactivity_fallback_interval", "wake_trigger_voltage_level"}
 	deviceSettingColumnsWithDefault    = []string{"id", "created_at", "updated_at"}
 	deviceSettingPrimaryKeyColumns     = []string{"template_name"}
 	deviceSettingGeneratedColumns      = []string{}
