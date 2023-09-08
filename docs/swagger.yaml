@@ -1,5 +1,16 @@
 basePath: /v1
 definitions:
+  controllers.DeviceConfigResponse:
+    properties:
+      dbcURL:
+        type: string
+      deviceSettingUrl:
+        type: string
+      pidUrl:
+        type: string
+      version:
+        type: string
+    type: object
   controllers.DeviceSetting:
     properties:
       battery_critical_level_voltage:
@@ -134,11 +145,9 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Successfully retrieved configuration URLs
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/controllers.DeviceConfigResponse'
       tags:
       - vehicle-signal-decoding
 swagger: "2.0"

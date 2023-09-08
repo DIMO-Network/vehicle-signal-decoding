@@ -132,12 +132,9 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Successfully retrieved configuration URLs",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/controllers.DeviceConfigResponse"
                         }
                     }
                 }
@@ -145,6 +142,23 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "controllers.DeviceConfigResponse": {
+            "type": "object",
+            "properties": {
+                "dbcURL": {
+                    "type": "string"
+                },
+                "deviceSettingUrl": {
+                    "type": "string"
+                },
+                "pidUrl": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "string"
+                }
+            }
+        },
         "controllers.DeviceSetting": {
             "type": "object",
             "properties": {
