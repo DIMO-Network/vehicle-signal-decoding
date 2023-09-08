@@ -216,7 +216,7 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 // @Description  Fetches the device settings configurations from device_settings table given a template name
 // @Tags         vehicle-signal-decoding
 // @Produce      json
-// @Success      200 {object} DeviceSettings "Successfully retrieved Device Settings"
+// @Success      200 {object} DeviceSetting "Successfully retrieved Device Settings"
 // @Failure 404 "No Device Settings data found for the given template name."
 // @Param        template_name  path   string  true   "template name"
 // @Router       /device-config/:template_name/deviceSettings [get]

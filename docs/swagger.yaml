@@ -1,31 +1,6 @@
 basePath: /v1
 definitions:
-  controllers.PIDConfig:
-    properties:
-      formula:
-        type: string
-      header:
-        items:
-          type: integer
-        type: array
-      id:
-        type: integer
-      interval_seconds:
-        type: integer
-      mode:
-        items:
-          type: integer
-        type: array
-      pid:
-        items:
-          type: integer
-        type: array
-      template_name:
-        type: string
-      version:
-        type: string
-    type: object
-  controllers.PowerConfig:
+  controllers.DeviceSetting:
     properties:
       battery_critical_level_voltage:
         type: string
@@ -47,9 +22,32 @@ definitions:
         type: string
       updated_at:
         type: string
-      version:
-        type: string
       wake_trigger_voltage_level:
+        type: string
+    type: object
+  controllers.PIDConfig:
+    properties:
+      formula:
+        type: string
+      header:
+        items:
+          type: integer
+        type: array
+      id:
+        type: integer
+      interval_seconds:
+        type: integer
+      mode:
+        items:
+          type: integer
+        type: array
+      pid:
+        items:
+          type: integer
+        type: array
+      protocol:
+        type: string
+      template_name:
         type: string
     type: object
 info:
@@ -78,6 +76,27 @@ paths:
           description: No DBC file found for the given template name.
       tags:
       - vehicle-signal-decoding
+  /device-config/:template_name/deviceSettings:
+    get:
+      description: Fetches the device settings configurations from device_settings
+        table given a template name
+      parameters:
+      - description: template name
+        in: path
+        name: template_name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved Device Settings
+          schema:
+            $ref: '#/definitions/controllers.DeviceSetting'
+        "404":
+          description: No Device Settings data found for the given template name.
+      tags:
+      - vehicle-signal-decoding
   /device-config/:template_name/pids:
     get:
       description: Retrieves a list of PID configurations from the database given
@@ -101,31 +120,10 @@ paths:
           description: No PID Config data found for the given template name.
       tags:
       - vehicle-signal-decoding
-  /device-config/:template_name/power:
-    get:
-      description: Fetches the power configurations from power_configs table given
-        a template name
-      parameters:
-      - description: template name
-        in: path
-        name: template_name
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Successfully retrieved Power Configurations
-          schema:
-            $ref: '#/definitions/controllers.PowerConfig'
-        "404":
-          description: No Power Config data found for the given template name.
-      tags:
-      - vehicle-signal-decoding
   /device-config/:vin/urls:
     get:
-      description: Retrieve the URLs for PID, Power, and DBC configuration based on
-        a given VIN
+      description: Retrieve the URLs for PID, DeviceSettings, and DBC configuration
+        based on a given VIN
       parameters:
       - description: vehicle identification number (VIN)
         in: path

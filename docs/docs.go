@@ -47,6 +47,37 @@ const docTemplate = `{
                 }
             }
         },
+        "/device-config/:template_name/deviceSettings": {
+            "get": {
+                "description": "Fetches the device settings configurations from device_settings table given a template name",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "vehicle-signal-decoding"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "template name",
+                        "name": "template_name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved Device Settings",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.DeviceSetting"
+                        }
+                    },
+                    "404": {
+                        "description": "No Device Settings data found for the given template name."
+                    }
+                }
+            }
+        },
         "/device-config/:template_name/pids": {
             "get": {
                 "description": "Retrieves a list of PID configurations from the database given a template name",
@@ -81,40 +112,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/device-config/:template_name/power": {
-            "get": {
-                "description": "Fetches the power configurations from power_configs table given a template name",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "vehicle-signal-decoding"
-                ],
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "template name",
-                        "name": "template_name",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successfully retrieved Power Configurations",
-                        "schema": {
-                            "$ref": "#/definitions/controllers.PowerConfig"
-                        }
-                    },
-                    "404": {
-                        "description": "No Power Config data found for the given template name."
-                    }
-                }
-            }
-        },
         "/device-config/:vin/urls": {
             "get": {
-                "description": "Retrieve the URLs for PID, Power, and DBC configuration based on a given VIN",
+                "description": "Retrieve the URLs for PID, DeviceSettings, and DBC configuration based on a given VIN",
                 "produces": [
                     "application/json"
                 ],
@@ -145,45 +145,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "controllers.PIDConfig": {
-            "type": "object",
-            "properties": {
-                "formula": {
-                    "type": "string"
-                },
-                "header": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "interval_seconds": {
-                    "type": "integer"
-                },
-                "mode": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
-                "pid": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
-                "template_name": {
-                    "type": "string"
-                },
-                "version": {
-                    "type": "string"
-                }
-            }
-        },
-        "controllers.PowerConfig": {
+        "controllers.DeviceSetting": {
             "type": "object",
             "properties": {
                 "battery_critical_level_voltage": {
@@ -216,10 +178,45 @@ const docTemplate = `{
                 "updated_at": {
                     "type": "string"
                 },
-                "version": {
+                "wake_trigger_voltage_level": {
+                    "type": "string"
+                }
+            }
+        },
+        "controllers.PIDConfig": {
+            "type": "object",
+            "properties": {
+                "formula": {
                     "type": "string"
                 },
-                "wake_trigger_voltage_level": {
+                "header": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "interval_seconds": {
+                    "type": "integer"
+                },
+                "mode": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "pid": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "protocol": {
+                    "type": "string"
+                },
+                "template_name": {
                     "type": "string"
                 }
             }

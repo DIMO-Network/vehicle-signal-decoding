@@ -8,17 +8,17 @@ option go_package = "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc";
 package grpc;
 
 message PIDConfig {
-    string Name = 1;
-    uint32 Header = 2;
-    uint32 Mode = 3;
-    uint32 Pid = 4;
-    string Formula = 5;
-    int32 IntervalSeconds = 6;
-    string Version = 7;
-    string Protocol = 8;
+    string name = 1;
+    uint32 header = 2;
+    uint32 mode = 3;
+    uint32 pid = 4;
+    string formula = 5;
+    int32 interval_seconds = 6;
+    string version = 7;
+    string protocol = 8;
 }
 message PIDRequests {
-  string templateName = 1;
+  string template_name = 1;
   string version = 2;
   repeated PIDConfig requests = 3;
 }
