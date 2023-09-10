@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"encoding/binary"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
@@ -124,7 +123,7 @@ func bytesToUint32(b []byte) (uint32, error) {
 // @Description  Retrieves a list of PID configurations from the database given a template name
 // @Tags         vehicle-signal-decoding
 // @Produce      json
-// @Success      200 {array} PIDConfig "Successfully retrieved PID Configurations"
+// @Success      200 {object} grpc.PIDRequests "Successfully retrieved PID Configurations"
 // @Failure 404 "No PID Config data found for the given template name."
 // @Param        template_name  path   string  true   "template name"
 // @Router       /device-config/:template_name/pids [get]
@@ -142,73 +141,58 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 		}
 		return errors.Wrap(err, "Failed to retrieve PID Configs")
 	}
+	template, err := models.FindTemplate(c.Context(), d.db, templateName)
+	if err != nil {
+		d.log.Warn().Err(err).Msg("failed to get template by name, continuing")
+	}
+
+	protoPIDs := &grpc.PIDRequests{
+		TemplateName: templateName,
+	}
+	if template != nil {
+		protoPIDs.Version = template.Version
+	}
+
+	for _, pidConfig := range pidConfigs {
+		headerUint32, err := bytesToUint32(pidConfig.Header)
+		if err != nil {
+			continue
+		}
+
+		modeUint32, err := bytesToUint32(pidConfig.Mode)
+		if err != nil {
+			continue
+		}
+
+		pidUint32, err := bytesToUint32(pidConfig.Pid)
+		if err != nil {
+			continue
+		}
+		pid := &grpc.PIDConfig{
+			Name:            pidConfig.TemplateName,
+			Header:          headerUint32,
+			Mode:            modeUint32,
+			Pid:             pidUint32,
+			Formula:         pidConfig.Formula,
+			IntervalSeconds: int32(pidConfig.IntervalSeconds),
+			Protocol:        pidConfig.Protocol,
+		}
+		protoPIDs.Requests = append(protoPIDs.Requests, pid)
+	}
 
 	acceptHeader := c.Get("Accept", "application/json")
-
 	if acceptHeader == "application/x-protobuf" {
-		protoPIDs := &grpc.PIDRequests{
-			TemplateName: templateName,
-			Version:      "",
-		}
-
-		for _, pidConfig := range pidConfigs {
-			headerUint32, err := bytesToUint32(pidConfig.Header)
-			if err != nil {
-				continue
-			}
-
-			modeUint32, err := bytesToUint32(pidConfig.Mode)
-			if err != nil {
-				continue
-			}
-
-			pidUint32, err := bytesToUint32(pidConfig.Pid)
-			if err != nil {
-				continue
-			}
-			pid := &grpc.PIDConfig{
-				Name:            pidConfig.TemplateName,
-				Header:          headerUint32,
-				Mode:            modeUint32,
-				Pid:             pidUint32,
-				Formula:         pidConfig.Formula,
-				IntervalSeconds: int32(pidConfig.IntervalSeconds),
-				Protocol:        pidConfig.Protocol,
-			}
-			protoPIDs.Requests = append(protoPIDs.Requests, pid)
-		}
-
 		out, err := proto.Marshal(protoPIDs)
 		if err != nil {
 			return errors.Wrap(err, "Failed to serialize to protobuf")
-		}
-
-		// Debugging
-		jsonStr, err := ProtobufToJSON(protoPIDs)
-		if err != nil {
-			log.Printf("Failed to convert Protobuf to JSON: %v", err)
-		} else {
-			log.Printf("Protobuf as JSON: %s", jsonStr)
 		}
 
 		c.Set("Content-Type", "application/x-protobuf")
 
 		return c.Send(out)
 	}
-	pids := make([]PIDConfig, len(pidConfigs))
-	for i, pidConfig := range pidConfigs {
-		pid := PIDConfig{
-			ID:              pidConfig.ID,
-			Header:          pidConfig.Header,
-			Mode:            pidConfig.Mode,
-			Pid:             pidConfig.Pid,
-			Formula:         pidConfig.Formula,
-			IntervalSeconds: pidConfig.IntervalSeconds,
-			Protocol:        pidConfig.Protocol,
-		}
-		pids[i] = pid
-	}
-	return c.JSON(pids)
+
+	return c.JSON(protoPIDs)
 
 }
 

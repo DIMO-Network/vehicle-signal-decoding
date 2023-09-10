@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
 	"io"
 	"os"
 	"testing"
@@ -66,7 +67,7 @@ func TestGetPIDsByTemplate(t *testing.T) {
 	app := fiber.New()
 	app.Get("/device-config/:template_name/pids", c.GetPIDsByTemplate)
 
-	t.Run("GET - PID by Template", func(t *testing.T) {
+	t.Run("GET - PIDs by Template", func(t *testing.T) {
 
 		// Act: make the request
 		request := test.BuildRequest("GET", "/device-config/"+template.TemplateName+"/pids", "")
@@ -78,25 +79,21 @@ func TestGetPIDsByTemplate(t *testing.T) {
 			fmt.Println("response body: " + string(body))
 		}
 
-		pids := make([]PIDConfig, 0)
+		pids := grpc.PIDRequests{}
 		err = json.Unmarshal(body, &pids)
 		assert.NoError(t, err)
 
 		fmt.Printf("Received PIDs: %v\n", pids)
 
-		require.Equal(t, 1, len(pids))
-		assert.Equal(t, pc.ID, pids[0].ID)
-		assert.Equal(t, pc.Header, pids[0].Header)
-		assert.Equal(t, pc.Mode, pids[0].Mode)
-		assert.Equal(t, pc.Pid, pids[0].Pid)
-		assert.Equal(t, pc.Formula, pids[0].Formula)
-		assert.Equal(t, pc.IntervalSeconds, pids[0].IntervalSeconds)
-		assert.Equal(t, pc.Protocol, pids[0].Protocol)
-
-		// Testing Version
-		templateFromDB, err := models.Templates(models.TemplateWhere.TemplateName.EQ(template.TemplateName)).One(context.Background(), pdb.DBS().Reader.DB)
-		assert.NoError(t, err)
-		assert.Equal(t, template.Version, templateFromDB.Version)
+		require.Equal(t, 1, len(pids.Requests))
+		assert.Equal(t, pc., pids.Requests[0].Name)
+		assert.Equal(t, pc.Header, pids.Requests[0].Header)
+		assert.Equal(t, pc.Mode, pids.Requests[0].Mode)
+		assert.Equal(t, pc.Pid, pids.Requests[0].Pid)
+		assert.Equal(t, pc.Formula, pids.Requests[0].Formula)
+		assert.Equal(t, pc.IntervalSeconds, pids.Requests[0].IntervalSeconds)
+		assert.Equal(t, pc.Protocol, pids.Requests[0].Protocol)
+		assert.Equal(t, template.Version, pids.Version)
 
 		// Teardown: cleanup after test
 		test.TruncateTables(pdb.DBS().Writer.DB, t)
