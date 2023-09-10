@@ -47,21 +47,22 @@ func TestGetPIDsByTemplate(t *testing.T) {
 		// etc
 	}
 	err := template.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	pc := models.PidConfig{
 		ID:              1,
+		SignalName:      "odometer",
 		TemplateName:    "exampleTemplate",
 		Header:          []byte("7E8"),
 		Mode:            []byte("01"),
 		Pid:             []byte("05"),
 		Formula:         "A*5",
 		IntervalSeconds: 60,
-		Protocol:        "CAN 11",
+		Protocol:        "CAN 11", // todo make this an enum in the db
 	}
 
-	errr := pc.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
-	assert.NoError(t, errr)
+	err = pc.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+	require.NoError(t, err)
 
 	c := NewDeviceConfigController(&config.Settings{Port: "3000"}, &logger, pdb.DBS().Reader.DB)
 	app := fiber.New()
@@ -86,7 +87,7 @@ func TestGetPIDsByTemplate(t *testing.T) {
 		fmt.Printf("Received PIDs: %v\n", pids)
 
 		require.Equal(t, 1, len(pids.Requests))
-		assert.Equal(t, pc., pids.Requests[0].Name)
+		assert.Equal(t, pc.SignalName, pids.Requests[0].Name)
 		assert.Equal(t, pc.Header, pids.Requests[0].Header)
 		assert.Equal(t, pc.Mode, pids.Requests[0].Mode)
 		assert.Equal(t, pc.Pid, pids.Requests[0].Pid)

@@ -169,7 +169,7 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 			continue
 		}
 		pid := &grpc.PIDConfig{
-			Name:            pidConfig.TemplateName,
+			Name:            pidConfig.SignalName,
 			Header:          headerUint32,
 			Mode:            modeUint32,
 			Pid:             pidUint32,
