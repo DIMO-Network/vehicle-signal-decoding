@@ -156,17 +156,17 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 	for _, pidConfig := range pidConfigs {
 		headerUint32, err := bytesToUint32(pidConfig.Header)
 		if err != nil {
-			continue
+			d.log.Err(err).Send()
 		}
 
 		modeUint32, err := bytesToUint32(pidConfig.Mode)
 		if err != nil {
-			continue
+			d.log.Err(err).Send()
 		}
 
 		pidUint32, err := bytesToUint32(pidConfig.Pid)
 		if err != nil {
-			continue
+			d.log.Err(err).Send()
 		}
 		pid := &grpc.PIDConfig{
 			Name:            pidConfig.SignalName,
