@@ -126,11 +126,18 @@ func bytesToUint32(b []byte) (uint32, error) {
 // @Success      200 {object} grpc.PIDRequests "Successfully retrieved PID Configurations"
 // @Failure 404 "No PID Config data found for the given template name."
 // @Param        template_name  path   string  true   "template name"
-// @Router       /device-config/:template_name/pids [get]
+// @Router       /device-config/{templateName}/pids [get]
 func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
-	templateName := c.Params("template_name")
+	templateName := c.Params("templateName")
 
-	/// Query the database to get the PIDs based on the template name using SQLBoiler
+	template, err := models.FindTemplate(c.Context(), d.db, templateName)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("No template with name: %s found", templateName))
+		}
+		return errors.Wrapf(err, "Failed to retrieve Template %s", templateName)
+	}
+
 	pidConfigs, err := models.PidConfigs(
 		models.PidConfigWhere.TemplateName.EQ(templateName),
 	).All(c.Context(), d.db)
@@ -140,10 +147,6 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 			return fiber.NewError(fiber.StatusNotFound, "No PID data found for the given template name.")
 		}
 		return errors.Wrap(err, "Failed to retrieve PID Configs")
-	}
-	template, err := models.FindTemplate(c.Context(), d.db, templateName)
-	if err != nil {
-		d.log.Warn().Err(err).Msg("failed to get template by name, continuing")
 	}
 
 	protoPIDs := &grpc.PIDRequests{

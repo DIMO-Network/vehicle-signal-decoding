@@ -69,37 +69,6 @@
                 }
             }
         },
-        "/device-config/:template_name/pids": {
-            "get": {
-                "description": "Retrieves a list of PID configurations from the database given a template name",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "vehicle-signal-decoding"
-                ],
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "template name",
-                        "name": "template_name",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successfully retrieved PID Configurations",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_DIMO-Network_vehicle-signal-decoding_pkg_grpc.PIDRequests"
-                        }
-                    },
-                    "404": {
-                        "description": "No PID Config data found for the given template name."
-                    }
-                }
-            }
-        },
         "/device-config/:vin/urls": {
             "get": {
                 "description": "Retrieve the URLs for PID, DeviceSettings, and DBC configuration based on a given VIN",
@@ -127,6 +96,37 @@
                                 "type": "string"
                             }
                         }
+                    }
+                }
+            }
+        },
+        "/device-config/{templateName}/pids": {
+            "get": {
+                "description": "Retrieves a list of PID configurations from the database given a template name",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "vehicle-signal-decoding"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "template name",
+                        "name": "template_name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved PID Configurations",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_DIMO-Network_vehicle-signal-decoding_pkg_grpc.PIDRequests"
+                        }
+                    },
+                    "404": {
+                        "description": "No PID Config data found for the given template name."
                     }
                 }
             }

@@ -67,7 +67,7 @@ func TestGetPIDsByTemplate(t *testing.T) {
 
 	c := NewDeviceConfigController(&config.Settings{Port: "3000"}, &logger, pdb.DBS().Reader.DB)
 	app := fiber.New()
-	app.Get("/device-config/:template_name/pids", c.GetPIDsByTemplate)
+	app.Get("/device-config/:templateName/pids", c.GetPIDsByTemplate)
 
 	t.Run("GET - PIDs by Template", func(t *testing.T) {
 
