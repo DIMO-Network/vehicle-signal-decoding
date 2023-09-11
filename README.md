@@ -30,7 +30,11 @@ go run ./cmd/vehicle-signal-decoding migrate
 go run ./cmd/vehicle-signal-decoding
 ```
 
-## Generating client and server code
+### Regenerate swagger docs
+
+`swag init -g cmd/vehicle-signal-decoding/main.go --parseDependency --parseInternal --generatedTime true`
+
+## Generating gRPC client and server code
 
 1. Install the protocol compiler plugins for Go using the following commands
 

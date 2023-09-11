@@ -2,6 +2,7 @@
 -- +goose StatementBegin
 SELECT 'up SQL query';
 
+SET search_path = vehicle_signal_decoding_api, public;
 
 CREATE TABLE IF NOT EXISTS serial_to_template_overrides (
     serial text NOT NULL,

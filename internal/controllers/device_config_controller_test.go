@@ -8,6 +8,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
+
 	"github.com/stretchr/testify/require"
 
 	"github.com/volatiletech/sqlboiler/v4/boil"
@@ -46,27 +48,28 @@ func TestGetPIDsByTemplate(t *testing.T) {
 		// etc
 	}
 	err := template.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	pc := models.PidConfig{
 		ID:              1,
+		SignalName:      "odometer",
 		TemplateName:    "exampleTemplate",
-		Header:          []byte("7E8"),
-		Mode:            []byte("01"),
-		Pid:             []byte("05"),
+		Header:          []byte("07E8"),
+		Mode:            []byte("0001"),
+		Pid:             []byte("0005"),
 		Formula:         "A*5",
 		IntervalSeconds: 60,
-		Protocol:        "CAN 11",
+		Protocol:        "CAN 11", // todo make this an enum in the db
 	}
 
-	errr := pc.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
-	assert.NoError(t, errr)
+	err = pc.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+	require.NoError(t, err)
 
 	c := NewDeviceConfigController(&config.Settings{Port: "3000"}, &logger, pdb.DBS().Reader.DB)
 	app := fiber.New()
 	app.Get("/device-config/:template_name/pids", c.GetPIDsByTemplate)
 
-	t.Run("GET - PID by Template", func(t *testing.T) {
+	t.Run("GET - PIDs by Template", func(t *testing.T) {
 
 		// Act: make the request
 		request := test.BuildRequest("GET", "/device-config/"+template.TemplateName+"/pids", "")
@@ -77,26 +80,25 @@ func TestGetPIDsByTemplate(t *testing.T) {
 		if assert.Equal(t, fiber.StatusOK, response.StatusCode) == false {
 			fmt.Println("response body: " + string(body))
 		}
+		fmt.Printf("Received response: %s", body)
 
-		pids := make([]PIDConfig, 0)
+		pids := grpc.PIDRequests{}
 		err = json.Unmarshal(body, &pids)
 		assert.NoError(t, err)
 
-		fmt.Printf("Received PIDs: %v\n", pids)
-
-		require.Equal(t, 1, len(pids))
-		assert.Equal(t, pc.ID, pids[0].ID)
-		assert.Equal(t, pc.Header, pids[0].Header)
-		assert.Equal(t, pc.Mode, pids[0].Mode)
-		assert.Equal(t, pc.Pid, pids[0].Pid)
-		assert.Equal(t, pc.Formula, pids[0].Formula)
-		assert.Equal(t, pc.IntervalSeconds, pids[0].IntervalSeconds)
-		assert.Equal(t, pc.Protocol, pids[0].Protocol)
-
-		// Testing Version
-		templateFromDB, err := models.Templates(models.TemplateWhere.TemplateName.EQ(template.TemplateName)).One(context.Background(), pdb.DBS().Reader.DB)
-		assert.NoError(t, err)
-		assert.Equal(t, template.Version, templateFromDB.Version)
+		require.Equal(t, 1, len(pids.Requests))
+		assert.Equal(t, pc.SignalName, pids.Requests[0].Name)
+		// convert uint32 back to bytes to compare
+		hdr, _ := bytesToUint32(pc.Header)
+		assert.Equal(t, hdr, pids.Requests[0].Header)
+		mde, _ := bytesToUint32(pc.Mode)
+		assert.Equal(t, mde, pids.Requests[0].Mode)
+		pid, _ := bytesToUint32(pc.Pid)
+		assert.Equal(t, pid, pids.Requests[0].Pid)
+		assert.Equal(t, pc.Formula, pids.Requests[0].Formula)
+		assert.Equal(t, pc.IntervalSeconds, int(pids.Requests[0].IntervalSeconds))
+		assert.Equal(t, pc.Protocol, pids.Requests[0].Protocol)
+		assert.Equal(t, template.Version, pids.Version)
 
 		// Teardown: cleanup after test
 		test.TruncateTables(pdb.DBS().Writer.DB, t)

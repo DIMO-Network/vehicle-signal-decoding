@@ -60,7 +60,7 @@
                     "200": {
                         "description": "Successfully retrieved Device Settings",
                         "schema": {
-                            "$ref": "#/definitions/controllers.DeviceSetting"
+                            "$ref": "#/definitions/internal_controllers.DeviceSetting"
                         }
                     },
                     "404": {
@@ -91,10 +91,7 @@
                     "200": {
                         "description": "Successfully retrieved PID Configurations",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/controllers.PIDConfig"
-                            }
+                            "$ref": "#/definitions/github_com_DIMO-Network_vehicle-signal-decoding_pkg_grpc.PIDRequests"
                         }
                     },
                     "404": {
@@ -136,7 +133,53 @@
         }
     },
     "definitions": {
-        "controllers.DeviceSetting": {
+        "github_com_DIMO-Network_vehicle-signal-decoding_pkg_grpc.PIDConfig": {
+            "type": "object",
+            "properties": {
+                "formula": {
+                    "type": "string"
+                },
+                "header": {
+                    "type": "integer"
+                },
+                "interval_seconds": {
+                    "type": "integer"
+                },
+                "mode": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "pid": {
+                    "type": "integer"
+                },
+                "protocol": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_DIMO-Network_vehicle-signal-decoding_pkg_grpc.PIDRequests": {
+            "type": "object",
+            "properties": {
+                "requests": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_DIMO-Network_vehicle-signal-decoding_pkg_grpc.PIDConfig"
+                    }
+                },
+                "template_name": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_controllers.DeviceSetting": {
             "type": "object",
             "properties": {
                 "battery_critical_level_voltage": {
@@ -170,44 +213,6 @@
                     "type": "string"
                 },
                 "wake_trigger_voltage_level": {
-                    "type": "string"
-                }
-            }
-        },
-        "controllers.PIDConfig": {
-            "type": "object",
-            "properties": {
-                "formula": {
-                    "type": "string"
-                },
-                "header": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "interval_seconds": {
-                    "type": "integer"
-                },
-                "mode": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
-                "pid": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
-                "protocol": {
-                    "type": "string"
-                },
-                "template_name": {
                     "type": "string"
                 }
             }
