@@ -4,10 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
 	"io"
 	"os"
 	"testing"
+
+	"github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
 
 	"github.com/stretchr/testify/require"
 
@@ -79,12 +80,11 @@ func TestGetPIDsByTemplate(t *testing.T) {
 		if assert.Equal(t, fiber.StatusOK, response.StatusCode) == false {
 			fmt.Println("response body: " + string(body))
 		}
+		fmt.Printf("Received response: %s", body)
 
 		pids := grpc.PIDRequests{}
 		err = json.Unmarshal(body, &pids)
 		assert.NoError(t, err)
-
-		fmt.Printf("Received PIDs: %v\n", pids)
 
 		require.Equal(t, 1, len(pids.Requests))
 		assert.Equal(t, pc.SignalName, pids.Requests[0].Name)
