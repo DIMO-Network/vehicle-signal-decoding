@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/friendsofgo/errors"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -23,17 +24,18 @@ import (
 
 // PidConfig is an object representing the database table.
 type PidConfig struct {
-	ID              int64     `boil:"id" json:"id" toml:"id" yaml:"id"`
-	TemplateName    string    `boil:"template_name" json:"template_name" toml:"template_name" yaml:"template_name"`
-	Header          []byte    `boil:"header" json:"header" toml:"header" yaml:"header"`
-	Mode            []byte    `boil:"mode" json:"mode" toml:"mode" yaml:"mode"`
-	Pid             []byte    `boil:"pid" json:"pid" toml:"pid" yaml:"pid"`
-	Formula         string    `boil:"formula" json:"formula" toml:"formula" yaml:"formula"`
-	IntervalSeconds int       `boil:"interval_seconds" json:"interval_seconds" toml:"interval_seconds" yaml:"interval_seconds"`
-	Protocol        string    `boil:"protocol" json:"protocol" toml:"protocol" yaml:"protocol"`
-	CreatedAt       time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	UpdatedAt       time.Time `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
-	SignalName      string    `boil:"signal_name" json:"signal_name" toml:"signal_name" yaml:"signal_name"`
+	ID              int64      `boil:"id" json:"id" toml:"id" yaml:"id"`
+	TemplateName    string     `boil:"template_name" json:"template_name" toml:"template_name" yaml:"template_name"`
+	Header          []byte     `boil:"header" json:"header" toml:"header" yaml:"header"`
+	Mode            []byte     `boil:"mode" json:"mode" toml:"mode" yaml:"mode"`
+	Pid             []byte     `boil:"pid" json:"pid" toml:"pid" yaml:"pid"`
+	Formula         string     `boil:"formula" json:"formula" toml:"formula" yaml:"formula"`
+	IntervalSeconds int        `boil:"interval_seconds" json:"interval_seconds" toml:"interval_seconds" yaml:"interval_seconds"`
+	Protocol        string     `boil:"protocol" json:"protocol" toml:"protocol" yaml:"protocol"`
+	CreatedAt       time.Time  `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UpdatedAt       time.Time  `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	SignalName      string     `boil:"signal_name" json:"signal_name" toml:"signal_name" yaml:"signal_name"`
+	BytesReturned   null.Int16 `boil:"bytes_returned" json:"bytes_returned,omitempty" toml:"bytes_returned" yaml:"bytes_returned,omitempty"`
 
 	R *pidConfigR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L pidConfigL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -51,6 +53,7 @@ var PidConfigColumns = struct {
 	CreatedAt       string
 	UpdatedAt       string
 	SignalName      string
+	BytesReturned   string
 }{
 	ID:              "id",
 	TemplateName:    "template_name",
@@ -63,6 +66,7 @@ var PidConfigColumns = struct {
 	CreatedAt:       "created_at",
 	UpdatedAt:       "updated_at",
 	SignalName:      "signal_name",
+	BytesReturned:   "bytes_returned",
 }
 
 var PidConfigTableColumns = struct {
@@ -77,6 +81,7 @@ var PidConfigTableColumns = struct {
 	CreatedAt       string
 	UpdatedAt       string
 	SignalName      string
+	BytesReturned   string
 }{
 	ID:              "pid_configs.id",
 	TemplateName:    "pid_configs.template_name",
@@ -89,6 +94,7 @@ var PidConfigTableColumns = struct {
 	CreatedAt:       "pid_configs.created_at",
 	UpdatedAt:       "pid_configs.updated_at",
 	SignalName:      "pid_configs.signal_name",
+	BytesReturned:   "pid_configs.bytes_returned",
 }
 
 // Generated where
@@ -102,6 +108,44 @@ func (w whereHelper__byte) LTE(x []byte) qm.QueryMod { return qmhelper.Where(w.f
 func (w whereHelper__byte) GT(x []byte) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.GT, x) }
 func (w whereHelper__byte) GTE(x []byte) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
 
+type whereHelpernull_Int16 struct{ field string }
+
+func (w whereHelpernull_Int16) EQ(x null.Int16) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, false, x)
+}
+func (w whereHelpernull_Int16) NEQ(x null.Int16) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, true, x)
+}
+func (w whereHelpernull_Int16) LT(x null.Int16) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LT, x)
+}
+func (w whereHelpernull_Int16) LTE(x null.Int16) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LTE, x)
+}
+func (w whereHelpernull_Int16) GT(x null.Int16) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GT, x)
+}
+func (w whereHelpernull_Int16) GTE(x null.Int16) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GTE, x)
+}
+func (w whereHelpernull_Int16) IN(slice []int16) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
+}
+func (w whereHelpernull_Int16) NIN(slice []int16) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
+}
+
+func (w whereHelpernull_Int16) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
+func (w whereHelpernull_Int16) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
+
 var PidConfigWhere = struct {
 	ID              whereHelperint64
 	TemplateName    whereHelperstring
@@ -114,6 +158,7 @@ var PidConfigWhere = struct {
 	CreatedAt       whereHelpertime_Time
 	UpdatedAt       whereHelpertime_Time
 	SignalName      whereHelperstring
+	BytesReturned   whereHelpernull_Int16
 }{
 	ID:              whereHelperint64{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"id\""},
 	TemplateName:    whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"template_name\""},
@@ -126,6 +171,7 @@ var PidConfigWhere = struct {
 	CreatedAt:       whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"created_at\""},
 	UpdatedAt:       whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"updated_at\""},
 	SignalName:      whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"signal_name\""},
+	BytesReturned:   whereHelpernull_Int16{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"bytes_returned\""},
 }
 
 // PidConfigRels is where relationship names are stored.
@@ -156,9 +202,9 @@ func (r *pidConfigR) GetTemplateNameTemplate() *Template {
 type pidConfigL struct{}
 
 var (
-	pidConfigAllColumns            = []string{"id", "template_name", "header", "mode", "pid", "formula", "interval_seconds", "protocol", "created_at", "updated_at", "signal_name"}
-	pidConfigColumnsWithoutDefault = []string{"template_name", "header", "mode", "pid", "formula", "interval_seconds", "protocol", "signal_name"}
-	pidConfigColumnsWithDefault    = []string{"id", "created_at", "updated_at"}
+	pidConfigAllColumns            = []string{"id", "template_name", "header", "mode", "pid", "formula", "interval_seconds", "protocol", "created_at", "updated_at", "signal_name", "bytes_returned"}
+	pidConfigColumnsWithoutDefault = []string{"template_name", "pid", "formula", "interval_seconds", "protocol", "signal_name"}
+	pidConfigColumnsWithDefault    = []string{"id", "header", "mode", "created_at", "updated_at", "bytes_returned"}
 	pidConfigPrimaryKeyColumns     = []string{"id"}
 	pidConfigGeneratedColumns      = []string{}
 )
