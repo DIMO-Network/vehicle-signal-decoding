@@ -21,4 +21,5 @@ INSERT INTO pid_configs (id, template_name, pid, formula, interval_seconds, prot
 VALUES (8, 'default-ice-can11', E'\\x33', '-', 60, 'CAN11_500', 'barometric_pressure');
 INSERT INTO pid_configs (id, template_name, pid, formula, interval_seconds, protocol, signal_name)
 VALUES (10, 'default-ice-can11', E'\\x0d', '-', 10, 'CAN11_500', 'vehicle_speed');
+-- todo add rest of stuff from default autopi template
 

@@ -125,7 +125,7 @@ func bytesToUint32(b []byte) (uint32, error) {
 // @Produce      json
 // @Success      200 {object} grpc.PIDRequests "Successfully retrieved PID Configurations"
 // @Failure 404 "No PID Config data found for the given template name."
-// @Param        template_name  path   string  true   "template name"
+// @Param        templateName  path   string  true   "template name"
 // @Router       /device-config/{templateName}/pids [get]
 func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 	templateName := c.Params("templateName")
@@ -205,10 +205,10 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 // @Produce      json
 // @Success      200 {object} DeviceSetting "Successfully retrieved Device Settings"
 // @Failure 404 "No Device Settings data found for the given template name."
-// @Param        template_name  path   string  true   "template name"
-// @Router       /device-config/:template_name/deviceSettings [get]
+// @Param        templateName  path   string  true   "template name"
+// @Router       /device-config/{templateName}/deviceSettings [get]
 func (d *DeviceConfigController) GetDeviceSettingsByTemplate(c *fiber.Ctx) error {
-	templateName := c.Params("template_name")
+	templateName := c.Params("templateName")
 
 	// Query the database to get the Device Settings based on the template name using SQLBoiler
 	dbDeviceSettings, err := models.DeviceSettings(
@@ -245,10 +245,10 @@ func (d *DeviceConfigController) GetDeviceSettingsByTemplate(c *fiber.Ctx) error
 // @Produce      plain
 // @Success      200 {string} string "Successfully retrieved DBC file"
 // @Failure 404 "No DBC file found for the given template name."
-// @Param        template_name  path   string  true   "template name"
-// @Router       /device-config/:template_name/dbc-file [get]
+// @Param        templateName  path   string  true   "template name"
+// @Router       /device-config/{templateName}/dbc-file [get]
 func (d *DeviceConfigController) GetDBCFileByTemplateName(c *fiber.Ctx) error {
-	templateName := c.Params("template_name")
+	templateName := c.Params("templateName")
 
 	// Query the database using SQLBoiler
 	//use same logic as above
@@ -278,7 +278,7 @@ func (d *DeviceConfigController) GetDBCFileByTemplateName(c *fiber.Ctx) error {
 // @Produce      json
 // @Success      200 {object} map[string]string
 // @Param        vin  path   string  true   "vehicle identification number (VIN)"
-// @Router       /device-config/:vin/urls [get]
+// @Router       /device-config/{vin}/urls [get]
 func (d *DeviceConfigController) GetConfigURLs(c *fiber.Ctx) error {
 	baseURL := d.Settings.DeploymentURL
 	vin := c.Params("vin")

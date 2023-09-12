@@ -145,7 +145,7 @@ func TestGetDeviceSettingsByTemplate(t *testing.T) {
 
 	c := NewDeviceConfigController(&config.Settings{Port: "3000"}, &logger, pdb.DBS().Reader.DB)
 	app := fiber.New()
-	app.Get("/device-config/:template_name", c.GetDeviceSettingsByTemplate)
+	app.Get("/device-config/:templateName", c.GetDeviceSettingsByTemplate)
 
 	t.Run("GET - Device Settings by Template", func(t *testing.T) {
 
@@ -215,7 +215,7 @@ func TestGetDBCFileByTemplateName(t *testing.T) {
 
 	c := NewDeviceConfigController(&config.Settings{Port: "3000"}, &logger, pdb.DBS().Reader.DB)
 	app := fiber.New()
-	app.Get("/device-config/:template_name/dbc-file", c.GetDBCFileByTemplateName)
+	app.Get("/device-config/:templateName/dbc-file", c.GetDBCFileByTemplateName)
 
 	t.Run("GET - DBCFile by TemplateName", func(t *testing.T) {
 		// Act: make the request
