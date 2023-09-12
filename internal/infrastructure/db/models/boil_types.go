@@ -63,3 +63,16 @@ func AllTriggerEnum() []string {
 		TriggerEnumPID,
 	}
 }
+
+// Enum values for CanProtocolType
+const (
+	CanProtocolTypeCAN11_500 string = "CAN11_500"
+	CanProtocolTypeCAN29_500 string = "CAN29_500"
+)
+
+func AllCanProtocolType() []string {
+	return []string{
+		CanProtocolTypeCAN11_500,
+		CanProtocolTypeCAN29_500,
+	}
+}
