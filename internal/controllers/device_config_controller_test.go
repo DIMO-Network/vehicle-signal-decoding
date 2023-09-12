@@ -59,7 +59,7 @@ func TestGetPIDsByTemplate(t *testing.T) {
 		Pid:             []byte("0005"),
 		Formula:         "A*5",
 		IntervalSeconds: 60,
-		Protocol:        "CAN 11", // todo make this an enum in the db
+		Protocol:        models.CanProtocolTypeCAN11_500,
 	}
 
 	err = pc.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
