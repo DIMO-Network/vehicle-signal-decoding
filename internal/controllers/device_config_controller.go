@@ -100,6 +100,12 @@ type DeviceSetting struct {
 	CreatedAt                              time.Time `json:"created_at"`
 	UpdatedAt                              time.Time `json:"updated_at"`
 }
+type DeviceConfigResponse struct {
+	PidURL           string `json:"pidUrl"`
+	DeviceSettingURL string `json:"deviceSettingUrl"`
+	DbcURL           string `json:"dbcURL"`
+	Version          string `json:"version"`
+}
 
 // ProtobufToJSON converts a Protobuf message to its JSON representation.
 func ProtobufToJSON(message proto.Message) (string, error) {
@@ -276,7 +282,7 @@ func (d *DeviceConfigController) GetDBCFileByTemplateName(c *fiber.Ctx) error {
 // @Description  Retrieve the URLs for PID, DeviceSettings, and DBC configuration based on a given VIN
 // @Tags         vehicle-signal-decoding
 // @Produce      json
-// @Success      200 {object} map[string]string
+// @Success      200 {object} DeviceConfigResponse "Successfully retrieved configuration URLs"
 // @Param        vin  path   string  true   "vehicle identification number (VIN)"
 // @Router       /device-config/{vin}/urls [get]
 func (d *DeviceConfigController) GetConfigURLs(c *fiber.Ctx) error {
@@ -300,14 +306,12 @@ func (d *DeviceConfigController) GetConfigURLs(c *fiber.Ctx) error {
 		})
 	}
 
-	pidURL := fmt.Sprintf("%s/device-config/pid/%s", baseURL, templateName)
-	deviceSettingURL := fmt.Sprintf("%s/device-config/deviceSetting/%s", baseURL, parentTemplateName)
-	dbcURL := fmt.Sprintf("%s/device-config/dbc/%s", baseURL, templateName)
+	response := DeviceConfigResponse{
+		PidURL:           fmt.Sprintf("%s/device-config/pid/%s", baseURL, templateName),
+		DeviceSettingURL: fmt.Sprintf("%s/device-config/deviceSetting/%s", baseURL, parentTemplateName),
+		DbcURL:           fmt.Sprintf("%s/device-config/dbc/%s", baseURL, templateName),
+		Version:          version,
+	}
 
-	return c.JSON(fiber.Map{
-		"pidUrl":           pidURL,
-		"deviceSettingUrl": deviceSettingURL,
-		"dbcURL":           dbcURL,
-		"Version":          version,
-	})
+	return c.JSON(response)
 }
