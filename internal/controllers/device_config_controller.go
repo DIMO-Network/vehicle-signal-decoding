@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	pbuser "github.com/DIMO-Network/shared/api/users"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
@@ -21,18 +22,21 @@ import (
 )
 
 type DeviceConfigController struct {
-	Settings *config.Settings
-	log      *zerolog.Logger
-	db       *sql.DB
+	Settings    *config.Settings
+	log         *zerolog.Logger
+	db          *sql.DB
+	usersClient pbuser.UserServiceClient
 }
 
 // NewDeviceConfigController constructor
-func NewDeviceConfigController(settings *config.Settings, logger *zerolog.Logger, database *sql.DB) DeviceConfigController {
+func NewDeviceConfigController(settings *config.Settings, logger *zerolog.Logger, database *sql.DB, usersClient pbuser.UserServiceClient) DeviceConfigController {
 	return DeviceConfigController{
-		Settings: settings,
-		log:      logger,
-		db:       database,
+		Settings:    settings,
+		log:         logger,
+		db:          database,
+		usersClient: usersClient,
 	}
+
 }
 
 // resolveTemplateName retrieves associated template and parent given a serial
@@ -99,6 +103,12 @@ type DeviceSetting struct {
 	WakeTriggerVoltageLevel                string    `json:"wake_trigger_voltage_level"`
 	CreatedAt                              time.Time `json:"created_at"`
 	UpdatedAt                              time.Time `json:"updated_at"`
+}
+type DeviceConfigResponse struct {
+	PidURL           string `json:"pidUrl"`
+	DeviceSettingURL string `json:"deviceSettingUrl"`
+	DbcURL           string `json:"dbcURL"`
+	Version          string `json:"version"`
 }
 
 // ProtobufToJSON converts a Protobuf message to its JSON representation.
@@ -276,12 +286,25 @@ func (d *DeviceConfigController) GetDBCFileByTemplateName(c *fiber.Ctx) error {
 // @Description  Retrieve the URLs for PID, DeviceSettings, and DBC configuration based on a given VIN
 // @Tags         vehicle-signal-decoding
 // @Produce      json
-// @Success      200 {object} map[string]string
+// @Success      200 {object} DeviceConfigResponse "Successfully retrieved configuration URLs"
 // @Param        vin  path   string  true   "vehicle identification number (VIN)"
 // @Router       /device-config/{vin}/urls [get]
 func (d *DeviceConfigController) GetConfigURLs(c *fiber.Ctx) error {
 	baseURL := d.Settings.DeploymentURL
 	vin := c.Params("vin")
+
+	// Set up gRPC call to retrieve UserDevice by VIN
+	req := &pb.GetUserDeviceByVINRequest{Vin: vin}
+	ud, err := d.usersClient.GetUserDeviceByVIN(context.Background(), req)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": fmt.Sprintf("Failed to retrieve user device for VIN: %s", vin),
+		})
+	}
+
+	//What do we do with this metadata?
+	canProtocol := ud.CAN_protocol
+	powerTrainType := ud.Power_train_type
 
 	// Resolve template name using VIN
 	templateName, parentTemplateName, err := resolveTemplateName(vin, d.db)
@@ -300,14 +323,12 @@ func (d *DeviceConfigController) GetConfigURLs(c *fiber.Ctx) error {
 		})
 	}
 
-	pidURL := fmt.Sprintf("%s/device-config/pid/%s", baseURL, templateName)
-	deviceSettingURL := fmt.Sprintf("%s/device-config/deviceSetting/%s", baseURL, parentTemplateName)
-	dbcURL := fmt.Sprintf("%s/device-config/dbc/%s", baseURL, templateName)
+	response := DeviceConfigResponse{
+		PidURL:           fmt.Sprintf("%s/device-config/pid/%s", baseURL, templateName),
+		DeviceSettingURL: fmt.Sprintf("%s/device-config/deviceSetting/%s", baseURL, parentTemplateName),
+		DbcURL:           fmt.Sprintf("%s/device-config/dbc/%s", baseURL, templateName),
+		Version:          version,
+	}
 
-	return c.JSON(fiber.Map{
-		"pidUrl":           pidURL,
-		"deviceSettingUrl": deviceSettingURL,
-		"dbcURL":           dbcURL,
-		"Version":          version,
-	})
+	return c.JSON(response)
 }
