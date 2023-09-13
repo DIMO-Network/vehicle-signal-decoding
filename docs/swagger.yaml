@@ -1,36 +1,17 @@
 basePath: /v1
 definitions:
-  github_com_DIMO-Network_vehicle-signal-decoding_pkg_grpc.PIDConfig:
+  controllers.DeviceConfigResponse:
     properties:
-      formula:
+      dbcURL:
         type: string
-      header:
-        type: integer
-      interval_seconds:
-        type: integer
-      mode:
-        type: integer
-      name:
+      deviceSettingUrl:
         type: string
-      pid:
-        type: integer
-      protocol:
+      pidUrl:
         type: string
       version:
         type: string
     type: object
-  github_com_DIMO-Network_vehicle-signal-decoding_pkg_grpc.PIDRequests:
-    properties:
-      requests:
-        items:
-          $ref: '#/definitions/github_com_DIMO-Network_vehicle-signal-decoding_pkg_grpc.PIDConfig'
-        type: array
-      template_name:
-        type: string
-      version:
-        type: string
-    type: object
-  internal_controllers.DeviceSetting:
+  controllers.DeviceSetting:
     properties:
       battery_critical_level_voltage:
         type: string
@@ -53,6 +34,36 @@ definitions:
       updated_at:
         type: string
       wake_trigger_voltage_level:
+        type: string
+    type: object
+  grpc.PIDConfig:
+    properties:
+      formula:
+        type: string
+      header:
+        type: integer
+      interval_seconds:
+        type: integer
+      mode:
+        type: integer
+      name:
+        type: string
+      pid:
+        type: integer
+      protocol:
+        type: string
+      version:
+        type: string
+    type: object
+  grpc.PIDRequests:
+    properties:
+      requests:
+        items:
+          $ref: '#/definitions/grpc.PIDConfig'
+        type: array
+      template_name:
+        type: string
+      version:
         type: string
     type: object
 info:
@@ -97,7 +108,7 @@ paths:
         "200":
           description: Successfully retrieved Device Settings
           schema:
-            $ref: '#/definitions/internal_controllers.DeviceSetting'
+            $ref: '#/definitions/controllers.DeviceSetting'
         "404":
           description: No Device Settings data found for the given template name.
       tags:
@@ -118,7 +129,7 @@ paths:
         "200":
           description: Successfully retrieved PID Configurations
           schema:
-            $ref: '#/definitions/github_com_DIMO-Network_vehicle-signal-decoding_pkg_grpc.PIDRequests'
+            $ref: '#/definitions/grpc.PIDRequests'
         "404":
           description: No PID Config data found for the given template name.
       tags:
@@ -137,11 +148,9 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Successfully retrieved configuration URLs
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/controllers.DeviceConfigResponse'
       tags:
       - vehicle-signal-decoding
 swagger: "2.0"
