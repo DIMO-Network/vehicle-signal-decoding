@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	pbuser "github.com/DIMO-Network/shared/api/users"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
@@ -21,18 +22,21 @@ import (
 )
 
 type DeviceConfigController struct {
-	Settings *config.Settings
-	log      *zerolog.Logger
-	db       *sql.DB
+	Settings    *config.Settings
+	log         *zerolog.Logger
+	db          *sql.DB
+	usersClient pbuser.UserServiceClient
 }
 
 // NewDeviceConfigController constructor
-func NewDeviceConfigController(settings *config.Settings, logger *zerolog.Logger, database *sql.DB) DeviceConfigController {
+func NewDeviceConfigController(settings *config.Settings, logger *zerolog.Logger, database *sql.DB, usersClient pbuser.UserServiceClient) DeviceConfigController {
 	return DeviceConfigController{
-		Settings: settings,
-		log:      logger,
-		db:       database,
+		Settings:    settings,
+		log:         logger,
+		db:          database,
+		usersClient: usersClient,
 	}
+
 }
 
 // resolveTemplateName retrieves associated template and parent given a serial
@@ -288,6 +292,19 @@ func (d *DeviceConfigController) GetDBCFileByTemplateName(c *fiber.Ctx) error {
 func (d *DeviceConfigController) GetConfigURLs(c *fiber.Ctx) error {
 	baseURL := d.Settings.DeploymentURL
 	vin := c.Params("vin")
+
+	// Set up gRPC call to retrieve UserDevice by VIN
+	req := &pb.GetUserDeviceByVINRequest{Vin: vin}
+	ud, err := d.usersClient.GetUserDeviceByVIN(context.Background(), req)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": fmt.Sprintf("Failed to retrieve user device for VIN: %s", vin),
+		})
+	}
+
+	//What do we do with this metadata?
+	canProtocol := ud.CAN_protocol
+	powerTrainType := ud.Power_train_type
 
 	// Resolve template name using VIN
 	templateName, parentTemplateName, err := resolveTemplateName(vin, d.db)

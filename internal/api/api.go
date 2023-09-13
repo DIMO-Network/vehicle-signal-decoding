@@ -37,7 +37,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 
 	go StartGrpcServer(logger, pdb.DBS, settings)
 
-	startWebAPI(logger, settings, pdb)
+	startWebAPI(logger, settings, pdb, settings.DeviceGRPCAddr)
 	startVehicleSignalConsumer(logger, settings, pdb)
 	startMonitoringServer(logger, settings)
 
@@ -104,7 +104,16 @@ func startMonitoringServer(logger zerolog.Logger, settings *config.Settings) {
 	logger.Info().Str("port", settings.MonitoringPort).Msg("Started monitoring web server.")
 }
 
-func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.Store) *fiber.App {
+func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.Store, deviceGRPCAddr string) *fiber.App {
+
+	//Create gRPC connection
+	usersClient, conn, err := getDeviceGrpcClient(deviceGRPCAddr)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("Failed to connect to gRPC server.")
+		return nil
+	}
+	defer conn.Close()
+
 	app := fiber.New(fiber.Config{
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			return ErrorHandler(c, err, logger)
@@ -126,7 +135,7 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 		return c.Status(fiber.StatusOK).SendString("healthy")
 	})
 
-	deviceConfigController := controllers.NewDeviceConfigController(settings, &logger, database.DBS().Reader.DB)
+	deviceConfigController := controllers.NewDeviceConfigController(settings, &logger, database.DBS().Reader.DB, usersClient)
 
 	v1 := app.Group("/v1")
 
