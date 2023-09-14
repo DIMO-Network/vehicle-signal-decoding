@@ -281,7 +281,7 @@ func (d *DeviceConfigController) GetConfigURLs(c *fiber.Ctx) error {
 
 	if err != nil {
 		// Check if error is due to no matching rows
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"error": fmt.Sprintf("No templates found for protocol: %s and powertrain: %s", ud.CANProtocol, ud.PowerTrainType),
 			})
