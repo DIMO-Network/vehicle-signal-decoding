@@ -4,14 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"os"
+	"testing"
+
 	pb "github.com/DIMO-Network/devices-api/pkg/grpc"
 	"github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
 	"github.com/golang/mock/gomock"
 	"github.com/segmentio/ksuid"
 	"github.com/stretchr/testify/require"
-	"io"
-	"os"
-	"testing"
 
 	"github.com/volatiletech/sqlboiler/v4/boil"
 
@@ -302,7 +303,7 @@ func TestGetConfigURLs(t *testing.T) {
 	}
 
 	mockUserDeviceSvc := mock_services.NewMockUserDeviceService(mockCtrl)
-	mockUserDeviceSvc.EXPECT().GetUserDeviceByVIN(gomock.Any(), "someVIN").Return(mockedUserDevice, nil)
+	mockUserDeviceSvc.EXPECT().GetUserDeviceByVIN(gomock.Any(), vin).Return(mockedUserDevice, nil)
 
 	// insert template in DB
 	template := &models.Template{

@@ -291,11 +291,16 @@ func (d *DeviceConfigController) GetConfigURLs(c *fiber.Ctx) error {
 		})
 	}
 
-	//If nothing is returned, fetch default?
-
 	//Return first match
+
 	templateName := templates[0].TemplateName
-	parentTemplateName := templates[0].ParentTemplateName.String
+
+	var parentTemplateName string
+	if templates[0].ParentTemplateName.Valid {
+		parentTemplateName = templates[0].ParentTemplateName.String
+	} else {
+		parentTemplateName = templateName
+	}
 	version := templates[0].Version
 
 	response := DeviceConfigResponse{
