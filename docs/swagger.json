@@ -60,7 +60,7 @@
                     "200": {
                         "description": "Successfully retrieved Device Settings",
                         "schema": {
-                            "$ref": "#/definitions/controllers.DeviceSetting"
+                            "$ref": "#/definitions/internal_controllers.DeviceSetting"
                         }
                     },
                     "404": {
@@ -91,7 +91,7 @@
                     "200": {
                         "description": "Successfully retrieved PID Configurations",
                         "schema": {
-                            "$ref": "#/definitions/grpc.PIDRequests"
+                            "$ref": "#/definitions/github_com_DIMO-Network_vehicle-signal-decoding_pkg_grpc.PIDRequests"
                         }
                     },
                     "404": {
@@ -122,7 +122,7 @@
                     "200": {
                         "description": "Successfully retrieved configuration URLs",
                         "schema": {
-                            "$ref": "#/definitions/controllers.DeviceConfigResponse"
+                            "$ref": "#/definitions/internal_controllers.DeviceConfigResponse"
                         }
                     }
                 }
@@ -130,7 +130,53 @@
         }
     },
     "definitions": {
-        "controllers.DeviceConfigResponse": {
+        "github_com_DIMO-Network_vehicle-signal-decoding_pkg_grpc.PIDConfig": {
+            "type": "object",
+            "properties": {
+                "formula": {
+                    "type": "string"
+                },
+                "header": {
+                    "type": "integer"
+                },
+                "interval_seconds": {
+                    "type": "integer"
+                },
+                "mode": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "pid": {
+                    "type": "integer"
+                },
+                "protocol": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_DIMO-Network_vehicle-signal-decoding_pkg_grpc.PIDRequests": {
+            "type": "object",
+            "properties": {
+                "requests": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_DIMO-Network_vehicle-signal-decoding_pkg_grpc.PIDConfig"
+                    }
+                },
+                "template_name": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_controllers.DeviceConfigResponse": {
             "type": "object",
             "properties": {
                 "dbcURL": {
@@ -147,7 +193,7 @@
                 }
             }
         },
-        "controllers.DeviceSetting": {
+        "internal_controllers.DeviceSetting": {
             "type": "object",
             "properties": {
                 "battery_critical_level_voltage": {
@@ -181,52 +227,6 @@
                     "type": "string"
                 },
                 "wake_trigger_voltage_level": {
-                    "type": "string"
-                }
-            }
-        },
-        "grpc.PIDConfig": {
-            "type": "object",
-            "properties": {
-                "formula": {
-                    "type": "string"
-                },
-                "header": {
-                    "type": "integer"
-                },
-                "interval_seconds": {
-                    "type": "integer"
-                },
-                "mode": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "pid": {
-                    "type": "integer"
-                },
-                "protocol": {
-                    "type": "string"
-                },
-                "version": {
-                    "type": "string"
-                }
-            }
-        },
-        "grpc.PIDRequests": {
-            "type": "object",
-            "properties": {
-                "requests": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/grpc.PIDConfig"
-                    }
-                },
-                "template_name": {
-                    "type": "string"
-                },
-                "version": {
                     "type": "string"
                 }
             }
