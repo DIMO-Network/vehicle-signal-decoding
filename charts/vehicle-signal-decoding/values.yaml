@@ -2,7 +2,7 @@ replicaCount: 2
 image:
   repository: dimozone/vehicle-signal-decoding
   pullPolicy: IfNotPresent
-  tag: e7bec0b
+  tag: b946ffc
 imagePullSecrets: []
 nameOverride: ''
 fullnameOverride: ''
@@ -26,10 +26,10 @@ cronJob:
 kafka:
   clusterName: kafka-dev-dimo-kafka
   topics:
-  - name: topic.device.protocol.canbus.dump
-    config:
-      compression.type: producer
-      cleanup.policy: delete
+    - name: topic.device.protocol.canbus.dump
+      config:
+        compression.type: producer
+        cleanup.policy: delete
 env:
   ENVIRONMENT: dev
   PORT: '8080'
