@@ -15,13 +15,12 @@ import (
 	_ "github.com/lib/pq" //nolint
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
-	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
 
 type DeviceConfigController struct {
-	Settings      *config.Settings
+	settings      *config.Settings
 	log           *zerolog.Logger
 	db            *sql.DB
 	userDeviceSvc services.UserDeviceService
@@ -30,7 +29,7 @@ type DeviceConfigController struct {
 // NewDeviceConfigController constructor
 func NewDeviceConfigController(settings *config.Settings, logger *zerolog.Logger, database *sql.DB, userDeviceSvc services.UserDeviceService) DeviceConfigController {
 	return DeviceConfigController{
-		Settings:      settings,
+		settings:      settings,
 		log:           logger,
 		db:            database,
 		userDeviceSvc: userDeviceSvc,
@@ -245,25 +244,42 @@ func (d *DeviceConfigController) GetDBCFileByTemplateName(c *fiber.Ctx) error {
 // @Tags         vehicle-signal-decoding
 // @Produce      json
 // @Success      200 {object} DeviceConfigResponse "Successfully retrieved configuration URLs"
+// @Failure 404  "Not Found - No templates available for the given parameters"
 // @Param        vin  path   string  true   "vehicle identification number (VIN)"
 // @Router       /device-config/{vin}/urls [get]
 func (d *DeviceConfigController) GetConfigURLs(c *fiber.Ctx) error {
-	baseURL := d.Settings.DeploymentURL
+	baseURL := d.settings.DeploymentURL
 	vin := c.Params("vin")
 
 	// Set up gRPC call to retrieve UserDevice by VIN
-	ud, err := d.userDeviceSvc.GetUserDeviceByVIN(context.Background(), vin)
+	ud, err := d.userDeviceSvc.GetUserDeviceByVIN(c.Context(), vin)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": fmt.Sprintf("Failed to retrieve user device for VIN: %s", vin),
 		})
 	}
+
+	// Setting defaults if empty
+	if ud.PowerTrainType == "" {
+		ud.PowerTrainType = "ICE"
+	}
+	if ud.CANProtocol == "" {
+		ud.CANProtocol = "CAN11_500"
+	}
+
 	// Query templates, filter by protocol and powertrain
 	templates, err := models.Templates(
-		qm.Where("protocol=?", ud.CANProtocol),
-		qm.Where("powertrain=?", ud.PowerTrainType)).All(context.Background(), d.db)
+		models.TemplateWhere.Protocol.EQ(ud.CANProtocol),
+		models.TemplateWhere.Powertrain.EQ(ud.PowerTrainType),
+	).All(context.Background(), d.db)
 
 	if err != nil {
+		// Check if error is due to no matching rows
+		if err == sql.ErrNoRows {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": fmt.Sprintf("No templates found for protocol: %s and powertrain: %s", ud.CANProtocol, ud.PowerTrainType),
+			})
+		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": fmt.Sprintf("Failed to query templates for protocol: %s and powertrain: %s", ud.CANProtocol, ud.PowerTrainType),
 		})
