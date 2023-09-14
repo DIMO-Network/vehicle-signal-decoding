@@ -5,8 +5,6 @@ import (
 	"database/sql"
 	"encoding/binary"
 	"fmt"
-	"time"
-
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/services"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
@@ -15,7 +13,6 @@ import (
 	_ "github.com/lib/pq" //nolint
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
-	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -49,17 +46,14 @@ type PIDConfig struct {
 }
 
 type DeviceSetting struct {
-	ID                                     int64     `json:"id"`
-	TemplateName                           string    `json:"template_name"`
-	BatteryCriticalLevelVoltage            string    `json:"battery_critical_level_voltage"`
-	SafetyCutOutVoltage                    string    `json:"safety_cut_out_voltage"`
-	SleepTimerEventDrivenInterval          string    `json:"sleep_timer_event_driven_interval"`
-	SleepTimerEventDrivenPeriod            string    `json:"sleep_timer_event_driven_period"`
-	SleepTimerInactivityAfterSleepInterval string    `json:"sleep_timer_inactivity_after_sleep_interval"`
-	SleepTimerInactivityFallbackInterval   string    `json:"sleep_timer_inactivity_fallback_interval"`
-	WakeTriggerVoltageLevel                string    `json:"wake_trigger_voltage_level"`
-	CreatedAt                              time.Time `json:"created_at"`
-	UpdatedAt                              time.Time `json:"updated_at"`
+	TemplateName                           string `json:"template_name"`
+	BatteryCriticalLevelVoltage            string `json:"battery_critical_level_voltage"`
+	SafetyCutOutVoltage                    string `json:"safety_cut_out_voltage"`
+	SleepTimerEventDrivenInterval          string `json:"sleep_timer_event_driven_interval"`
+	SleepTimerEventDrivenPeriod            string `json:"sleep_timer_event_driven_period"`
+	SleepTimerInactivityAfterSleepInterval string `json:"sleep_timer_inactivity_after_sleep_interval"`
+	SleepTimerInactivityFallbackInterval   string `json:"sleep_timer_inactivity_fallback_interval"`
+	WakeTriggerVoltageLevel                string `json:"wake_trigger_voltage_level"`
 }
 type DeviceConfigResponse struct {
 	PidURL           string `json:"pidUrl"`
@@ -68,17 +62,6 @@ type DeviceConfigResponse struct {
 	Version          string `json:"version"`
 }
 
-// ProtobufToJSON converts a Protobuf message to its JSON representation.
-func ProtobufToJSON(message proto.Message) (string, error) {
-	marshaler := protojson.MarshalOptions{
-		UseProtoNames: true,
-	}
-	bytes, err := marshaler.Marshal(message)
-	if err != nil {
-		return "", err
-	}
-	return string(bytes), nil
-}
 func bytesToUint32(b []byte) (uint32, error) {
 	if len(b) != 4 {
 		return 0, errors.New("invalid length for uint32 conversion")
@@ -205,8 +188,7 @@ func (d *DeviceConfigController) GetDeviceSettingsByTemplate(c *fiber.Ctx) error
 	}
 
 	apiDeviceSettings := DeviceSetting{
-
-		ID:                                     dbDeviceSettings.ID,
+		TemplateName:                           templateName,
 		BatteryCriticalLevelVoltage:            dbDeviceSettings.BatteryCriticalLevelVoltage,
 		SafetyCutOutVoltage:                    dbDeviceSettings.SafetyCutOutVoltage,
 		SleepTimerEventDrivenInterval:          dbDeviceSettings.SleepTimerEventDrivenInterval,
