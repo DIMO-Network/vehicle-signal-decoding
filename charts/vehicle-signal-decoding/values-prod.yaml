@@ -6,6 +6,8 @@ image:
 cronJob:
   enabled: false
   schedule: 0 0 * * 0
+kafka:
+  clusterName: kafka-prod-dimo-kafka
 env:
   ENVIRONMENT: prod
   PORT: '8080'
