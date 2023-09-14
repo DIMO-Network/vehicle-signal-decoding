@@ -37,7 +37,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 
 	go StartGrpcServer(logger, pdb.DBS, settings)
 
-	startWebAPI(logger, settings, pdb, settings.DeviceGRPCAddr)
+	startWebAPI(logger, settings, pdb)
 	startVehicleSignalConsumer(logger, settings, pdb)
 	startMonitoringServer(logger, settings)
 
@@ -104,15 +104,10 @@ func startMonitoringServer(logger zerolog.Logger, settings *config.Settings) {
 	logger.Info().Str("port", settings.MonitoringPort).Msg("Started monitoring web server.")
 }
 
-func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.Store, deviceGRPCAddr string) *fiber.App {
+func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.Store) *fiber.App {
 
 	//Create gRPC connection
-	usersClient, conn, err := getDeviceGrpcClient(deviceGRPCAddr)
-	if err != nil {
-		logger.Fatal().Err(err).Msg("Failed to connect to gRPC server.")
-		return nil
-	}
-	defer conn.Close()
+	userDeviceSvc := services.NewUserDeviceService(settings)
 
 	app := fiber.New(fiber.Config{
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
@@ -135,7 +130,7 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 		return c.Status(fiber.StatusOK).SendString("healthy")
 	})
 
-	deviceConfigController := controllers.NewDeviceConfigController(settings, &logger, database.DBS().Reader.DB, usersClient)
+	deviceConfigController := controllers.NewDeviceConfigController(settings, &logger, database.DBS().Reader.DB, userDeviceSvc)
 
 	v1 := app.Group("/v1")
 
@@ -145,7 +140,7 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 
 	v1.Get("/device-config/:templateName/pids", deviceConfigController.GetPIDsByTemplate)
 	v1.Get("/device-config/:templateName/deviceSettings", deviceConfigController.GetDeviceSettingsByTemplate)
-	v1.Get("/device-config/:templateName/dbc-file", deviceConfigController.GetDBCFileByTemplateName)
+	v1.Get("/device-config/:templateName/dbc", deviceConfigController.GetDBCFileByTemplateName)
 
 	go func() {
 		if err := app.Listen(":" + settings.Port); err != nil {

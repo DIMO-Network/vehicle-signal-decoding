@@ -61,7 +61,6 @@ func (s *RunTestSignalTestSuite) Test_RunTestSignal() {
 	type tableTestCases struct {
 		description string
 		command     *RunTestSignalCommandRequest
-		expected    string
 		isError     bool
 	}
 
@@ -99,8 +98,7 @@ func (s *RunTestSignalTestSuite) Test_RunTestSignal() {
 				AutoPIUnitID: autoPIUnitID,
 				Signals:      eventSignals1,
 			},
-			expected: "dbcName",
-			isError:  false,
+			isError: false,
 		},
 	} {
 		s.T().Run(scenario.description, func(t *testing.T) {

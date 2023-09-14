@@ -15,7 +15,7 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/device-config/{templateName}/dbc-file": {
+        "/device-config/{templateName}/dbc": {
             "get": {
                 "description": "Fetches the DBC file from the dbc_files table given a template name",
                 "produces": [
@@ -132,6 +132,9 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/internal_controllers.DeviceConfigResponse"
                         }
+                    },
+                    "404": {
+                        "description": "Not Found - No templates available for the given parameters"
                     }
                 }
             }

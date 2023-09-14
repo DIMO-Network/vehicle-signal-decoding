@@ -7,77 +7,34 @@ import (
 	"fmt"
 	"time"
 
-	pbuser "github.com/DIMO-Network/shared/api/users"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/services"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
 	"github.com/gofiber/fiber/v2"
 	_ "github.com/lib/pq" //nolint
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
-	"github.com/volatiletech/sqlboiler/v4/boil"
-	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
 
 type DeviceConfigController struct {
-	Settings    *config.Settings
-	log         *zerolog.Logger
-	db          *sql.DB
-	usersClient pbuser.UserServiceClient
+	settings      *config.Settings
+	log           *zerolog.Logger
+	db            *sql.DB
+	userDeviceSvc services.UserDeviceService
 }
 
 // NewDeviceConfigController constructor
-func NewDeviceConfigController(settings *config.Settings, logger *zerolog.Logger, database *sql.DB, usersClient pbuser.UserServiceClient) DeviceConfigController {
+func NewDeviceConfigController(settings *config.Settings, logger *zerolog.Logger, database *sql.DB, userDeviceSvc services.UserDeviceService) DeviceConfigController {
 	return DeviceConfigController{
-		Settings:    settings,
-		log:         logger,
-		db:          database,
-		usersClient: usersClient,
+		settings:      settings,
+		log:           logger,
+		db:            database,
+		userDeviceSvc: userDeviceSvc,
 	}
 
-}
-
-// resolveTemplateName retrieves associated template and parent given a serial
-func resolveTemplateName(serial string, db *sql.DB) (string, string, error) {
-	// Create empty Template and SerialToTemplateOverride structs to hold query results
-	var template models.Template
-
-	// Create query modifiers
-	queryMods := []qm.QueryMod{
-		qm.Select("t.template_name", "t.parent_template_name"),
-		qm.From("templates t"),
-		qm.InnerJoin("serial_to_template_overrides sto ON t.template_name = sto.template_name"),
-		qm.Where("sto.serial = ?", serial),
-	}
-
-	// Execute the query and bind the results to the Template struct
-	err := models.Templates(queryMods...).Bind(context.Background(), db, &template)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return "", "", fmt.Errorf("No template found for serial: %s", serial)
-		}
-		return "", "", err
-	}
-
-	parentTemplateName := ""
-	if template.ParentTemplateName.Valid {
-		parentTemplateName = template.ParentTemplateName.String
-	}
-
-	return template.TemplateName, parentTemplateName, nil
-}
-
-func getVersionByTemplateName(templateName string, db boil.ContextExecutor) (string, error) {
-	template, err := models.Templates(models.TemplateWhere.TemplateName.EQ(templateName)).One(context.Background(), db)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return "", fmt.Errorf("No version found for template name: %s", templateName)
-		}
-		return "", err
-	}
-	return template.Version, nil
 }
 
 type PIDConfig struct {
@@ -256,7 +213,7 @@ func (d *DeviceConfigController) GetDeviceSettingsByTemplate(c *fiber.Ctx) error
 // @Success      200 {string} string "Successfully retrieved DBC file"
 // @Failure 404 "No DBC file found for the given template name."
 // @Param        templateName  path   string  true   "template name"
-// @Router       /device-config/{templateName}/dbc-file [get]
+// @Router       /device-config/{templateName}/dbc [get]
 func (d *DeviceConfigController) GetDBCFileByTemplateName(c *fiber.Ctx) error {
 	templateName := c.Params("templateName")
 
@@ -287,46 +244,69 @@ func (d *DeviceConfigController) GetDBCFileByTemplateName(c *fiber.Ctx) error {
 // @Tags         vehicle-signal-decoding
 // @Produce      json
 // @Success      200 {object} DeviceConfigResponse "Successfully retrieved configuration URLs"
+// @Failure 404  "Not Found - No templates available for the given parameters"
 // @Param        vin  path   string  true   "vehicle identification number (VIN)"
 // @Router       /device-config/{vin}/urls [get]
 func (d *DeviceConfigController) GetConfigURLs(c *fiber.Ctx) error {
-	baseURL := d.Settings.DeploymentURL
+	baseURL := d.settings.DeploymentURL
 	vin := c.Params("vin")
 
 	// Set up gRPC call to retrieve UserDevice by VIN
-	req := &pb.GetUserDeviceByVINRequest{Vin: vin}
-	ud, err := d.usersClient.GetUserDeviceByVIN(context.Background(), req)
+	ud, err := d.userDeviceSvc.GetUserDeviceByVIN(c.Context(), vin)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": fmt.Sprintf("Failed to retrieve user device for VIN: %s", vin),
 		})
 	}
 
-	//What do we do with this metadata?
-	canProtocol := ud.CAN_protocol
-	powerTrainType := ud.Power_train_type
+	switch ud.CANProtocol {
+	case "6":
+		ud.CANProtocol = models.CanProtocolTypeCAN11_500
+	case "7":
+		ud.CANProtocol = models.CanProtocolTypeCAN29_500
+	case "":
+		ud.CANProtocol = models.CanProtocolTypeCAN11_500
+	}
 
-	// Resolve template name using VIN
-	templateName, parentTemplateName, err := resolveTemplateName(vin, d.db)
+	// Set default for PowerTrainType if empty
+	if ud.PowerTrainType == "" {
+		ud.PowerTrainType = "ICE"
+	}
+
+	// Query templates, filter by protocol and powertrain
+	templates, err := models.Templates(
+		models.TemplateWhere.Protocol.EQ(ud.CANProtocol),
+		models.TemplateWhere.Powertrain.EQ(ud.PowerTrainType),
+	).All(context.Background(), d.db)
+
 	if err != nil {
+		// Check if error is due to no matching rows
+		if errors.Is(err, sql.ErrNoRows) {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": fmt.Sprintf("No templates found for protocol: %s and powertrain: %s", ud.CANProtocol, ud.PowerTrainType),
+			})
+		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": fmt.Sprintf("Failed to retrieve template name for VIN: %s", vin),
+			"error": fmt.Sprintf("Failed to query templates for protocol: %s and powertrain: %s", ud.CANProtocol, ud.PowerTrainType),
 		})
 	}
 
-	//Versioning
+	//Return first match
 
-	version, err := getVersionByTemplateName(templateName, d.db)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": fmt.Sprintf("Failed to retrieve version for template: %s", templateName),
-		})
+	templateName := templates[0].TemplateName
+
+	var parentTemplateName string
+	if templates[0].ParentTemplateName.Valid {
+		parentTemplateName = templates[0].ParentTemplateName.String
+	} else {
+		parentTemplateName = templateName
 	}
+	version := templates[0].Version
 
 	response := DeviceConfigResponse{
-		PidURL:           fmt.Sprintf("%s/device-config/pid/%s", baseURL, templateName),
-		DeviceSettingURL: fmt.Sprintf("%s/device-config/deviceSetting/%s", baseURL, parentTemplateName),
-		DbcURL:           fmt.Sprintf("%s/device-config/dbc/%s", baseURL, templateName),
+		PidURL:           fmt.Sprintf("%s/device-config/%s/pids", baseURL, templateName),
+		DeviceSettingURL: fmt.Sprintf("%s/device-config/%s/deviceSettings", baseURL, parentTemplateName),
+		DbcURL:           fmt.Sprintf("%s/device-config/%s/dbc", baseURL, templateName),
 		Version:          version,
 	}
 
