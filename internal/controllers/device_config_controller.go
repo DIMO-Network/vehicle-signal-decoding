@@ -213,7 +213,7 @@ func (d *DeviceConfigController) GetDeviceSettingsByTemplate(c *fiber.Ctx) error
 // @Success      200 {string} string "Successfully retrieved DBC file"
 // @Failure 404 "No DBC file found for the given template name."
 // @Param        templateName  path   string  true   "template name"
-// @Router       /device-config/{templateName}/dbc-file [get]
+// @Router       /device-config/{templateName}/dbc [get]
 func (d *DeviceConfigController) GetDBCFileByTemplateName(c *fiber.Ctx) error {
 	templateName := c.Params("templateName")
 
@@ -258,20 +258,17 @@ func (d *DeviceConfigController) GetConfigURLs(c *fiber.Ctx) error {
 			"error": fmt.Sprintf("Failed to retrieve user device for VIN: %s", vin),
 		})
 	}
-	// todo cleanup in func?
-	if ud.CANProtocol == "6" {
+
+	switch ud.CANProtocol {
+	case "6", "7":
 		ud.CANProtocol = models.CanProtocolTypeCAN11_500
-	}
-	if ud.CANProtocol == "7" {
-		ud.CANProtocol = models.CanProtocolTypeCAN11_500
+	case "":
+		ud.CANProtocol = "CAN11_500"
 	}
 
-	// Setting defaults if empty
+	// Set default for PowerTrainType if empty
 	if ud.PowerTrainType == "" {
 		ud.PowerTrainType = "ICE"
-	}
-	if ud.CANProtocol == "" {
-		ud.CANProtocol = "CAN11_500"
 	}
 
 	// Query templates, filter by protocol and powertrain
@@ -300,9 +297,9 @@ func (d *DeviceConfigController) GetConfigURLs(c *fiber.Ctx) error {
 	version := templates[0].Version
 
 	response := DeviceConfigResponse{
-		PidURL:           fmt.Sprintf("%s/device-config/pid/%s", baseURL, templateName),
-		DeviceSettingURL: fmt.Sprintf("%s/device-config/deviceSetting/%s", baseURL, parentTemplateName),
-		DbcURL:           fmt.Sprintf("%s/device-config/dbc/%s", baseURL, templateName),
+		PidURL:           fmt.Sprintf("%s/device-config/%s/pids", baseURL, templateName),
+		DeviceSettingURL: fmt.Sprintf("%s/device-config/%s/deviceSettings", baseURL, parentTemplateName),
+		DbcURL:           fmt.Sprintf("%s/device-config/%s/dbc", baseURL, templateName),
 		Version:          version,
 	}
 

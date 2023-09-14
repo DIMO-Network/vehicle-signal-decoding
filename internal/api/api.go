@@ -140,7 +140,7 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 
 	v1.Get("/device-config/:templateName/pids", deviceConfigController.GetPIDsByTemplate)
 	v1.Get("/device-config/:templateName/deviceSettings", deviceConfigController.GetDeviceSettingsByTemplate)
-	v1.Get("/device-config/:templateName/dbc-file", deviceConfigController.GetDBCFileByTemplateName)
+	v1.Get("/device-config/:templateName/dbc", deviceConfigController.GetDBCFileByTemplateName)
 
 	go func() {
 		if err := app.Listen(":" + settings.Port); err != nil {

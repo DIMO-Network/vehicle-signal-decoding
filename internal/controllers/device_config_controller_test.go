@@ -22,6 +22,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
+
+	_ "github.com/lib/pq" //nolint
 )
 
 const migrationsDirRelPath = "../infrastructure/db/migrations"
@@ -139,6 +141,8 @@ func TestGetDeviceSettingsByTemplate(t *testing.T) {
 	template := models.Template{
 		TemplateName: "testTemplate",
 		Version:      "2.0",
+		Protocol:     models.CanProtocolTypeCAN11_500,
+		Powertrain:   "ICE",
 	}
 	err := template.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	assert.NoError(t, err)
@@ -193,7 +197,6 @@ func TestGetDeviceSettingsByTemplate(t *testing.T) {
 
 	})
 }
-
 func TestGetDBCFileByTemplateName(t *testing.T) {
 
 	// arrange global db and route setup
@@ -219,6 +222,8 @@ func TestGetDBCFileByTemplateName(t *testing.T) {
 	template := models.Template{
 		TemplateName: "exampleDBCFileTemplate",
 		Version:      "3.0",
+		Protocol:     models.CanProtocolTypeCAN11_500,
+		Powertrain:   "ICE",
 		// etc
 	}
 	err := template.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
