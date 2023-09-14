@@ -10,11 +10,13 @@ import (
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
 
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/volatiletech/sqlboiler/v4/boil"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
+	mock_services "github.com/DIMO-Network/vehicle-signal-decoding/internal/core/services/mocks"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/test"
 	"github.com/gofiber/fiber/v2"
@@ -25,6 +27,10 @@ import (
 const migrationsDirRelPath = "../infrastructure/db/migrations"
 
 func TestGetPIDsByTemplate(t *testing.T) {
+
+	// arrange global db and route setup
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
 
 	// Arrange: db and route setup
 	logger := zerolog.New(os.Stdout).With().
@@ -64,8 +70,9 @@ func TestGetPIDsByTemplate(t *testing.T) {
 
 	err = pc.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err)
+	mockUserDeviceSvc := mock_services.NewMockUserDeviceService(mockCtrl)
 
-	c := NewDeviceConfigController(&config.Settings{Port: "3000"}, &logger, pdb.DBS().Reader.DB)
+	c := NewDeviceConfigController(&config.Settings{Port: "3000"}, &logger, pdb.DBS().Reader.DB, mockUserDeviceSvc)
 	app := fiber.New()
 	app.Get("/device-config/:templateName/pids", c.GetPIDsByTemplate)
 
@@ -108,6 +115,10 @@ func TestGetPIDsByTemplate(t *testing.T) {
 
 func TestGetDeviceSettingsByTemplate(t *testing.T) {
 
+	// arrange global db and route setup
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
 	// Arrange: db and route setup
 	logger := zerolog.New(os.Stdout).With().
 		Timestamp().
@@ -143,7 +154,9 @@ func TestGetDeviceSettingsByTemplate(t *testing.T) {
 	err = ds.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	assert.NoError(t, err)
 
-	c := NewDeviceConfigController(&config.Settings{Port: "3000"}, &logger, pdb.DBS().Reader.DB)
+	mockUserDeviceSvc := mock_services.NewMockUserDeviceService(mockCtrl)
+
+	c := NewDeviceConfigController(&config.Settings{Port: "3000"}, &logger, pdb.DBS().Reader.DB, mockUserDeviceSvc)
 	app := fiber.New()
 	app.Get("/device-config/:templateName", c.GetDeviceSettingsByTemplate)
 
@@ -181,6 +194,11 @@ func TestGetDeviceSettingsByTemplate(t *testing.T) {
 }
 
 func TestGetDBCFileByTemplateName(t *testing.T) {
+
+	// arrange global db and route setup
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
 	// Arrange: db and route setup
 	logger := zerolog.New(os.Stdout).With().
 		Timestamp().
@@ -213,7 +231,9 @@ func TestGetDBCFileByTemplateName(t *testing.T) {
 	err = dbcf.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
 	assert.NoError(t, err)
 
-	c := NewDeviceConfigController(&config.Settings{Port: "3000"}, &logger, pdb.DBS().Reader.DB)
+	mockUserDeviceSvc := mock_services.NewMockUserDeviceService(mockCtrl)
+
+	c := NewDeviceConfigController(&config.Settings{Port: "3000"}, &logger, pdb.DBS().Reader.DB, mockUserDeviceSvc)
 	app := fiber.New()
 	app.Get("/device-config/:templateName/dbc-file", c.GetDBCFileByTemplateName)
 

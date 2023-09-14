@@ -37,7 +37,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 
 	go StartGrpcServer(logger, pdb.DBS, settings)
 
-	startWebAPI(logger, settings, pdb, settings.DeviceGRPCAddr)
+	startWebAPI(logger, settings, pdb)
 	startVehicleSignalConsumer(logger, settings, pdb)
 	startMonitoringServer(logger, settings)
 
@@ -104,7 +104,7 @@ func startMonitoringServer(logger zerolog.Logger, settings *config.Settings) {
 	logger.Info().Str("port", settings.MonitoringPort).Msg("Started monitoring web server.")
 }
 
-func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.Store, deviceGRPCAddr string) *fiber.App {
+func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.Store) *fiber.App {
 
 	//Create gRPC connection
 	userDeviceSvc := services.NewUserDeviceService(settings)
