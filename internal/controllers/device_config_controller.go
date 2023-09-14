@@ -116,6 +116,20 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 		return errors.Wrap(err, "Failed to retrieve PID Configs")
 	}
 
+	// Check if template has a parent and retrieve its PID configs
+	if template.ParentTemplateName.Valid {
+		pidConfigsParent, err := models.PidConfigs(
+			models.PidConfigWhere.TemplateName.EQ(template.ParentTemplateName.String),
+		).All(c.Context(), d.db)
+
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return errors.Wrap(err, "Failed to retrieve Parent PID Configs")
+		}
+
+		// Append the parent pidConfigs to the original pidConfigs
+		pidConfigs = append(pidConfigs, pidConfigsParent...)
+	}
+
 	protoPIDs := &grpc.PIDRequests{
 		TemplateName: templateName,
 	}
