@@ -71,7 +71,7 @@ info:
   title: DIMO Vehicle-Signal-Decoding
   version: "1.0"
 paths:
-  /device-config/{templateName}/dbc-file:
+  /device-config/{templateName}/dbc:
     get:
       description: Fetches the DBC file from the dbc_files table given a template
         name
@@ -151,6 +151,8 @@ paths:
           description: Successfully retrieved configuration URLs
           schema:
             $ref: '#/definitions/internal_controllers.DeviceConfigResponse'
+        "404":
+          description: Not Found - No templates available for the given parameters
       tags:
       - vehicle-signal-decoding
 swagger: "2.0"
