@@ -4,17 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	pb "github.com/DIMO-Network/devices-api/pkg/grpc"
+	"github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
+	"github.com/golang/mock/gomock"
+	"github.com/segmentio/ksuid"
+	"github.com/stretchr/testify/require"
 	"io"
 	"os"
 	"testing"
-	"time"
 
-	"github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
-
-	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/require"
-
-	"github.com/volatiletech/null"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
@@ -287,41 +285,34 @@ func TestGetConfigURLs(t *testing.T) {
 			t.Fatal(err)
 		}
 	}()
+	vin := "TMBEK6NW1N3088739"
 
-	mockedUserDevice := &UserDevice{
-		ID:                 "sampleID",
-		UserID:             "sampleUserID",
-		DeviceDefinitionID: "sampleDeviceDefID",
-		VinIdentifier:      null.NewString("someVIN", true),
-		Name:               null.NewString("SampleDeviceName", true),
-		CustomImageURL:     null.NewString("http://sampleurl.com/img.png", true),
-		CountryCode:        null.NewString("US", true),
-		CreatedAt:          time.Now(),
-		UpdatedAt:          time.Now(),
-		VinConfirmed:       true,
-		Metadata:           null.JSONFrom([]byte(`{"key": "value"}`)),
-		DeviceStyleID:      null.NewString("sampleStyleID", true),
-		OptedInAt:          null.NewTime(time.Now(), true),
+	mockedUserDevice := &pb.UserDevice{
+		Id:                  ksuid.New().String(),
+		UserId:              ksuid.New().String(),
+		Vin:                 &vin,
+		DeviceDefinitionId:  ksuid.New().String(),
+		VinConfirmed:        true,
+		CountryCode:         "USA",
+		PowerTrainType:      "HEV",
+		CANProtocol:         "7",
+		PostalCode:          "48025",
+		GeoDecodedCountry:   "USA",
+		GeoDecodedStateProv: "MI",
 	}
 
 	mockUserDeviceSvc := mock_services.NewMockUserDeviceService(mockCtrl)
 	mockUserDeviceSvc.EXPECT().GetUserDeviceByVIN(gomock.Any(), "someVIN").Return(mockedUserDevice, nil)
 
-	ud := &models.UserDevice{
-		VIN:            "testVIN",
-		CANProtocol:    models.CanProtocolTypeCAN11_500,
-		PowerTrainType: "ICE",
+	// insert template in DB
+	template := &models.Template{
+		TemplateName: "some-template",
+		Version:      "1.0",
+		Protocol:     models.CanProtocolTypeCAN29_500,
+		Powertrain:   "HEV",
 	}
-
-	type MockedTemplate struct {
-		TemplateName       string
-		ParentTemplateName string
-	}
-
-	mockedTemplate := &MockedTemplate{
-		TemplateName:       "mockedTemplate",
-		ParentTemplateName: "mockedParentTemplate",
-	}
+	err := template.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+	require.NoError(t, err)
 
 	c := NewDeviceConfigController(&config.Settings{Port: "3000", DeploymentURL: "http://localhost:3000"}, &logger, pdb.DBS().Reader.DB, mockUserDeviceSvc)
 	app := fiber.New()
@@ -329,8 +320,9 @@ func TestGetConfigURLs(t *testing.T) {
 
 	t.Run("GET - Config URLs by VIN", func(t *testing.T) {
 		// Act: make the request
-		request := test.BuildRequest("GET", "/config-urls/"+ud.VIN, "")
-		response, _ := app.Test(request)
+		request := test.BuildRequest("GET", "/config-urls/"+vin, "")
+		response, err := app.Test(request)
+		require.NoError(t, err)
 		body, _ := io.ReadAll(response.Body)
 
 		// Assert: check the results
@@ -339,12 +331,13 @@ func TestGetConfigURLs(t *testing.T) {
 		}
 
 		var receivedResp DeviceConfigResponse
-		err := json.Unmarshal(body, &receivedResp)
+		err = json.Unmarshal(body, &receivedResp)
 		assert.NoError(t, err)
 
-		assert.Equal(t, fmt.Sprintf("http://localhost:3000/device-config/%s/pids", mockedTemplate.TemplateName), receivedResp.PidURL)
-		assert.Equal(t, fmt.Sprintf("http://localhost:3000/device-config/%s/deviceSettings", mockedTemplate.ParentTemplateName), receivedResp.DeviceSettingURL)
-		assert.Equal(t, fmt.Sprintf("http://localhost:3000/device-config/%s/dbc", mockedTemplate.TemplateName), receivedResp.DbcURL)
+		assert.Equal(t, fmt.Sprintf("http://localhost:3000/device-config/%s/pids", template.TemplateName), receivedResp.PidURL)
+		assert.Equal(t, fmt.Sprintf("http://localhost:3000/device-config/%s/deviceSettings", template.TemplateName), receivedResp.DeviceSettingURL)
+		assert.Equal(t, fmt.Sprintf("http://localhost:3000/device-config/%s/dbc", template.TemplateName), receivedResp.DbcURL)
+		assert.Equal(t, template.Version, receivedResp.Version)
 
 		// Teardown: cleanup after test
 		test.TruncateTables(pdb.DBS().Writer.DB, t)

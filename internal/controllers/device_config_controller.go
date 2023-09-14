@@ -265,7 +265,7 @@ func (d *DeviceConfigController) GetConfigURLs(c *fiber.Ctx) error {
 	case "7":
 		ud.CANProtocol = models.CanProtocolTypeCAN29_500
 	case "":
-		ud.CANProtocol = "CAN11_500"
+		ud.CANProtocol = models.CanProtocolTypeCAN11_500
 	}
 
 	// Set default for PowerTrainType if empty
