@@ -258,6 +258,13 @@ func (d *DeviceConfigController) GetConfigURLs(c *fiber.Ctx) error {
 			"error": fmt.Sprintf("Failed to retrieve user device for VIN: %s", vin),
 		})
 	}
+	// todo cleanup in func?
+	if ud.CANProtocol == "6" {
+		ud.CANProtocol = models.CanProtocolTypeCAN11_500
+	}
+	if ud.CANProtocol == "7" {
+		ud.CANProtocol = models.CanProtocolTypeCAN11_500
+	}
 
 	// Setting defaults if empty
 	if ud.PowerTrainType == "" {
