@@ -260,8 +260,10 @@ func (d *DeviceConfigController) GetConfigURLs(c *fiber.Ctx) error {
 	}
 
 	switch ud.CANProtocol {
-	case "6", "7":
+	case "6":
 		ud.CANProtocol = models.CanProtocolTypeCAN11_500
+	case "7":
+		ud.CANProtocol = models.CanProtocolTypeCAN29_500
 	case "":
 		ud.CANProtocol = "CAN11_500"
 	}
