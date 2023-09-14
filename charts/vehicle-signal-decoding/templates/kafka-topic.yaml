@@ -7,7 +7,7 @@ metadata:
   namespace: {{ $.Release.Namespace }}
   labels:
     strimzi.io/cluster: {{$.Values.kafka.clusterName}}
-    {{- include "vehicle-signal-decoding.labels" . | nindent 4 }}
+    {{- include "vehicle-signal-decoding.labels" $ | nindent 4 }}
 spec:
   config:
     {{- range $key, $val := $item.config }}
