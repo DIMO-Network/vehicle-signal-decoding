@@ -51,7 +51,8 @@ func TestGetPIDsByTemplate(t *testing.T) {
 	template := models.Template{
 		TemplateName: "exampleTemplate",
 		Version:      "1.0",
-		// etc
+		Protocol:     models.CanProtocolTypeCAN11_500,
+		Powertrain:   "ICE",
 	}
 	err := template.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err)
