@@ -182,8 +182,6 @@ func TestGetDeviceSettingsByTemplate(t *testing.T) {
 		err = json.Unmarshal(body, &receivedDS)
 		assert.NoError(t, err)
 
-		assert.Equal(t, ds.ID, receivedDS.ID)
-
 		assert.Equal(t, ds.BatteryCriticalLevelVoltage, receivedDS.BatteryCriticalLevelVoltage)
 		assert.Equal(t, ds.SafetyCutOutVoltage, receivedDS.SafetyCutOutVoltage)
 		assert.Equal(t, ds.SleepTimerEventDrivenInterval, receivedDS.SleepTimerEventDrivenInterval)

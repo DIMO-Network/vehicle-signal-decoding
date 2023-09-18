@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"encoding/binary"
 	"fmt"
+
+	pb "github.com/DIMO-Network/devices-api/pkg/grpc"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
@@ -248,12 +250,29 @@ func (d *DeviceConfigController) GetDBCFileByTemplateName(c *fiber.Ctx) error {
 func (d *DeviceConfigController) GetConfigURLs(c *fiber.Ctx) error {
 	baseURL := d.settings.DeploymentURL
 	vin := c.Params("vin")
+	ethAddr := c.Params("ethAddr")
 
-	// Set up gRPC call to retrieve UserDevice by VIN
-	ud, err := d.userDeviceSvc.GetUserDeviceByVIN(c.Context(), vin)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": fmt.Sprintf("Failed to retrieve user device for VIN: %s", vin),
+	var ud *pb.UserDevice
+	var err error
+
+	switch {
+	case vin != "":
+		ud, err = d.userDeviceSvc.GetUserDeviceByVIN(c.Context(), vin)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": fmt.Sprintf("Failed to retrieve user device for VIN: %s", vin),
+			})
+		}
+	case ethAddr != "":
+		ud, err = d.userDeviceSvc.GetUserDeviceByEthAddr(c.Context(), ethAddr)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": fmt.Sprintf("Failed to retrieve user device for EthAddr: %s", ethAddr),
+			})
+		}
+	default:
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Both VIN and EthAddr are missing.",
 		})
 	}
 
