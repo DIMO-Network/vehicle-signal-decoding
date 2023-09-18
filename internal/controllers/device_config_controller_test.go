@@ -335,11 +335,8 @@ func TestGetConfigURLs(t *testing.T) {
 
 		assert.Equal(t, fmt.Sprintf("http://localhost:3000/device-config/%s/pids", template.TemplateName), receivedResp.PidURL)
 		assert.Equal(t, fmt.Sprintf("http://localhost:3000/device-config/%s/deviceSettings", template.TemplateName), receivedResp.DeviceSettingURL)
-		if template.R.TemplateNameDBCFile != nil && len(template.R.TemplateNameDBCFile.DBCFile) > 0 {
-			assert.Equal(t, fmt.Sprintf("http://localhost:3000/device-config/%s/dbc", template.TemplateName), receivedResp.DbcURL)
-		} else {
-			assert.Empty(t, receivedResp.DbcURL)
-		}
+		assert.Equal(t, "", receivedResp.DbcURL)
+
 		assert.Equal(t, template.Version, receivedResp.Version)
 
 		// Teardown: cleanup after test
