@@ -5,8 +5,6 @@ import (
 	"database/sql"
 	"encoding/binary"
 	"fmt"
-	"time"
-
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
