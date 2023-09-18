@@ -5,6 +5,10 @@ import (
 	"database/sql"
 	"encoding/binary"
 	"fmt"
+	"time"
+
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
+
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/services"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
@@ -58,7 +62,7 @@ type DeviceSetting struct {
 type DeviceConfigResponse struct {
 	PidURL           string `json:"pidUrl"`
 	DeviceSettingURL string `json:"deviceSettingUrl"`
-	DbcURL           string `json:"dbcURL"`
+	DbcURL           string `json:"dbcURL,omitempty"`
 	Version          string `json:"version"`
 }
 
@@ -273,6 +277,7 @@ func (d *DeviceConfigController) GetConfigURLs(c *fiber.Ctx) error {
 	templates, err := models.Templates(
 		models.TemplateWhere.Protocol.EQ(ud.CANProtocol),
 		models.TemplateWhere.Powertrain.EQ(ud.PowerTrainType),
+		qm.Load(models.TemplateRels.TemplateNameDBCFile),
 	).All(context.Background(), d.db)
 
 	if err != nil {
@@ -302,8 +307,12 @@ func (d *DeviceConfigController) GetConfigURLs(c *fiber.Ctx) error {
 	response := DeviceConfigResponse{
 		PidURL:           fmt.Sprintf("%s/device-config/%s/pids", baseURL, templateName),
 		DeviceSettingURL: fmt.Sprintf("%s/device-config/%s/deviceSettings", baseURL, parentTemplateName),
-		DbcURL:           fmt.Sprintf("%s/device-config/%s/dbc", baseURL, templateName),
-		Version:          version,
+		//DbcURL:           fmt.Sprintf("%s/device-config/%s/dbc", baseURL, templateName),
+		Version: version,
+	}
+	// TemplateNameDBC pointer nil AND DBCFile string empty
+	if templates[0].R.TemplateNameDBCFile != nil && len(templates[0].R.TemplateNameDBCFile.DBCFile) > 0 {
+		response.DbcURL = fmt.Sprintf("%s/device-config/%s/dbc", baseURL, templateName)
 	}
 
 	return c.JSON(response)
