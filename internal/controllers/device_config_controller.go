@@ -240,12 +240,13 @@ func (d *DeviceConfigController) GetDBCFileByTemplateName(c *fiber.Ctx) error {
 }
 
 // GetConfigURLs godoc
-// @Description  Retrieve the URLs for PID, DeviceSettings, and DBC configuration based on a given VIN
+// @Description  Retrieve the URLs for PID, DeviceSettings, and DBC configuration based on a given VIN or Ethereum Address
 // @Tags         vehicle-signal-decoding
 // @Produce      json
 // @Success      200 {object} DeviceConfigResponse "Successfully retrieved configuration URLs"
 // @Failure 404  "Not Found - No templates available for the given parameters"
 // @Param        vin  path   string  true   "vehicle identification number (VIN)"
+// @Param        ethAddr  path   string  false  "Ethereum Address"
 // @Router       /device-config/{vin}/urls [get]
 func (d *DeviceConfigController) GetConfigURLs(c *fiber.Ctx) error {
 	baseURL := d.settings.DeploymentURL
