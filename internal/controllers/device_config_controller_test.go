@@ -265,7 +265,7 @@ func TestGetDBCFileByTemplateName(t *testing.T) {
 	})
 }
 
-func TestGetConfigURLs(t *testing.T) {
+func TestGetConfigURLsNonEmptyDBC(t *testing.T) {
 	// Arrange
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
@@ -317,7 +317,95 @@ func TestGetConfigURLs(t *testing.T) {
 	app := fiber.New()
 	app.Get("/config-urls/:vin", c.GetConfigURLs)
 
-	t.Run("GET - Config URLs by VIN", func(t *testing.T) {
+	t.Run("GET - Config URLs by VIN with Non-Empty DbcURL", func(t *testing.T) {
+		// Insert DBCFile in the database
+		dbcFile := &models.DBCFile{
+			TemplateName: "some-template",
+			DBCFile:      "sample-dbc-file-name",
+		}
+		err := dbcFile.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+		require.NoError(t, err)
+
+		// Act: make the request
+		request := test.BuildRequest("GET", "/config-urls/"+vin, "")
+		response, err := app.Test(request)
+		require.NoError(t, err)
+		body, _ := io.ReadAll(response.Body)
+
+		// Assert: check the results
+		if !assert.Equal(t, fiber.StatusOK, response.StatusCode) {
+			fmt.Println("response body: " + string(body))
+		}
+
+		var receivedResp DeviceConfigResponse
+		err = json.Unmarshal(body, &receivedResp)
+		assert.NoError(t, err)
+
+		assert.Equal(t, fmt.Sprintf("http://localhost:3000/device-config/%s/pids", template.TemplateName), receivedResp.PidURL)
+		assert.Equal(t, fmt.Sprintf("http://localhost:3000/device-config/%s/deviceSettings", template.TemplateName), receivedResp.DeviceSettingURL)
+		assert.Equal(t, fmt.Sprintf("http://localhost:3000/device-config/%s/dbc", template.TemplateName), receivedResp.DbcURL)
+
+		assert.Equal(t, template.Version, receivedResp.Version)
+
+		// Teardown: cleanup after test
+		test.TruncateTables(pdb.DBS().Writer.DB, t)
+	})
+
+}
+
+func TestGetConfigURLsEmptyDBC(t *testing.T) {
+	// Arrange
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	logger := zerolog.New(os.Stdout).With().
+		Timestamp().
+		Str("app", "vehicle-signal-decoding").
+		Logger()
+
+	ctx := context.Background()
+
+	// Spin up test database in a Docker container
+	pdb, container := test.StartContainerDatabase(ctx, t, migrationsDirRelPath)
+	defer func() {
+		if err := container.Terminate(ctx); err != nil {
+			t.Fatal(err)
+		}
+	}()
+	vin := "TMBEK6NW1N3088739"
+
+	mockedUserDevice := &pb.UserDevice{
+		Id:                  ksuid.New().String(),
+		UserId:              ksuid.New().String(),
+		Vin:                 &vin,
+		DeviceDefinitionId:  ksuid.New().String(),
+		VinConfirmed:        true,
+		CountryCode:         "USA",
+		PowerTrainType:      "HEV",
+		CANProtocol:         "7",
+		PostalCode:          "48025",
+		GeoDecodedCountry:   "USA",
+		GeoDecodedStateProv: "MI",
+	}
+
+	mockUserDeviceSvc := mock_services.NewMockUserDeviceService(mockCtrl)
+	mockUserDeviceSvc.EXPECT().GetUserDeviceByVIN(gomock.Any(), vin).Return(mockedUserDevice, nil)
+
+	// insert template in DB
+	template := &models.Template{
+		TemplateName: "some-template",
+		Version:      "1.0",
+		Protocol:     models.CanProtocolTypeCAN29_500,
+		Powertrain:   "HEV",
+	}
+	err := template.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+	require.NoError(t, err)
+
+	c := NewDeviceConfigController(&config.Settings{Port: "3000", DeploymentURL: "http://localhost:3000"}, &logger, pdb.DBS().Reader.DB, mockUserDeviceSvc)
+	app := fiber.New()
+	app.Get("/config-urls/:vin", c.GetConfigURLs)
+
+	t.Run("GET - Config URLs by VIN with Empty DbcURL", func(t *testing.T) {
 		// Act: make the request
 		request := test.BuildRequest("GET", "/config-urls/"+vin, "")
 		response, err := app.Test(request)
@@ -342,4 +430,5 @@ func TestGetConfigURLs(t *testing.T) {
 		// Teardown: cleanup after test
 		test.TruncateTables(pdb.DBS().Writer.DB, t)
 	})
+
 }
