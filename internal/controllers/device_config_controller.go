@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"encoding/binary"
 	"fmt"
-
+	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	pb "github.com/DIMO-Network/devices-api/pkg/grpc"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 
@@ -25,15 +25,17 @@ type DeviceConfigController struct {
 	log           *zerolog.Logger
 	db            *sql.DB
 	userDeviceSvc services.UserDeviceService
+	deviceDefSvc  services.DeviceDefinitionsService
 }
 
 // NewDeviceConfigController constructor
-func NewDeviceConfigController(settings *config.Settings, logger *zerolog.Logger, database *sql.DB, userDeviceSvc services.UserDeviceService) DeviceConfigController {
+func NewDeviceConfigController(settings *config.Settings, logger *zerolog.Logger, database *sql.DB, userDeviceSvc services.UserDeviceService, deviceDefSvc services.DeviceDefinitionsService) DeviceConfigController {
 	return DeviceConfigController{
 		settings:      settings,
 		log:           logger,
 		db:            database,
 		userDeviceSvc: userDeviceSvc,
+		deviceDefSvc:  deviceDefSvc,
 	}
 
 }
@@ -291,11 +293,24 @@ func (d *DeviceConfigController) GetConfigURLs(c *fiber.Ctx) error {
 		ud.PowerTrainType = "ICE"
 	}
 
+	//Device Definitions
+
+	var ddResponse *p_grpc.GetDeviceDefinitionResponse
+	deviceDefinitionId := ud.DeviceDefinitionId
+	ddResponse, err = d.deviceDefSvc.GetDeviceDefinitionByID(c.Context(), deviceDefinitionId)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": fmt.Sprintf("Failed to retrieve device definition for deviceDefinitionId: %s", deviceDefinitionId),
+		})
+	}
+	vehicleYear := int(ddResponse.DeviceDefinitions[0].Type.Year)
+
 	// Query templates, filter by protocol and powertrain
 	templates, err := models.Templates(
 		models.TemplateWhere.Protocol.EQ(ud.CANProtocol),
 		models.TemplateWhere.Powertrain.EQ(ud.PowerTrainType),
 		qm.Load(models.TemplateRels.TemplateNameDBCFile),
+		qm.Load(models.TemplateRels.TemplateNameTemplateVehicles),
 	).All(context.Background(), d.db)
 
 	if err != nil {
@@ -310,17 +325,34 @@ func (d *DeviceConfigController) GetConfigURLs(c *fiber.Ctx) error {
 		})
 	}
 
-	//Return first match
+	// Filter templates by vehicle year range
+	var matchedTemplate *models.Template
+	for _, template := range templates {
+		for _, tv := range template.R.TemplateNameTemplateVehicles {
+			if vehicleYear >= tv.YearStart && vehicleYear <= tv.YearEnd {
+				matchedTemplate = template
+				break
+			}
+		}
+		if matchedTemplate != nil {
+			break
+		}
+	}
+	if matchedTemplate == nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "No matching template found for the vehicle's year.",
+		})
+	}
 
-	templateName := templates[0].TemplateName
-
+	// Use the matchedTemplate for the response
+	templateName := matchedTemplate.TemplateName
 	var parentTemplateName string
-	if templates[0].ParentTemplateName.Valid {
-		parentTemplateName = templates[0].ParentTemplateName.String
+	if matchedTemplate.ParentTemplateName.Valid {
+		parentTemplateName = matchedTemplate.ParentTemplateName.String
 	} else {
 		parentTemplateName = templateName
 	}
-	version := templates[0].Version
+	version := matchedTemplate.Version
 
 	response := DeviceConfigResponse{
 		PidURL:           fmt.Sprintf("%s/device-config/%s/pids", baseURL, templateName),
