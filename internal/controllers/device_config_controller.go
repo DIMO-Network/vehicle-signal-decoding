@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/binary"
 	"fmt"
+
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	pb "github.com/DIMO-Network/devices-api/pkg/grpc"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -296,11 +297,11 @@ func (d *DeviceConfigController) GetConfigURLs(c *fiber.Ctx) error {
 	//Device Definitions
 
 	var ddResponse *p_grpc.GetDeviceDefinitionResponse
-	deviceDefinitionId := ud.DeviceDefinitionId
-	ddResponse, err = d.deviceDefSvc.GetDeviceDefinitionByID(c.Context(), deviceDefinitionId)
+	deviceDefinitionID := ud.DeviceDefinitionId
+	ddResponse, err = d.deviceDefSvc.GetDeviceDefinitionByID(c.Context(), deviceDefinitionID)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": fmt.Sprintf("Failed to retrieve device definition for deviceDefinitionId: %s", deviceDefinitionId),
+			"error": fmt.Sprintf("Failed to retrieve device definition for deviceDefinitionId: %s", deviceDefinitionID),
 		})
 	}
 	vehicleYear := int(ddResponse.DeviceDefinitions[0].Type.Year)
