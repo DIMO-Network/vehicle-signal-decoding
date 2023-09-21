@@ -36,6 +36,21 @@ func (m *MockUserDeviceService) EXPECT() *MockUserDeviceServiceMockRecorder {
 	return m.recorder
 }
 
+// GetUserDeviceByEthAddr mocks base method.
+func (m *MockUserDeviceService) GetUserDeviceByEthAddr(ctx context.Context, ethAddr string) (*grpc.UserDevice, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserDeviceByEthAddr", ctx, ethAddr)
+	ret0, _ := ret[0].(*grpc.UserDevice)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserDeviceByEthAddr indicates an expected call of GetUserDeviceByEthAddr.
+func (mr *MockUserDeviceServiceMockRecorder) GetUserDeviceByEthAddr(ctx, ethAddr interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserDeviceByEthAddr", reflect.TypeOf((*MockUserDeviceService)(nil).GetUserDeviceByEthAddr), ctx, ethAddr)
+}
+
 // GetUserDeviceByVIN mocks base method.
 func (m *MockUserDeviceService) GetUserDeviceByVIN(ctx context.Context, vin string) (*grpc.UserDevice, error) {
 	m.ctrl.T.Helper()

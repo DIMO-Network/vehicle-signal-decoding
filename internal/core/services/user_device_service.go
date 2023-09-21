@@ -14,6 +14,7 @@ import (
 type UserDeviceService interface {
 	GetUserDeviceServiceByAutoPIUnitID(ctx context.Context, id string) (*UserDeviceAutoPIUnit, error)
 	GetUserDeviceByVIN(ctx context.Context, vin string) (*pb.UserDevice, error)
+	GetUserDeviceByEthAddr(ctx context.Context, ethAddr string) (*pb.UserDevice, error)
 }
 
 type userDeviceService struct {
@@ -56,6 +57,22 @@ func (a *userDeviceService) GetUserDeviceByVIN(ctx context.Context, vin string) 
 	defer conn.Close()
 
 	userDevice, err := deviceClient.GetUserDeviceByVIN(ctx, &pb.GetUserDeviceByVINRequest{Vin: vin})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return userDevice, nil
+}
+func (a *userDeviceService) GetUserDeviceByEthAddr(ctx context.Context, ethAddr string) (*pb.UserDevice, error) {
+
+	deviceClient, conn, err := a.getDeviceGrpcClient()
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+
+	userDevice, err := deviceClient.GetUserDeviceByEthAddr(ctx, &pb.GetUserDeviceByEthAddrRequest{EthAddr: []byte(ethAddr)})
 
 	if err != nil {
 		return nil, err
