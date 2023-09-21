@@ -324,9 +324,7 @@ func (d *DeviceConfigController) GetConfigURLsFromVIN(c *fiber.Ctx) error {
 		}
 	}
 	if matchedTemplate == nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "No matching template found for the vehicle's year.",
-		})
+		matchedTemplate = templates[0]
 	}
 
 	// Use the matchedTemplate for the response
@@ -435,9 +433,7 @@ func (d *DeviceConfigController) GetConfigURLsFromEthAddr(c *fiber.Ctx) error {
 		}
 	}
 	if matchedTemplate == nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "No matching template found for the vehicle's year.",
-		})
+		matchedTemplate = templates[0]
 	}
 
 	// Use the matchedTemplate for the response

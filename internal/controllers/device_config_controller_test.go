@@ -336,7 +336,7 @@ func TestGetConfigURLsEmptyDBC(t *testing.T) {
 	require.NoError(t, err)
 
 	app := fiber.New()
-	app.Get("/config-urls/:vin", c.GetConfigURLs)
+	app.Get("/config-urls/:vin", c.GetConfigURLsFromVIN)
 
 	t.Run("GET - Config URLs by VIN with Empty DbcURL", func(t *testing.T) {
 		// Add vehicle year range to the template
@@ -437,7 +437,7 @@ func TestGetConfigURLsMatchingYearRange(t *testing.T) {
 	require.NoError(t, err)
 
 	app := fiber.New()
-	app.Get("/config-urls/:vin", c.GetConfigURLs)
+	app.Get("/config-urls/:vin", c.GetConfigURLsFromVIN)
 
 	t.Run("GET - Config URLs by VIN with Matching Year Range", func(t *testing.T) {
 		// Insert DBCFile in the database
@@ -546,7 +546,7 @@ func TestGetConfigURLsNonMatchingYearRange(t *testing.T) {
 	require.NoError(t, err)
 
 	app := fiber.New()
-	app.Get("/config-urls/:vin", c.GetConfigURLs)
+	app.Get("/config-urls/:vin", c.GetConfigURLsFromVIN)
 
 	t.Run("GET - Config URLs by VIN with Non-Matching Year Range", func(t *testing.T) {
 		// Insert DBCFile in the database
@@ -572,13 +572,17 @@ func TestGetConfigURLsNonMatchingYearRange(t *testing.T) {
 		body, _ := io.ReadAll(response.Body)
 
 		// Assert: check the results
-		assert.Equal(t, fiber.StatusBadRequest, response.StatusCode, "response body: "+string(body))
+		assert.Equal(t, fiber.StatusOK, response.StatusCode, "response body: "+string(body))
 
-		var receivedResp map[string]interface{}
+		var receivedResp DeviceConfigResponse
 		err = json.Unmarshal(body, &receivedResp)
 		assert.NoError(t, err)
 
-		assert.Equal(t, "No matching template found for the vehicle's year.", receivedResp["error"])
+		assert.Equal(t, fmt.Sprintf("http://localhost:3000/device-config/%s/pids", template.TemplateName), receivedResp.PidURL)
+		assert.Equal(t, fmt.Sprintf("http://localhost:3000/device-config/%s/deviceSettings", template.TemplateName), receivedResp.DeviceSettingURL)
+		assert.Equal(t, fmt.Sprintf("http://localhost:3000/device-config/%s/dbc", template.TemplateName), receivedResp.DbcURL)
+
+		assert.Equal(t, template.Version, receivedResp.Version)
 
 		// Teardown: cleanup after test
 		test.TruncateTables(pdb.DBS().Writer.DB, t)
