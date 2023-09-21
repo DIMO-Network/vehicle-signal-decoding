@@ -242,41 +242,136 @@ func (d *DeviceConfigController) GetDBCFileByTemplateName(c *fiber.Ctx) error {
 
 }
 
-// GetConfigURLs godoc
-// @Description  Retrieve the URLs for PID, DeviceSettings, and DBC configuration based on a given VIN or Ethereum Address
+// GetConfigURLsFromVIN godoc
+// @Description  Retrieve the URLs for PID, DeviceSettings, and DBC configuration based on a given VIN
 // @Tags         vehicle-signal-decoding
 // @Produce      json
 // @Success      200 {object} DeviceConfigResponse "Successfully retrieved configuration URLs"
 // @Failure 404  "Not Found - No templates available for the given parameters"
 // @Param        vin  path   string  true   "vehicle identification number (VIN)"
-// @Param        ethAddr  path   string  false  "Ethereum Address"
-// @Router       /device-config/{vin}/urls [get]
-func (d *DeviceConfigController) GetConfigURLs(c *fiber.Ctx) error {
+// @Router       /device-config/vin/{vin}/urls [get]
+func (d *DeviceConfigController) GetConfigURLsFromVIN(c *fiber.Ctx) error {
 	baseURL := d.settings.DeploymentURL
 	vin := c.Params("vin")
+
+	var ud *pb.UserDevice
+	var err error
+
+	ud, err = d.userDeviceSvc.GetUserDeviceByVIN(c.Context(), vin)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": fmt.Sprintf("Failed to retrieve user device for VIN: %s", vin),
+		})
+	}
+
+	switch ud.CANProtocol {
+	case "6":
+		ud.CANProtocol = models.CanProtocolTypeCAN11_500
+	case "7":
+		ud.CANProtocol = models.CanProtocolTypeCAN29_500
+	case "":
+		ud.CANProtocol = models.CanProtocolTypeCAN11_500
+	}
+
+	// Set default for PowerTrainType if empty
+	if ud.PowerTrainType == "" {
+		ud.PowerTrainType = "ICE"
+	}
+
+	//Device Definitions
+
+	var ddResponse *p_grpc.GetDeviceDefinitionResponse
+	deviceDefinitionID := ud.DeviceDefinitionId
+	ddResponse, err = d.deviceDefSvc.GetDeviceDefinitionByID(c.Context(), deviceDefinitionID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": fmt.Sprintf("Failed to retrieve device definition for deviceDefinitionId: %s", deviceDefinitionID),
+		})
+	}
+	vehicleYear := int(ddResponse.DeviceDefinitions[0].Type.Year)
+
+	// Query templates, filter by protocol and powertrain
+	templates, err := models.Templates(
+		models.TemplateWhere.Protocol.EQ(ud.CANProtocol),
+		models.TemplateWhere.Powertrain.EQ(ud.PowerTrainType),
+		qm.Load(models.TemplateRels.TemplateNameDBCFile),
+		qm.Load(models.TemplateRels.TemplateNameTemplateVehicles),
+	).All(context.Background(), d.db)
+
+	if err != nil {
+		// Check if error is due to no matching rows
+		if errors.Is(err, sql.ErrNoRows) {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": fmt.Sprintf("No templates found for protocol: %s and powertrain: %s", ud.CANProtocol, ud.PowerTrainType),
+			})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": fmt.Sprintf("Failed to query templates for protocol: %s and powertrain: %s", ud.CANProtocol, ud.PowerTrainType),
+		})
+	}
+
+	// Filter templates by vehicle year range
+	var matchedTemplate *models.Template
+	for _, template := range templates {
+		for _, tv := range template.R.TemplateNameTemplateVehicles {
+			if vehicleYear >= tv.YearStart && vehicleYear <= tv.YearEnd {
+				matchedTemplate = template
+				break
+			}
+		}
+		if matchedTemplate != nil {
+			break
+		}
+	}
+	if matchedTemplate == nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "No matching template found for the vehicle's year.",
+		})
+	}
+
+	// Use the matchedTemplate for the response
+	templateName := matchedTemplate.TemplateName
+	var parentTemplateName string
+	if matchedTemplate.ParentTemplateName.Valid {
+		parentTemplateName = matchedTemplate.ParentTemplateName.String
+	} else {
+		parentTemplateName = templateName
+	}
+	version := matchedTemplate.Version
+
+	response := DeviceConfigResponse{
+		PidURL:           fmt.Sprintf("%s/device-config/%s/pids", baseURL, templateName),
+		DeviceSettingURL: fmt.Sprintf("%s/device-config/%s/deviceSettings", baseURL, parentTemplateName),
+		//DbcURL:           fmt.Sprintf("%s/device-config/%s/dbc", baseURL, templateName),
+		Version: version,
+	}
+	// TemplateNameDBC pointer nil AND DBCFile string empty
+	if templates[0].R.TemplateNameDBCFile != nil && len(templates[0].R.TemplateNameDBCFile.DBCFile) > 0 {
+		response.DbcURL = fmt.Sprintf("%s/device-config/%s/dbc", baseURL, templateName)
+	}
+
+	return c.JSON(response)
+}
+
+// GetConfigURLsFromEthAddr godoc
+// @Description  Retrieve the URLs for PID, DeviceSettings, and DBC configuration based on device's Ethereum Address
+// @Tags         vehicle-signal-decoding
+// @Produce      json
+// @Success      200 {object} DeviceConfigResponse "Successfully retrieved configuration URLs"
+// @Failure 404  "Not Found - No templates available for the given parameters"
+// @Param        ethAddr  path   string  false  "Ethereum Address"
+// @Router       /device-config/eth-addr/{ethAddr}/urls [get]
+func (d *DeviceConfigController) GetConfigURLsFromEthAddr(c *fiber.Ctx) error {
+	baseURL := d.settings.DeploymentURL
 	ethAddr := c.Params("ethAddr")
 
 	var ud *pb.UserDevice
 	var err error
 
-	switch {
-	case vin != "":
-		ud, err = d.userDeviceSvc.GetUserDeviceByVIN(c.Context(), vin)
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": fmt.Sprintf("Failed to retrieve user device for VIN: %s", vin),
-			})
-		}
-	case ethAddr != "":
-		ud, err = d.userDeviceSvc.GetUserDeviceByEthAddr(c.Context(), ethAddr)
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": fmt.Sprintf("Failed to retrieve user device for EthAddr: %s", ethAddr),
-			})
-		}
-	default:
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Both VIN and EthAddr are missing.",
+	ud, err = d.userDeviceSvc.GetUserDeviceByEthAddr(c.Context(), ethAddr)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": fmt.Sprintf("Failed to retrieve user device for EthAddr: %s", ethAddr),
 		})
 	}
 

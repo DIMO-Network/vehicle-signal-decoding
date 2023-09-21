@@ -137,7 +137,8 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 
 	v1.Get("/swagger/*", swagger.HandlerDefault)
 
-	v1.Get("/device-config/:vin/urls", deviceConfigController.GetConfigURLs)
+	v1.Get("/device-config/vin/:vin/urls", deviceConfigController.GetConfigURLsFromVIN)
+	v1.Get("/device-config/eth-addr/:ethAddr/urls", deviceConfigController.GetConfigURLsFromEthAddr)
 
 	v1.Get("/device-config/:templateName/pids", deviceConfigController.GetPIDsByTemplate)
 	v1.Get("/device-config/:templateName/deviceSettings", deviceConfigController.GetDeviceSettingsByTemplate)
