@@ -22,6 +22,7 @@ env:
   KAFKA_BROKERS: kafka-prod-dimo-kafka-kafka-brokers:9092
   DBC_DECODING_TOPIC: topic.dbc.decoding
   DEVICE_GRPC_ADDR: devices-api-prod:8086
+  DEFINITIONS_GRPC_ADDR: device-definitions-api-prod:8086
 ingress:
   enabled: true
   className: nginx
