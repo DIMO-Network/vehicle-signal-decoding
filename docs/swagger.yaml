@@ -45,10 +45,6 @@ definitions:
     properties:
       battery_critical_level_voltage:
         type: string
-      created_at:
-        type: string
-      id:
-        type: integer
       safety_cut_out_voltage:
         type: string
       sleep_timer_event_driven_interval:
@@ -60,8 +56,6 @@ definitions:
       sleep_timer_inactivity_fallback_interval:
         type: string
       template_name:
-        type: string
-      updated_at:
         type: string
       wake_trigger_voltage_level:
         type: string
