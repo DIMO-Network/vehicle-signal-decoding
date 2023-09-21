@@ -7,6 +7,67 @@
     },
     "basePath": "/v1",
     "paths": {
+        "/device-config/eth-addr/{ethAddr}/urls": {
+            "get": {
+                "description": "Retrieve the URLs for PID, DeviceSettings, and DBC configuration based on device's Ethereum Address",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "vehicle-signal-decoding"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Ethereum Address",
+                        "name": "ethAddr",
+                        "in": "path"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved configuration URLs",
+                        "schema": {
+                            "$ref": "#/definitions/internal_controllers.DeviceConfigResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found - No templates available for the given parameters"
+                    }
+                }
+            }
+        },
+        "/device-config/vin/{vin}/urls": {
+            "get": {
+                "description": "Retrieve the URLs for PID, DeviceSettings, and DBC configuration based on a given VIN",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "vehicle-signal-decoding"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "vehicle identification number (VIN)",
+                        "name": "vin",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved configuration URLs",
+                        "schema": {
+                            "$ref": "#/definitions/internal_controllers.DeviceConfigResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found - No templates available for the given parameters"
+                    }
+                }
+            }
+        },
         "/device-config/{templateName}/dbc": {
             "get": {
                 "description": "Fetches the DBC file from the dbc_files table given a template name",
@@ -99,37 +160,6 @@
                     }
                 }
             }
-        },
-        "/device-config/{vin}/urls": {
-            "get": {
-                "description": "Retrieve the URLs for PID, DeviceSettings, and DBC configuration based on a given VIN",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "vehicle-signal-decoding"
-                ],
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "vehicle identification number (VIN)",
-                        "name": "vin",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successfully retrieved configuration URLs",
-                        "schema": {
-                            "$ref": "#/definitions/internal_controllers.DeviceConfigResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found - No templates available for the given parameters"
-                    }
-                }
-            }
         }
     },
     "definitions": {
@@ -202,12 +232,6 @@
                 "battery_critical_level_voltage": {
                     "type": "string"
                 },
-                "created_at": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
                 "safety_cut_out_voltage": {
                     "type": "string"
                 },
@@ -224,9 +248,6 @@
                     "type": "string"
                 },
                 "template_name": {
-                    "type": "string"
-                },
-                "updated_at": {
                     "type": "string"
                 },
                 "wake_trigger_voltage_level": {

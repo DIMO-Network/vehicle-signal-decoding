@@ -45,10 +45,6 @@ definitions:
     properties:
       battery_critical_level_voltage:
         type: string
-      created_at:
-        type: string
-      id:
-        type: integer
       safety_cut_out_voltage:
         type: string
       sleep_timer_event_driven_interval:
@@ -60,8 +56,6 @@ definitions:
       sleep_timer_inactivity_fallback_interval:
         type: string
       template_name:
-        type: string
-      updated_at:
         type: string
       wake_trigger_voltage_level:
         type: string
@@ -134,7 +128,27 @@ paths:
           description: No PID Config data found for the given template name.
       tags:
       - vehicle-signal-decoding
-  /device-config/{vin}/urls:
+  /device-config/eth-addr/{ethAddr}/urls:
+    get:
+      description: Retrieve the URLs for PID, DeviceSettings, and DBC configuration
+        based on device's Ethereum Address
+      parameters:
+      - description: Ethereum Address
+        in: path
+        name: ethAddr
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved configuration URLs
+          schema:
+            $ref: '#/definitions/internal_controllers.DeviceConfigResponse'
+        "404":
+          description: Not Found - No templates available for the given parameters
+      tags:
+      - vehicle-signal-decoding
+  /device-config/vin/{vin}/urls:
     get:
       description: Retrieve the URLs for PID, DeviceSettings, and DBC configuration
         based on a given VIN
