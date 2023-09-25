@@ -131,16 +131,19 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 		headerUint32, err := bytesToUint32(pidConfig.Header)
 		if err != nil {
 			d.log.Err(err).Send()
+			return fiber.NewError(fiber.StatusInternalServerError, "invalid header bytes configuration: "+err.Error())
 		}
 
 		modeUint32, err := bytesToUint32(pidConfig.Mode)
 		if err != nil {
 			d.log.Err(err).Send()
+			return fiber.NewError(fiber.StatusInternalServerError, "invalid mode bytes configuration: "+err.Error())
 		}
 
 		pidUint32, err := bytesToUint32(pidConfig.Pid)
 		if err != nil {
 			d.log.Err(err).Send()
+			return fiber.NewError(fiber.StatusInternalServerError, "invalid pid bytes configuration: "+err.Error())
 		}
 		pid := &grpc.PIDConfig{
 			Name:            pidConfig.SignalName,
@@ -340,6 +343,7 @@ func (d *DeviceConfigController) GetConfigURLsFromVIN(c *fiber.Ctx) error {
 // @Produce      json
 // @Success      200 {object} DeviceConfigResponse "Successfully retrieved configuration URLs"
 // @Failure 404  "Not Found - No templates available for the given parameters"
+// @Failure 400  "incorrect eth addr format"
 // @Param        ethAddr  path   string  false  "Ethereum Address"
 // @Router       /device-config/eth-addr/{ethAddr}/urls [get]
 func (d *DeviceConfigController) GetConfigURLsFromEthAddr(c *fiber.Ctx) error {
