@@ -2,6 +2,8 @@ package services
 
 import (
 	"context"
+	"encoding/hex"
+	"fmt"
 
 	pb "github.com/DIMO-Network/devices-api/pkg/grpc"
 
@@ -65,15 +67,22 @@ func (a *userDeviceService) GetUserDeviceByVIN(ctx context.Context, vin string) 
 	return userDevice, nil
 }
 func (a *userDeviceService) GetUserDeviceByEthAddr(ctx context.Context, ethAddr string) (*pb.UserDevice, error) {
-
 	deviceClient, conn, err := a.getDeviceGrpcClient()
 	if err != nil {
 		return nil, err
 	}
 	defer conn.Close()
 
-	userDevice, err := deviceClient.GetUserDeviceByEthAddr(ctx, &pb.GetUserDeviceByEthAddrRequest{EthAddr: []byte(ethAddr)})
+	if len(ethAddr) > 2 && ethAddr[:2] == "0x" {
+		ethAddr = ethAddr[2:]
+	}
 
+	ethAddrBytes, err := hex.DecodeString(ethAddr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid ethereum address: %w", err)
+	}
+
+	userDevice, err := deviceClient.GetUserDeviceByEthAddr(ctx, &pb.GetUserDeviceByEthAddrRequest{EthAddr: ethAddrBytes})
 	if err != nil {
 		return nil, err
 	}
