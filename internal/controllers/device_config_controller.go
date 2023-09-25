@@ -194,7 +194,7 @@ func (d *DeviceConfigController) GetDeviceSettingsByTemplate(c *fiber.Ctx) error
 		return errors.Wrap(err, "Failed to retrieve Device Settings")
 	}
 
-	apiDeviceSettings := DeviceSetting{
+	protoDeviceSettings := &grpc.DeviceSetting{
 		TemplateName:                           templateName,
 		BatteryCriticalLevelVoltage:            dbDeviceSettings.BatteryCriticalLevelVoltage,
 		SafetyCutOutVoltage:                    dbDeviceSettings.SafetyCutOutVoltage,
@@ -205,7 +205,17 @@ func (d *DeviceConfigController) GetDeviceSettingsByTemplate(c *fiber.Ctx) error
 		WakeTriggerVoltageLevel:                dbDeviceSettings.WakeTriggerVoltageLevel,
 	}
 
-	return c.JSON(apiDeviceSettings)
+	acceptHeader := c.Get("Accept", "application/json")
+	if acceptHeader == "application/x-protobuf" {
+		out, err := proto.Marshal(protoDeviceSettings)
+		if err != nil {
+			return errors.Wrap(err, "Failed to serialize to protobuf")
+		}
+		c.Set("Content-Type", "application/x-protobuf")
+		return c.Send(out)
+	}
+
+	return c.JSON(protoDeviceSettings)
 
 }
 
