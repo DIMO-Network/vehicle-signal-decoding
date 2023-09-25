@@ -17,10 +17,27 @@ message PIDConfig {
     string version = 7;
     string protocol = 8;
 }
+
 message PIDRequests {
   string template_name = 1;
   string version = 2;
   repeated PIDConfig requests = 3;
+}
+
+message DeviceSetting {
+  string template_name = 1;
+  string battery_critical_level_voltage = 2;
+  string safety_cut_out_voltage = 3;
+  string sleep_timer_event_driven_interval = 4;
+  string sleep_timer_event_driven_period = 5;
+  string sleep_timer_inactivity_after_sleep_interval = 6;
+  string sleep_timer_inactivity_fallback_interval = 7;
+  string wake_trigger_voltage_level = 8;
+}
+
+message DeviceSettingsResponse {
+  string template_name = 1;
+  DeviceSetting device_setting = 2;
 }
 
 message CreateDBCCodeRequest {
