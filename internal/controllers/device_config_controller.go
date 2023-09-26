@@ -70,10 +70,8 @@ type DeviceConfigResponse struct {
 }
 
 func bytesToUint32(b []byte) (uint32, error) {
-	if len(b) != 4 {
-		return 0, errors.New("invalid length for uint32 conversion")
-	}
-	return binary.LittleEndian.Uint32(b), nil
+	b2 := padByteArray(b, 4)
+	return binary.LittleEndian.Uint32(b2), nil
 }
 
 // GetPIDsByTemplate godoc
@@ -363,4 +361,13 @@ func (d *DeviceConfigController) GetConfigURLsFromEthAddr(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": fmt.Sprintf("Failed to retrieve user device for EthAddr: %s", ethAddr)})
 	}
 	return d.GetConfigURLs(c, ud)
+}
+
+func padByteArray(input []byte, targetLength int) []byte {
+	if len(input) >= targetLength {
+		return input // No need to pad if the input is already longer or equal to the target length
+	}
+
+	padded := make([]byte, targetLength-len(input))
+	return append(padded, input...)
 }
