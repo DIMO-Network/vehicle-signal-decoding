@@ -340,10 +340,35 @@ func (d *DeviceConfigController) GetConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) 
 // @Router       /device-config/vin/{vin}/urls [get]
 func (d *DeviceConfigController) GetConfigURLsFromVIN(c *fiber.Ctx) error {
 	vin := c.Params("vin")
+
 	ud, err := d.userDeviceSvc.GetUserDeviceByVIN(c.Context(), vin)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": fmt.Sprintf("Failed to retrieve user device for VIN: %s", vin)})
+
+		definitionResp, err := d.deviceDefSvc.DecodeVIN(c.Context(), vin)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": fmt.Sprintf("Failed to decode VIN: %s", vin)})
+		}
+
+		deviceDefinitionResp, err := d.deviceDefSvc.GetDeviceDefinitionByID(c.Context(), definitionResp.DeviceDefinitionId)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": fmt.Sprintf("Failed to get device definition by ID: %s", definitionResp.DeviceDefinitionId)})
+		}
+
+		var powerTrainType string
+		//Iterate over device attributes
+		for _, attribute := range deviceDefinitionResp.DeviceDefinitions[0].DeviceAttributes {
+			if attribute.Name == "powertrain_type" {
+				powerTrainType = attribute.Value
+				break
+			}
+		}
+
+		ud = &pb.UserDevice{
+			DeviceDefinitionId: definitionResp.DeviceDefinitionId,
+			PowerTrainType:     powerTrainType,
+		}
 	}
+
 	return d.GetConfigURLs(c, ud)
 }
 
