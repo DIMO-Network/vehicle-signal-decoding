@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -424,7 +425,39 @@ func TestGetConfigURLsMatchingYearRange(t *testing.T) {
 	}
 	mockDeviceDefSvc := mock_services.NewMockDeviceDefinitionsService(mockCtrl)
 	mockDeviceDefSvc.EXPECT().GetDeviceDefinitionByID(gomock.Any(), gomock.Any()).Return(mockedDeviceDefinition, nil)
+	decodeVinResponse := []*p_grpc.DecodeVinResponse{
+		{
+			DeviceMakeId:       "some_device_make_id",
+			DeviceDefinitionId: "some_device_definition_id",
+			DeviceStyleId:      "some_device_style_id",
+			Year:               2023,
+			Source:             "some_source",
+		},
+	}
+
+	mockDeviceDefSvc.EXPECT().DecodeVIN(gomock.Any(), vin).Return(decodeVinResponse, nil)
 	c := NewDeviceConfigController(&config.Settings{Port: "3000", DeploymentURL: "http://localhost:3000"}, &logger, pdb.DBS().Reader.DB, mockUserDeviceSvc, mockDeviceDefSvc)
+
+	// Mocking to simulate an error for GetUserDeviceByVIN
+	mockUserDeviceSvc.EXPECT().GetUserDeviceByVIN(gomock.Any(), vin).Return(nil, errors.New("simulated error"))
+
+	expectedPowerTrainType := "some_value"
+	deviceDefinitionResp := &p_grpc.GetDeviceDefinitionResponse{
+		DeviceDefinitions: []*p_grpc.GetDeviceDefinitionItemResponse{
+			{
+				DeviceDefinitionId: ksuid.New().String(),
+				DeviceAttributes: []*p_grpc.DeviceTypeAttribute{
+					{
+						Name:  "powertrain_type",
+						Value: expectedPowerTrainType,
+					},
+				},
+			},
+		},
+	}
+	// Mocking to return a valid definition response
+	mockDeviceDefSvc.EXPECT().GetDeviceDefinitionByID(gomock.Any(), gomock.Any()).Return(deviceDefinitionResp, nil)
+	mockDeviceDefSvc.EXPECT().DecodeVIN(gomock.Any(), vin).Return(deviceDefinitionResp, nil)
 
 	// insert template in DB
 	template := &models.Template{
