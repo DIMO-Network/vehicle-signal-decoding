@@ -614,21 +614,9 @@ func TestGetConfigURLsDecodeVin(t *testing.T) {
 
 	mockUserDeviceSvc := mock_services.NewMockUserDeviceService(mockCtrl)
 	mockUserDeviceSvc.EXPECT().GetUserDeviceByVIN(gomock.Any(), vin).Return(nil, errors.New("user device not found"))
-
-	expectedPowerTrainType := "some_value"
-	deviceDefinitionResp := &p_grpc.GetDeviceDefinitionResponse{
-		DeviceDefinitions: []*p_grpc.GetDeviceDefinitionItemResponse{
-			{
-				DeviceDefinitionId: ksuid.New().String(),
-				DeviceAttributes: []*p_grpc.DeviceTypeAttribute{
-					{
-						Name:  "powertrain_type",
-						Value: expectedPowerTrainType,
-					},
-				},
-			},
-		},
-	}
+	mockDeviceDefSvc := mock_services.NewMockDeviceDefinitionsService(mockCtrl)
+	mockDeviceDefSvc.EXPECT().DecodeVIN(gomock.Any(), vin).Return(&p_grpc.DecodeVinResponse{}, nil)
+	mockDeviceDefSvc.EXPECT().GetDeviceDefinitionByID(gomock.Any(), gomock.Any()).Return(&p_grpc.GetDeviceDefinitionResponse{}, nil)
 
 	mockedDeviceDefinition := &p_grpc.GetDeviceDefinitionResponse{
 		DeviceDefinitions: []*p_grpc.GetDeviceDefinitionItemResponse{
@@ -640,9 +628,6 @@ func TestGetConfigURLsDecodeVin(t *testing.T) {
 			},
 		},
 	}
-
-	mockDeviceDefSvc := mock_services.NewMockDeviceDefinitionsService(mockCtrl)
-	mockDeviceDefSvc.EXPECT().DecodeVIN(gomock.Any(), vin).Return(deviceDefinitionResp, nil)
 	mockDeviceDefSvc.EXPECT().GetDeviceDefinitionByID(gomock.Any(), gomock.Any()).Return(mockedDeviceDefinition, nil)
 
 	c := NewDeviceConfigController(&config.Settings{Port: "3000", DeploymentURL: "http://localhost:3000"}, &logger, pdb.DBS().Reader.DB, mockUserDeviceSvc, mockDeviceDefSvc)
@@ -663,7 +648,11 @@ func TestGetConfigURLsDecodeVin(t *testing.T) {
 	// Act: make the request
 	request := test.BuildRequest("GET", "/config-urls/"+vin, "")
 	response, err := app.Test(request)
+	if err != nil {
+		t.Logf("Error making the request: %v", err)
+	}
 	require.NoError(t, err)
+
 	body, _ := io.ReadAll(response.Body)
 
 	// Assert: check the results
