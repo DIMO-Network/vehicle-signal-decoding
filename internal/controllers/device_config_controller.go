@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"encoding/binary"
 	"fmt"
-
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	pb "github.com/DIMO-Network/devices-api/pkg/grpc"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -70,8 +69,8 @@ type DeviceConfigResponse struct {
 }
 
 func bytesToUint32(b []byte) (uint32, error) {
-	b2 := padByteArray(b, 4)
-	return binary.LittleEndian.Uint32(b2), nil
+	u := binary.BigEndian.Uint32(padByteArray(b, 4))
+	return u, nil
 }
 
 // GetPIDsByTemplate godoc

@@ -66,9 +66,9 @@ func TestGetPIDsByTemplate(t *testing.T) {
 		ID:              1,
 		SignalName:      "odometer",
 		TemplateName:    "exampleTemplate",
-		Header:          []byte("7df"), // short notation without padding
-		Mode:            []byte("01"),
-		Pid:             []byte("00a6"),
+		Header:          []byte{0x07, 0xdf}, // short notation without padding
+		Mode:            []byte{0x01},
+		Pid:             []byte{0xa6},
 		Formula:         "A*5",
 		IntervalSeconds: 60,
 		Protocol:        models.CanProtocolTypeCAN11_500,
