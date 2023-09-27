@@ -264,10 +264,6 @@ func (d *DeviceConfigController) GetConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) 
 		ud.CANProtocol = models.CanProtocolTypeCAN11_500
 	}
 
-	if ud.PowerTrainType == "" {
-		ud.PowerTrainType = "ICE"
-	}
-
 	// Device Definitions
 	var ddResponse *p_grpc.GetDeviceDefinitionResponse
 	deviceDefinitionID := ud.DeviceDefinitionId
@@ -276,6 +272,20 @@ func (d *DeviceConfigController) GetConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) 
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": fmt.Sprintf("Failed to retrieve device definition for deviceDefinitionId: %s", deviceDefinitionID)})
 	}
 	vehicleYear := int(ddResponse.DeviceDefinitions[0].Type.Year)
+
+	var powerTrainType string
+	for _, attribute := range ddResponse.DeviceDefinitions[0].DeviceAttributes {
+		if attribute.Name == "powertrain_type" {
+			powerTrainType = attribute.Value
+			break
+		}
+	}
+	if ud.PowerTrainType == "" {
+		ud.PowerTrainType = powerTrainType
+		if ud.PowerTrainType == "" {
+			ud.PowerTrainType = "ICE"
+		}
+	}
 
 	// Query templates, filter by protocol and powertrain
 	templates, err := models.Templates(
@@ -337,10 +347,20 @@ func (d *DeviceConfigController) GetConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) 
 // @Router       /device-config/vin/{vin}/urls [get]
 func (d *DeviceConfigController) GetConfigURLsFromVIN(c *fiber.Ctx) error {
 	vin := c.Params("vin")
+
 	ud, err := d.userDeviceSvc.GetUserDeviceByVIN(c.Context(), vin)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": fmt.Sprintf("Failed to retrieve user device for VIN: %s", vin)})
+
+		definitionResp, err := d.deviceDefSvc.DecodeVIN(c.Context(), vin)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": fmt.Sprintf("Failed to decode VIN: %s", vin)})
+		}
+
+		ud = &pb.UserDevice{
+			DeviceDefinitionId: definitionResp.DeviceDefinitionId,
+		}
 	}
+
 	return d.GetConfigURLs(c, ud)
 }
 

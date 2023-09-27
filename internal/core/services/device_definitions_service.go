@@ -13,6 +13,7 @@ import (
 //go:generate mockgen -source device_definitions_service.go -destination mocks/device_definitions_service_mock.go
 type DeviceDefinitionsService interface {
 	GetDeviceDefinitionByID(ctx context.Context, id string) (*p_grpc.GetDeviceDefinitionResponse, error)
+	DecodeVIN(ctx context.Context, vin string) (*p_grpc.DecodeVinResponse, error)
 	// Add other methods as required.
 }
 
@@ -37,6 +38,25 @@ func (d *deviceDefinitionsService) GetDeviceDefinitionByID(ctx context.Context, 
 		Ids: []string{id},
 	}
 	response, err := definitionsClient.GetDeviceDefinitionByID(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+
+func (d *deviceDefinitionsService) DecodeVIN(ctx context.Context, vin string) (*p_grpc.DecodeVinResponse, error) {
+	_, conn, err := d.getDefinitionsGrpcClient()
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+
+	request := &p_grpc.DecodeVinRequest{
+		Vin: vin,
+	}
+	decoderClient := p_grpc.NewVinDecoderServiceClient(conn)
+	response, err := decoderClient.DecodeVin(ctx, request)
 	if err != nil {
 		return nil, err
 	}
