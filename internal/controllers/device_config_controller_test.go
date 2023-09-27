@@ -651,7 +651,7 @@ func TestGetConfigURLsDecodeVin(t *testing.T) {
 			dd,
 		},
 	}
-	mockDeviceDefSvc.EXPECT().GetDeviceDefinitionByID(gomock.Any(), dd.DeviceDefinitionId).Times(2).Return(mockedDeviceDefinition, nil)
+	mockDeviceDefSvc.EXPECT().GetDeviceDefinitionByID(gomock.Any(), dd.DeviceDefinitionId).Return(mockedDeviceDefinition, nil)
 
 	c := NewDeviceConfigController(&config.Settings{Port: "3000", DeploymentURL: "http://localhost:3000"}, &logger, pdb.DBS().Reader.DB, mockUserDeviceSvc, mockDeviceDefSvc)
 
