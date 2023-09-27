@@ -66,9 +66,9 @@ func TestGetPIDsByTemplate(t *testing.T) {
 		ID:              1,
 		SignalName:      "odometer",
 		TemplateName:    "exampleTemplate",
-		Header:          []byte("07E8"),
-		Mode:            []byte("0001"),
-		Pid:             []byte("0005"),
+		Header:          []byte{0x07, 0xdf}, // short notation without padding
+		Mode:            []byte{0x01},
+		Pid:             []byte{0xa6},
 		Formula:         "A*5",
 		IntervalSeconds: 60,
 		Protocol:        models.CanProtocolTypeCAN11_500,
@@ -103,13 +103,11 @@ func TestGetPIDsByTemplate(t *testing.T) {
 
 		require.Equal(t, 1, len(pids.Requests))
 		assert.Equal(t, pc.SignalName, pids.Requests[0].Name)
-		// convert uint32 back to bytes to compare
-		hdr, _ := bytesToUint32(pc.Header)
-		assert.Equal(t, hdr, pids.Requests[0].Header)
-		mde, _ := bytesToUint32(pc.Mode)
-		assert.Equal(t, mde, pids.Requests[0].Mode)
-		pid, _ := bytesToUint32(pc.Pid)
-		assert.Equal(t, pid, pids.Requests[0].Pid)
+		// use known values uint32 that we expect above bytes to convert to as uint32 decimal
+		assert.Equal(t, uint32(2015), pids.Requests[0].Header)
+		assert.Equal(t, uint32(1), pids.Requests[0].Mode)
+		assert.Equal(t, uint32(166), pids.Requests[0].Pid)
+
 		assert.Equal(t, pc.Formula, pids.Requests[0].Formula)
 		assert.Equal(t, pc.IntervalSeconds, int(pids.Requests[0].IntervalSeconds))
 		assert.Equal(t, pc.Protocol, pids.Requests[0].Protocol)
