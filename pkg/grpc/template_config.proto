@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc";
+
+package grpc;
+
+message Template {
+  string id  = 1;
+  repeated string pids = 2;
+  string dbc = 3;
+  repeated string template_vehicles = 4;
+}
+message PID {
+  string id = 1;
+}
+
+message GetTemplateListRequest {
+  string powertrain = 1;
+  string protocol = 2;
+
+}
+message GetTemplateListResponse {
+  repeated Template templates = 1;
+
+}
+message GetTemplateByIDRequest {
+  string id = 1;
+
+}
+message GetTemplateByIDResponse {
+  Template template = 1;
+  repeated PID pids = 2;
+
+}
+message CreateTemplateRequest {
+  Template template = 1;
+
+}
+message CreateTemplateResponse {
+  Template template = 1;
+
+}
+message UpdateTemplateRequest {
+  Template template = 1;
+
+}
+message UpdateTemplateResponse {
+  Template template = 1;
+
+}
+
+
+
+service TemplateConfigService {
+  rpc CreateTemplate (CreateTemplateRequest) returns (CreateTemplateResponse);
+  rpc UpdateTemplate(UpdateTemplateRequest) returns (UpdateTemplateResponse);
+  rpc GetTemplateList (GetTemplateListRequest) returns (GetTemplateListResponse);
+  rpc GetTemplateByID (GetTemplateByIDRequest) returns (GetTemplateByIDResponse);
+
+}
