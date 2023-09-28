@@ -9,7 +9,6 @@ import (
 )
 
 func main() {
-	rand.Seed(time.Now().UnixNano())
 	min := 10
 	max := 30
 	fmt.Println(rand.Intn(max-min+1) + min)
@@ -140,7 +139,6 @@ func ReturnPopulatedMap() map[string]string {
 // odometer is first up, will expand into processing other signal types after
 func (thisSignal ObdSignal) GetRandomValue() int {
 	if thisSignal.SignalType == "odometer" {
-		rand.Seed(time.Now().UnixNano())
 		min := thisSignal.MinVal
 		max := thisSignal.MaxVal
 		returnVal := rand.Intn((max - min + 1) + min)
@@ -152,7 +150,6 @@ func (thisSignal ObdSignal) GetRandomValue() int {
 }
 
 func GetRandomCanSignal(inputArray []ObdSignal) ObdSignal {
-	rand.Seed(time.Now().UnixNano())
 	min := 10
 	max := 23
 	fmt.Println("random index: ", rand.Intn(max-min+1)+min)
