@@ -9,9 +9,15 @@ package grpc;
 
 message Template {
   string id  = 1;
-  repeated string pids = 2;
-  string dbc = 3;
-  repeated string template_vehicles = 4;
+  string name = 2;
+  repeated string pids = 3;
+  string dbc = 4;
+  repeated string template_vehicles = 5;
+}
+message TemplateSummary {
+  string id = 1;
+  string name = 2;
+
 }
 message PID {
   string id = 1;
