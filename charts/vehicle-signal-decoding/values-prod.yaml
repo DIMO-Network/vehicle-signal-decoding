@@ -18,7 +18,7 @@ env:
   DB_MAX_IDLE_CONNECTIONS: '15'
   SERVICE_NAME: vehicle-signal-decoding
   JWT_KEY_SET_URL: https://auth.dimo.zone/keys
-  DEPLOYMENT_BASE_URL: https://vehicle-signal-decoding.dimo.zone
+  DEPLOYMENT_URL: https://vehicle-signal-decoding.dimo.zone
   KAFKA_BROKERS: kafka-prod-dimo-kafka-kafka-brokers:9092
   DBC_DECODING_TOPIC: topic.dbc.decoding
   DEVICE_GRPC_ADDR: devices-api-prod:8086

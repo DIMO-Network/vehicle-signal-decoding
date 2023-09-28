@@ -326,12 +326,12 @@ func (d *DeviceConfigController) GetConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) 
 	version := matchedTemplate.Version
 
 	response := DeviceConfigResponse{
-		PidURL:           fmt.Sprintf("%s/device-config/%s/pids", baseURL, templateName),
-		DeviceSettingURL: fmt.Sprintf("%s/device-config/%s/deviceSettings", baseURL, parentTemplateName),
+		PidURL:           fmt.Sprintf("%s/v1/device-config/%s/pids", baseURL, templateName),
+		DeviceSettingURL: fmt.Sprintf("%s/v1/device-config/%s/deviceSettings", baseURL, parentTemplateName),
 		Version:          version,
 	}
 	if templates[0].R.TemplateNameDBCFile != nil && len(templates[0].R.TemplateNameDBCFile.DBCFile) > 0 {
-		response.DbcURL = fmt.Sprintf("%s/device-config/%s/dbc", baseURL, templateName)
+		response.DbcURL = fmt.Sprintf("%s/v1/device-config/%s/dbc", baseURL, templateName)
 	}
 
 	return c.JSON(response)
@@ -353,7 +353,7 @@ func (d *DeviceConfigController) GetConfigURLsFromVIN(c *fiber.Ctx) error {
 
 		definitionResp, err := d.deviceDefSvc.DecodeVIN(c.Context(), vin)
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": fmt.Sprintf("Failed to decode VIN: %s", vin)})
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": fmt.Sprintf("could not decode VIN, contact support if you're sure this is valid VIN: %s", vin)})
 		}
 
 		ud = &pb.UserDevice{
