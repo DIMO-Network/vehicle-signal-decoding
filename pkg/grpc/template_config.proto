@@ -29,7 +29,7 @@ message GetTemplateListRequest {
 
 }
 message GetTemplateListResponse {
-  repeated Template templates = 1;
+  repeated TemplateSummary templates = 1;
 
 }
 message GetTemplateByIDRequest {
