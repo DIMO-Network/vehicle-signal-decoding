@@ -1,6 +1,6 @@
 module github.com/DIMO-Network/vehicle-signal-decoding
 
-go 1.18
+go 1.21
 
 require (
 	github.com/DIMO-Network/device-definitions-api v1.0.16
