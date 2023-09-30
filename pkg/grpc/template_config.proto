@@ -35,8 +35,8 @@ message PID {
 }
 
 message GetTemplateListRequest {
-  string powertrain = 1;
-  string protocol = 2;
+  optional string powertrain = 1;
+  optional string protocol = 2;
 
 }
 message GetTemplateListResponse {
