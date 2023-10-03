@@ -25,6 +25,7 @@ func StartGrpcServer(logger zerolog.Logger, dbs func() *db.ReaderWriter, s *conf
 	}
 
 	vehicleSignalDecodingService := NewGrpcService(&logger, dbs)
+	templateConfigService := NewTemplateConfigService(&logger, dbs)
 
 	server := grpc.NewServer(
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
@@ -33,6 +34,7 @@ func StartGrpcServer(logger zerolog.Logger, dbs func() *db.ReaderWriter, s *conf
 	)
 
 	pkggrpc.RegisterVehicleSignalDecodingServiceServer(server, vehicleSignalDecodingService)
+	pkggrpc.RegisterTemplateConfigServiceServer(server, templateConfigService)
 
 	logger.Info().Str("port", s.GRPCPort).Msgf("started grpc server on port: %v", s.GRPCPort)
 
