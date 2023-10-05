@@ -47,13 +47,10 @@ func (h GetTemplateByIDQueryHandler) Handle(ctx context.Context, query *GetTempl
 			Version:            item.Version,
 			Protocol:           item.Protocol,
 			Powertrain:         item.Powertrain,
-			//Need help from here
-			HasDbc:    "", //need help
-			PidsCount: 1,  //need help
-			// Pids:
-			Dbc: "",
-			//Template Vehicles:
-			// to here
+			HasDbc:             len(item.R.GetTemplateNameDBCFile().DBCFile) > 0,
+			PidsCount:          int32(len(item.R.GetTemplateNamePidConfigs())),
+			Pids:               nil,
+			//Dbc:
 			CreatedAt: timestamppb.New(item.CreatedAt),
 			UpdatedAt: timestamppb.New(item.UpdatedAt),
 		},

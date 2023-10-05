@@ -15,25 +15,25 @@ import (
 type TemplateConfigService struct {
 	grpc.TemplateConfigServiceServer
 	logger *zerolog.Logger
-	DBS    func() *db.ReaderWriter
+	dbs    func() *db.ReaderWriter
 }
 
 func NewTemplateConfigService(logger *zerolog.Logger, dbs func() *db.ReaderWriter) grpc.TemplateConfigServiceServer {
-	return &TemplateConfigService{logger: logger, DBS: dbs}
+	return &TemplateConfigService{logger: logger, dbs: dbs}
 }
 
 func (s *TemplateConfigService) CreateTemplate(ctx context.Context, in *grpc.UpdateTemplateRequest) (*emptypb.Empty, error) {
-	service := commands.NewCreateTemplateCommandHandler(s.DBS)
+	service := commands.NewCreateTemplateCommandHandler(s.dbs)
 	_, err := service.Execute(ctx, &commands.CreateTemplateCommandRequest{
-		Name:               in.GetTemplate().GetName(),
-		ParentTemplateName: in.GetTemplate().GetParentTemplateName(),
-		Version:            in.GetTemplate().GetVersion(),
-		Protocol:           in.GetTemplate().GetProtocol(),
-		Powertrain:         in.GetTemplate().GetPowertrain(),
-		HasDBC:             in.GetTemplate().GetHasDbc(),
-		//PidsCount:          in.GetTemplate().GetPidsCount(),
-		DBC:              in.GetTemplate().GetDbc(),
-		TemplateVehicles: in.GetTemplate().GetTemplateVehicles(),
+		Name:               in.Template.Name,
+		ParentTemplateName: in.Template.ParentTemplateName,
+		Version:            in.Template.Version,
+		Protocol:           in.Template.Protocol,
+		Powertrain:         in.Template.Powertrain,
+		HasDBC:             in.Template.HasDbc,
+		PidsCount:          in.Template.PidsCount,
+		DBC:                in.Template.Dbc,
+		TemplateVehicles:   in.Template.TemplateVehicles,
 	})
 
 	if err != nil {
@@ -43,17 +43,17 @@ func (s *TemplateConfigService) CreateTemplate(ctx context.Context, in *grpc.Upd
 }
 
 func (s *TemplateConfigService) UpdateTemplate(ctx context.Context, in *grpc.UpdateTemplateRequest) (*emptypb.Empty, error) {
-	service := commands.NewUpdateTemplateCommandHandler(s.DBS)
+	service := commands.NewUpdateTemplateCommandHandler(s.dbs)
 	_, err := service.Execute(ctx, &commands.UpdateTemplateCommandRequest{
-		Name:               in.GetTemplate().GetName(),
-		ParentTemplateName: in.GetTemplate().GetParentTemplateName(),
-		Version:            in.GetTemplate().GetVersion(),
-		Protocol:           in.GetTemplate().GetProtocol(),
-		Powertrain:         in.GetTemplate().GetPowertrain(),
-		HasDBC:             in.GetTemplate().GetHasDbc(),
-		//PidsCount:          in.GetTemplate().GetPidsCount(),
-		DBC:              in.GetTemplate().GetDbc(),
-		TemplateVehicles: in.GetTemplate().GetTemplateVehicles(),
+		Name:               in.Template.Name,
+		ParentTemplateName: in.Template.ParentTemplateName,
+		Version:            in.Template.Version,
+		Protocol:           in.Template.Protocol,
+		Powertrain:         in.Template.Powertrain,
+		HasDBC:             in.Template.HasDbc,
+		PidsCount:          in.Template.PidsCount,
+		DBC:                in.Template.Dbc,
+		TemplateVehicles:   in.Template.TemplateVehicles,
 	})
 
 	if err != nil {
@@ -64,10 +64,10 @@ func (s *TemplateConfigService) UpdateTemplate(ctx context.Context, in *grpc.Upd
 }
 
 func (s *TemplateConfigService) GetTemplateList(ctx context.Context, in *grpc.GetTemplateListRequest) (*grpc.GetTemplateListResponse, error) {
-	service := queries.NewGetTemplatesAllQueryHandler(s.DBS, s.logger)
+	service := queries.NewGetTemplatesAllQueryHandler(s.dbs, s.logger)
 	response, err := service.Handle(ctx, &queries.GetTemplatesAllQueryRequest{
-		Protocol:   in.Protocol,
-		Powertrain: in.Powertrain,
+		Protocol:   *in.Protocol,
+		Powertrain: *in.Powertrain,
 	})
 	if err != nil {
 		return nil, err
@@ -76,7 +76,7 @@ func (s *TemplateConfigService) GetTemplateList(ctx context.Context, in *grpc.Ge
 }
 
 func (s *TemplateConfigService) GetTemplateByID(ctx context.Context, in *grpc.GetTemplateByIDRequest) (*grpc.GetTemplateByIDResponse, error) {
-	service := queries.NewGetTemplateByIDQueryHandler(s.DBS, s.logger)
+	service := queries.NewGetTemplateByIDQueryHandler(s.dbs, s.logger)
 	response, err := service.Handle(ctx, &queries.GetTemplateByIDQueryRequest{
 		ID: in.Id,
 	})

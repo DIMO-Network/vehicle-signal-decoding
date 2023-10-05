@@ -27,8 +27,8 @@ type UpdateTemplateCommandRequest struct {
 	Version            string
 	Protocol           string
 	Powertrain         string
-	HasDBC             string
-	PidsCount          int
+	HasDBC             bool
+	PidsCount          int32
 	DBC                string
 	TemplateVehicles   []string
 }
@@ -43,7 +43,7 @@ func (h UpdateTemplateCommandHandler) Execute(ctx context.Context, req *UpdateTe
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, &exceptions.NotFoundError{
-				Err: fmt.Errorf("template not found id: %s", req.Name),
+				Err: fmt.Errorf("template not found name: %s", req.Name),
 			}
 		}
 		return nil, &exceptions.InternalError{
@@ -56,10 +56,6 @@ func (h UpdateTemplateCommandHandler) Execute(ctx context.Context, req *UpdateTe
 	template.Version = req.Version
 	template.Protocol = req.Protocol
 	template.Powertrain = req.Powertrain
-	//template.HasDbc = req.HasDBC
-	//template.PidsCount = req.PidsCount
-	//template.Dbc = req.DBC
-	//template.TemplateVehicles = req.TemplateVehicles
 
 	if _, err := template.Update(ctx, h.DBS().Writer.DB, boil.Infer()); err != nil {
 		return nil, &exceptions.InternalError{

@@ -13,7 +13,7 @@ message Template {
   string version = 3;
   string protocol = 4;
   string powertrain = 5;
-  string has_dbc = 6;
+  bool has_dbc = 6;
   int32 pids_count = 7;
   repeated PID pids = 8;
   string dbc = 9;
@@ -26,7 +26,7 @@ message TemplateSummary {
   string version = 2;
   string protocol = 3;
   string powertrain = 4;
-  string has_dbc = 5;
+  bool has_dbc = 5;
   int32 pids_count = 6;
 
 }

@@ -41,8 +41,8 @@ func (h GetTemplatesAllQueryHandler) Handle(ctx context.Context, _ *GetTemplates
 			Version:    item.Version,
 			Protocol:   item.Protocol,
 			Powertrain: item.Powertrain,
-			HasDbc:     "", //need help
-			PidsCount:  1,  //need help
+			HasDbc:     len(item.R.GetTemplateNameDBCFile().DBCFile) > 0,
+			PidsCount:  int32(len(item.R.GetTemplateNamePidConfigs())),
 		})
 	}
 	return result, nil

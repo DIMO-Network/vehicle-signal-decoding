@@ -27,8 +27,8 @@ type CreateTemplateCommandRequest struct {
 	Version            string
 	Protocol           string
 	Powertrain         string
-	HasDBC             string
-	PidsCount          int
+	HasDBC             bool
+	PidsCount          int32
 	DBC                string
 	TemplateVehicles   []string
 }
@@ -44,11 +44,6 @@ func (h CreateTemplateCommandHandler) Execute(ctx context.Context, req *CreateTe
 		Version:            req.Version,
 		Protocol:           req.Protocol,
 		Powertrain:         req.Powertrain,
-		//HasDbc:             req.HasDBC,
-		//PidsCount:          req.PidsCount,
-		//Dbc:                req.DBC,
-		//TemplateVehicles:   req.TemplateVehicles,
-
 	}
 
 	template.TemplateName = ksuid.New().String()
