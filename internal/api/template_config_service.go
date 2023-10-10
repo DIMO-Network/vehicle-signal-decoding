@@ -30,8 +30,6 @@ func (s *TemplateConfigService) CreateTemplate(ctx context.Context, in *grpc.Upd
 		Version:            in.Template.Version,
 		Protocol:           in.Template.Protocol,
 		Powertrain:         in.Template.Powertrain,
-		HasDBC:             in.Template.HasDbc,
-		PidsCount:          in.Template.PidsCount,
 		DBC:                in.Template.Dbc,
 		TemplateVehicles:   in.Template.TemplateVehicles,
 	})
@@ -50,8 +48,6 @@ func (s *TemplateConfigService) UpdateTemplate(ctx context.Context, in *grpc.Upd
 		Version:            in.Template.Version,
 		Protocol:           in.Template.Protocol,
 		Powertrain:         in.Template.Powertrain,
-		HasDBC:             in.Template.HasDbc,
-		PidsCount:          in.Template.PidsCount,
 		DBC:                in.Template.Dbc,
 		TemplateVehicles:   in.Template.TemplateVehicles,
 	})
