@@ -196,14 +196,14 @@ func (d *DeviceConfigController) GetDeviceSettingsByTemplate(c *fiber.Ctx) error
 	}
 
 	protoDeviceSettings := &grpc.DeviceSetting{
-		TemplateName:                           templateName,
-		BatteryCriticalLevelVoltage:            float32(dbDeviceSettings.BatteryCriticalLevelVoltage),
-		SafetyCutOutVoltage:                    float32(dbDeviceSettings.SafetyCutOutVoltage),
-		SleepTimerEventDrivenInterval:          float32(dbDeviceSettings.SleepTimerEventDrivenInterval),
-		SleepTimerEventDrivenPeriod:            float32(dbDeviceSettings.SleepTimerEventDrivenPeriod),
-		SleepTimerInactivityAfterSleepInterval: float32(dbDeviceSettings.SleepTimerInactivityAfterSleepInterval),
-		SleepTimerInactivityFallbackInterval:   float32(dbDeviceSettings.SleepTimerInactivityFallbackInterval),
-		WakeTriggerVoltageLevel:                float32(dbDeviceSettings.WakeTriggerVoltageLevel),
+		TemplateName:                             templateName,
+		BatteryCriticalLevelVoltage:              float32(dbDeviceSettings.BatteryCriticalLevelVoltage),
+		SafetyCutOutVoltage:                      float32(dbDeviceSettings.SafetyCutOutVoltage),
+		SleepTimerEventDrivenIntervalSecs:        float32(dbDeviceSettings.SleepTimerEventDrivenInterval),
+		SleepTimerEventDrivenPeriodSecs:          float32(dbDeviceSettings.SleepTimerEventDrivenPeriod),
+		SleepTimerInactivityAfterSleepSecs:       float32(dbDeviceSettings.SleepTimerInactivityAfterSleepInterval),
+		SleepTimerInactivityFallbackIntervalSecs: float32(dbDeviceSettings.SleepTimerInactivityFallbackInterval),
+		WakeTriggerVoltageLevel:                  float32(dbDeviceSettings.WakeTriggerVoltageLevel),
 	}
 
 	acceptHeader := c.Get("Accept", "application/json")

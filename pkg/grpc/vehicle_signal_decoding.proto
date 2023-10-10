@@ -14,7 +14,7 @@ message PIDConfig {
     uint32 pid = 4;
     string formula = 5;
     uint32 interval_seconds = 6;
-    string protocol = 8;
+    string protocol = 7;
 }
 
 message PIDRequests {
@@ -27,10 +27,10 @@ message DeviceSetting {
   string template_name = 1;
   float battery_critical_level_voltage = 2;
   float safety_cut_out_voltage = 3;
-  float sleep_timer_event_driven_interval = 4;
-  float sleep_timer_event_driven_period = 5;
-  float sleep_timer_inactivity_after_sleep_interval = 6;
-  float sleep_timer_inactivity_fallback_interval = 7;
+  float sleep_timer_event_driven_interval_secs = 4;
+  float sleep_timer_event_driven_period_secs = 5;
+  float sleep_timer_inactivity_after_sleep_secs = 6;
+  float sleep_timer_inactivity_fallback_interval_secs = 7;
   float wake_trigger_voltage_level = 8;
 }
 
