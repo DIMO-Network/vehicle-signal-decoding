@@ -27,8 +27,6 @@ type UpdateTemplateCommandRequest struct {
 	Version            string
 	Protocol           string
 	Powertrain         string
-	HasDBC             bool
-	PidsCount          int32
 	DBC                string
 	TemplateVehicles   []string
 }

@@ -6,7 +6,6 @@ import (
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/exceptions"
 	"github.com/pkg/errors"
-	"github.com/segmentio/ksuid"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 
@@ -27,8 +26,6 @@ type CreateTemplateCommandRequest struct {
 	Version            string
 	Protocol           string
 	Powertrain         string
-	HasDBC             bool
-	PidsCount          int32
 	DBC                string
 	TemplateVehicles   []string
 }
@@ -38,6 +35,8 @@ type CreateTemplateCommandResponse struct {
 }
 
 func (h CreateTemplateCommandHandler) Execute(ctx context.Context, req *CreateTemplateCommandRequest) (*CreateTemplateCommandResponse, error) {
+	// todo check if a template with same name already exists
+
 	template := &models.Template{
 		TemplateName:       req.Name,
 		ParentTemplateName: null.StringFrom(req.ParentTemplateName),
@@ -45,8 +44,6 @@ func (h CreateTemplateCommandHandler) Execute(ctx context.Context, req *CreateTe
 		Protocol:           req.Protocol,
 		Powertrain:         req.Powertrain,
 	}
-
-	template.TemplateName = ksuid.New().String()
 
 	err := template.Insert(ctx, h.DBS().Writer, boil.Infer())
 	if err != nil {

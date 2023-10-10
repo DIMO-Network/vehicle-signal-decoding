@@ -3,6 +3,7 @@ package queries
 import (
 	"context"
 	"fmt"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 
 	"github.com/DIMO-Network/shared/db"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
@@ -27,8 +28,22 @@ type GetTemplatesAllQueryRequest struct {
 	Powertrain string
 }
 
-func (h GetTemplatesAllQueryHandler) Handle(ctx context.Context, _ *GetTemplatesAllQueryRequest) (*grpc.GetTemplateListResponse, error) {
-	all, err := models.Templates().All(ctx, h.DBS().Reader)
+func (h GetTemplatesAllQueryHandler) Handle(ctx context.Context, query *GetTemplatesAllQueryRequest) (*grpc.GetTemplateListResponse, error) {
+	var mods []qm.QueryMod
+
+	if len(query.Protocol) > 0 {
+		// todo check that passed in protocol matches one of db enums eg. models.CanProtocolTypeCAN11_500, if not return bad request err
+		mods = append(mods,
+			models.TemplateWhere.Protocol.EQ(query.Protocol))
+	}
+	if len(query.Powertrain) > 0 {
+		mods = append(mods,
+			models.TemplateWhere.Powertrain.EQ(query.Powertrain))
+	}
+	// future optimization, use raw sql. note that we're pulling in the entire relationship list just to use the count below and whether it as a dbc file present
+	mods = append(mods, qm.Load(models.TemplateRels.TemplateNameDBCFile), qm.Load(models.TemplateRels.TemplateNamePidConfigs))
+
+	all, err := models.Templates(mods...).All(ctx, h.DBS().Reader)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get templates: %w", err)
 	}
