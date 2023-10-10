@@ -41,27 +41,6 @@ func NewDeviceConfigController(settings *config.Settings, logger *zerolog.Logger
 
 }
 
-type PIDConfig struct {
-	ID              int64  `json:"id"`
-	TemplateName    string `json:"template_name,omitempty"`
-	Header          []byte `json:"header"`
-	Mode            []byte `json:"mode"`
-	Pid             []byte `json:"pid"`
-	Formula         string `json:"formula"`
-	IntervalSeconds int    `json:"interval_seconds"`
-	Protocol        string `json:"protocol,omitempty"`
-}
-
-type DeviceSetting struct {
-	TemplateName                           string `json:"template_name"`
-	BatteryCriticalLevelVoltage            string `json:"battery_critical_level_voltage"`
-	SafetyCutOutVoltage                    string `json:"safety_cut_out_voltage"`
-	SleepTimerEventDrivenInterval          string `json:"sleep_timer_event_driven_interval"`
-	SleepTimerEventDrivenPeriod            string `json:"sleep_timer_event_driven_period"`
-	SleepTimerInactivityAfterSleepInterval string `json:"sleep_timer_inactivity_after_sleep_interval"`
-	SleepTimerInactivityFallbackInterval   string `json:"sleep_timer_inactivity_fallback_interval"`
-	WakeTriggerVoltageLevel                string `json:"wake_trigger_voltage_level"`
-}
 type DeviceConfigResponse struct {
 	PidURL           string `json:"pidUrl"`
 	DeviceSettingURL string `json:"deviceSettingUrl"`
@@ -175,7 +154,7 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 // @Description  Fetches the device settings configurations from device_settings table given a template name
 // @Tags         vehicle-signal-decoding
 // @Produce      json
-// @Success      200 {object} DeviceSetting "Successfully retrieved Device Settings"
+// @Success      200 {object} grpc.DeviceSetting "Successfully retrieved Device Settings"
 // @Failure 404 "No Device Settings data found for the given template name."
 // @Param        templateName  path   string  true   "template name"
 // @Router       /device-config/{templateName}/deviceSettings [get]
