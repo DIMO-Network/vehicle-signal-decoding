@@ -154,9 +154,9 @@ func TestGetDeviceSettingsByTemplate(t *testing.T) {
 	ds := models.DeviceSetting{
 		ID:                            1,
 		TemplateName:                  "testTemplate",
-		BatteryCriticalLevelVoltage:   "3.2V",
-		SafetyCutOutVoltage:           "2.8V",
-		SleepTimerEventDrivenInterval: "5s",
+		BatteryCriticalLevelVoltage:   3.2,
+		SafetyCutOutVoltage:           2.8,
+		SleepTimerEventDrivenInterval: 5,
 		//etc
 	}
 

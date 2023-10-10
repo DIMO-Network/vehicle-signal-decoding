@@ -149,7 +149,7 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 			Mode:            modeUint32,
 			Pid:             pidUint32,
 			Formula:         pidConfig.Formula,
-			IntervalSeconds: int32(pidConfig.IntervalSeconds),
+			IntervalSeconds: uint32(pidConfig.IntervalSeconds),
 			Protocol:        pidConfig.Protocol,
 		}
 		protoPIDs.Requests = append(protoPIDs.Requests, pid)
@@ -197,13 +197,13 @@ func (d *DeviceConfigController) GetDeviceSettingsByTemplate(c *fiber.Ctx) error
 
 	protoDeviceSettings := &grpc.DeviceSetting{
 		TemplateName:                           templateName,
-		BatteryCriticalLevelVoltage:            dbDeviceSettings.BatteryCriticalLevelVoltage,
-		SafetyCutOutVoltage:                    dbDeviceSettings.SafetyCutOutVoltage,
-		SleepTimerEventDrivenInterval:          dbDeviceSettings.SleepTimerEventDrivenInterval,
-		SleepTimerEventDrivenPeriod:            dbDeviceSettings.SleepTimerEventDrivenPeriod,
-		SleepTimerInactivityAfterSleepInterval: dbDeviceSettings.SleepTimerInactivityAfterSleepInterval,
-		SleepTimerInactivityFallbackInterval:   dbDeviceSettings.SleepTimerInactivityFallbackInterval,
-		WakeTriggerVoltageLevel:                dbDeviceSettings.WakeTriggerVoltageLevel,
+		BatteryCriticalLevelVoltage:            float32(dbDeviceSettings.BatteryCriticalLevelVoltage),
+		SafetyCutOutVoltage:                    float32(dbDeviceSettings.SafetyCutOutVoltage),
+		SleepTimerEventDrivenInterval:          float32(dbDeviceSettings.SleepTimerEventDrivenInterval),
+		SleepTimerEventDrivenPeriod:            float32(dbDeviceSettings.SleepTimerEventDrivenPeriod),
+		SleepTimerInactivityAfterSleepInterval: float32(dbDeviceSettings.SleepTimerInactivityAfterSleepInterval),
+		SleepTimerInactivityFallbackInterval:   float32(dbDeviceSettings.SleepTimerInactivityFallbackInterval),
+		WakeTriggerVoltageLevel:                float32(dbDeviceSettings.WakeTriggerVoltageLevel),
 	}
 
 	acceptHeader := c.Get("Accept", "application/json")
