@@ -129,7 +129,7 @@ paths:
   /device-config/eth-addr/{ethAddr}/urls:
     get:
       description: Retrieve the URLs for PID, DeviceSettings, and DBC configuration
-        based on device's Ethereum Address
+        based on device's Ethereum Address. These could be empty if not configs available
       parameters:
       - description: Ethereum Address
         in: path
@@ -151,7 +151,7 @@ paths:
   /device-config/vin/{vin}/urls:
     get:
       description: Retrieve the URLs for PID, DeviceSettings, and DBC configuration
-        based on a given VIN
+        based on a given VIN. These could be empty if not configs available
       parameters:
       - description: vehicle identification number (VIN)
         in: path
