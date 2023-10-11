@@ -84,7 +84,7 @@ paths:
           description: No DBC file found for the given template name.
       tags:
       - vehicle-signal-decoding
-  /device-config/{templateName}/deviceSettings:
+  /device-config/{templateName}/device-settings:
     get:
       description: Fetches the device settings configurations from device_settings
         table given a template name

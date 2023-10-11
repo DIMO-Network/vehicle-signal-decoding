@@ -157,7 +157,7 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 // @Success      200 {object} grpc.DeviceSetting "Successfully retrieved Device Settings"
 // @Failure 404 "No Device Settings data found for the given template name."
 // @Param        templateName  path   string  true   "template name"
-// @Router       /device-config/{templateName}/deviceSettings [get]
+// @Router       /device-config/{templateName}/device-settings [get]
 func (d *DeviceConfigController) GetDeviceSettingsByTemplate(c *fiber.Ctx) error {
 	templateName := c.Params("templateName")
 
@@ -273,6 +273,7 @@ func (d *DeviceConfigController) GetConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) 
 		models.TemplateWhere.Powertrain.EQ(ud.PowerTrainType),
 		qm.Load(models.TemplateRels.TemplateNameDBCFile),
 		qm.Load(models.TemplateRels.TemplateNameTemplateVehicles),
+		qm.Load(models.TemplateRels.TemplateNameDeviceSetting),
 	).All(context.Background(), d.db)
 
 	if err != nil {
@@ -306,12 +307,16 @@ func (d *DeviceConfigController) GetConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) 
 	version := matchedTemplate.Version
 
 	response := DeviceConfigResponse{
-		PidURL:           fmt.Sprintf("%s/v1/device-config/%s/pids", baseURL, templateName),
-		DeviceSettingURL: fmt.Sprintf("%s/v1/device-config/%s/deviceSettings", baseURL, parentTemplateName),
-		Version:          version,
+		PidURL:  fmt.Sprintf("%s/v1/device-config/%s/pids", baseURL, templateName),
+		Version: version,
 	}
+	// only set dbc url if we have dbc
 	if templates[0].R.TemplateNameDBCFile != nil && len(templates[0].R.TemplateNameDBCFile.DBCFile) > 0 {
 		response.DbcURL = fmt.Sprintf("%s/v1/device-config/%s/dbc", baseURL, templateName)
+	}
+	// only set device settings url if we have one
+	if templates[0].R.TemplateNameDeviceSetting != nil {
+		response.DeviceSettingURL = fmt.Sprintf("%s/v1/device-config/%s/device-settings", baseURL, parentTemplateName)
 	}
 
 	return c.JSON(response)
