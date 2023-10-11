@@ -35,7 +35,18 @@ type CreateTemplateCommandResponse struct {
 }
 
 func (h CreateTemplateCommandHandler) Execute(ctx context.Context, req *CreateTemplateCommandRequest) (*CreateTemplateCommandResponse, error) {
-	// todo check if a template with same name already exists
+
+	exists, err := models.Templates(models.TemplateWhere.TemplateName.EQ(req.Name)).Exists(ctx, h.DBS().Reader)
+	if err != nil {
+		return nil, &exceptions.InternalError{
+			Err: errors.Wrapf(err, "error checking if template exists: %s", req.Name),
+		}
+	}
+	if exists {
+		return nil, &exceptions.ConflictError{
+			Err: errors.Wrapf(err, "template with name %s already exists", req.Name),
+		}
+	}
 
 	template := &models.Template{
 		TemplateName:       req.Name,
@@ -45,7 +56,7 @@ func (h CreateTemplateCommandHandler) Execute(ctx context.Context, req *CreateTe
 		Powertrain:         req.Powertrain,
 	}
 
-	err := template.Insert(ctx, h.DBS().Writer, boil.Infer())
+	err = template.Insert(ctx, h.DBS().Writer, boil.Infer())
 	if err != nil {
 		return nil, &exceptions.InternalError{
 			Err: errors.Wrapf(err, "error inserting template: %s", req.Name),

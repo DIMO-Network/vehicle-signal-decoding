@@ -3,6 +3,10 @@ package queries
 import (
 	"context"
 	"fmt"
+
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/exceptions"
+	"github.com/pkg/errors"
+
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 
 	"github.com/DIMO-Network/shared/db"
@@ -32,7 +36,15 @@ func (h GetTemplatesAllQueryHandler) Handle(ctx context.Context, query *GetTempl
 	var mods []qm.QueryMod
 
 	if len(query.Protocol) > 0 {
-		// todo check that passed in protocol matches one of db enums eg. models.CanProtocolTypeCAN11_500, if not return bad request err
+		validProtocols := map[string]struct{}{
+			models.CanProtocolTypeCAN11_500: {},
+			models.CanProtocolTypeCAN29_500: {},
+		}
+		if _, isValid := validProtocols[query.Protocol]; !isValid {
+			return nil, &exceptions.ValidationError{
+				Err: errors.Errorf("invalid protocol: %s", query.Protocol),
+			}
+		}
 		mods = append(mods,
 			models.TemplateWhere.Protocol.EQ(query.Protocol))
 	}
