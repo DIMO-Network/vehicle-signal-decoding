@@ -20,10 +20,10 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	TemplateConfigService_CreateTemplate_FullMethodName  = "/grpc.TemplateConfigService/CreateTemplate"
-	TemplateConfigService_UpdateTemplate_FullMethodName  = "/grpc.TemplateConfigService/UpdateTemplate"
-	TemplateConfigService_GetTemplateList_FullMethodName = "/grpc.TemplateConfigService/GetTemplateList"
-	TemplateConfigService_GetTemplateByID_FullMethodName = "/grpc.TemplateConfigService/GetTemplateByID"
+	TemplateConfigService_CreateTemplate_FullMethodName    = "/grpc.TemplateConfigService/CreateTemplate"
+	TemplateConfigService_UpdateTemplate_FullMethodName    = "/grpc.TemplateConfigService/UpdateTemplate"
+	TemplateConfigService_GetTemplateList_FullMethodName   = "/grpc.TemplateConfigService/GetTemplateList"
+	TemplateConfigService_GetTemplateByName_FullMethodName = "/grpc.TemplateConfigService/GetTemplateByName"
 )
 
 // TemplateConfigServiceClient is the client API for TemplateConfigService service.
@@ -33,7 +33,7 @@ type TemplateConfigServiceClient interface {
 	CreateTemplate(ctx context.Context, in *UpdateTemplateRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	UpdateTemplate(ctx context.Context, in *UpdateTemplateRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	GetTemplateList(ctx context.Context, in *GetTemplateListRequest, opts ...grpc.CallOption) (*GetTemplateListResponse, error)
-	GetTemplateByID(ctx context.Context, in *GetTemplateByIDRequest, opts ...grpc.CallOption) (*GetTemplateByIDResponse, error)
+	GetTemplateByName(ctx context.Context, in *GetTemplateByNameRequest, opts ...grpc.CallOption) (*GetTemplateByNameResponse, error)
 }
 
 type templateConfigServiceClient struct {
@@ -71,9 +71,9 @@ func (c *templateConfigServiceClient) GetTemplateList(ctx context.Context, in *G
 	return out, nil
 }
 
-func (c *templateConfigServiceClient) GetTemplateByID(ctx context.Context, in *GetTemplateByIDRequest, opts ...grpc.CallOption) (*GetTemplateByIDResponse, error) {
-	out := new(GetTemplateByIDResponse)
-	err := c.cc.Invoke(ctx, TemplateConfigService_GetTemplateByID_FullMethodName, in, out, opts...)
+func (c *templateConfigServiceClient) GetTemplateByName(ctx context.Context, in *GetTemplateByNameRequest, opts ...grpc.CallOption) (*GetTemplateByNameResponse, error) {
+	out := new(GetTemplateByNameResponse)
+	err := c.cc.Invoke(ctx, TemplateConfigService_GetTemplateByName_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +87,7 @@ type TemplateConfigServiceServer interface {
 	CreateTemplate(context.Context, *UpdateTemplateRequest) (*emptypb.Empty, error)
 	UpdateTemplate(context.Context, *UpdateTemplateRequest) (*emptypb.Empty, error)
 	GetTemplateList(context.Context, *GetTemplateListRequest) (*GetTemplateListResponse, error)
-	GetTemplateByID(context.Context, *GetTemplateByIDRequest) (*GetTemplateByIDResponse, error)
+	GetTemplateByName(context.Context, *GetTemplateByNameRequest) (*GetTemplateByNameResponse, error)
 	mustEmbedUnimplementedTemplateConfigServiceServer()
 }
 
@@ -104,8 +104,8 @@ func (UnimplementedTemplateConfigServiceServer) UpdateTemplate(context.Context, 
 func (UnimplementedTemplateConfigServiceServer) GetTemplateList(context.Context, *GetTemplateListRequest) (*GetTemplateListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetTemplateList not implemented")
 }
-func (UnimplementedTemplateConfigServiceServer) GetTemplateByID(context.Context, *GetTemplateByIDRequest) (*GetTemplateByIDResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetTemplateByID not implemented")
+func (UnimplementedTemplateConfigServiceServer) GetTemplateByName(context.Context, *GetTemplateByNameRequest) (*GetTemplateByNameResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetTemplateByName not implemented")
 }
 func (UnimplementedTemplateConfigServiceServer) mustEmbedUnimplementedTemplateConfigServiceServer() {}
 
@@ -174,20 +174,20 @@ func _TemplateConfigService_GetTemplateList_Handler(srv interface{}, ctx context
 	return interceptor(ctx, in, info, handler)
 }
 
-func _TemplateConfigService_GetTemplateByID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetTemplateByIDRequest)
+func _TemplateConfigService_GetTemplateByName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetTemplateByNameRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TemplateConfigServiceServer).GetTemplateByID(ctx, in)
+		return srv.(TemplateConfigServiceServer).GetTemplateByName(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: TemplateConfigService_GetTemplateByID_FullMethodName,
+		FullMethod: TemplateConfigService_GetTemplateByName_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TemplateConfigServiceServer).GetTemplateByID(ctx, req.(*GetTemplateByIDRequest))
+		return srv.(TemplateConfigServiceServer).GetTemplateByName(ctx, req.(*GetTemplateByNameRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -212,8 +212,8 @@ var TemplateConfigService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _TemplateConfigService_GetTemplateList_Handler,
 		},
 		{
-			MethodName: "GetTemplateByID",
-			Handler:    _TemplateConfigService_GetTemplateByID_Handler,
+			MethodName: "GetTemplateByName",
+			Handler:    _TemplateConfigService_GetTemplateByName_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

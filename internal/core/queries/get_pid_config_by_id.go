@@ -26,15 +26,15 @@ func NewGetPidByIDQueryHandler(dbs func() *db.ReaderWriter, logger *zerolog.Logg
 }
 
 type GetPidByIDQueryRequest struct {
-	ID string
+	ID int64
 }
 
 func (h GetPidByIDQueryHandler) Handle(ctx context.Context, query *GetPidByIDQueryRequest) (*grpc.GetPidByIDResponse, error) {
 
-	item, err := models.PidConfigs(models.PidConfigWhere.TemplateName.EQ(query.ID)).One(ctx, h.DBS().Reader)
+	item, err := models.PidConfigs(models.PidConfigWhere.ID.EQ(query.ID)).One(ctx, h.DBS().Reader)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf("template not found id: %s", query.ID) // You may replace it with your custom NotFoundError
+			return nil, fmt.Errorf("template not found id: %d", query.ID)
 		}
 
 		return nil, fmt.Errorf("failed to get template")
@@ -42,6 +42,7 @@ func (h GetPidByIDQueryHandler) Handle(ctx context.Context, query *GetPidByIDQue
 
 	result := &grpc.GetPidByIDResponse{
 		Pid: &grpc.PidConfig{
+			Id:              item.ID,
 			TemplateName:    item.TemplateName,
 			Header:          item.Header,
 			Mode:            item.Mode,

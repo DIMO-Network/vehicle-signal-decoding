@@ -25,6 +25,7 @@ func NewPidConfigService(logger *zerolog.Logger, dbs func() *db.ReaderWriter) gr
 func (s *PidConfigService) CreatePid(ctx context.Context, in *grpc.UpdatePidRequest) (*emptypb.Empty, error) {
 	service := commands.NewCreatePidCommandHandler(s.dbs)
 	_, err := service.Execute(ctx, &commands.CreatePidCommandRequest{
+		ID:              in.Pid.Id,
 		TemplateName:    in.Pid.TemplateName,
 		Header:          in.Pid.Header,
 		Mode:            in.Pid.Mode,
@@ -41,9 +42,10 @@ func (s *PidConfigService) CreatePid(ctx context.Context, in *grpc.UpdatePidRequ
 	return &emptypb.Empty{}, nil
 }
 
-func (s *TemplateConfigService) UpdatePid(ctx context.Context, in *grpc.UpdatePidRequest) (*emptypb.Empty, error) {
+func (s *PidConfigService) UpdatePid(ctx context.Context, in *grpc.UpdatePidRequest) (*emptypb.Empty, error) {
 	service := commands.NewUpdatePidCommandHandler(s.dbs)
 	_, err := service.Execute(ctx, &commands.UpdatePidCommandRequest{
+		ID:              in.Pid.Id,
 		TemplateName:    in.Pid.TemplateName,
 		Header:          in.Pid.Header,
 		Mode:            in.Pid.Mode,
@@ -61,10 +63,10 @@ func (s *TemplateConfigService) UpdatePid(ctx context.Context, in *grpc.UpdatePi
 	return &emptypb.Empty{}, nil
 }
 
-func (s *TemplateConfigService) GetPidList(ctx context.Context, in *grpc.GetPidListRequest) (*grpc.GetPidListResponse, error) {
+func (s *PidConfigService) GetPidList(ctx context.Context, in *grpc.GetPidListRequest) (*grpc.GetPidListResponse, error) {
 	service := queries.NewGetPidAllQueryHandler(s.dbs, s.logger)
 	response, err := service.Handle(ctx, &queries.GetPidAllQueryRequest{
-		TemplateName: *in.TemplateName,
+		ID: *in.Id,
 	})
 	if err != nil {
 		return nil, err
@@ -72,7 +74,7 @@ func (s *TemplateConfigService) GetPidList(ctx context.Context, in *grpc.GetPidL
 	return response, nil
 }
 
-func (s *TemplateConfigService) GetPidByID(ctx context.Context, in *grpc.GetPidByIDRequest) (*grpc.GetPidByIDResponse, error) {
+func (s *PidConfigService) GetPidByID(ctx context.Context, in *grpc.GetPidByIDRequest) (*grpc.GetPidByIDResponse, error) {
 	service := queries.NewGetPidByIDQueryHandler(s.dbs, s.logger)
 	response, err := service.Handle(ctx, &queries.GetPidByIDQueryRequest{
 		ID: in.Id,

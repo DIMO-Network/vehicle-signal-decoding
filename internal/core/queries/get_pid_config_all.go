@@ -23,7 +23,7 @@ func NewGetPidAllQueryHandler(dbs func() *db.ReaderWriter, logger *zerolog.Logge
 }
 
 type GetPidAllQueryRequest struct {
-	TemplateName string
+	ID int64
 }
 
 func (h GetPidAllQueryHandler) Handle(ctx context.Context, _ *GetPidAllQueryRequest) (*grpc.GetPidListResponse, error) {
@@ -35,6 +35,7 @@ func (h GetPidAllQueryHandler) Handle(ctx context.Context, _ *GetPidAllQueryRequ
 	pidSummaries := make([]*grpc.PidSummary, 0, len(all))
 	for _, item := range all {
 		pidSummaries = append(pidSummaries, &grpc.PidSummary{
+			Id:              item.ID,
 			TemplateName:    item.TemplateName,
 			Header:          item.Header,
 			Mode:            item.Mode,

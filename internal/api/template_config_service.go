@@ -71,10 +71,10 @@ func (s *TemplateConfigService) GetTemplateList(ctx context.Context, in *grpc.Ge
 	return response, nil
 }
 
-func (s *TemplateConfigService) GetTemplateByID(ctx context.Context, in *grpc.GetTemplateByIDRequest) (*grpc.GetTemplateByIDResponse, error) {
-	service := queries.NewGetTemplateByIDQueryHandler(s.dbs, s.logger)
-	response, err := service.Handle(ctx, &queries.GetTemplateByIDQueryRequest{
-		ID: in.Id,
+func (s *TemplateConfigService) GetTemplateByName(ctx context.Context, in *grpc.GetTemplateByNameRequest) (*grpc.GetTemplateByNameResponse, error) {
+	service := queries.NewGetTemplateByNameQueryHandler(s.dbs, s.logger)
+	response, err := service.Handle(ctx, &queries.GetTemplateByNameQueryRequest{
+		Name: in.Name,
 	})
 
 	if err != nil {

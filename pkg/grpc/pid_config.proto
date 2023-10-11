@@ -8,48 +8,50 @@ option go_package = "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc";
 package grpc;
 
 message PidConfig {
-string template_name = 1;
-bytes header = 2;
-bytes mode = 3;
-bytes pid = 4;
-string formula = 5;
-int32 interval_seconds = 6;
-string protocol = 7;
-string signal_name = 8;
-int32 bytes_returned = 9;
-google.protobuf.Timestamp created_at = 10;
-google.protobuf.Timestamp updated_at = 11;
+  int64 id = 1;
+  string template_name = 2;
+  bytes header = 3;
+  bytes mode = 4;
+  bytes pid = 5;
+  string formula = 6;
+  int32 interval_seconds = 7;
+  string protocol = 8;
+  string signal_name = 9;
+  int32 bytes_returned = 10;
+  google.protobuf.Timestamp created_at = 11;
+  google.protobuf.Timestamp updated_at = 12;
 
 }
 message PidSummary {
-string template_name = 1;
-bytes header = 2;
-bytes mode = 3;
-bytes pid = 4;
-string formula = 5;
-int32 interval_seconds = 6;
-string protocol = 7;
-string signal_name = 8;
+  int64 id = 1;
+  string template_name = 2;
+  bytes header = 3;
+  bytes mode = 4;
+  bytes pid = 5;
+  string formula = 6;
+  int32 interval_seconds = 7;
+  string protocol = 8;
+  string signal_name = 9;
 
 }
 message GetPidListRequest {
-optional string template_name = 1;
+  optional int64 id = 1;
 
 }
 message GetPidListResponse {
-repeated PidSummary pid = 1;
+  repeated PidSummary pid = 1;
 
 }
 message GetPidByIDRequest {
-string id = 1;
+  int64 id = 1;
 
 }
 message GetPidByIDResponse {
-PidConfig pid = 1;
+  PidConfig pid = 1;
 
 }
 message UpdatePidRequest {
-PidConfig pid = 1;
+  PidConfig pid = 1;
 
 
 }

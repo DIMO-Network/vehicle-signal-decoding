@@ -21,6 +21,7 @@ func NewUpdatePidCommandHandler(dbs func() *db.ReaderWriter) UpdatePidCommandHan
 }
 
 type UpdatePidCommandRequest struct {
+	ID              int64
 	TemplateName    string
 	Header          []byte
 	Mode            []byte
@@ -33,23 +34,23 @@ type UpdatePidCommandRequest struct {
 }
 
 type UpdatePidCommandResponse struct {
-	Name string
+	ID int64
 }
 
 func (h UpdatePidCommandHandler) Execute(ctx context.Context, req *UpdatePidCommandRequest) (*UpdatePidCommandResponse, error) {
 
-	pid, err := models.PidConfigs(models.PidConfigWhere.TemplateName.EQ(req.TemplateName)).One(ctx, h.DBS().Reader)
+	pid, err := models.PidConfigs(models.PidConfigWhere.ID.EQ(req.ID)).One(ctx, h.DBS().Reader)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, &exceptions.NotFoundError{
-				Err: fmt.Errorf("pid config not found name: %s", req.TemplateName),
+				Err: fmt.Errorf("pid config not found for ID: %d", req.ID),
 			}
 		}
 		return nil, &exceptions.InternalError{
 			Err: err,
 		}
 	}
-
+	pid.ID = req.ID
 	pid.TemplateName = req.TemplateName
 	pid.Header = req.Header
 	pid.Mode = req.Mode
@@ -65,5 +66,5 @@ func (h UpdatePidCommandHandler) Execute(ctx context.Context, req *UpdatePidComm
 		}
 	}
 
-	return &UpdatePidCommandResponse{Name: pid.TemplateName}, nil
+	return &UpdatePidCommandResponse{ID: pid.ID}, nil
 }

@@ -20,6 +20,7 @@ func NewCreatePidCommandHandler(dbs func() *db.ReaderWriter) CreatePidCommandHan
 }
 
 type CreatePidCommandRequest struct {
+	ID              int64
 	TemplateName    string
 	Header          []byte
 	Mode            []byte
@@ -32,7 +33,7 @@ type CreatePidCommandRequest struct {
 }
 
 type CreatePidCommandResponse struct {
-	Name string
+	ID int64
 }
 
 func (h CreatePidCommandHandler) Execute(ctx context.Context, req *CreatePidCommandRequest) (*CreatePidCommandResponse, error) {
@@ -50,6 +51,7 @@ func (h CreatePidCommandHandler) Execute(ctx context.Context, req *CreatePidComm
 	}
 
 	pid := &models.PidConfig{
+		ID:              req.ID,
 		TemplateName:    req.TemplateName,
 		Header:          req.Header,
 		Mode:            req.Mode,
@@ -63,9 +65,9 @@ func (h CreatePidCommandHandler) Execute(ctx context.Context, req *CreatePidComm
 	err = pid.Insert(ctx, h.DBS().Writer, boil.Infer())
 	if err != nil {
 		return nil, &exceptions.InternalError{
-			Err: errors.Wrapf(err, "error inserting pid with template name: %s", req.TemplateName),
+			Err: errors.Wrapf(err, "error inserting pid with id: %d", req.ID),
 		}
 	}
 
-	return &CreatePidCommandResponse{Name: pid.TemplateName}, nil
+	return &CreatePidCommandResponse{ID: pid.ID}, nil
 }

@@ -13,34 +13,34 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-type GetTemplateByIDQueryHandler struct {
+type GetTemplateByNameQueryHandler struct {
 	DBS    func() *db.ReaderWriter
 	logger *zerolog.Logger
 }
 
-func NewGetTemplateByIDQueryHandler(dbs func() *db.ReaderWriter, logger *zerolog.Logger) GetTemplateByIDQueryHandler {
-	return GetTemplateByIDQueryHandler{
+func NewGetTemplateByNameQueryHandler(dbs func() *db.ReaderWriter, logger *zerolog.Logger) GetTemplateByNameQueryHandler {
+	return GetTemplateByNameQueryHandler{
 		DBS:    dbs,
 		logger: logger,
 	}
 }
 
-type GetTemplateByIDQueryRequest struct {
-	ID string
+type GetTemplateByNameQueryRequest struct {
+	Name string
 }
 
-func (h GetTemplateByIDQueryHandler) Handle(ctx context.Context, query *GetTemplateByIDQueryRequest) (*grpc.GetTemplateByIDResponse, error) {
+func (h GetTemplateByNameQueryHandler) Handle(ctx context.Context, query *GetTemplateByNameQueryRequest) (*grpc.GetTemplateByNameResponse, error) {
 
-	item, err := models.Templates(models.TemplateWhere.TemplateName.EQ(query.ID)).One(ctx, h.DBS().Reader)
+	item, err := models.Templates(models.TemplateWhere.TemplateName.EQ(query.Name)).One(ctx, h.DBS().Reader)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf("template not found id: %s", query.ID) // You may replace it with your custom NotFoundError
+			return nil, fmt.Errorf("template not found name: %s", query.Name)
 		}
 
 		return nil, fmt.Errorf("failed to get template")
 	}
 
-	result := &grpc.GetTemplateByIDResponse{
+	result := &grpc.GetTemplateByNameResponse{
 		Template: &grpc.Template{
 			Name:               item.TemplateName,
 			ParentTemplateName: "",
@@ -50,9 +50,8 @@ func (h GetTemplateByIDQueryHandler) Handle(ctx context.Context, query *GetTempl
 			HasDbc:             item.R.GetTemplateNameDBCFile().DBCFile,
 			PidsCount:          int32(len(item.R.GetTemplateNamePidConfigs())),
 			Pids:               nil,
-			//Dbc:
-			CreatedAt: timestamppb.New(item.CreatedAt),
-			UpdatedAt: timestamppb.New(item.UpdatedAt),
+			CreatedAt:          timestamppb.New(item.CreatedAt),
+			UpdatedAt:          timestamppb.New(item.UpdatedAt),
 		},
 	}
 	if item.ParentTemplateName.Valid {
