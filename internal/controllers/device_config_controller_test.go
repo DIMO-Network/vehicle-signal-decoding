@@ -620,9 +620,15 @@ func TestGetConfigURLsDecodeVin(t *testing.T) {
 		Protocol:     models.CanProtocolTypeCAN11_500,
 		Powertrain:   "HEV",
 	}
-
 	err := template.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err)
+	// insert device settings
+	ds := &models.DeviceSetting{
+		TemplateName: "some-template",
+	}
+	err = ds.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	require.NoError(t, err)
+
 	dd := &p_grpc.GetDeviceDefinitionItemResponse{
 		DeviceDefinitionId: ksuid.New().String(),
 		Type: &p_grpc.DeviceType{
