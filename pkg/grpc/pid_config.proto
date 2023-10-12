@@ -1,0 +1,68 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc";
+
+package grpc;
+
+message PidConfig {
+  int64 id = 1;
+  string template_name = 2;
+  bytes header = 3;
+  bytes mode = 4;
+  bytes pid = 5;
+  string formula = 6;
+  int32 interval_seconds = 7;
+  string protocol = 8;
+  string signal_name = 9;
+  int32 bytes_returned = 10;
+  google.protobuf.Timestamp created_at = 11;
+  google.protobuf.Timestamp updated_at = 12;
+
+}
+message PidSummary {
+  int64 id = 1;
+  string template_name = 2;
+  bytes header = 3;
+  bytes mode = 4;
+  bytes pid = 5;
+  string formula = 6;
+  int32 interval_seconds = 7;
+  string protocol = 8;
+  string signal_name = 9;
+
+}
+message GetPidListRequest {
+  optional int64 id = 1;
+
+}
+message GetPidListResponse {
+  repeated PidSummary pid = 1;
+
+}
+message GetPidByIDRequest {
+  int64 id = 1;
+
+}
+message GetPidByIDResponse {
+  PidConfig pid = 1;
+
+}
+message UpdatePidRequest {
+  PidConfig pid = 1;
+
+
+}
+
+service PidConfigService {
+rpc CreatePid (UpdatePidRequest) returns (google.protobuf.Empty);
+rpc UpdatePid (UpdatePidRequest) returns (google.protobuf.Empty);
+rpc GetPidList (GetPidListRequest) returns (GetPidListResponse);
+rpc GetPidByID (GetPidByIDRequest) returns (GetPidByIDResponse);
+
+}
+
+
+

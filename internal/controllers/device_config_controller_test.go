@@ -5,11 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"io"
 	"os"
 	"testing"
-
-	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 
 	pb "github.com/DIMO-Network/devices-api/pkg/grpc"
 	"github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
@@ -331,7 +330,13 @@ func TestGetConfigURLsEmptyDBC(t *testing.T) {
 		Protocol:     models.CanProtocolTypeCAN29_500,
 		Powertrain:   "HEV",
 	}
-	err := template.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+	err := template.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	require.NoError(t, err)
+	// insert device settings
+	ds := &models.DeviceSetting{
+		TemplateName: "some-template",
+	}
+	err = ds.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err)
 
 	app := fiber.New()
@@ -362,7 +367,7 @@ func TestGetConfigURLsEmptyDBC(t *testing.T) {
 		assert.NoError(t, err)
 
 		assert.Equal(t, fmt.Sprintf("http://localhost:3000/v1/device-config/%s/pids", template.TemplateName), receivedResp.PidURL)
-		assert.Equal(t, fmt.Sprintf("http://localhost:3000/v1/device-config/%s/deviceSettings", template.TemplateName), receivedResp.DeviceSettingURL)
+		assert.Equal(t, fmt.Sprintf("http://localhost:3000/v1/device-config/%s/device-settings", template.TemplateName), receivedResp.DeviceSettingURL)
 		assert.Equal(t, "", receivedResp.DbcURL)
 
 		assert.Equal(t, template.Version, receivedResp.Version)
@@ -615,9 +620,15 @@ func TestGetConfigURLsDecodeVin(t *testing.T) {
 		Protocol:     models.CanProtocolTypeCAN11_500,
 		Powertrain:   "HEV",
 	}
-
 	err := template.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err)
+	// insert device settings
+	ds := &models.DeviceSetting{
+		TemplateName: "some-template",
+	}
+	err = ds.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	require.NoError(t, err)
+
 	dd := &p_grpc.GetDeviceDefinitionItemResponse{
 		DeviceDefinitionId: ksuid.New().String(),
 		Type: &p_grpc.DeviceType{
@@ -671,7 +682,7 @@ func TestGetConfigURLsDecodeVin(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, fmt.Sprintf("http://localhost:3000/v1/device-config/%s/pids", template.TemplateName), receivedResp.PidURL)
-	assert.Equal(t, fmt.Sprintf("http://localhost:3000/v1/device-config/%s/deviceSettings", template.TemplateName), receivedResp.DeviceSettingURL)
+	assert.Equal(t, fmt.Sprintf("http://localhost:3000/v1/device-config/%s/device-settings", template.TemplateName), receivedResp.DeviceSettingURL)
 	assert.Equal(t, "", receivedResp.DbcURL)
 
 	assert.Equal(t, template.Version, receivedResp.Version)

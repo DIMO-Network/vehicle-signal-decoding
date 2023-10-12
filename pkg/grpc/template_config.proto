@@ -43,11 +43,11 @@ message GetTemplateListResponse {
   repeated TemplateSummary templates = 1;
 
 }
-message GetTemplateByIDRequest {
-  string id = 1;
+message GetTemplateByNameRequest {
+  string name = 1;
 
 }
-message GetTemplateByIDResponse {
+message GetTemplateByNameResponse {
   Template template = 1;
   repeated PID pids = 2;
 
@@ -61,6 +61,6 @@ service TemplateConfigService {
   rpc CreateTemplate (UpdateTemplateRequest) returns (google.protobuf.Empty);
   rpc UpdateTemplate(UpdateTemplateRequest) returns (google.protobuf.Empty);
   rpc GetTemplateList (GetTemplateListRequest) returns (GetTemplateListResponse);
-  rpc GetTemplateByID (GetTemplateByIDRequest) returns (GetTemplateByIDResponse);
+  rpc GetTemplateByName (GetTemplateByNameRequest) returns (GetTemplateByNameResponse);
 
 }

@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc";
+
+package grpc;
+
+message DbcConfig {
+  string template_name = 1;
+  string dbc_file = 2;
+  google.protobuf.Timestamp created_at = 3;
+  google.protobuf.Timestamp updated_at = 4;
+
+}
+message DbcSummary {
+  string template_name = 1;
+  string dbc_file = 2;
+
+}
+message GetDbcListRequest {
+  optional string template_name = 1;
+
+}
+message GetDbcListResponse {
+  repeated DbcSummary dbc = 1;
+
+}
+message GetDbcByTemplateNameRequest {
+  string template_name = 1;
+
+}
+message GetDbcByTemplateNameResponse {
+  DbcConfig dbc = 1;
+
+}
+message UpdateDbcRequest {
+  DbcConfig dbc = 1;
+
+}
+
+service DbcConfigService {
+  rpc CreateDbc (UpdateDbcRequest) returns (google.protobuf.Empty);
+  rpc UpdateDbc (UpdateDbcRequest) returns (google.protobuf.Empty);
+  rpc GetDbcList (GetDbcListRequest) returns (GetDbcListResponse);
+  rpc GetDbcByTemplateName (GetDbcByTemplateNameRequest) returns (GetDbcByTemplateNameResponse);
+
+}
