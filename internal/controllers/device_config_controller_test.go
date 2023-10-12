@@ -367,7 +367,7 @@ func TestGetConfigURLsEmptyDBC(t *testing.T) {
 		assert.NoError(t, err)
 
 		assert.Equal(t, fmt.Sprintf("http://localhost:3000/v1/device-config/%s/pids", template.TemplateName), receivedResp.PidURL)
-		assert.Equal(t, fmt.Sprintf("http://localhost:3000/v1/device-config/%s/deviceSettings", template.TemplateName), receivedResp.DeviceSettingURL)
+		assert.Equal(t, fmt.Sprintf("http://localhost:3000/v1/device-config/%s/device-settings", template.TemplateName), receivedResp.DeviceSettingURL)
 		assert.Equal(t, "", receivedResp.DbcURL)
 
 		assert.Equal(t, template.Version, receivedResp.Version)
@@ -682,7 +682,7 @@ func TestGetConfigURLsDecodeVin(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, fmt.Sprintf("http://localhost:3000/v1/device-config/%s/pids", template.TemplateName), receivedResp.PidURL)
-	assert.Equal(t, fmt.Sprintf("http://localhost:3000/v1/device-config/%s/deviceSettings", template.TemplateName), receivedResp.DeviceSettingURL)
+	assert.Equal(t, fmt.Sprintf("http://localhost:3000/v1/device-config/%s/device-settings", template.TemplateName), receivedResp.DeviceSettingURL)
 	assert.Equal(t, "", receivedResp.DbcURL)
 
 	assert.Equal(t, template.Version, receivedResp.Version)
