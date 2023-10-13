@@ -5,10 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"io"
 	"os"
 	"testing"
+
+	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 
 	pb "github.com/DIMO-Network/devices-api/pkg/grpc"
 	"github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
