@@ -61,7 +61,9 @@ func (h GetTemplatesAllQueryHandler) Handle(ctx context.Context, query *GetTempl
 		return nil, fmt.Errorf("failed to get templates: %w", err)
 	}
 
-	result := &grpc.GetTemplateListResponse{}
+	result := &grpc.GetTemplateListResponse{
+		Templates: []*grpc.TemplateSummary{},
+	}
 
 	for _, item := range all {
 		ts := &grpc.TemplateSummary{
