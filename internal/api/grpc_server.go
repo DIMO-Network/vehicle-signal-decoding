@@ -1,15 +1,19 @@
 package api
 
 import (
+	"fmt"
 	"net"
+	"runtime/debug"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/DIMO-Network/shared/db"
 
-	"github.com/DIMO-Network/vehicle-signal-decoding/internal/api/common"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
 	pkggrpc "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
-	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
+	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc"
 )
@@ -20,19 +24,16 @@ func StartGrpcServer(logger zerolog.Logger, dbs func() *db.ReaderWriter, s *conf
 		logger.Fatal().Msgf("Failed to listen on port %v: %v", s.GRPCPort, err)
 	}
 
-	opts := []grpc_recovery.Option{
-		grpc_recovery.WithRecoveryHandler(common.GrpcConfig),
-	}
-
 	vehicleSignalDecodingService := NewGrpcService(&logger, dbs)
 	templateConfigService := NewTemplateConfigService(&logger, dbs)
 	pidConfigService := NewPidConfigService(&logger, dbs)
 	deviceSettingsService := NewDeviceSettingsConfigService(&logger, dbs)
 	dbcConfigService := NewDbcConfigService(&logger, dbs)
 
+	grpcRecovery := GRPCPanicker{Logger: &logger}
 	server := grpc.NewServer(
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
-			grpc_recovery.UnaryServerInterceptor(opts...),
+			recovery.UnaryServerInterceptor(recovery.WithRecoveryHandler(grpcRecovery.GRPCPanicRecoveryHandler)),
 		)),
 	)
 
@@ -47,4 +48,15 @@ func StartGrpcServer(logger zerolog.Logger, dbs func() *db.ReaderWriter, s *conf
 	if err := server.Serve(lis); err != nil {
 		logger.Fatal().Msgf("Failed to serve over port %v: %v", s.GRPCPort, err)
 	}
+}
+
+type GRPCPanicker struct {
+	Logger *zerolog.Logger
+}
+
+func (pr *GRPCPanicker) GRPCPanicRecoveryHandler(p any) (err error) {
+	//appmetrics.GRPCPanicsCount.Inc()
+
+	pr.Logger.Err(fmt.Errorf("%s", p)).Str("stack", string(debug.Stack())).Msg("grpc recovered from panic")
+	return status.Errorf(codes.Internal, "%s", p)
 }
