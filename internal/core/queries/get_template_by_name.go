@@ -10,6 +10,7 @@ import (
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 	grpc "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
 	"github.com/rs/zerolog"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -31,7 +32,12 @@ type GetTemplateByNameQueryRequest struct {
 
 func (h GetTemplateByNameQueryHandler) Handle(ctx context.Context, query *GetTemplateByNameQueryRequest) (*grpc.GetTemplateByNameResponse, error) {
 
-	item, err := models.Templates(models.TemplateWhere.TemplateName.EQ(query.Name)).One(ctx, h.DBS().Reader)
+	item, err := models.Templates(
+		models.TemplateWhere.TemplateName.EQ(query.Name),
+		qm.Load(models.TemplateRels.TemplateNameDBCFile),
+		qm.Load(models.TemplateRels.TemplateNamePidConfigs),
+	).One(ctx, h.DBS().Reader)
+
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("template not found name: %s", query.Name)
@@ -41,13 +47,11 @@ func (h GetTemplateByNameQueryHandler) Handle(ctx context.Context, query *GetTem
 	}
 
 	pidsCount := 0
-
 	if item.R.TemplateNamePidConfigs != nil {
 		pidsCount = len(item.R.GetTemplateNamePidConfigs())
 	}
 
 	hasDbc := "false"
-
 	if item.R.TemplateNameDBCFile != nil {
 		hasDbc = "true" // ! todo: this should not be a string
 	}
@@ -60,7 +64,6 @@ func (h GetTemplateByNameQueryHandler) Handle(ctx context.Context, query *GetTem
 			Powertrain: item.Powertrain,
 			HasDbc:     hasDbc,
 			PidsCount:  int32(pidsCount),
-			Pids:       nil,
 			CreatedAt:  timestamppb.New(item.CreatedAt),
 			UpdatedAt:  timestamppb.New(item.UpdatedAt),
 		},
