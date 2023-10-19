@@ -28,29 +28,29 @@ func NewGetTemplatesAllQueryHandler(dbs func() *db.ReaderWriter, logger *zerolog
 }
 
 type GetTemplatesAllQueryRequest struct {
-	Protocol   string
-	Powertrain string
+	Protocol   *string
+	Powertrain *string
 }
 
 func (h GetTemplatesAllQueryHandler) Handle(ctx context.Context, query *GetTemplatesAllQueryRequest) (*grpc.GetTemplateListResponse, error) {
 	var mods []qm.QueryMod
 
-	if len(query.Protocol) > 0 {
+	if query.Protocol != nil {
 		validProtocols := map[string]struct{}{
 			models.CanProtocolTypeCAN11_500: {},
 			models.CanProtocolTypeCAN29_500: {},
 		}
-		if _, isValid := validProtocols[query.Protocol]; !isValid {
+		if _, isValid := validProtocols[*query.Protocol]; !isValid {
 			return nil, &exceptions.ValidationError{
-				Err: errors.Errorf("invalid protocol: %s", query.Protocol),
+				Err: errors.Errorf("invalid protocol: %s", *query.Protocol),
 			}
 		}
 		mods = append(mods,
-			models.TemplateWhere.Protocol.EQ(query.Protocol))
+			models.TemplateWhere.Protocol.EQ(*query.Protocol))
 	}
-	if len(query.Powertrain) > 0 {
+	if query.Powertrain != nil {
 		mods = append(mods,
-			models.TemplateWhere.Powertrain.EQ(query.Powertrain))
+			models.TemplateWhere.Powertrain.EQ(*query.Powertrain))
 	}
 	// future optimization, use raw sql. note that we're pulling in the entire relationship list just to use the count below and whether it as a dbc file present
 	mods = append(mods, qm.Load(models.TemplateRels.TemplateNameDBCFile), qm.Load(models.TemplateRels.TemplateNamePidConfigs))

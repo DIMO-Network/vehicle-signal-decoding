@@ -62,8 +62,8 @@ func (s *TemplateConfigService) UpdateTemplate(ctx context.Context, in *grpc.Upd
 func (s *TemplateConfigService) GetTemplateList(ctx context.Context, in *grpc.GetTemplateListRequest) (*grpc.GetTemplateListResponse, error) {
 	service := queries.NewGetTemplatesAllQueryHandler(s.dbs, s.logger)
 	response, err := service.Handle(ctx, &queries.GetTemplatesAllQueryRequest{
-		Protocol:   *in.Protocol,
-		Powertrain: *in.Powertrain,
+		Protocol:   in.Protocol,
+		Powertrain: in.Powertrain,
 	})
 	if err != nil {
 		return nil, err
