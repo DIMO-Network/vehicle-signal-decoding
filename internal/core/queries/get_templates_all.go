@@ -76,7 +76,7 @@ func (h GetTemplatesAllQueryHandler) Handle(ctx context.Context, query *GetTempl
 			ts.PidsCount = int32(len(item.R.GetTemplateNamePidConfigs()))
 		}
 		if item.R.TemplateNameDBCFile != nil {
-			ts.HasDbc = "true" // todo this should not be a string
+			ts.HasDbc = "true" // ! todo: this should not be a string
 		}
 		result.Templates = append(result.Templates, ts)
 	}

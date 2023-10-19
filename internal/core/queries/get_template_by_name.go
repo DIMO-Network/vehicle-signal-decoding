@@ -40,18 +40,29 @@ func (h GetTemplateByNameQueryHandler) Handle(ctx context.Context, query *GetTem
 		return nil, fmt.Errorf("failed to get template")
 	}
 
+	pidsCount := 0
+
+	if item.R.TemplateNamePidConfigs != nil {
+		pidsCount = len(item.R.GetTemplateNamePidConfigs())
+	}
+
+	hasDbc := "false"
+
+	if item.R.TemplateNameDBCFile != nil {
+		hasDbc = "true" // ! todo: this should not be a string
+	}
+
 	result := &grpc.GetTemplateByNameResponse{
 		Template: &grpc.Template{
-			Name:               item.TemplateName,
-			ParentTemplateName: "",
-			Version:            item.Version,
-			Protocol:           item.Protocol,
-			Powertrain:         item.Powertrain,
-			HasDbc:             item.R.GetTemplateNameDBCFile().DBCFile,
-			PidsCount:          int32(len(item.R.GetTemplateNamePidConfigs())),
-			Pids:               nil,
-			CreatedAt:          timestamppb.New(item.CreatedAt),
-			UpdatedAt:          timestamppb.New(item.UpdatedAt),
+			Name:       item.TemplateName,
+			Version:    item.Version,
+			Protocol:   item.Protocol,
+			Powertrain: item.Powertrain,
+			HasDbc:     hasDbc,
+			PidsCount:  int32(pidsCount),
+			Pids:       nil,
+			CreatedAt:  timestamppb.New(item.CreatedAt),
+			UpdatedAt:  timestamppb.New(item.UpdatedAt),
 		},
 	}
 	if item.ParentTemplateName.Valid {
