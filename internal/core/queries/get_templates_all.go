@@ -35,7 +35,7 @@ type GetTemplatesAllQueryRequest struct {
 func (h GetTemplatesAllQueryHandler) Handle(ctx context.Context, query *GetTemplatesAllQueryRequest) (*grpc.GetTemplateListResponse, error) {
 	var mods []qm.QueryMod
 
-	if query.Protocol != nil {
+	if query.Protocol != nil && len(*query.Protocol) > 0 {
 		validProtocols := map[string]struct{}{
 			models.CanProtocolTypeCAN11_500: {},
 			models.CanProtocolTypeCAN29_500: {},
@@ -48,7 +48,8 @@ func (h GetTemplatesAllQueryHandler) Handle(ctx context.Context, query *GetTempl
 		mods = append(mods,
 			models.TemplateWhere.Protocol.EQ(*query.Protocol))
 	}
-	if query.Powertrain != nil {
+
+	if query.Powertrain != nil && len(*query.Powertrain) > 0 {
 		mods = append(mods,
 			models.TemplateWhere.Powertrain.EQ(*query.Powertrain))
 	}

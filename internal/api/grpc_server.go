@@ -19,7 +19,7 @@ import (
 )
 
 func StartGrpcServer(logger zerolog.Logger, dbs func() *db.ReaderWriter, s *config.Settings) {
-	lis, err := net.Listen("tcp", ":"+s.GRPCPort)
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%v", s.GRPCPort))
 	if err != nil {
 		logger.Fatal().Msgf("Failed to listen on port %v: %v", s.GRPCPort, err)
 	}
