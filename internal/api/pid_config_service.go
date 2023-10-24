@@ -66,7 +66,7 @@ func (s *PidConfigService) UpdatePid(ctx context.Context, in *grpc.UpdatePidRequ
 func (s *PidConfigService) GetPidList(ctx context.Context, in *grpc.GetPidListRequest) (*grpc.GetPidListResponse, error) {
 	service := queries.NewGetPidAllQueryHandler(s.dbs, s.logger)
 	response, err := service.Handle(ctx, &queries.GetPidAllQueryRequest{
-		ID: *in.Id,
+		TemplateName: in.TemplateName,
 	})
 	if err != nil {
 		return nil, err

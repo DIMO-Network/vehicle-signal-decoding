@@ -35,8 +35,7 @@ message PidSummary {
 
 }
 message GetPidListRequest {
-  optional int64 id = 1;
-
+  string template_name = 1;
 }
 message GetPidListResponse {
   repeated PidSummary pid = 1;
@@ -61,7 +60,6 @@ rpc CreatePid (UpdatePidRequest) returns (google.protobuf.Empty);
 rpc UpdatePid (UpdatePidRequest) returns (google.protobuf.Empty);
 rpc GetPidList (GetPidListRequest) returns (GetPidListResponse);
 rpc GetPidByID (GetPidByIDRequest) returns (GetPidByIDResponse);
-
 }
 
 

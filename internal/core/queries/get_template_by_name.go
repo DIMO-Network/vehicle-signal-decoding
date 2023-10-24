@@ -68,6 +68,7 @@ func (h GetTemplateByNameQueryHandler) Handle(ctx context.Context, query *GetTem
 			UpdatedAt:  timestamppb.New(item.UpdatedAt),
 		},
 	}
+
 	if item.ParentTemplateName.Valid {
 		result.Template.ParentTemplateName = item.ParentTemplateName.String
 	}

@@ -23,17 +23,20 @@ func NewGetPidAllQueryHandler(dbs func() *db.ReaderWriter, logger *zerolog.Logge
 }
 
 type GetPidAllQueryRequest struct {
-	ID int64
+	TemplateName string
 }
 
-func (h GetPidAllQueryHandler) Handle(ctx context.Context, _ *GetPidAllQueryRequest) (*grpc.GetPidListResponse, error) {
+func (h GetPidAllQueryHandler) Handle(ctx context.Context, request *GetPidAllQueryRequest) (*grpc.GetPidListResponse, error) {
 
-	all, err := models.PidConfigs().All(ctx, h.DBS().Reader)
+	allPidConfigs, err := models.PidConfigs(models.PidConfigWhere.TemplateName.EQ(request.TemplateName)).All(ctx, h.DBS().Reader)
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to get PidConfigs: %w", err)
 	}
-	pidSummaries := make([]*grpc.PidSummary, 0, len(all))
-	for _, item := range all {
+
+	pidSummaries := make([]*grpc.PidSummary, 0, len(allPidConfigs))
+
+	for _, item := range allPidConfigs {
 		pidSummaries = append(pidSummaries, &grpc.PidSummary{
 			Id:              item.ID,
 			TemplateName:    item.TemplateName,
