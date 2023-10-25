@@ -86,3 +86,17 @@ func (s *PidConfigService) GetPidByID(ctx context.Context, in *grpc.GetPidByIDRe
 
 	return response, nil
 }
+
+func (s *PidConfigService) DeletePid(ctx context.Context, in *grpc.DeletePidRequest) (*emptypb.Empty, error) {
+	service := commands.NewDeletePidCommandHandler(s.dbs)
+	err := service.Execute(ctx, &commands.DeletePidCommandRequest{
+		ID:           in.Id,
+		TemplateName: in.TemplateName,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &emptypb.Empty{}, nil
+}

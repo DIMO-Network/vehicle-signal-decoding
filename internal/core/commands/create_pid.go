@@ -51,7 +51,6 @@ func (h CreatePidCommandHandler) Execute(ctx context.Context, req *CreatePidComm
 	}
 
 	pid := &models.PidConfig{
-		ID:              req.ID,
 		TemplateName:    req.TemplateName,
 		Header:          req.Header,
 		Mode:            req.Mode,

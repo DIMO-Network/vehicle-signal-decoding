@@ -51,8 +51,11 @@ message GetPidByIDResponse {
 }
 message UpdatePidRequest {
   PidConfig pid = 1;
+}
 
-
+message DeletePidRequest {
+  int64 id = 1;
+  string template_name = 2;
 }
 
 service PidConfigService {
@@ -60,6 +63,7 @@ rpc CreatePid (UpdatePidRequest) returns (google.protobuf.Empty);
 rpc UpdatePid (UpdatePidRequest) returns (google.protobuf.Empty);
 rpc GetPidList (GetPidListRequest) returns (GetPidListResponse);
 rpc GetPidByID (GetPidByIDRequest) returns (GetPidByIDResponse);
+rpc DeletePid (DeletePidRequest) returns (google.protobuf.Empty);
 }
 
 
