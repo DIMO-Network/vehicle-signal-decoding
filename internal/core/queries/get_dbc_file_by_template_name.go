@@ -33,7 +33,8 @@ func (h GetDbcByTemplateNameQueryHandler) Handle(ctx context.Context, query *Get
 	item, err := models.DBCFiles(models.DBCFileWhere.TemplateName.EQ(query.TemplateName)).One(ctx, h.DBS().Reader)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf("DBC File not found for template name: %s", query.TemplateName)
+			h.logger.Info().Msgf("failed to get DBC File by template name: %s", err)
+			return nil, nil
 		}
 		return nil, fmt.Errorf("failed to get DBC File by template name: %s", err)
 	}
