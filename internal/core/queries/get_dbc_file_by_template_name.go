@@ -34,7 +34,7 @@ func (h GetDbcByTemplateNameQueryHandler) Handle(ctx context.Context, query *Get
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			h.logger.Info().Msgf("failed to get DBC File by template name: %s", err)
-			return nil, nil
+			return &grpc.GetDbcByTemplateNameResponse{Dbc: &grpc.DbcConfig{}}, nil
 		}
 		return nil, fmt.Errorf("failed to get DBC File by template name: %s", err)
 	}
