@@ -28,7 +28,6 @@ message TemplateSummary {
   string powertrain = 4;
   string has_dbc = 5;
   int32 pids_count = 6;
-
 }
 message PID {
   string id = 1;
@@ -37,24 +36,19 @@ message PID {
 message GetTemplateListRequest {
   optional string powertrain = 1;
   optional string protocol = 2;
-
 }
 message GetTemplateListResponse {
   repeated TemplateSummary templates = 1;
-
 }
 message GetTemplateByNameRequest {
   string name = 1;
-
 }
 message GetTemplateByNameResponse {
   Template template = 1;
   repeated PID pids = 2;
-
 }
 message UpdateTemplateRequest {
   Template template = 1;
-
 }
 
 service TemplateConfigService {
@@ -62,5 +56,4 @@ service TemplateConfigService {
   rpc UpdateTemplate(UpdateTemplateRequest) returns (google.protobuf.Empty);
   rpc GetTemplateList (GetTemplateListRequest) returns (GetTemplateListResponse);
   rpc GetTemplateByName (GetTemplateByNameRequest) returns (GetTemplateByNameResponse);
-
 }

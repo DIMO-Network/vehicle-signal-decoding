@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
+	"google.golang.org/protobuf/types/known/timestamppb"
+
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/exceptions"
 
@@ -29,7 +32,7 @@ type GetDBCCodeAllQueryRequest struct {
 
 func (h GetDBCCodeAllQueryHandler) Handle(ctx context.Context, _ *GetDBCCodeAllQueryRequest) (*p_grpc.GetDBCCodeListResponse, error) {
 
-	all, err := models.DBCCodes().All(ctx, h.DBS().Reader)
+	all, err := models.DBCCodes(qm.OrderBy("created_at desc"), qm.Limit(100)).All(ctx, h.DBS().Reader)
 	if err != nil {
 		return nil, &exceptions.InternalError{
 			Err: fmt.Errorf("failed to get dbc_codes"),
@@ -47,6 +50,8 @@ func (h GetDBCCodeAllQueryHandler) Handle(ctx context.Context, _ *GetDBCCodeAllQ
 			Trigger:          item.Trigger,
 			MaxSampleSize:    int32(item.MaxSampleSize),
 			RecordingEnabled: item.RecordingEnabled,
+			CreatedAt:        timestamppb.New(item.CreatedAt),
+			UpdatedAt:        timestamppb.New(item.UpdatedAt),
 		})
 	}
 
