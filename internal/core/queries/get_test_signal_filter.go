@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"google.golang.org/protobuf/types/known/timestamppb"
+
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/common"
 
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -74,6 +76,7 @@ func (h GetTestSignalFilterQueryHandler) Handle(ctx context.Context, query *GetT
 			AutopiUnitId:       item.AutopiUnitID,
 			Approved:           item.Approved,
 			Signals:            string(common.JSONOrDefault(item.Signals)),
+			CreatedAt:          timestamppb.New(item.CreatedAt),
 		})
 
 	}
