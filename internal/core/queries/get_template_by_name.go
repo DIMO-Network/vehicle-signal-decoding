@@ -58,14 +58,15 @@ func (h GetTemplateByNameQueryHandler) Handle(ctx context.Context, query *GetTem
 
 	result := &grpc.GetTemplateByNameResponse{
 		Template: &grpc.Template{
-			Name:       item.TemplateName,
-			Version:    item.Version,
-			Protocol:   item.Protocol,
-			Powertrain: item.Powertrain,
-			HasDbc:     hasDbc,
-			PidsCount:  int32(pidsCount),
-			CreatedAt:  timestamppb.New(item.CreatedAt),
-			UpdatedAt:  timestamppb.New(item.UpdatedAt),
+			Name:               item.TemplateName,
+			ParentTemplateName: item.ParentTemplateName.String,
+			Version:            item.Version,
+			Protocol:           item.Protocol,
+			Powertrain:         item.Powertrain,
+			HasDbc:             hasDbc,
+			PidsCount:          int32(pidsCount),
+			CreatedAt:          timestamppb.New(item.CreatedAt),
+			UpdatedAt:          timestamppb.New(item.UpdatedAt),
 		},
 	}
 
