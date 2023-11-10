@@ -3,6 +3,9 @@ package api
 import (
 	"context"
 	"errors"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"os"
 	"os/signal"
 	"runtime/debug"
@@ -30,6 +33,8 @@ import (
 	"github.com/rs/zerolog"
 
 	fiberrecover "github.com/gofiber/fiber/v2/middleware/recover"
+
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 )
 
 func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) {
@@ -38,7 +43,10 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 	pdb := db.NewDbConnectionFromSettings(ctx, &settings.DB, true)
 	pdb.WaitForDB(logger)
 
-	go StartGrpcServer(logger, pdb.DBS, settings)
+	//resolve s3 connection
+	s3Client := getS3ServiceClient(ctx, settings, logger)
+
+	go StartGrpcServer(logger, pdb.DBS, settings, s3Client)
 
 	startWebAPI(logger, settings, pdb)
 	startVehicleSignalConsumer(logger, settings, pdb)
@@ -183,4 +191,32 @@ func ErrorHandler(c *fiber.Ctx, err error, logger zerolog.Logger) error {
 type CodeResp struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
+}
+
+// getS3ServiceClient instantiates a new default config and then a new s3 services client if not already set. Takes context in, although it could likely use a context from container passed in on instantiation
+func getS3ServiceClient(ctx context.Context, settings *config.Settings, logger zerolog.Logger) *s3.Client {
+	cfg, err := awsconfig.LoadDefaultConfig(ctx,
+		awsconfig.WithRegion(settings.AWSRegion),
+		// Comment the below out if not using localhost
+		awsconfig.WithEndpointResolverWithOptions(aws.EndpointResolverWithOptionsFunc(
+			func(service, region string, options ...interface{}) (aws.Endpoint, error) {
+
+				if settings.Environment == "local" {
+					return aws.Endpoint{PartitionID: "aws", URL: settings.DocumentsAWSEndpoint, SigningRegion: settings.AWSRegion}, nil // The SigningRegion key was what's was missing! D'oh.
+				}
+
+				// returning EndpointNotFoundError will allow the service to fallback to its default resolution
+				return aws.Endpoint{}, &aws.EndpointNotFoundError{}
+			})))
+
+	if err != nil {
+		logger.Fatal().Err(err).Msg("Could not load aws config, terminating")
+	}
+
+	s3ServiceClient := s3.NewFromConfig(cfg, func(o *s3.Options) {
+		o.Region = settings.AWSRegion
+		o.Credentials = credentials.NewStaticCredentialsProvider(settings.DocumentsAWSAccessKeyID, settings.DocumentsAWSSecretsAccessKey, "")
+	})
+
+	return s3ServiceClient
 }
