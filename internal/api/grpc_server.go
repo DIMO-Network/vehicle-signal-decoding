@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"net"
 	"runtime/debug"
 
