@@ -118,6 +118,29 @@ message GetByIdRequest {
   string id = 1;
 }
 
+message GetCanBusDumpFileRequest {
+  string eth_addr = 1;
+}
+
+message GetCanBusDumpFileResponse {
+  repeated GetCanBusDumpFileItemResponse items = 1;
+}
+
+message GetCanBusDumpFileItemResponse {
+  string file_id = 1;
+  string file_name = 2;
+  string file_type = 3;
+  google.protobuf.Timestamp created_at = 4;
+}
+
+message DownloadCanBusDumpFileContentRequest {
+  string id = 1;
+}
+
+message DownloadCanBusDumpFileContentResponse {
+  bytes content = 1;
+}
+
 service VehicleSignalDecodingService {
   rpc CreateDBCCode(CreateDBCCodeRequest) returns (VehicleSignalBaseResponse);
   rpc UpdateDBCCode(UpdateDBCCodeRequest) returns (VehicleSignalBaseResponse);
@@ -131,4 +154,7 @@ service VehicleSignalDecodingService {
   rpc GetTestSignalsByUserDeviceID(GetByIdRequest) returns (GetTestSignalListResponse);
   rpc GetTestSignalsByDBCCodeID(GetByIdRequest) returns (GetTestSignalListResponse);
   rpc GetTestSignalByID(GetByIdRequest) returns (GetTestSignalResponse);
+
+  rpc GetCanBusDumpFiles(GetCanBusDumpFileRequest) returns (GetCanBusDumpFileResponse);
+  rpc DownloadCanBusDumpFile(DownloadCanBusDumpFileContentRequest) returns (DownloadCanBusDumpFileContentResponse);
 }

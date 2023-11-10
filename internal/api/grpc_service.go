@@ -2,6 +2,8 @@ package api
 
 import (
 	"context"
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 
 	"github.com/DIMO-Network/shared/db"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/commands"
@@ -14,12 +16,14 @@ import (
 
 type GrpcService struct {
 	p_grpc.VehicleSignalDecodingServiceServer
-	logger *zerolog.Logger
-	DBS    func() *db.ReaderWriter
+	logger   *zerolog.Logger
+	DBS      func() *db.ReaderWriter
+	s3Client *s3.Client
+	settings *config.Settings
 }
 
-func NewGrpcService(logger *zerolog.Logger, dbs func() *db.ReaderWriter) p_grpc.VehicleSignalDecodingServiceServer {
-	return &GrpcService{logger: logger, DBS: dbs}
+func NewGrpcService(logger *zerolog.Logger, dbs func() *db.ReaderWriter, s3Client *s3.Client, settings *config.Settings) p_grpc.VehicleSignalDecodingServiceServer {
+	return &GrpcService{logger: logger, DBS: dbs, settings: settings, s3Client: s3Client}
 }
 
 func (s *GrpcService) CreateDBCCode(ctx context.Context, in *p_grpc.CreateDBCCodeRequest) (*p_grpc.VehicleSignalBaseResponse, error) {
@@ -174,6 +178,32 @@ func (s *GrpcService) GetTestSignalsByDBCCodeID(ctx context.Context, in *p_grpc.
 	service := queries.NewGetTestSignalFilterQueryHandler(s.DBS, s.logger)
 	response, err := service.Handle(ctx, &queries.GetTestSignalFilterQueryRequest{
 		DBCCodeID: in.Id,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+
+func (s *GrpcService) GetCanBusDumpFiles(ctx context.Context, in *p_grpc.GetCanBusDumpFileRequest) (*p_grpc.GetCanBusDumpFileResponse, error) {
+	service := queries.NewGetCanBusDumpFileByEthAddressQueryHandler(s.logger, s.s3Client, s.settings)
+	response, err := service.Handle(ctx, &queries.GetCanBusDumpFileByEthAddressQueryRequest{
+		EthAddress: in.EthAddr,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+
+func (s *GrpcService) DownloadCanBusDumpFile(ctx context.Context, in *p_grpc.DownloadCanBusDumpFileContentRequest) (*p_grpc.DownloadCanBusDumpFileContentResponse, error) {
+	service := queries.NewDownloadCanBusDumpFileByFileNameQueryHandler(s.logger, s.s3Client, s.settings)
+	response, err := service.Handle(ctx, &queries.DownloadCanBusDumpFileByFileNameQueryRequest{
+		FileName: in.Id,
 	})
 
 	if err != nil {
