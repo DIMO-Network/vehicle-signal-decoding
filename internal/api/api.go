@@ -202,7 +202,7 @@ func getS3ServiceClient(ctx context.Context, settings *config.Settings, logger z
 			func(service, region string, options ...interface{}) (aws.Endpoint, error) {
 
 				if settings.Environment == "local" {
-					return aws.Endpoint{PartitionID: "aws", URL: settings.DocumentsAWSEndpoint, SigningRegion: settings.AWSRegion}, nil // The SigningRegion key was what's was missing! D'oh.
+					return aws.Endpoint{PartitionID: "aws", URL: settings.CandumpsAWSEndpoint, SigningRegion: settings.AWSRegion}, nil // The SigningRegion key was what's was missing! D'oh.
 				}
 
 				// returning EndpointNotFoundError will allow the service to fallback to its default resolution
@@ -215,7 +215,7 @@ func getS3ServiceClient(ctx context.Context, settings *config.Settings, logger z
 
 	s3ServiceClient := s3.NewFromConfig(cfg, func(o *s3.Options) {
 		o.Region = settings.AWSRegion
-		o.Credentials = credentials.NewStaticCredentialsProvider(settings.DocumentsAWSAccessKeyID, settings.DocumentsAWSSecretsAccessKey, "")
+		o.Credentials = credentials.NewStaticCredentialsProvider(settings.CandumpsAWSAccessKeyID, settings.CandumpsAWSSecretsAccessKey, "")
 	})
 
 	return s3ServiceClient
