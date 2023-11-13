@@ -28,13 +28,51 @@ type GetPidAllQueryRequest struct {
 
 func (h GetPidAllQueryHandler) Handle(ctx context.Context, request *GetPidAllQueryRequest) (*grpc.GetPidListResponse, error) {
 
-	allPidConfigs, err := models.PidConfigs(models.PidConfigWhere.TemplateName.EQ(request.TemplateName)).All(ctx, h.DBS().Reader)
+	template, err := models.Templates(models.TemplateWhere.TemplateName.EQ(request.TemplateName)).One(ctx, h.DBS().Reader)
+
+	if err != nil {
+		return nil, fmt.Errorf("invalid template: %w", err)
+	}
+
+	currentTemplatePids, err := h.getPidsByTemplate(ctx, template.TemplateName)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to get PidConfigs: %w", err)
 	}
 
-	pidSummaries := make([]*grpc.PidSummary, 0, len(allPidConfigs))
+	parentTemplatePids := make([]*grpc.PidSummary, 0)
+
+	if template.ParentTemplateName.Valid && len(template.ParentTemplateName.String) > 0 {
+		parentTemplatePids, err = h.getPidsByTemplate(ctx, template.ParentTemplateName.String)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get PidConfigs: %w", err)
+		}
+	}
+
+	pidSummaries := make([]*grpc.PidSummary, 0)
+
+	pidSummaries = append(pidSummaries, currentTemplatePids...)
+
+	for _, item := range parentTemplatePids {
+		item.IsParentPid = true
+		pidSummaries = append(pidSummaries, item)
+	}
+
+	result := &grpc.GetPidListResponse{
+		Pid: pidSummaries,
+	}
+
+	return result, nil
+}
+
+func (h *GetPidAllQueryHandler) getPidsByTemplate(ctx context.Context, templateName string) ([]*grpc.PidSummary, error) {
+	allPidConfigs, err := models.PidConfigs(models.PidConfigWhere.TemplateName.EQ(templateName)).All(ctx, h.DBS().Reader)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to get PidConfigs: %w", err)
+	}
+
+	pidSummaries := make([]*grpc.PidSummary, 0)
 
 	for _, item := range allPidConfigs {
 		pidSummaries = append(pidSummaries, &grpc.PidSummary{
@@ -50,9 +88,5 @@ func (h GetPidAllQueryHandler) Handle(ctx context.Context, request *GetPidAllQue
 		})
 	}
 
-	result := &grpc.GetPidListResponse{
-		Pid: pidSummaries,
-	}
-
-	return result, nil
+	return pidSummaries, nil
 }
