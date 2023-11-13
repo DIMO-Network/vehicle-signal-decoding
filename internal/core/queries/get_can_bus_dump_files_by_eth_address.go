@@ -33,7 +33,7 @@ type GetCanBusDumpFileByEthAddressQueryRequest struct {
 func (h GetCanBusDumpFileByEthAddressQueryHandler) Handle(ctx context.Context, query *GetCanBusDumpFileByEthAddressQueryRequest) (*p_grpc.GetCanBusDumpFileResponse, error) {
 
 	response, err := h.s3Client.ListObjectsV2(ctx, &s3.ListObjectsV2Input{
-		Bucket: aws.String(h.settings.AWSDocumentsBucketName),
+		Bucket: aws.String(h.settings.AWSCandumpsBucketName),
 		Prefix: aws.String(query.EthAddress + "/"),
 	})
 
