@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/binary"
 	"fmt"
+	"strconv"
 
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	pb "github.com/DIMO-Network/devices-api/pkg/grpc"
@@ -244,17 +245,20 @@ func (d *DeviceConfigController) getConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) 
 		ud.CANProtocol = models.CanProtocolTypeCAN11_500
 	}
 
-	// Device Definitions
-	var ddResponse *p_grpc.GetDeviceDefinitionItemResponse
+	// Retrieve Device Definition
+	var ddResponse *p_grpc.GetDeviceDefinitionResponse
 	deviceDefinitionID := ud.DeviceDefinitionId
 	ddResponse, err := d.deviceDefSvc.GetDeviceDefinitionByID(c.Context(), deviceDefinitionID)
 	if err != nil {
-		return err
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": fmt.Sprintf("Failed to retrieve device definition for deviceDefinitionId: %s", deviceDefinitionID)})
 	}
-	vehicleYear := int(ddResponse.Type.Year)
+	vehicleYear := int(ddResponse.DeviceDefinitions[0].Type.Year)
+	vehicleMake := ddResponse.DeviceDefinitions[0].Type.MakeSlug
+	vehicleModel := ddResponse.DeviceDefinitions[0].Type.ModelSlug
 
+	// Determine Powertrain
 	var powerTrainType string
-	for _, attribute := range ddResponse.DeviceAttributes {
+	for _, attribute := range ddResponse.DeviceDefinitions[0].DeviceAttributes {
 		if attribute.Name == "powertrain_type" {
 			powerTrainType = attribute.Value
 			break
@@ -267,37 +271,91 @@ func (d *DeviceConfigController) getConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) 
 		}
 	}
 
-	// Query templates, filter by protocol and powertrain
-	templates, err := models.Templates(
-		models.TemplateWhere.Protocol.EQ(ud.CANProtocol),
-		models.TemplateWhere.Powertrain.EQ(ud.PowerTrainType),
-		qm.Load(models.TemplateRels.TemplateNameDBCFile),
-		qm.Load(models.TemplateRels.TemplateNameTemplateVehicles),
-		qm.Load(models.TemplateRels.TemplateNameDeviceSetting),
-	).All(context.Background(), d.db)
-
+	deviceDefinitionIDInt64, err := strconv.ParseInt(deviceDefinitionID, 10, 64)
 	if err != nil {
-		// todo what if err is sql.ErrNoRows - eg. nothing found? we would probably want to return the first default template
-		// todo - this should just return the wrapped error and let the api.ErrorHandler deal with how to return the error
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": fmt.Sprintf("Failed to query templates for protocol: %s and powertrain: %s", ud.CANProtocol, ud.PowerTrainType)})
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Invalid device definition ID"})
 	}
 
-	// Filter templates by vehicle year range
-	var matchedTemplate *models.Template
-	for _, template := range templates {
-		for _, tv := range template.R.TemplateNameTemplateVehicles {
-			if vehicleYear >= tv.YearStart && vehicleYear <= tv.YearEnd {
-				matchedTemplate = template
+	var matchedTemplateName string
+	var matchedDeviceDefinition *models.TemplateDeviceDefinition
+
+	// Try and find a template from template_device_definitions
+	deviceDefinitions, err := models.TemplateDeviceDefinitions(
+		models.TemplateDeviceDefinitionWhere.DeviceDefinitionID.EQ(deviceDefinitionIDInt64),
+		models.TemplateDeviceDefinitionWhere.YearStart.LTE(vehicleYear),
+		models.TemplateDeviceDefinitionWhere.YearEnd.GTE(vehicleYear),
+		models.TemplateDeviceDefinitionWhere.MakeSlug.EQ(vehicleMake),
+	).All(context.Background(), d.db)
+
+	if err != nil && err != sql.ErrNoRows {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to query template device definitions"})
+	}
+
+	for _, dd := range deviceDefinitions {
+		for _, model := range dd.ModelWhitelist {
+			if model == vehicleModel {
+				matchedDeviceDefinition = dd
 				break
 			}
 		}
-		if matchedTemplate != nil {
+		if matchedDeviceDefinition != nil {
 			break
 		}
 	}
+
+	if matchedDeviceDefinition != nil {
+		matchedTemplateName = matchedDeviceDefinition.TemplateName
+	}
+
+	var matchedTemplate *models.Template
+
+	// Fetch the template object if a name was found
+	if matchedTemplateName != "" {
+		matchedTemplate, err = models.Templates(
+			models.TemplateWhere.TemplateName.EQ(matchedTemplateName),
+		).One(context.Background(), d.db)
+
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to fetch the template by name"})
+		}
+	}
+
+	var templates []*models.Template
+
+	// If no specific template match is found, query by protocol and powertrain
 	if matchedTemplate == nil {
-		// todo - what if templates length is 0? maybe handle this further above
-		matchedTemplate = templates[0]
+		// Query templates, filter by protocol and powertrain
+		templates, err := models.Templates(
+			models.TemplateWhere.Protocol.EQ(ud.CANProtocol),
+			models.TemplateWhere.Powertrain.EQ(ud.PowerTrainType),
+			qm.Load(models.TemplateRels.TemplateNameDBCFile),
+			qm.Load(models.TemplateRels.TemplateNameTemplateVehicles),
+			qm.Load(models.TemplateRels.TemplateNameDeviceSetting),
+		).All(context.Background(), d.db)
+
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": fmt.Sprintf("Failed to query templates for protocol: %s and powertrain: %s", ud.CANProtocol, ud.PowerTrainType)})
+		}
+
+		// Filter templates by vehicle year range
+		for _, template := range templates {
+			for _, tv := range template.R.TemplateNameTemplateVehicles {
+				if vehicleYear >= tv.YearStart && vehicleYear <= tv.YearEnd {
+					matchedTemplate = template
+					break
+				}
+			}
+			if matchedTemplate != nil {
+				break
+			}
+		}
+		if matchedTemplate == nil {
+			matchedTemplate = templates[0]
+		}
+	}
+
+	if matchedTemplate == nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "No matching template found"})
 	}
 
 	templateName := matchedTemplate.TemplateName
@@ -342,8 +400,8 @@ func (d *DeviceConfigController) GetConfigURLsFromVIN(c *fiber.Ctx) error {
 	vin := c.Params("vin")
 
 	ud, err := d.userDeviceSvc.GetUserDeviceByVIN(c.Context(), vin)
-	// if there is no user device with this VIN, then just decode the vin and return the corresponding definition
 	if err != nil {
+
 		definitionResp, err := d.deviceDefSvc.DecodeVIN(c.Context(), vin)
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": fmt.Sprintf("could not decode VIN, contact support if you're sure this is valid VIN: %s", vin)})
@@ -352,10 +410,6 @@ func (d *DeviceConfigController) GetConfigURLsFromVIN(c *fiber.Ctx) error {
 		ud = &pb.UserDevice{
 			DeviceDefinitionId: definitionResp.DeviceDefinitionId,
 		}
-		if len(definitionResp.DeviceStyleId) > 0 {
-			ud.DeviceStyleId = &definitionResp.DeviceStyleId
-		}
-		// todo: get powertrain type from definition response and include in ud.PowerTrainType
 	}
 
 	return d.getConfigURLs(c, ud)
