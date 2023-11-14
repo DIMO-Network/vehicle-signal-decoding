@@ -14,7 +14,6 @@ import (
 type DeviceDefinitionsService interface {
 	GetDeviceDefinitionByID(ctx context.Context, id string) (*p_grpc.GetDeviceDefinitionResponse, error)
 	DecodeVIN(ctx context.Context, vin string) (*p_grpc.DecodeVinResponse, error)
-	// Add other methods as required.
 }
 
 type deviceDefinitionsService struct {
