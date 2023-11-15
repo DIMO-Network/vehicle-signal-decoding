@@ -3,11 +3,11 @@ package queries
 import (
 	"context"
 	"fmt"
-
 	"github.com/DIMO-Network/shared/db"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 	grpc "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
 	"github.com/rs/zerolog"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
 type GetPidAllQueryHandler struct {
@@ -66,7 +66,7 @@ func (h GetPidAllQueryHandler) Handle(ctx context.Context, request *GetPidAllQue
 }
 
 func (h *GetPidAllQueryHandler) getPidsByTemplate(ctx context.Context, templateName string) ([]*grpc.PidSummary, error) {
-	allPidConfigs, err := models.PidConfigs(models.PidConfigWhere.TemplateName.EQ(templateName)).All(ctx, h.DBS().Reader)
+	allPidConfigs, err := models.PidConfigs(models.PidConfigWhere.TemplateName.EQ(templateName), qm.OrderBy(models.PidConfigColumns.SignalName)).All(ctx, h.DBS().Reader)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to get PidConfigs: %w", err)
