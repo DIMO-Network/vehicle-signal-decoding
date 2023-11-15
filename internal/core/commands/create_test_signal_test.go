@@ -15,9 +15,9 @@ import (
 	"github.com/DIMO-Network/shared/db"
 	"github.com/testcontainers/testcontainers-go"
 
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+	"go.uber.org/mock/gomock"
 )
 
 type CreateTestSignalTestSuite struct {

@@ -6,9 +6,9 @@ import (
 	mock_commands "github.com/DIMO-Network/vehicle-signal-decoding/internal/core/commands/mocks"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/dbtest"
 	"github.com/ThreeDotsLabs/watermill/message"
-	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
 
 func TestWorkerListenerService_processMessage(t *testing.T) {

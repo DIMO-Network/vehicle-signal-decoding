@@ -245,16 +245,16 @@ func (d *DeviceConfigController) GetConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) 
 	}
 
 	// Device Definitions
-	var ddResponse *p_grpc.GetDeviceDefinitionResponse
+	var ddResponse *p_grpc.GetDeviceDefinitionItemResponse
 	deviceDefinitionID := ud.DeviceDefinitionId
 	ddResponse, err := d.deviceDefSvc.GetDeviceDefinitionByID(c.Context(), deviceDefinitionID)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": fmt.Sprintf("Failed to retrieve device definition for deviceDefinitionId: %s", deviceDefinitionID)})
+		return err
 	}
-	vehicleYear := int(ddResponse.DeviceDefinitions[0].Type.Year)
+	vehicleYear := int(ddResponse.Type.Year)
 
 	var powerTrainType string
-	for _, attribute := range ddResponse.DeviceDefinitions[0].DeviceAttributes {
+	for _, attribute := range ddResponse.DeviceAttributes {
 		if attribute.Name == "powertrain_type" {
 			powerTrainType = attribute.Value
 			break
@@ -334,8 +334,8 @@ func (d *DeviceConfigController) GetConfigURLsFromVIN(c *fiber.Ctx) error {
 	vin := c.Params("vin")
 
 	ud, err := d.userDeviceSvc.GetUserDeviceByVIN(c.Context(), vin)
+	// if there is no user device with this VIN, then just decode the vin and return the corresponding definition
 	if err != nil {
-
 		definitionResp, err := d.deviceDefSvc.DecodeVIN(c.Context(), vin)
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": fmt.Sprintf("could not decode VIN, contact support if you're sure this is valid VIN: %s", vin)})
@@ -344,6 +344,10 @@ func (d *DeviceConfigController) GetConfigURLsFromVIN(c *fiber.Ctx) error {
 		ud = &pb.UserDevice{
 			DeviceDefinitionId: definitionResp.DeviceDefinitionId,
 		}
+		if len(definitionResp.DeviceStyleId) > 0 {
+			ud.DeviceStyleId = &definitionResp.DeviceStyleId
+		}
+		// todo: get powertrain type from definition response and include in ud.PowerTrainType
 	}
 
 	return d.GetConfigURLs(c, ud)

@@ -13,9 +13,9 @@ import (
 
 	pb "github.com/DIMO-Network/devices-api/pkg/grpc"
 	"github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
-	"github.com/golang/mock/gomock"
 	"github.com/segmentio/ksuid"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 
 	"github.com/volatiletech/sqlboiler/v4/boil"
 
@@ -310,16 +310,13 @@ func TestGetConfigURLsEmptyDBC(t *testing.T) {
 	mockUserDeviceSvc.EXPECT().GetUserDeviceByVIN(gomock.Any(), vin).Return(mockedUserDevice, nil)
 
 	// Mock the device definition service
-	mockedDeviceDefinition := &p_grpc.GetDeviceDefinitionResponse{
-		DeviceDefinitions: []*p_grpc.GetDeviceDefinitionItemResponse{
-			{
-				DeviceDefinitionId: ksuid.New().String(),
-				Type: &p_grpc.DeviceType{
-					Year: 2020,
-				},
-			},
+	mockedDeviceDefinition := &p_grpc.GetDeviceDefinitionItemResponse{
+		DeviceDefinitionId: ksuid.New().String(),
+		Type: &p_grpc.DeviceType{
+			Year: 2020,
 		},
 	}
+
 	mockDeviceDefSvc := mock_services.NewMockDeviceDefinitionsService(mockCtrl)
 	mockDeviceDefSvc.EXPECT().GetDeviceDefinitionByID(gomock.Any(), gomock.Any()).Return(mockedDeviceDefinition, nil)
 	c := NewDeviceConfigController(&config.Settings{Port: "3000", DeploymentURL: "http://localhost:3000"}, &logger, pdb.DBS().Reader.DB, mockUserDeviceSvc, mockDeviceDefSvc)
@@ -417,14 +414,10 @@ func TestGetConfigURLsEmptyDeviceSettings(t *testing.T) {
 	mockUserDeviceSvc := mock_services.NewMockUserDeviceService(mockCtrl)
 	mockUserDeviceSvc.EXPECT().GetUserDeviceByVIN(gomock.Any(), vin).Return(mockedUserDevice, nil)
 	// Mock the device definition service
-	mockedDeviceDefinition := &p_grpc.GetDeviceDefinitionResponse{
-		DeviceDefinitions: []*p_grpc.GetDeviceDefinitionItemResponse{
-			{
-				DeviceDefinitionId: ksuid.New().String(),
-				Type: &p_grpc.DeviceType{
-					Year: 2020,
-				},
-			},
+	mockedDeviceDefinition := &p_grpc.GetDeviceDefinitionItemResponse{
+		DeviceDefinitionId: ksuid.New().String(),
+		Type: &p_grpc.DeviceType{
+			Year: 2020,
 		},
 	}
 	mockDeviceDefSvc := mock_services.NewMockDeviceDefinitionsService(mockCtrl)
@@ -526,16 +519,13 @@ func TestGetConfigURLsMatchingYearRange(t *testing.T) {
 	mockUserDeviceSvc := mock_services.NewMockUserDeviceService(mockCtrl)
 	mockUserDeviceSvc.EXPECT().GetUserDeviceByVIN(gomock.Any(), vin).Return(mockedUserDevice, nil)
 	// Mock the device definition service
-	mockedDeviceDefinition := &p_grpc.GetDeviceDefinitionResponse{
-		DeviceDefinitions: []*p_grpc.GetDeviceDefinitionItemResponse{
-			{
-				DeviceDefinitionId: ksuid.New().String(),
-				Type: &p_grpc.DeviceType{
-					Year: 2020,
-				},
-			},
+	mockedDeviceDefinition := &p_grpc.GetDeviceDefinitionItemResponse{
+		DeviceDefinitionId: ksuid.New().String(),
+		Type: &p_grpc.DeviceType{
+			Year: 2020,
 		},
 	}
+
 	mockDeviceDefSvc := mock_services.NewMockDeviceDefinitionsService(mockCtrl)
 	mockDeviceDefSvc.EXPECT().GetDeviceDefinitionByID(gomock.Any(), gomock.Any()).Return(mockedDeviceDefinition, nil)
 	c := NewDeviceConfigController(&config.Settings{Port: "3000", DeploymentURL: "http://localhost:3000"}, &logger, pdb.DBS().Reader.DB, mockUserDeviceSvc, mockDeviceDefSvc)
@@ -643,16 +633,13 @@ func TestGetConfigURLsNonMatchingYearRange(t *testing.T) {
 	mockUserDeviceSvc := mock_services.NewMockUserDeviceService(mockCtrl)
 	mockUserDeviceSvc.EXPECT().GetUserDeviceByVIN(gomock.Any(), vin).Return(mockedUserDevice, nil)
 	// Mock the device definition service
-	mockedDeviceDefinition := &p_grpc.GetDeviceDefinitionResponse{
-		DeviceDefinitions: []*p_grpc.GetDeviceDefinitionItemResponse{
-			{
-				DeviceDefinitionId: ksuid.New().String(),
-				Type: &p_grpc.DeviceType{
-					Year: 2019,
-				},
-			},
+	mockedDeviceDefinition := &p_grpc.GetDeviceDefinitionItemResponse{
+		DeviceDefinitionId: ksuid.New().String(),
+		Type: &p_grpc.DeviceType{
+			Year: 2019,
 		},
 	}
+
 	mockDeviceDefSvc := mock_services.NewMockDeviceDefinitionsService(mockCtrl)
 	mockDeviceDefSvc.EXPECT().GetDeviceDefinitionByID(gomock.Any(), gomock.Any()).Return(mockedDeviceDefinition, nil)
 	c := NewDeviceConfigController(&config.Settings{Port: "3000", DeploymentURL: "http://localhost:3000"}, &logger, pdb.DBS().Reader.DB, mockUserDeviceSvc, mockDeviceDefSvc)
@@ -782,12 +769,7 @@ func TestGetConfigURLsDecodeVin(t *testing.T) {
 		Source:             "",
 	}, nil)
 
-	mockedDeviceDefinition := &p_grpc.GetDeviceDefinitionResponse{
-		DeviceDefinitions: []*p_grpc.GetDeviceDefinitionItemResponse{
-			dd,
-		},
-	}
-	mockDeviceDefSvc.EXPECT().GetDeviceDefinitionByID(gomock.Any(), dd.DeviceDefinitionId).Return(mockedDeviceDefinition, nil)
+	mockDeviceDefSvc.EXPECT().GetDeviceDefinitionByID(gomock.Any(), dd.DeviceDefinitionId).Return(dd, nil)
 
 	c := NewDeviceConfigController(&config.Settings{Port: "3000", DeploymentURL: "http://localhost:3000"}, &logger, pdb.DBS().Reader.DB, mockUserDeviceSvc, mockDeviceDefSvc)
 
