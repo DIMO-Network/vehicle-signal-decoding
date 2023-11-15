@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"errors"
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/exceptions"
 	"os"
 	"os/signal"
 	"strings"
@@ -157,12 +158,17 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 
 // Code below copied from device-data-api/main.go
 func ErrorHandler(c *fiber.Ctx, err error, logger zerolog.Logger) error {
-	code := fiber.StatusInternalServerError // Default 500 statuscode
-	message := "Internal error."
+	// Default error info
+	code := fiber.StatusInternalServerError
+	message := "An error occurred while processing your request."
 
 	var e *fiber.Error
+	var evnf *exceptions.NotFoundError
 	if errors.As(err, &e) {
 		code = e.Code
+		message = e.Message
+	} else if errors.As(err, &evnf) {
+		code = fiber.StatusNotFound
 		message = e.Message
 	}
 
