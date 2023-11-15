@@ -14,26 +14,22 @@ import (
 	"time"
 
 	"github.com/friendsofgo/errors"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"github.com/volatiletech/sqlboiler/v4/queries/qmhelper"
-	"github.com/volatiletech/sqlboiler/v4/types"
 	"github.com/volatiletech/strmangle"
 )
 
 // TemplateDeviceDefinition is an object representing the database table.
 type TemplateDeviceDefinition struct {
-	ID                 int64             `boil:"id" json:"id" toml:"id" yaml:"id"`
-	DeviceDefinitionID int64             `boil:"device_definition_id" json:"device_definition_id" toml:"device_definition_id" yaml:"device_definition_id"`
-	TemplateName       string            `boil:"template_name" json:"template_name" toml:"template_name" yaml:"template_name"`
-	YearStart          int               `boil:"year_start" json:"year_start" toml:"year_start" yaml:"year_start"`
-	YearEnd            int               `boil:"year_end" json:"year_end" toml:"year_end" yaml:"year_end"`
-	MakeSlug           string            `boil:"make_slug" json:"make_slug" toml:"make_slug" yaml:"make_slug"`
-	ModelWhitelist     types.StringArray `boil:"model_whitelist" json:"model_whitelist" toml:"model_whitelist" yaml:"model_whitelist"`
-	HierarchyLevel     int               `boil:"hierarchy_level" json:"hierarchy_level" toml:"hierarchy_level" yaml:"hierarchy_level"`
-	CreatedAt          time.Time         `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	UpdatedAt          time.Time         `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	ID                 int64       `boil:"id" json:"id" toml:"id" yaml:"id"`
+	DeviceDefinitionID string      `boil:"device_definition_id" json:"device_definition_id" toml:"device_definition_id" yaml:"device_definition_id"`
+	DeviceStyleID      null.String `boil:"device_style_id" json:"device_style_id,omitempty" toml:"device_style_id" yaml:"device_style_id,omitempty"`
+	TemplateName       string      `boil:"template_name" json:"template_name" toml:"template_name" yaml:"template_name"`
+	CreatedAt          time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UpdatedAt          time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
 
 	R *templateDeviceDefinitionR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L templateDeviceDefinitionL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -42,23 +38,15 @@ type TemplateDeviceDefinition struct {
 var TemplateDeviceDefinitionColumns = struct {
 	ID                 string
 	DeviceDefinitionID string
+	DeviceStyleID      string
 	TemplateName       string
-	YearStart          string
-	YearEnd            string
-	MakeSlug           string
-	ModelWhitelist     string
-	HierarchyLevel     string
 	CreatedAt          string
 	UpdatedAt          string
 }{
 	ID:                 "id",
 	DeviceDefinitionID: "device_definition_id",
+	DeviceStyleID:      "device_style_id",
 	TemplateName:       "template_name",
-	YearStart:          "year_start",
-	YearEnd:            "year_end",
-	MakeSlug:           "make_slug",
-	ModelWhitelist:     "model_whitelist",
-	HierarchyLevel:     "hierarchy_level",
 	CreatedAt:          "created_at",
 	UpdatedAt:          "updated_at",
 }
@@ -66,70 +54,33 @@ var TemplateDeviceDefinitionColumns = struct {
 var TemplateDeviceDefinitionTableColumns = struct {
 	ID                 string
 	DeviceDefinitionID string
+	DeviceStyleID      string
 	TemplateName       string
-	YearStart          string
-	YearEnd            string
-	MakeSlug           string
-	ModelWhitelist     string
-	HierarchyLevel     string
 	CreatedAt          string
 	UpdatedAt          string
 }{
 	ID:                 "template_device_definitions.id",
 	DeviceDefinitionID: "template_device_definitions.device_definition_id",
+	DeviceStyleID:      "template_device_definitions.device_style_id",
 	TemplateName:       "template_device_definitions.template_name",
-	YearStart:          "template_device_definitions.year_start",
-	YearEnd:            "template_device_definitions.year_end",
-	MakeSlug:           "template_device_definitions.make_slug",
-	ModelWhitelist:     "template_device_definitions.model_whitelist",
-	HierarchyLevel:     "template_device_definitions.hierarchy_level",
 	CreatedAt:          "template_device_definitions.created_at",
 	UpdatedAt:          "template_device_definitions.updated_at",
 }
 
 // Generated where
 
-type whereHelpertypes_StringArray struct{ field string }
-
-func (w whereHelpertypes_StringArray) EQ(x types.StringArray) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.EQ, x)
-}
-func (w whereHelpertypes_StringArray) NEQ(x types.StringArray) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.NEQ, x)
-}
-func (w whereHelpertypes_StringArray) LT(x types.StringArray) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LT, x)
-}
-func (w whereHelpertypes_StringArray) LTE(x types.StringArray) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LTE, x)
-}
-func (w whereHelpertypes_StringArray) GT(x types.StringArray) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GT, x)
-}
-func (w whereHelpertypes_StringArray) GTE(x types.StringArray) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GTE, x)
-}
-
 var TemplateDeviceDefinitionWhere = struct {
 	ID                 whereHelperint64
-	DeviceDefinitionID whereHelperint64
+	DeviceDefinitionID whereHelperstring
+	DeviceStyleID      whereHelpernull_String
 	TemplateName       whereHelperstring
-	YearStart          whereHelperint
-	YearEnd            whereHelperint
-	MakeSlug           whereHelperstring
-	ModelWhitelist     whereHelpertypes_StringArray
-	HierarchyLevel     whereHelperint
 	CreatedAt          whereHelpertime_Time
 	UpdatedAt          whereHelpertime_Time
 }{
 	ID:                 whereHelperint64{field: "\"vehicle_signal_decoding_api\".\"template_device_definitions\".\"id\""},
-	DeviceDefinitionID: whereHelperint64{field: "\"vehicle_signal_decoding_api\".\"template_device_definitions\".\"device_definition_id\""},
+	DeviceDefinitionID: whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"template_device_definitions\".\"device_definition_id\""},
+	DeviceStyleID:      whereHelpernull_String{field: "\"vehicle_signal_decoding_api\".\"template_device_definitions\".\"device_style_id\""},
 	TemplateName:       whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"template_device_definitions\".\"template_name\""},
-	YearStart:          whereHelperint{field: "\"vehicle_signal_decoding_api\".\"template_device_definitions\".\"year_start\""},
-	YearEnd:            whereHelperint{field: "\"vehicle_signal_decoding_api\".\"template_device_definitions\".\"year_end\""},
-	MakeSlug:           whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"template_device_definitions\".\"make_slug\""},
-	ModelWhitelist:     whereHelpertypes_StringArray{field: "\"vehicle_signal_decoding_api\".\"template_device_definitions\".\"model_whitelist\""},
-	HierarchyLevel:     whereHelperint{field: "\"vehicle_signal_decoding_api\".\"template_device_definitions\".\"hierarchy_level\""},
 	CreatedAt:          whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"template_device_definitions\".\"created_at\""},
 	UpdatedAt:          whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"template_device_definitions\".\"updated_at\""},
 }
@@ -162,9 +113,9 @@ func (r *templateDeviceDefinitionR) GetTemplateNameTemplate() *Template {
 type templateDeviceDefinitionL struct{}
 
 var (
-	templateDeviceDefinitionAllColumns            = []string{"id", "device_definition_id", "template_name", "year_start", "year_end", "make_slug", "model_whitelist", "hierarchy_level", "created_at", "updated_at"}
-	templateDeviceDefinitionColumnsWithoutDefault = []string{"device_definition_id", "template_name", "year_start", "year_end", "make_slug", "model_whitelist", "hierarchy_level"}
-	templateDeviceDefinitionColumnsWithDefault    = []string{"id", "created_at", "updated_at"}
+	templateDeviceDefinitionAllColumns            = []string{"id", "device_definition_id", "device_style_id", "template_name", "created_at", "updated_at"}
+	templateDeviceDefinitionColumnsWithoutDefault = []string{"device_definition_id", "template_name"}
+	templateDeviceDefinitionColumnsWithDefault    = []string{"id", "device_style_id", "created_at", "updated_at"}
 	templateDeviceDefinitionPrimaryKeyColumns     = []string{"id"}
 	templateDeviceDefinitionGeneratedColumns      = []string{}
 )

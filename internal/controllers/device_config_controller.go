@@ -5,8 +5,6 @@ import (
 	"database/sql"
 	"encoding/binary"
 	"fmt"
-	"strconv"
-
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	pb "github.com/DIMO-Network/devices-api/pkg/grpc"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -271,17 +269,12 @@ func (d *DeviceConfigController) getConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) 
 		}
 	}
 
-	deviceDefinitionIDInt64, err := strconv.ParseInt(deviceDefinitionID, 10, 64)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Invalid device definition ID"})
-	}
-
 	var matchedTemplateName string
 	var matchedDeviceDefinition *models.TemplateDeviceDefinition
 
 	// Try and find a template from template_device_definitions
 	deviceDefinitions, err := models.TemplateDeviceDefinitions(
-		models.TemplateDeviceDefinitionWhere.DeviceDefinitionID.EQ(deviceDefinitionIDInt64),
+		models.TemplateDeviceDefinitionWhere.DeviceDefinitionID.EQ(deviceDefinitionID),
 		models.TemplateDeviceDefinitionWhere.YearStart.LTE(vehicleYear),
 		models.TemplateDeviceDefinitionWhere.YearEnd.GTE(vehicleYear),
 		models.TemplateDeviceDefinitionWhere.MakeSlug.EQ(vehicleMake),
