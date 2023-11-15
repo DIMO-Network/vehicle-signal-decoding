@@ -3,11 +3,12 @@ package api
 import (
 	"context"
 	"errors"
-	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/exceptions"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
+
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/exceptions"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/commands"
 

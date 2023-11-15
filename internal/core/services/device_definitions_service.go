@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/exceptions"
 
