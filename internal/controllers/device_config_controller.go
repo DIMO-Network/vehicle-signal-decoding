@@ -246,7 +246,7 @@ func (d *DeviceConfigController) setCANProtocol(ud *pb.UserDevice) {
 func (d *DeviceConfigController) retrieveAndSetVehicleInfo(ctx context.Context, ud *pb.UserDevice) (string, string, int, error) {
 	// Retrieve Device Definition
 
-	var ddResponse *p_grpc.GetDeviceDefinitionResponse
+	var ddResponse *p_grpc.GetDeviceDefinitionItemResponse
 	deviceDefinitionID := ud.DeviceDefinitionId
 	ddResponse, err := d.deviceDefSvc.GetDeviceDefinitionByID(ctx, deviceDefinitionID)
 	if err != nil {
@@ -254,9 +254,9 @@ func (d *DeviceConfigController) retrieveAndSetVehicleInfo(ctx context.Context, 
 	}
 
 	// Extract vehicle information
-	vehicleYear := int(ddResponse.DeviceDefinitions[0].Type.Year)
-	vehicleMake := ddResponse.DeviceDefinitions[0].Type.MakeSlug
-	vehicleModel := ddResponse.DeviceDefinitions[0].Type.ModelSlug
+	vehicleYear := int(ddResponse.Type.Year)
+	vehicleMake := ddResponse.Type.MakeSlug
+	vehicleModel := ddResponse.Type.ModelSlug
 
 	// Determine and set Powertrain
 	d.setPowerTrainType(ddResponse, ud)
@@ -264,9 +264,9 @@ func (d *DeviceConfigController) retrieveAndSetVehicleInfo(ctx context.Context, 
 	return vehicleMake, vehicleModel, vehicleYear, nil
 }
 
-func (d *DeviceConfigController) setPowerTrainType(ddResponse *p_grpc.GetDeviceDefinitionResponse, ud *pb.UserDevice) {
+func (d *DeviceConfigController) setPowerTrainType(ddResponse *p_grpc.GetDeviceDefinitionItemResponse, ud *pb.UserDevice) {
 	var powerTrainType string
-	for _, attribute := range ddResponse.DeviceDefinitions[0].DeviceAttributes {
+	for _, attribute := range ddResponse.DeviceAttributes {
 		if attribute.Name == "powertrain_type" {
 			powerTrainType = attribute.Value
 			break
@@ -286,6 +286,7 @@ func (d *DeviceConfigController) selectAndFetchTemplate(ctx context.Context, ud 
 		models.TemplateDeviceDefinitionWhere.DeviceDefinitionID.EQ(ud.DeviceDefinitionId),
 	).All(ctx, d.db)
 
+	// todo - you could still be in an error situation here since using &&, also use errors.Is
 	if err != nil && err != sql.ErrNoRows {
 		return nil, fmt.Errorf("failed to query template device definitions: %w", err)
 	}
@@ -326,7 +327,7 @@ func (d *DeviceConfigController) selectAndFetchTemplate(ctx context.Context, ud 
 	return matchedTemplate, nil
 }
 
-func (d *DeviceConfigController) GetConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) error {
+func (d *DeviceConfigController) getConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) error {
 	d.setCANProtocol(ud)
 
 	vehicleMake, vehicleModel, vehicleYear, err := d.retrieveAndSetVehicleInfo(c.Context(), ud)
