@@ -232,7 +232,7 @@ func (d *DeviceConfigController) GetDBCFileByTemplateName(c *fiber.Ctx) error {
 
 }
 
-func (d *DeviceConfigController) GetConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) error {
+func (d *DeviceConfigController) getConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) error {
 	baseURL := d.settings.DeploymentURL
 
 	switch ud.CANProtocol {
@@ -277,6 +277,8 @@ func (d *DeviceConfigController) GetConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) 
 	).All(context.Background(), d.db)
 
 	if err != nil {
+		// todo what if err is sql.ErrNoRows - eg. nothing found? we would probably want to return the first default template
+		// todo - this should just return the wrapped error and let the api.ErrorHandler deal with how to return the error
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": fmt.Sprintf("Failed to query templates for protocol: %s and powertrain: %s", ud.CANProtocol, ud.PowerTrainType)})
 	}
 
@@ -294,6 +296,7 @@ func (d *DeviceConfigController) GetConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) 
 		}
 	}
 	if matchedTemplate == nil {
+		// todo - what if templates length is 0? maybe handle this further above
 		matchedTemplate = templates[0]
 	}
 
@@ -350,7 +353,7 @@ func (d *DeviceConfigController) GetConfigURLsFromVIN(c *fiber.Ctx) error {
 		// todo: get powertrain type from definition response and include in ud.PowerTrainType
 	}
 
-	return d.GetConfigURLs(c, ud)
+	return d.getConfigURLs(c, ud)
 }
 
 // GetConfigURLsFromEthAddr godoc
@@ -368,7 +371,7 @@ func (d *DeviceConfigController) GetConfigURLsFromEthAddr(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": fmt.Sprintf("no connected user device found for EthAddr: %s", ethAddr)})
 	}
-	return d.GetConfigURLs(c, ud)
+	return d.getConfigURLs(c, ud)
 }
 
 func padByteArray(input []byte, targetLength int) []byte {
