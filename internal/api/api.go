@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"strings"
 	"syscall"
 
@@ -157,7 +158,7 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 	return app
 }
 
-// Code below copied from device-data-api/main.go
+// ErrorHandler handles errors returned from fiber handlers / controllers
 func ErrorHandler(c *fiber.Ctx, err error, logger zerolog.Logger) error {
 	// Default error info
 	code := fiber.StatusInternalServerError
@@ -173,7 +174,8 @@ func ErrorHandler(c *fiber.Ctx, err error, logger zerolog.Logger) error {
 		message = e.Message
 	}
 
-	logger.Err(err).Int("code", code).Str("path", strings.TrimPrefix(c.Path(), "/")).Msg("Failed request.")
+	logger.Err(err).Int("code", code).Str("path", strings.TrimPrefix(c.Path(), "/")).
+		Str("stack", string(debug.Stack())).Msg("Failed request.")
 
 	return c.Status(code).JSON(CodeResp{Code: code, Message: message})
 }
