@@ -233,9 +233,7 @@ func (d *DeviceConfigController) GetDBCFileByTemplateName(c *fiber.Ctx) error {
 
 }
 
-func (d *DeviceConfigController) getConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) error {
-	baseURL := d.settings.DeploymentURL
-
+func (d *DeviceConfigController) setCANProtocol(ud *pb.UserDevice) {
 	switch ud.CANProtocol {
 	case "6":
 		ud.CANProtocol = models.CanProtocolTypeCAN11_500
@@ -244,20 +242,29 @@ func (d *DeviceConfigController) getConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) 
 	case "":
 		ud.CANProtocol = models.CanProtocolTypeCAN11_500
 	}
-
+}
+func (d *DeviceConfigController) retrieveAndSetVehicleInfo(ctx context.Context, ud *pb.UserDevice) (string, string, int, error) {
 	// Retrieve Device Definition
+
 	var ddResponse *p_grpc.GetDeviceDefinitionResponse
 	deviceDefinitionID := ud.DeviceDefinitionId
-	ddResponse, err := d.deviceDefSvc.GetDeviceDefinitionByID(c.Context(), deviceDefinitionID)
+	ddResponse, err := d.deviceDefSvc.GetDeviceDefinitionByID(ctx, deviceDefinitionID)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": fmt.Sprintf("Failed to retrieve device definition for deviceDefinitionId: %s", deviceDefinitionID)})
+		return "", "", 0, fmt.Errorf("failed to retrieve device definition for deviceDefinitionId %s: %w", deviceDefinitionID, err)
 	}
 
+	// Extract vehicle information
 	vehicleYear := int(ddResponse.DeviceDefinitions[0].Type.Year)
 	vehicleMake := ddResponse.DeviceDefinitions[0].Type.MakeSlug
 	vehicleModel := ddResponse.DeviceDefinitions[0].Type.ModelSlug
 
-	// Determine Powertrain
+	// Determine and set Powertrain
+	d.setPowerTrainType(ddResponse, ud)
+
+	return vehicleMake, vehicleModel, vehicleYear, nil
+}
+
+func (d *DeviceConfigController) setPowerTrainType(ddResponse *p_grpc.GetDeviceDefinitionResponse, ud *pb.UserDevice) {
 	var powerTrainType string
 	for _, attribute := range ddResponse.DeviceDefinitions[0].DeviceAttributes {
 		if attribute.Name == "powertrain_type" {
@@ -268,24 +275,23 @@ func (d *DeviceConfigController) getConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) 
 	if ud.PowerTrainType == "" {
 		ud.PowerTrainType = powerTrainType
 		if ud.PowerTrainType == "" {
-			ud.PowerTrainType = "ICE"
+			ud.PowerTrainType = "ICE" // Default value if not set
 		}
 	}
+}
 
+func (d *DeviceConfigController) selectAndFetchTemplate(ctx context.Context, ud *pb.UserDevice, vehicleMake, vehicleModel string, vehicleYear int) (*models.Template, error) {
 	// Try and find a template from template_device_definitions
 	deviceDefinitions, err := models.TemplateDeviceDefinitions(
-		models.TemplateDeviceDefinitionWhere.DeviceDefinitionID.EQ(deviceDefinitionID),
-	).All(context.Background(), d.db)
+		models.TemplateDeviceDefinitionWhere.DeviceDefinitionID.EQ(ud.DeviceDefinitionId),
+	).All(ctx, d.db)
 
 	if err != nil && err != sql.ErrNoRows {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to query template device definitions"})
+		return nil, fmt.Errorf("failed to query template device definitions: %w", err)
 	}
 
 	var matchedTemplateName string
-	var matchedTemplate *models.Template
-
 	if len(deviceDefinitions) > 0 {
-		// If a match is found
 		matchedTemplateName = deviceDefinitions[0].TemplateName
 	} else {
 		// If no specific template match is found, use TemplateVehicle data
@@ -294,10 +300,10 @@ func (d *DeviceConfigController) getConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) 
 			models.TemplateVehicleWhere.ModelWhitelist.EQ(types.StringArray{vehicleModel}),
 			models.TemplateVehicleWhere.YearStart.LTE(vehicleYear),
 			models.TemplateVehicleWhere.YearEnd.GTE(vehicleYear),
-		).All(context.Background(), d.db)
+		).All(ctx, d.db)
 
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": fmt.Sprintf("Failed to query templates for protocol: %s and powertrain: %s", ud.CANProtocol, ud.PowerTrainType)})
+			return nil, fmt.Errorf("failed to query templates for make: %s, model: %s, year: %d: %w", vehicleMake, vehicleModel, vehicleYear, err)
 		}
 
 		if len(templateVehicles) > 0 {
@@ -305,21 +311,35 @@ func (d *DeviceConfigController) getConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) 
 		}
 	}
 
+	if matchedTemplateName == "" {
+		return nil, fmt.Errorf("no matching template found for make: %s, model: %s, year: %d", vehicleMake, vehicleModel, vehicleYear)
+	}
+
 	// Fetch the template object if a name was found
-	if matchedTemplateName != "" {
-		matchedTemplate, err = models.Templates(
-			models.TemplateWhere.TemplateName.EQ(matchedTemplateName),
-		).One(context.Background(), d.db)
-
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to fetch the template by name"})
-		}
+	matchedTemplate, err := models.Templates(
+		models.TemplateWhere.TemplateName.EQ(matchedTemplateName),
+	).One(ctx, d.db)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch template by name %s: %w", matchedTemplateName, err)
 	}
 
-	if matchedTemplate == nil {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "No matching template found"})
+	return matchedTemplate, nil
+}
+
+func (d *DeviceConfigController) GetConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) error {
+	d.setCANProtocol(ud)
+
+	vehicleMake, vehicleModel, vehicleYear, err := d.retrieveAndSetVehicleInfo(c.Context(), ud)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": fmt.Sprintf("Failed to retrieve device definition: %s", err)})
 	}
 
+	matchedTemplate, err := d.selectAndFetchTemplate(c.Context(), ud, vehicleMake, vehicleModel, vehicleYear)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	baseURL := d.settings.DeploymentURL
 	templateName := matchedTemplate.TemplateName
 	var parentTemplateName string
 	if matchedTemplate.ParentTemplateName.Valid {
@@ -333,11 +353,11 @@ func (d *DeviceConfigController) getConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) 
 		PidURL:  fmt.Sprintf("%s/v1/device-config/%s/pids", baseURL, templateName),
 		Version: version,
 	}
-	// only set dbc url if we have dbc
+
 	if matchedTemplate.R.TemplateNameDBCFile != nil && len(matchedTemplate.R.TemplateNameDBCFile.DBCFile) > 0 {
 		response.DbcURL = fmt.Sprintf("%s/v1/device-config/%s/dbc", baseURL, templateName)
 	}
-	// only set device settings url if we have one
+
 	if matchedTemplate.R.TemplateNameDeviceSetting != nil {
 		response.DeviceSettingURL = fmt.Sprintf("%s/v1/device-config/%s/device-settings", baseURL, parentTemplateName)
 	}
