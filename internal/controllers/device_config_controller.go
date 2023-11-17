@@ -6,11 +6,10 @@ import (
 	"encoding/binary"
 	"fmt"
 
+	"github.com/volatiletech/sqlboiler/v4/types"
+
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	pb "github.com/DIMO-Network/devices-api/pkg/grpc"
-	"github.com/volatiletech/sqlboiler/v4/types"
-	"github.com/volatiletech/sqlboiler/v4/queries/qm"
-
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/services"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
@@ -244,7 +243,6 @@ func (d *DeviceConfigController) setCANProtocol(ud *pb.UserDevice) {
 	}
 }
 func (d *DeviceConfigController) retrieveAndSetVehicleInfo(ctx context.Context, ud *pb.UserDevice) (string, string, int, error) {
-	// Retrieve Device Definition
 
 	var ddResponse *p_grpc.GetDeviceDefinitionItemResponse
 	deviceDefinitionID := ud.DeviceDefinitionId
@@ -253,12 +251,10 @@ func (d *DeviceConfigController) retrieveAndSetVehicleInfo(ctx context.Context, 
 		return "", "", 0, fmt.Errorf("failed to retrieve device definition for deviceDefinitionId %s: %w", deviceDefinitionID, err)
 	}
 
-	// Extract vehicle information
 	vehicleYear := int(ddResponse.Type.Year)
 	vehicleMake := ddResponse.Type.MakeSlug
 	vehicleModel := ddResponse.Type.ModelSlug
 
-	// Determine and set Powertrain
 	d.setPowerTrainType(ddResponse, ud)
 
 	return vehicleMake, vehicleModel, vehicleYear, nil
@@ -275,23 +271,31 @@ func (d *DeviceConfigController) setPowerTrainType(ddResponse *p_grpc.GetDeviceD
 	if ud.PowerTrainType == "" {
 		ud.PowerTrainType = powerTrainType
 		if ud.PowerTrainType == "" {
-			ud.PowerTrainType = "ICE" // Default value if not set
+			ud.PowerTrainType = "ICE"
 		}
 	}
 }
 
 func (d *DeviceConfigController) selectAndFetchTemplate(ctx context.Context, ud *pb.UserDevice, vehicleMake, vehicleModel string, vehicleYear int) (*models.Template, error) {
+
+	var matchedTemplateName string
+
+	handleNoRows := func(err error) error {
+		if errors.Is(err, sql.ErrNoRows) {
+			matchedTemplateName = "defaultTemplateName"
+			return nil
+		}
+		return err
+	}
 	// Try and find a template from template_device_definitions
 	deviceDefinitions, err := models.TemplateDeviceDefinitions(
 		models.TemplateDeviceDefinitionWhere.DeviceDefinitionID.EQ(ud.DeviceDefinitionId),
 	).All(ctx, d.db)
 
-	// todo - you could still be in an error situation here since using &&, also use errors.Is
-	if err != nil && err != sql.ErrNoRows {
+	if err := handleNoRows(err); err != nil {
 		return nil, fmt.Errorf("failed to query template device definitions: %w", err)
 	}
 
-	var matchedTemplateName string
 	if len(deviceDefinitions) > 0 {
 		matchedTemplateName = deviceDefinitions[0].TemplateName
 	} else {
@@ -303,7 +307,7 @@ func (d *DeviceConfigController) selectAndFetchTemplate(ctx context.Context, ud 
 			models.TemplateVehicleWhere.YearEnd.GTE(vehicleYear),
 		).All(ctx, d.db)
 
-		if err != nil {
+		if err := handleNoRows(err); err != nil {
 			return nil, fmt.Errorf("failed to query templates for make: %s, model: %s, year: %d: %w", vehicleMake, vehicleModel, vehicleYear, err)
 		}
 
@@ -313,7 +317,7 @@ func (d *DeviceConfigController) selectAndFetchTemplate(ctx context.Context, ud 
 	}
 
 	if matchedTemplateName == "" {
-		return nil, fmt.Errorf("no matching template found for make: %s, model: %s, year: %d", vehicleMake, vehicleModel, vehicleYear)
+		matchedTemplateName = "defaultTemplateName"
 	}
 
 	// Fetch the template object if a name was found
@@ -388,6 +392,11 @@ func (d *DeviceConfigController) GetConfigURLsFromVIN(c *fiber.Ctx) error {
 		ud = &pb.UserDevice{
 			DeviceDefinitionId: definitionResp.DeviceDefinitionId,
 		}
+		if len(definitionResp.DeviceStyleId) > 0 {
+			ud.DeviceStyleId = &definitionResp.DeviceStyleId
+		}
+		// todo: get powertrain type from definition response and include in ud.PowerTrainType
+
 	}
 
 	return d.getConfigURLs(c, ud)
