@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/binary"
 	"fmt"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 
 	"github.com/volatiletech/sqlboiler/v4/types"
 
@@ -373,8 +374,40 @@ func (d *DeviceConfigController) selectAndFetchTemplate(ctx context.Context, ud 
 		}
 	}
 
+	// If no template is found using MMY, query by powertrain and protocol
 	if matchedTemplateName == "" {
-		matchedTemplateName = "defaultTemplateName"
+		templates, err := models.Templates(
+			models.TemplateWhere.Protocol.EQ(ud.CANProtocol),
+			models.TemplateWhere.Powertrain.EQ(ud.PowerTrainType),
+			qm.Load(models.TemplateRels.TemplateNameDBCFile),
+			qm.Load(models.TemplateRels.TemplateNameTemplateVehicles),
+			qm.Load(models.TemplateRels.TemplateNameDeviceSetting),
+		).All(ctx, d.db)
+
+		if err != nil {
+			return nil, fmt.Errorf("failed to query templates for protocol: %s and powertrain: %s: %w", ud.CANProtocol, ud.PowerTrainType, err)
+		}
+
+		if len(templates) > 0 {
+			matchedTemplateName = templates[0].TemplateName
+		}
+	}
+
+	// Fallback to default template if still no match is found
+	if matchedTemplateName == "" {
+		defaultTemplates, err := models.Templates(
+			models.TemplateWhere.TemplateName.LIKE("default%"),
+		).All(ctx, d.db)
+
+		if err != nil {
+			return nil, fmt.Errorf("failed to query for default templates: %w", err)
+		}
+
+		if len(defaultTemplates) > 0 {
+			matchedTemplateName = defaultTemplates[0].TemplateName
+		} else {
+			return nil, errors.New("no default templates found")
+		}
 	}
 
 	// Fetch the template object if a name was found
