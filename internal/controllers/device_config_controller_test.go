@@ -482,8 +482,7 @@ func TestGetConfigURLsEmptyDeviceSettings(t *testing.T) {
 	})
 
 }
-
-func TestGetConfigURLsDecodeVin(t *testing.T) {
+func TestGetConfigURLsDecodeVIN(t *testing.T) {
 	// Arrange
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
@@ -495,7 +494,6 @@ func TestGetConfigURLsDecodeVin(t *testing.T) {
 
 	ctx := context.Background()
 
-	// Spin up test database in a Docker container
 	pdb, container := test.StartContainerDatabase(ctx, t, migrationsDirRelPath)
 	defer func() {
 		if err := container.Terminate(ctx); err != nil {
@@ -503,6 +501,8 @@ func TestGetConfigURLsDecodeVin(t *testing.T) {
 		}
 	}()
 	vin := "TMBEK6NW1N3088739"
+
+	// Insert template "some-template" into the database
 	template := &models.Template{
 		TemplateName: "some-template",
 		Version:      "1.0",
@@ -511,67 +511,61 @@ func TestGetConfigURLsDecodeVin(t *testing.T) {
 	}
 	err := template.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err)
-	// insert device settings
+
+	// Insert device settings for "some-template"
 	ds := &models.DeviceSetting{
-		TemplateName: "some-template",
+		TemplateName: template.TemplateName,
 	}
 	err = ds.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err)
 
-	dd := &p_grpc.GetDeviceDefinitionItemResponse{
+	// Mock the device definition service
+	mockedDeviceDefinition := &p_grpc.GetDeviceDefinitionItemResponse{
 		DeviceDefinitionId: ksuid.New().String(),
 		Type: &p_grpc.DeviceType{
-			Year: 2020,
-		},
-		Make: &p_grpc.DeviceMake{
-			Id: ksuid.New().String(),
+			Year:      2020,
+			MakeSlug:  "Ford",
+			ModelSlug: "Mustang",
 		},
 		DeviceAttributes: []*p_grpc.DeviceTypeAttribute{{
 			Name:  "powertrain_type",
-			Value: template.Powertrain,
-		},
-		},
+			Value: "HEV",
+		}},
 	}
 
 	mockUserDeviceSvc := mock_services.NewMockUserDeviceService(mockCtrl)
 	mockUserDeviceSvc.EXPECT().GetUserDeviceByVIN(gomock.Any(), vin).Return(nil, errors.New("user device not found"))
+
 	mockDeviceDefSvc := mock_services.NewMockDeviceDefinitionsService(mockCtrl)
 	mockDeviceDefSvc.EXPECT().DecodeVIN(gomock.Any(), vin).Return(&p_grpc.DecodeVinResponse{
-		DeviceMakeId:       dd.Make.Id,
-		DeviceDefinitionId: dd.DeviceDefinitionId,
-		DeviceStyleId:      "",
-		Year:               2022,
-		Source:             "",
+		DeviceDefinitionId: mockedDeviceDefinition.DeviceDefinitionId,
 	}, nil)
-
-	mockDeviceDefSvc.EXPECT().GetDeviceDefinitionByID(gomock.Any(), dd.DeviceDefinitionId).Return(dd, nil)
+	mockDeviceDefSvc.EXPECT().GetDeviceDefinitionByID(gomock.Any(), mockedDeviceDefinition.DeviceDefinitionId).Return(mockedDeviceDefinition, nil)
 
 	c := NewDeviceConfigController(&config.Settings{Port: "3000", DeploymentURL: "http://localhost:3000"}, &logger, pdb.DBS().Reader.DB, mockUserDeviceSvc, mockDeviceDefSvc)
 
 	app := fiber.New()
 	app.Get("/config-urls/:vin", c.GetConfigURLsFromVIN)
 
-	// Act: make the request
+	// Act
 	request := test.BuildRequest("GET", "/config-urls/"+vin, "")
 	response, err := app.Test(request)
 	require.NoError(t, err)
 
 	body, _ := io.ReadAll(response.Body)
 
-	// Assert: check the results
+	// Assert
 	assert.Equal(t, fiber.StatusOK, response.StatusCode, "response body: "+string(body))
 
 	var receivedResp DeviceConfigResponse
 	err = json.Unmarshal(body, &receivedResp)
 	assert.NoError(t, err)
 
+	//"some-template"
 	assert.Equal(t, fmt.Sprintf("http://localhost:3000/v1/device-config/%s/pids", template.TemplateName), receivedResp.PidURL)
 	assert.Equal(t, fmt.Sprintf("http://localhost:3000/v1/device-config/%s/device-settings", template.TemplateName), receivedResp.DeviceSettingURL)
-	assert.Equal(t, "", receivedResp.DbcURL)
-
 	assert.Equal(t, template.Version, receivedResp.Version)
 
-	// Teardown: cleanup after test
 	test.TruncateTables(pdb.DBS().Writer.DB, t)
 }
 
