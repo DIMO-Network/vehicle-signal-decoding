@@ -5,10 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/volatiletech/sqlboiler/v4/types"
 	"io"
 	"os"
 	"testing"
+
+	"github.com/volatiletech/sqlboiler/v4/types"
 
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 
