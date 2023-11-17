@@ -440,6 +440,7 @@ func (d *DeviceConfigController) getConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) 
 
 	baseURL := d.settings.DeploymentURL
 	templateName := matchedTemplate.TemplateName
+
 	var parentTemplateName string
 	if matchedTemplate.ParentTemplateName.Valid {
 		parentTemplateName = matchedTemplate.ParentTemplateName.String
@@ -453,7 +454,7 @@ func (d *DeviceConfigController) getConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) 
 		Version: version,
 	}
 
-	if matchedTemplate != nil && matchedTemplate.R != nil {
+	if matchedTemplate.R != nil {
 		if matchedTemplate.R.TemplateNameDBCFile != nil && len(matchedTemplate.R.TemplateNameDBCFile.DBCFile) > 0 {
 			response.DbcURL = fmt.Sprintf("%s/v1/device-config/%s/dbc", baseURL, templateName)
 		}
