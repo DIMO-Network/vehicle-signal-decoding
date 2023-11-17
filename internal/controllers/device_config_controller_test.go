@@ -970,6 +970,7 @@ func TestSetCANProtocol(t *testing.T) {
 		})
 	}
 }
+
 func TestSelectAndFetchTemplate(t *testing.T) {
 	// Arrange
 	mockCtrl := gomock.NewController(t)

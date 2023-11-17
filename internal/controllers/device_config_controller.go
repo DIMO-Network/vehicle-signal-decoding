@@ -232,6 +232,63 @@ func (d *DeviceConfigController) GetDBCFileByTemplateName(c *fiber.Ctx) error {
 
 }
 
+// GetConfigURLsFromVIN godoc
+// @Description  Retrieve the URLs for PID, DeviceSettings, and DBC configuration based on a given VIN. These could be empty if not configs available
+// @Tags         vehicle-signal-decoding
+// @Produce      json
+// @Success      200 {object} DeviceConfigResponse "Successfully retrieved configuration URLs"
+// @Failure 404  "Not Found - No templates available for the given parameters"
+// @Param        vin  path   string  true   "vehicle identification number (VIN)"
+// @Router       /device-config/vin/{vin}/urls [get]
+func (d *DeviceConfigController) GetConfigURLsFromVIN(c *fiber.Ctx) error {
+	vin := c.Params("vin")
+
+	ud, err := d.userDeviceSvc.GetUserDeviceByVIN(c.Context(), vin)
+	if err != nil {
+		definitionResp, err := d.deviceDefSvc.DecodeVIN(c.Context(), vin)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": fmt.Sprintf("could not decode VIN, contact support if you're sure this is valid VIN: %s", vin)})
+		}
+		// todo: when DecodeVIN supports powertrain, add to below ud
+
+		ud = &pb.UserDevice{
+			DeviceDefinitionId: definitionResp.DeviceDefinitionId,
+		}
+		if len(definitionResp.DeviceStyleId) > 0 {
+			ud.DeviceStyleId = &definitionResp.DeviceStyleId
+		}
+	}
+
+	return d.getConfigURLs(c, ud)
+}
+
+// GetConfigURLsFromEthAddr godoc
+// @Description  Retrieve the URLs for PID, DeviceSettings, and DBC configuration based on device's Ethereum Address. These could be empty if not configs available
+// @Tags         vehicle-signal-decoding
+// @Produce      json
+// @Success      200 {object} DeviceConfigResponse "Successfully retrieved configuration URLs"
+// @Failure 404  "Not Found - No templates available for the given parameters"
+// @Failure 400  "incorrect eth addr format"
+// @Param        ethAddr  path   string  false  "Ethereum Address"
+// @Router       /device-config/eth-addr/{ethAddr}/urls [get]
+func (d *DeviceConfigController) GetConfigURLsFromEthAddr(c *fiber.Ctx) error {
+	ethAddr := c.Params("ethAddr")
+	ud, err := d.userDeviceSvc.GetUserDeviceByEthAddr(c.Context(), ethAddr)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": fmt.Sprintf("no connected user device found for EthAddr: %s", ethAddr)})
+	}
+	return d.getConfigURLs(c, ud)
+}
+
+func padByteArray(input []byte, targetLength int) []byte {
+	if len(input) >= targetLength {
+		return input // No need to pad if the input is already longer or equal to the target length
+	}
+
+	padded := make([]byte, targetLength-len(input))
+	return append(padded, input...)
+}
+
 func (d *DeviceConfigController) setCANProtocol(ud *pb.UserDevice) {
 	switch ud.CANProtocol {
 	case "6":
@@ -336,12 +393,12 @@ func (d *DeviceConfigController) getConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) 
 
 	vehicleMake, vehicleModel, vehicleYear, err := d.retrieveAndSetVehicleInfo(c.Context(), ud)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": fmt.Sprintf("Failed to retrieve device definition: %s", err)})
+		return errors.Wrap(err, fmt.Sprintf("Failed to retrieve device definition: %s", ud.DeviceDefinitionId))
 	}
 
 	matchedTemplate, err := d.selectAndFetchTemplate(c.Context(), ud, vehicleMake, vehicleModel, vehicleYear)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		return err
 	}
 
 	baseURL := d.settings.DeploymentURL
@@ -368,63 +425,4 @@ func (d *DeviceConfigController) getConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) 
 	}
 
 	return c.JSON(response)
-}
-
-// GetConfigURLsFromVIN godoc
-// @Description  Retrieve the URLs for PID, DeviceSettings, and DBC configuration based on a given VIN. These could be empty if not configs available
-// @Tags         vehicle-signal-decoding
-// @Produce      json
-// @Success      200 {object} DeviceConfigResponse "Successfully retrieved configuration URLs"
-// @Failure 404  "Not Found - No templates available for the given parameters"
-// @Param        vin  path   string  true   "vehicle identification number (VIN)"
-// @Router       /device-config/vin/{vin}/urls [get]
-func (d *DeviceConfigController) GetConfigURLsFromVIN(c *fiber.Ctx) error {
-	vin := c.Params("vin")
-
-	ud, err := d.userDeviceSvc.GetUserDeviceByVIN(c.Context(), vin)
-	if err != nil {
-
-		definitionResp, err := d.deviceDefSvc.DecodeVIN(c.Context(), vin)
-		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": fmt.Sprintf("could not decode VIN, contact support if you're sure this is valid VIN: %s", vin)})
-		}
-
-		ud = &pb.UserDevice{
-			DeviceDefinitionId: definitionResp.DeviceDefinitionId,
-		}
-		if len(definitionResp.DeviceStyleId) > 0 {
-			ud.DeviceStyleId = &definitionResp.DeviceStyleId
-		}
-		// todo: get powertrain type from definition response and include in ud.PowerTrainType
-
-	}
-
-	return d.getConfigURLs(c, ud)
-}
-
-// GetConfigURLsFromEthAddr godoc
-// @Description  Retrieve the URLs for PID, DeviceSettings, and DBC configuration based on device's Ethereum Address. These could be empty if not configs available
-// @Tags         vehicle-signal-decoding
-// @Produce      json
-// @Success      200 {object} DeviceConfigResponse "Successfully retrieved configuration URLs"
-// @Failure 404  "Not Found - No templates available for the given parameters"
-// @Failure 400  "incorrect eth addr format"
-// @Param        ethAddr  path   string  false  "Ethereum Address"
-// @Router       /device-config/eth-addr/{ethAddr}/urls [get]
-func (d *DeviceConfigController) GetConfigURLsFromEthAddr(c *fiber.Ctx) error {
-	ethAddr := c.Params("ethAddr")
-	ud, err := d.userDeviceSvc.GetUserDeviceByEthAddr(c.Context(), ethAddr)
-	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": fmt.Sprintf("no connected user device found for EthAddr: %s", ethAddr)})
-	}
-	return d.getConfigURLs(c, ud)
-}
-
-func padByteArray(input []byte, targetLength int) []byte {
-	if len(input) >= targetLength {
-		return input // No need to pad if the input is already longer or equal to the target length
-	}
-
-	padded := make([]byte, targetLength-len(input))
-	return append(padded, input...)
 }
