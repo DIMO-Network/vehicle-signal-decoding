@@ -477,7 +477,6 @@ func TestGetConfigURLsEmptyDeviceSettings(t *testing.T) {
 
 		assert.Equal(t, template.Version, receivedResp.Version)
 
-		// Teardown: cleanup after test
 		test.TruncateTables(pdb.DBS().Writer.DB, t)
 	})
 
@@ -564,6 +563,7 @@ func TestGetConfigURLsDecodeVIN(t *testing.T) {
 	//"some-template"
 	assert.Equal(t, fmt.Sprintf("http://localhost:3000/v1/device-config/%s/pids", template.TemplateName), receivedResp.PidURL)
 	assert.Equal(t, fmt.Sprintf("http://localhost:3000/v1/device-config/%s/device-settings", template.TemplateName), receivedResp.DeviceSettingURL)
+	assert.Equal(t, "", receivedResp.DbcURL)
 	assert.Equal(t, template.Version, receivedResp.Version)
 
 	test.TruncateTables(pdb.DBS().Writer.DB, t)

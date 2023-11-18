@@ -339,26 +339,21 @@ func (d *DeviceConfigController) selectAndFetchTemplate(ctx context.Context, ud 
 
 	var matchedTemplateName string
 
-	handleNoRows := func(err error) error {
-		if errors.Is(err, sql.ErrNoRows) {
-			matchedTemplateName = "defaultTemplateName"
-			return nil
-		}
-		return err
-	}
-	// Try and find a template from template_device_definitions
+	// First, try to find a template based on device definitions
 	deviceDefinitions, err := models.TemplateDeviceDefinitions(
 		models.TemplateDeviceDefinitionWhere.DeviceDefinitionID.EQ(ud.DeviceDefinitionId),
 	).All(ctx, d.db)
 
-	if err := handleNoRows(err); err != nil {
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, fmt.Errorf("failed to query template device definitions: %w", err)
 	}
 
 	if len(deviceDefinitions) > 0 {
 		matchedTemplateName = deviceDefinitions[0].TemplateName
-	} else {
-		// If no specific template match is found, use TemplateVehicle data
+	}
+
+	// Second, try to find a template based on Make, Model, Year
+	if matchedTemplateName == "" {
 		templateVehicles, err := models.TemplateVehicles(
 			models.TemplateVehicleWhere.MakeSlug.EQ(vehicleMake),
 			models.TemplateVehicleWhere.ModelWhitelist.EQ(types.StringArray{vehicleModel}),
@@ -366,7 +361,7 @@ func (d *DeviceConfigController) selectAndFetchTemplate(ctx context.Context, ud 
 			models.TemplateVehicleWhere.YearEnd.GTE(vehicleYear),
 		).All(ctx, d.db)
 
-		if err := handleNoRows(err); err != nil {
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("failed to query templates for make: %s, model: %s, year: %d: %w", vehicleMake, vehicleModel, vehicleYear, err)
 		}
 
@@ -375,7 +370,7 @@ func (d *DeviceConfigController) selectAndFetchTemplate(ctx context.Context, ud 
 		}
 	}
 
-	// If no template is found using MMY, query by powertrain and protocol
+	// Third, fallback to query by protocol and powertrain
 	if matchedTemplateName == "" {
 		templates, err := models.Templates(
 			models.TemplateWhere.Protocol.EQ(ud.CANProtocol),
@@ -385,10 +380,9 @@ func (d *DeviceConfigController) selectAndFetchTemplate(ctx context.Context, ud 
 			qm.Load(models.TemplateRels.TemplateNameDeviceSetting),
 		).All(ctx, d.db)
 
-		if err != nil {
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("failed to query templates for protocol: %s and powertrain: %s: %w", ud.CANProtocol, ud.PowerTrainType, err)
 		}
-
 		if len(templates) > 0 {
 			matchedTemplateName = templates[0].TemplateName
 		}
@@ -414,6 +408,8 @@ func (d *DeviceConfigController) selectAndFetchTemplate(ctx context.Context, ud 
 	// Fetch the template object if a name was found
 	matchedTemplate, err := models.Templates(
 		models.TemplateWhere.TemplateName.EQ(matchedTemplateName),
+		qm.Load(models.TemplateRels.TemplateNameDBCFile),
+		qm.Load(models.TemplateRels.TemplateNameDeviceSetting),
 	).One(ctx, d.db)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch template by name %s: %w", matchedTemplateName, err)
@@ -454,14 +450,18 @@ func (d *DeviceConfigController) getConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) 
 		Version: version,
 	}
 
-	if matchedTemplate.R != nil {
-		if matchedTemplate.R.TemplateNameDBCFile != nil && len(matchedTemplate.R.TemplateNameDBCFile.DBCFile) > 0 {
-			response.DbcURL = fmt.Sprintf("%s/v1/device-config/%s/dbc", baseURL, templateName)
-		}
+	// only set dbc url if we have dbc
+	if matchedTemplate.R.TemplateNameDBCFile != nil && len(matchedTemplate.R.TemplateNameDBCFile.DBCFile) > 0 {
+		response.DbcURL = fmt.Sprintf("%s/v1/device-config/%s/dbc", baseURL, templateName)
+	} else {
+		response.DbcURL = ""
+	}
 
-		if matchedTemplate.R.TemplateNameDeviceSetting != nil {
-			response.DeviceSettingURL = fmt.Sprintf("%s/v1/device-config/%s/device-settings", baseURL, parentTemplateName)
-		}
+	// only set device settings url if we have one
+	if matchedTemplate.R.TemplateNameDeviceSetting != nil {
+		response.DeviceSettingURL = fmt.Sprintf("%s/v1/device-config/%s/device-settings", baseURL, parentTemplateName)
+	} else {
+		response.DeviceSettingURL = ""
 	}
 
 	return c.JSON(response)
