@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	_ "github.com/lib/pq"
 	"io"
 	"os"
 	"testing"
@@ -28,8 +29,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
-
-	_ "github.com/lib/pq" //nolint
 )
 
 const migrationsDirRelPath = "../infrastructure/db/migrations"
@@ -969,14 +968,22 @@ func TestSelectAndFetchTemplate_PowertrainProtocol(t *testing.T) {
 	mockDeviceDefSvc := mock_services.NewMockDeviceDefinitionsService(mockCtrl)
 	c := NewDeviceConfigController(&config.Settings{Port: "3000"}, &logger, pdb.DBS().Reader.DB, mockUserDeviceSvc, mockDeviceDefSvc)
 
+	decoy := &models.Template{
+		TemplateName: "protocol-powertrain-template-decoy",
+		Version:      "1.0",
+		Protocol:     models.CanProtocolTypeCAN29_500,
+		Powertrain:   "PHEV",
+	}
+	err := decoy.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	require.NoError(t, err)
 	// Insert template into the database
 	template := &models.Template{
 		TemplateName: "protocol-powertrain-template",
 		Version:      "1.0",
-		Protocol:     "CAN29_500",
+		Protocol:     models.CanProtocolTypeCAN29_500,
 		Powertrain:   "HEV",
 	}
-	err := template.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	err = template.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err)
 
 	// Create a mocked user device
@@ -984,7 +991,7 @@ func TestSelectAndFetchTemplate_PowertrainProtocol(t *testing.T) {
 		Id:                 ksuid.New().String(),
 		UserId:             ksuid.New().String(),
 		DeviceDefinitionId: "non-existing-def-id",
-		CANProtocol:        "CAN29_500",
+		CANProtocol:        models.CanProtocolTypeCAN29_500,
 		PowerTrainType:     "HEV",
 	}
 
@@ -1027,6 +1034,15 @@ func TestSelectAndFetchTemplate_Default(t *testing.T) {
 	mockDeviceDefSvc := mock_services.NewMockDeviceDefinitionsService(mockCtrl)
 	c := NewDeviceConfigController(&config.Settings{Port: "3000"}, &logger, pdb.DBS().Reader.DB, mockUserDeviceSvc, mockDeviceDefSvc)
 
+	// decoy
+	nonDefaultTmpl := &models.Template{
+		TemplateName: "some-template-special",
+		Version:      "1.0",
+		Protocol:     "CAN11_500",
+		Powertrain:   "ICE",
+	}
+	err := nonDefaultTmpl.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	require.NoError(t, err)
 	// Insert a default template into the database
 	defaultTemplate := &models.Template{
 		TemplateName: "default-some-template",
@@ -1034,7 +1050,7 @@ func TestSelectAndFetchTemplate_Default(t *testing.T) {
 		Protocol:     "CAN11_500",
 		Powertrain:   "ICE",
 	}
-	err := defaultTemplate.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	err = defaultTemplate.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err)
 
 	// Create a mocked user device that does not match any existing definitions, vehicles, or powertrain/protocol
@@ -1042,13 +1058,13 @@ func TestSelectAndFetchTemplate_Default(t *testing.T) {
 		Id:                 ksuid.New().String(),
 		UserId:             ksuid.New().String(),
 		DeviceDefinitionId: "non-existing-def-id",
-		CANProtocol:        "CAN29_500",
+		CANProtocol:        models.CanProtocolTypeCAN29_500,
 		PowerTrainType:     "HEV",
 	}
 
 	vehicleMake := "NonExistingMake"
 	vehicleModel := "NonExistingModel"
-	vehicleYear := 1999
+	vehicleYear := 2010
 
 	// Act
 	fetchedTemplate, err := c.selectAndFetchTemplate(ctx, mockedUserDevice, vehicleMake, vehicleModel, vehicleYear)
@@ -1059,4 +1075,31 @@ func TestSelectAndFetchTemplate_Default(t *testing.T) {
 	assert.Equal(t, defaultTemplate.TemplateName, fetchedTemplate.TemplateName)
 
 	test.TruncateTables(pdb.DBS().Writer.DB, t)
+}
+
+func Test_modelMatch(t *testing.T) {
+	tests := []struct {
+		name      string
+		modelList types.StringArray
+		modelName string
+		want      bool
+	}{
+		{
+			name:      "match found",
+			modelList: types.StringArray{"falcon", "model-x"},
+			modelName: "model-x",
+			want:      true,
+		},
+		{
+			name:      "no match found",
+			modelList: types.StringArray{"falcon", "model-x"},
+			modelName: "model-y",
+			want:      false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equalf(t, tt.want, modelMatch(tt.modelList, tt.modelName), "modelMatch(%v, %v)", tt.modelList, tt.modelName)
+		})
+	}
 }

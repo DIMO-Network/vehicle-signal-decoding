@@ -5,10 +5,10 @@ import (
 	"database/sql"
 	"encoding/binary"
 	"fmt"
+	"github.com/volatiletech/sqlboiler/v4/types"
+	"strings"
 
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
-
-	"github.com/volatiletech/sqlboiler/v4/types"
 
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	pb "github.com/DIMO-Network/devices-api/pkg/grpc"
@@ -352,39 +352,56 @@ func (d *DeviceConfigController) selectAndFetchTemplate(ctx context.Context, ud 
 		matchedTemplateName = deviceDefinitions[0].TemplateName
 	}
 
-	// Second, try to find a template based on Make, Model, Year
+	// Second, try to find a template based on Year, then Make & Model
 	if matchedTemplateName == "" {
+		// compare by year first, then in memory below we'll look for make and/or model
 		templateVehicles, err := models.TemplateVehicles(
-			models.TemplateVehicleWhere.MakeSlug.EQ(vehicleMake),
-			models.TemplateVehicleWhere.ModelWhitelist.EQ(types.StringArray{vehicleModel}),
 			models.TemplateVehicleWhere.YearStart.LTE(vehicleYear),
 			models.TemplateVehicleWhere.YearEnd.GTE(vehicleYear),
+			qm.Load(models.TemplateVehicleRels.TemplateNameTemplate),
 		).All(ctx, d.db)
 
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("failed to query templates for make: %s, model: %s, year: %d: %w", vehicleMake, vehicleModel, vehicleYear, err)
 		}
-
+		// if anything is returned, try finding a match by make and/or model
 		if len(templateVehicles) > 0 {
-			matchedTemplateName = templateVehicles[0].TemplateName
+			for _, tv := range templateVehicles {
+				// any matches for year & same protocol
+				if tv.R.TemplateNameTemplate.Protocol == ud.CANProtocol {
+					matchedTemplateName = tv.TemplateName
+					// now any matches for make
+					if tv.MakeSlug == vehicleMake {
+						matchedTemplateName = tv.TemplateName
+						// now see if there is also a model match
+						if modelMatch(tv.ModelWhitelist, vehicleModel) {
+							break
+						}
+					}
+				}
+			}
 		}
 	}
 
-	// Third, fallback to query by protocol and powertrain
+	// Third, fallback to query by protocol and powertrain. Match by protocol first
 	if matchedTemplateName == "" {
 		templates, err := models.Templates(
 			models.TemplateWhere.Protocol.EQ(ud.CANProtocol),
-			models.TemplateWhere.Powertrain.EQ(ud.PowerTrainType),
-			qm.Load(models.TemplateRels.TemplateNameDBCFile),
-			qm.Load(models.TemplateRels.TemplateNameTemplateVehicles),
-			qm.Load(models.TemplateRels.TemplateNameDeviceSetting),
 		).All(ctx, d.db)
 
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("failed to query templates for protocol: %s and powertrain: %s: %w", ud.CANProtocol, ud.PowerTrainType, err)
 		}
 		if len(templates) > 0 {
+			// match the first one just in case
 			matchedTemplateName = templates[0].TemplateName
+			// now see if also have a powertrain match
+			for _, t := range templates {
+				if t.Powertrain == ud.PowerTrainType {
+					matchedTemplateName = t.TemplateName
+					break
+				}
+			}
 		}
 	}
 
@@ -416,6 +433,16 @@ func (d *DeviceConfigController) selectAndFetchTemplate(ctx context.Context, ud 
 	}
 
 	return matchedTemplate, nil
+}
+
+// modelMatch simply returns if the modelName is in the model List
+func modelMatch(modelList types.StringArray, modelName string) bool {
+	for _, m := range modelList {
+		if strings.EqualFold(m, modelName) {
+			return true
+		}
+	}
+	return false
 }
 
 func (d *DeviceConfigController) getConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) error {
