@@ -310,13 +310,18 @@ func (d *DeviceConfigController) GetConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) 
 		PidURL:  fmt.Sprintf("%s/v1/device-config/%s/pids", baseURL, templateName),
 		Version: version,
 	}
-	// only set dbc url if we have dbc
-	if templates[0].R.TemplateNameDBCFile != nil && len(templates[0].R.TemplateNameDBCFile.DBCFile) > 0 {
-		response.DbcURL = fmt.Sprintf("%s/v1/device-config/%s/dbc", baseURL, templateName)
-	}
-	// only set device settings url if we have one
-	if templates[0].R.TemplateNameDeviceSetting != nil {
-		response.DeviceSettingURL = fmt.Sprintf("%s/v1/device-config/%s/device-settings", baseURL, parentTemplateName)
+
+	if len(templates) > 0 {
+		if templates[0].R != nil {
+			// only set dbc url if we have dbc
+			if templates[0].R.TemplateNameDBCFile != nil && len(templates[0].R.TemplateNameDBCFile.DBCFile) > 0 {
+				response.DbcURL = fmt.Sprintf("%s/v1/device-config/%s/dbc", baseURL, templateName)
+			}
+			// only set device settings url if we have one
+			if templates[0].R.TemplateNameDeviceSetting != nil {
+				response.DeviceSettingURL = fmt.Sprintf("%s/v1/device-config/%s/device-settings", baseURL, parentTemplateName)
+			}
+		}
 	}
 
 	return c.JSON(response)
