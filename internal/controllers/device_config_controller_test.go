@@ -871,6 +871,81 @@ func TestSelectAndFetchTemplate_MMY(t *testing.T) {
 	test.TruncateTables(pdb.DBS().Writer.DB, t)
 }
 
+func TestSelectAndFetchTemplate_YearRange(t *testing.T) {
+	// Arrange
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	logger := zerolog.New(os.Stdout).With().
+		Timestamp().
+		Str("app", "vehicle-signal-decoding").
+		Logger()
+
+	ctx := context.Background()
+
+	pdb, container := test.StartContainerDatabase(ctx, t, migrationsDirRelPath)
+	defer func() {
+		if err := container.Terminate(ctx); err != nil {
+			t.Fatal(err)
+		}
+	}()
+
+	mockUserDeviceSvc := mock_services.NewMockUserDeviceService(mockCtrl)
+	mockDeviceDefSvc := mock_services.NewMockDeviceDefinitionsService(mockCtrl)
+	c := NewDeviceConfigController(&config.Settings{Port: "3000"}, &logger, pdb.DBS().Reader.DB, mockUserDeviceSvc, mockDeviceDefSvc)
+	// insert another template to have more test data - we should not get this one
+	template2 := &models.Template{
+		TemplateName: "default-template",
+		Version:      "1.0",
+		Protocol:     models.CanProtocolTypeCAN11_500,
+		Powertrain:   "ICE",
+	}
+	err := template2.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	require.NoError(t, err)
+
+	// Insert template we expect to get
+	template := &models.Template{
+		TemplateName: "2019plus-template",
+		Version:      "1.0",
+		Protocol:     models.CanProtocolTypeCAN11_500,
+		Powertrain:   "ICE",
+	}
+	err = template.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	require.NoError(t, err)
+
+	// Insert a template vehicle that matches the year range
+	templateVehicle := &models.TemplateVehicle{
+		TemplateName: template.TemplateName,
+		YearStart:    2019,
+		YearEnd:      2025,
+	}
+	err = templateVehicle.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	require.NoError(t, err)
+
+	// Create a mocked user device without a matching device definition
+	mockedUserDevice := &pb.UserDevice{
+		Id:                 ksuid.New().String(),
+		UserId:             ksuid.New().String(),
+		DeviceDefinitionId: "some-2019-vehicle",
+		PowerTrainType:     template.Powertrain,
+		CANProtocol:        template.Protocol,
+	}
+
+	vehicleMake := "Ford"
+	vehicleModel := "Mustang"
+	vehicleYear := 2019
+
+	// Act
+	fetchedTemplate, err := c.selectAndFetchTemplate(ctx, mockedUserDevice, vehicleMake, vehicleModel, vehicleYear)
+
+	// Assert
+	require.NoError(t, err)
+	assert.NotNil(t, fetchedTemplate)
+	assert.Equal(t, template.TemplateName, fetchedTemplate.TemplateName)
+
+	test.TruncateTables(pdb.DBS().Writer.DB, t)
+}
+
 func TestSelectAndFetchTemplate_PowertrainProtocol(t *testing.T) {
 	// Arrange
 	mockCtrl := gomock.NewController(t)
