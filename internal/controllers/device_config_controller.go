@@ -245,6 +245,7 @@ func (d *DeviceConfigController) GetDBCFileByTemplateName(c *fiber.Ctx) error {
 // @Router       /device-config/vin/{vin}/urls [get]
 func (d *DeviceConfigController) GetConfigURLsFromVIN(c *fiber.Ctx) error {
 	vin := c.Params("vin")
+	protocol := c.Query("protocol", "")
 
 	ud, err := d.userDeviceSvc.GetUserDeviceByVIN(c.Context(), vin)
 	if err != nil {
@@ -262,6 +263,10 @@ func (d *DeviceConfigController) GetConfigURLsFromVIN(c *fiber.Ctx) error {
 		}
 	}
 
+	if protocol != "" {
+		ud.CANProtocol = protocol // todo - what form is this coming in from macaron
+	}
+
 	return d.getConfigURLs(c, ud)
 }
 
@@ -276,10 +281,17 @@ func (d *DeviceConfigController) GetConfigURLsFromVIN(c *fiber.Ctx) error {
 // @Router       /device-config/eth-addr/{ethAddr}/urls [get]
 func (d *DeviceConfigController) GetConfigURLsFromEthAddr(c *fiber.Ctx) error {
 	ethAddr := c.Params("ethAddr")
+	protocol := c.Query("protocol", "")
+
 	ud, err := d.userDeviceSvc.GetUserDeviceByEthAddr(c.Context(), ethAddr)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": fmt.Sprintf("no connected user device found for EthAddr: %s", ethAddr)})
 	}
+
+	if protocol != "" {
+		ud.CANProtocol = protocol // todo - what form is this coming in from macaron
+	}
+
 	return d.getConfigURLs(c, ud)
 }
 
