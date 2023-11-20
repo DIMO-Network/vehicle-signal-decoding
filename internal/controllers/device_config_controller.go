@@ -291,6 +291,7 @@ func padByteArray(input []byte, targetLength int) []byte {
 	return append(padded, input...)
 }
 
+// setCANProtocol converts autopi style Protocol to our VSD style protocol, but always returning a default if nothing found
 func (d *DeviceConfigController) setCANProtocol(ud *pb.UserDevice) {
 	switch ud.CANProtocol {
 	case "6":
@@ -301,6 +302,9 @@ func (d *DeviceConfigController) setCANProtocol(ud *pb.UserDevice) {
 		ud.CANProtocol = models.CanProtocolTypeCAN11_500
 	}
 }
+
+// retrieveAndSetVehicleInfo figures out what if any device definition information corresponds to the UserDevice.
+// also calls setPowerTrainType to find and set a default Powertrain
 func (d *DeviceConfigController) retrieveAndSetVehicleInfo(ctx context.Context, ud *pb.UserDevice) (string, string, int, error) {
 
 	var ddResponse *p_grpc.GetDeviceDefinitionItemResponse
@@ -335,7 +339,16 @@ func (d *DeviceConfigController) setPowerTrainType(ddResponse *p_grpc.GetDeviceD
 	}
 }
 
+// selectAndFetchTemplate figures out the right template to use based on the protocol, powertrain, year range, make, and /or model.
+// Returns default template if nothing found. Requirees ud.CANProtocol and Powertrain to be set to something
 func (d *DeviceConfigController) selectAndFetchTemplate(ctx context.Context, ud *pb.UserDevice, vehicleMake, vehicleModel string, vehicleYear int) (*models.Template, error) {
+	// guard
+	if ud.CANProtocol == "" {
+		return nil, fmt.Errorf("CANProtocol is required in the user device")
+	}
+	if ud.PowerTrainType == "" {
+		return nil, fmt.Errorf("PowerTrainType is required in the user device")
+	}
 
 	var matchedTemplateName string
 

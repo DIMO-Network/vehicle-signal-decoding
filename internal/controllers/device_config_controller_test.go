@@ -827,6 +827,14 @@ func TestSelectAndFetchTemplate_MMY(t *testing.T) {
 	mockDeviceDefSvc := mock_services.NewMockDeviceDefinitionsService(mockCtrl)
 	c := NewDeviceConfigController(&config.Settings{Port: "3000"}, &logger, pdb.DBS().Reader.DB, mockUserDeviceSvc, mockDeviceDefSvc)
 
+	decoy := &models.Template{
+		TemplateName: "mmy-template-decoy",
+		Version:      "1.0",
+		Protocol:     models.CanProtocolTypeCAN29_500,
+		Powertrain:   "HEV",
+	}
+	err := decoy.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	require.NoError(t, err)
 	// Insert template into the database
 	template := &models.Template{
 		TemplateName: "mmy-template",
@@ -834,7 +842,7 @@ func TestSelectAndFetchTemplate_MMY(t *testing.T) {
 		Protocol:     models.CanProtocolTypeCAN29_500,
 		Powertrain:   "HEV",
 	}
-	err := template.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	err = template.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err)
 
 	// Insert a template vehicle that matches the MMY
@@ -853,6 +861,8 @@ func TestSelectAndFetchTemplate_MMY(t *testing.T) {
 		Id:                 ksuid.New().String(),
 		UserId:             ksuid.New().String(),
 		DeviceDefinitionId: "non-existing-def-id",
+		CANProtocol:        models.CanProtocolTypeCAN29_500,
+		PowerTrainType:     "HEV",
 	}
 
 	vehicleMake := "Ford"
