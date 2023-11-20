@@ -5,8 +5,9 @@ import (
 	"database/sql"
 	"encoding/binary"
 	"fmt"
-	"github.com/volatiletech/sqlboiler/v4/types"
 	"strings"
+
+	"github.com/volatiletech/sqlboiler/v4/types"
 
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 
