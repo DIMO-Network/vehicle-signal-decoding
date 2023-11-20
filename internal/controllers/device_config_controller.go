@@ -242,6 +242,7 @@ func (d *DeviceConfigController) GetDBCFileByTemplateName(c *fiber.Ctx) error {
 // @Success      200 {object} DeviceConfigResponse "Successfully retrieved configuration URLs"
 // @Failure 404  "Not Found - No templates available for the given parameters"
 // @Param        vin  path   string  true   "vehicle identification number (VIN)"
+// @Param        protocol  query   string  false  "CAN Protocol"
 // @Router       /device-config/vin/{vin}/urls [get]
 func (d *DeviceConfigController) GetConfigURLsFromVIN(c *fiber.Ctx) error {
 	vin := c.Params("vin")
@@ -277,7 +278,8 @@ func (d *DeviceConfigController) GetConfigURLsFromVIN(c *fiber.Ctx) error {
 // @Success      200 {object} DeviceConfigResponse "Successfully retrieved configuration URLs"
 // @Failure 404  "Not Found - No templates available for the given parameters"
 // @Failure 400  "incorrect eth addr format"
-// @Param        ethAddr  path   string  false  "Ethereum Address"
+// @Param        ethAddr  path   string  true  "Ethereum Address"
+// @Param        protocol  query   string  false  "CAN Protocol"
 // @Router       /device-config/eth-addr/{ethAddr}/urls [get]
 func (d *DeviceConfigController) GetConfigURLsFromEthAddr(c *fiber.Ctx) error {
 	ethAddr := c.Params("ethAddr")

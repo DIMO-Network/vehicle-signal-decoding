@@ -21,7 +21,14 @@
                         "type": "string",
                         "description": "Ethereum Address",
                         "name": "ethAddr",
-                        "in": "path"
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "CAN Protocol",
+                        "name": "protocol",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -56,6 +63,12 @@
                         "name": "vin",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "CAN Protocol",
+                        "name": "protocol",
+                        "in": "query"
                     }
                 ],
                 "responses": {
