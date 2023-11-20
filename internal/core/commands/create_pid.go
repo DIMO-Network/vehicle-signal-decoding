@@ -46,7 +46,7 @@ func (h CreatePidCommandHandler) Execute(ctx context.Context, req *CreatePidComm
 	}
 	if exists {
 		return nil, &exceptions.ConflictError{
-			Err: errors.Wrapf(err, "pid with name %s already exists", req.TemplateName),
+			Err: errors.Errorf("pid config already exists: %s", req.TemplateName),
 		}
 	}
 

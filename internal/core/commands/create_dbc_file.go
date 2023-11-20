@@ -2,7 +2,6 @@ package commands
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/exceptions"
@@ -39,7 +38,7 @@ func (h CreateDbcCommandHandler) Execute(ctx context.Context, req *CreateDbcComm
 	}
 	if exists {
 		return nil, &exceptions.ConflictError{
-			Err: fmt.Errorf("DbcConfig with name %s already exists", req.TemplateName),
+			Err: errors.Errorf("DbcConfig already exists: %s", req.TemplateName),
 		}
 	}
 
