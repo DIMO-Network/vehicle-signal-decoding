@@ -3,6 +3,8 @@ package queries
 import (
 	"context"
 	"fmt"
+	"io"
+
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/exceptions"
 	p_grpc "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
@@ -11,7 +13,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
-	"io"
 )
 
 type DownloadCanBusDumpFileByFileNameQueryHandler struct {

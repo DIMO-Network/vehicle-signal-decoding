@@ -3,6 +3,7 @@ package queries
 import (
 	"context"
 	"fmt"
+
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/exceptions"
 	p_grpc "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
