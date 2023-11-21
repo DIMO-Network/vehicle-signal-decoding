@@ -242,9 +242,11 @@ func (d *DeviceConfigController) GetDBCFileByTemplateName(c *fiber.Ctx) error {
 // @Success      200 {object} DeviceConfigResponse "Successfully retrieved configuration URLs"
 // @Failure 404  "Not Found - No templates available for the given parameters"
 // @Param        vin  path   string  true   "vehicle identification number (VIN)"
+// @Param        protocol  query   string  false  "CAN Protocol, '6' or '7'"
 // @Router       /device-config/vin/{vin}/urls [get]
 func (d *DeviceConfigController) GetConfigURLsFromVIN(c *fiber.Ctx) error {
 	vin := c.Params("vin")
+	protocol := c.Query("protocol", "")
 
 	ud, err := d.userDeviceSvc.GetUserDeviceByVIN(c.Context(), vin)
 	if err != nil {
@@ -262,6 +264,10 @@ func (d *DeviceConfigController) GetConfigURLsFromVIN(c *fiber.Ctx) error {
 		}
 	}
 
+	if protocol != "" {
+		ud.CANProtocol = protocol
+	}
+
 	return d.getConfigURLs(c, ud)
 }
 
@@ -272,14 +278,22 @@ func (d *DeviceConfigController) GetConfigURLsFromVIN(c *fiber.Ctx) error {
 // @Success      200 {object} DeviceConfigResponse "Successfully retrieved configuration URLs"
 // @Failure 404  "Not Found - No templates available for the given parameters"
 // @Failure 400  "incorrect eth addr format"
-// @Param        ethAddr  path   string  false  "Ethereum Address"
+// @Param        ethAddr  path   string  true  "Ethereum Address"
+// @Param        protocol  query   string  false  "CAN Protocol, '6' or '7'"
 // @Router       /device-config/eth-addr/{ethAddr}/urls [get]
 func (d *DeviceConfigController) GetConfigURLsFromEthAddr(c *fiber.Ctx) error {
 	ethAddr := c.Params("ethAddr")
+	protocol := c.Query("protocol", "")
+
 	ud, err := d.userDeviceSvc.GetUserDeviceByEthAddr(c.Context(), ethAddr)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": fmt.Sprintf("no connected user device found for EthAddr: %s", ethAddr)})
 	}
+
+	if protocol != "" {
+		ud.CANProtocol = protocol
+	}
+
 	return d.getConfigURLs(c, ud)
 }
 
@@ -292,7 +306,7 @@ func padByteArray(input []byte, targetLength int) []byte {
 	return append(padded, input...)
 }
 
-// setCANProtocol converts autopi style Protocol to our VSD style protocol, but always returning a default if nothing found
+// setCANProtocol converts autopi/macaron style Protocol (6 or 7) to our VSD style protocol, but always returning a default if nothing found
 func (d *DeviceConfigController) setCANProtocol(ud *pb.UserDevice) {
 	switch ud.CANProtocol {
 	case "6":
@@ -300,6 +314,9 @@ func (d *DeviceConfigController) setCANProtocol(ud *pb.UserDevice) {
 	case "7":
 		ud.CANProtocol = models.CanProtocolTypeCAN29_500
 	case "":
+		ud.CANProtocol = models.CanProtocolTypeCAN11_500
+	default:
+		d.log.Warn().Str("user_device_id", ud.Id).Msgf("invalid protocol detected: %s", ud.CANProtocol)
 		ud.CANProtocol = models.CanProtocolTypeCAN11_500
 	}
 }

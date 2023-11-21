@@ -134,6 +134,11 @@ paths:
       - description: Ethereum Address
         in: path
         name: ethAddr
+        required: true
+        type: string
+      - description: CAN Protocol
+        in: query
+        name: protocol
         type: string
       produces:
       - application/json
@@ -157,6 +162,10 @@ paths:
         in: path
         name: vin
         required: true
+        type: string
+      - description: CAN Protocol
+        in: query
+        name: protocol
         type: string
       produces:
       - application/json
