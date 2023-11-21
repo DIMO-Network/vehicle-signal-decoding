@@ -5,6 +5,8 @@ import (
 	"net"
 	"runtime/debug"
 
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -18,13 +20,13 @@ import (
 	"google.golang.org/grpc"
 )
 
-func StartGrpcServer(logger zerolog.Logger, dbs func() *db.ReaderWriter, s *config.Settings) {
+func StartGrpcServer(logger zerolog.Logger, dbs func() *db.ReaderWriter, s *config.Settings, s3Client *s3.Client) {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%v", s.GRPCPort))
 	if err != nil {
 		logger.Fatal().Msgf("Failed to listen on port %v: %v", s.GRPCPort, err)
 	}
 
-	vehicleSignalDecodingService := NewGrpcService(&logger, dbs)
+	vehicleSignalDecodingService := NewGrpcService(&logger, dbs, s3Client, s)
 	templateConfigService := NewTemplateConfigService(&logger, dbs)
 	pidConfigService := NewPidConfigService(&logger, dbs)
 	deviceSettingsService := NewDeviceSettingsConfigService(&logger, dbs)
