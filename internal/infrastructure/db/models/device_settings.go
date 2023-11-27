@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/friendsofgo/errors"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -23,152 +24,75 @@ import (
 
 // DeviceSetting is an object representing the database table.
 type DeviceSetting struct {
-	ID                                     int64     `boil:"id" json:"id" toml:"id" yaml:"id"`
-	TemplateName                           string    `boil:"template_name" json:"template_name" toml:"template_name" yaml:"template_name"`
-	BatteryCriticalLevelVoltage            float64   `boil:"battery_critical_level_voltage" json:"battery_critical_level_voltage" toml:"battery_critical_level_voltage" yaml:"battery_critical_level_voltage"`
-	SafetyCutOutVoltage                    float64   `boil:"safety_cut_out_voltage" json:"safety_cut_out_voltage" toml:"safety_cut_out_voltage" yaml:"safety_cut_out_voltage"`
-	SleepTimerEventDrivenInterval          float64   `boil:"sleep_timer_event_driven_interval" json:"sleep_timer_event_driven_interval" toml:"sleep_timer_event_driven_interval" yaml:"sleep_timer_event_driven_interval"`
-	SleepTimerEventDrivenPeriod            float64   `boil:"sleep_timer_event_driven_period" json:"sleep_timer_event_driven_period" toml:"sleep_timer_event_driven_period" yaml:"sleep_timer_event_driven_period"`
-	SleepTimerInactivityAfterSleepInterval float64   `boil:"sleep_timer_inactivity_after_sleep_interval" json:"sleep_timer_inactivity_after_sleep_interval" toml:"sleep_timer_inactivity_after_sleep_interval" yaml:"sleep_timer_inactivity_after_sleep_interval"`
-	SleepTimerInactivityFallbackInterval   float64   `boil:"sleep_timer_inactivity_fallback_interval" json:"sleep_timer_inactivity_fallback_interval" toml:"sleep_timer_inactivity_fallback_interval" yaml:"sleep_timer_inactivity_fallback_interval"`
-	WakeTriggerVoltageLevel                float64   `boil:"wake_trigger_voltage_level" json:"wake_trigger_voltage_level" toml:"wake_trigger_voltage_level" yaml:"wake_trigger_voltage_level"`
-	CreatedAt                              time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	UpdatedAt                              time.Time `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	TemplateName string    `boil:"template_name" json:"template_name" toml:"template_name" yaml:"template_name"`
+	CreatedAt    time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UpdatedAt    time.Time `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	Settings     null.JSON `boil:"settings" json:"settings,omitempty" toml:"settings" yaml:"settings,omitempty"`
 
 	R *deviceSettingR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L deviceSettingL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var DeviceSettingColumns = struct {
-	ID                                     string
-	TemplateName                           string
-	BatteryCriticalLevelVoltage            string
-	SafetyCutOutVoltage                    string
-	SleepTimerEventDrivenInterval          string
-	SleepTimerEventDrivenPeriod            string
-	SleepTimerInactivityAfterSleepInterval string
-	SleepTimerInactivityFallbackInterval   string
-	WakeTriggerVoltageLevel                string
-	CreatedAt                              string
-	UpdatedAt                              string
+	TemplateName string
+	CreatedAt    string
+	UpdatedAt    string
+	Settings     string
 }{
-	ID:                                     "id",
-	TemplateName:                           "template_name",
-	BatteryCriticalLevelVoltage:            "battery_critical_level_voltage",
-	SafetyCutOutVoltage:                    "safety_cut_out_voltage",
-	SleepTimerEventDrivenInterval:          "sleep_timer_event_driven_interval",
-	SleepTimerEventDrivenPeriod:            "sleep_timer_event_driven_period",
-	SleepTimerInactivityAfterSleepInterval: "sleep_timer_inactivity_after_sleep_interval",
-	SleepTimerInactivityFallbackInterval:   "sleep_timer_inactivity_fallback_interval",
-	WakeTriggerVoltageLevel:                "wake_trigger_voltage_level",
-	CreatedAt:                              "created_at",
-	UpdatedAt:                              "updated_at",
+	TemplateName: "template_name",
+	CreatedAt:    "created_at",
+	UpdatedAt:    "updated_at",
+	Settings:     "settings",
 }
 
 var DeviceSettingTableColumns = struct {
-	ID                                     string
-	TemplateName                           string
-	BatteryCriticalLevelVoltage            string
-	SafetyCutOutVoltage                    string
-	SleepTimerEventDrivenInterval          string
-	SleepTimerEventDrivenPeriod            string
-	SleepTimerInactivityAfterSleepInterval string
-	SleepTimerInactivityFallbackInterval   string
-	WakeTriggerVoltageLevel                string
-	CreatedAt                              string
-	UpdatedAt                              string
+	TemplateName string
+	CreatedAt    string
+	UpdatedAt    string
+	Settings     string
 }{
-	ID:                                     "device_settings.id",
-	TemplateName:                           "device_settings.template_name",
-	BatteryCriticalLevelVoltage:            "device_settings.battery_critical_level_voltage",
-	SafetyCutOutVoltage:                    "device_settings.safety_cut_out_voltage",
-	SleepTimerEventDrivenInterval:          "device_settings.sleep_timer_event_driven_interval",
-	SleepTimerEventDrivenPeriod:            "device_settings.sleep_timer_event_driven_period",
-	SleepTimerInactivityAfterSleepInterval: "device_settings.sleep_timer_inactivity_after_sleep_interval",
-	SleepTimerInactivityFallbackInterval:   "device_settings.sleep_timer_inactivity_fallback_interval",
-	WakeTriggerVoltageLevel:                "device_settings.wake_trigger_voltage_level",
-	CreatedAt:                              "device_settings.created_at",
-	UpdatedAt:                              "device_settings.updated_at",
+	TemplateName: "device_settings.template_name",
+	CreatedAt:    "device_settings.created_at",
+	UpdatedAt:    "device_settings.updated_at",
+	Settings:     "device_settings.settings",
 }
 
 // Generated where
 
-type whereHelperint64 struct{ field string }
+type whereHelpernull_JSON struct{ field string }
 
-func (w whereHelperint64) EQ(x int64) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.EQ, x) }
-func (w whereHelperint64) NEQ(x int64) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.NEQ, x) }
-func (w whereHelperint64) LT(x int64) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.LT, x) }
-func (w whereHelperint64) LTE(x int64) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.LTE, x) }
-func (w whereHelperint64) GT(x int64) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.GT, x) }
-func (w whereHelperint64) GTE(x int64) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
-func (w whereHelperint64) IN(slice []int64) qm.QueryMod {
-	values := make([]interface{}, 0, len(slice))
-	for _, value := range slice {
-		values = append(values, value)
-	}
-	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
+func (w whereHelpernull_JSON) EQ(x null.JSON) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, false, x)
 }
-func (w whereHelperint64) NIN(slice []int64) qm.QueryMod {
-	values := make([]interface{}, 0, len(slice))
-	for _, value := range slice {
-		values = append(values, value)
-	}
-	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
+func (w whereHelpernull_JSON) NEQ(x null.JSON) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, true, x)
 }
-
-type whereHelperfloat64 struct{ field string }
-
-func (w whereHelperfloat64) EQ(x float64) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.EQ, x) }
-func (w whereHelperfloat64) NEQ(x float64) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.NEQ, x)
+func (w whereHelpernull_JSON) LT(x null.JSON) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LT, x)
 }
-func (w whereHelperfloat64) LT(x float64) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.LT, x) }
-func (w whereHelperfloat64) LTE(x float64) qm.QueryMod {
+func (w whereHelpernull_JSON) LTE(x null.JSON) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.LTE, x)
 }
-func (w whereHelperfloat64) GT(x float64) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GT, x) }
-func (w whereHelperfloat64) GTE(x float64) qm.QueryMod {
+func (w whereHelpernull_JSON) GT(x null.JSON) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GT, x)
+}
+func (w whereHelpernull_JSON) GTE(x null.JSON) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.GTE, x)
 }
-func (w whereHelperfloat64) IN(slice []float64) qm.QueryMod {
-	values := make([]interface{}, 0, len(slice))
-	for _, value := range slice {
-		values = append(values, value)
-	}
-	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
-}
-func (w whereHelperfloat64) NIN(slice []float64) qm.QueryMod {
-	values := make([]interface{}, 0, len(slice))
-	for _, value := range slice {
-		values = append(values, value)
-	}
-	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
-}
+
+func (w whereHelpernull_JSON) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
+func (w whereHelpernull_JSON) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
 
 var DeviceSettingWhere = struct {
-	ID                                     whereHelperint64
-	TemplateName                           whereHelperstring
-	BatteryCriticalLevelVoltage            whereHelperfloat64
-	SafetyCutOutVoltage                    whereHelperfloat64
-	SleepTimerEventDrivenInterval          whereHelperfloat64
-	SleepTimerEventDrivenPeriod            whereHelperfloat64
-	SleepTimerInactivityAfterSleepInterval whereHelperfloat64
-	SleepTimerInactivityFallbackInterval   whereHelperfloat64
-	WakeTriggerVoltageLevel                whereHelperfloat64
-	CreatedAt                              whereHelpertime_Time
-	UpdatedAt                              whereHelpertime_Time
+	TemplateName whereHelperstring
+	CreatedAt    whereHelpertime_Time
+	UpdatedAt    whereHelpertime_Time
+	Settings     whereHelpernull_JSON
 }{
-	ID:                                     whereHelperint64{field: "\"vehicle_signal_decoding_api\".\"device_settings\".\"id\""},
-	TemplateName:                           whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"device_settings\".\"template_name\""},
-	BatteryCriticalLevelVoltage:            whereHelperfloat64{field: "\"vehicle_signal_decoding_api\".\"device_settings\".\"battery_critical_level_voltage\""},
-	SafetyCutOutVoltage:                    whereHelperfloat64{field: "\"vehicle_signal_decoding_api\".\"device_settings\".\"safety_cut_out_voltage\""},
-	SleepTimerEventDrivenInterval:          whereHelperfloat64{field: "\"vehicle_signal_decoding_api\".\"device_settings\".\"sleep_timer_event_driven_interval\""},
-	SleepTimerEventDrivenPeriod:            whereHelperfloat64{field: "\"vehicle_signal_decoding_api\".\"device_settings\".\"sleep_timer_event_driven_period\""},
-	SleepTimerInactivityAfterSleepInterval: whereHelperfloat64{field: "\"vehicle_signal_decoding_api\".\"device_settings\".\"sleep_timer_inactivity_after_sleep_interval\""},
-	SleepTimerInactivityFallbackInterval:   whereHelperfloat64{field: "\"vehicle_signal_decoding_api\".\"device_settings\".\"sleep_timer_inactivity_fallback_interval\""},
-	WakeTriggerVoltageLevel:                whereHelperfloat64{field: "\"vehicle_signal_decoding_api\".\"device_settings\".\"wake_trigger_voltage_level\""},
-	CreatedAt:                              whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"device_settings\".\"created_at\""},
-	UpdatedAt:                              whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"device_settings\".\"updated_at\""},
+	TemplateName: whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"device_settings\".\"template_name\""},
+	CreatedAt:    whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"device_settings\".\"created_at\""},
+	UpdatedAt:    whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"device_settings\".\"updated_at\""},
+	Settings:     whereHelpernull_JSON{field: "\"vehicle_signal_decoding_api\".\"device_settings\".\"settings\""},
 }
 
 // DeviceSettingRels is where relationship names are stored.
@@ -199,9 +123,9 @@ func (r *deviceSettingR) GetTemplateNameTemplate() *Template {
 type deviceSettingL struct{}
 
 var (
-	deviceSettingAllColumns            = []string{"id", "template_name", "battery_critical_level_voltage", "safety_cut_out_voltage", "sleep_timer_event_driven_interval", "sleep_timer_event_driven_period", "sleep_timer_inactivity_after_sleep_interval", "sleep_timer_inactivity_fallback_interval", "wake_trigger_voltage_level", "created_at", "updated_at"}
-	deviceSettingColumnsWithoutDefault = []string{"template_name", "battery_critical_level_voltage", "safety_cut_out_voltage", "sleep_timer_event_driven_interval", "sleep_timer_event_driven_period", "sleep_timer_inactivity_after_sleep_interval", "sleep_timer_inactivity_fallback_interval", "wake_trigger_voltage_level"}
-	deviceSettingColumnsWithDefault    = []string{"id", "created_at", "updated_at"}
+	deviceSettingAllColumns            = []string{"template_name", "created_at", "updated_at", "settings"}
+	deviceSettingColumnsWithoutDefault = []string{"template_name"}
+	deviceSettingColumnsWithDefault    = []string{"created_at", "updated_at", "settings"}
 	deviceSettingPrimaryKeyColumns     = []string{"template_name"}
 	deviceSettingGeneratedColumns      = []string{}
 )
