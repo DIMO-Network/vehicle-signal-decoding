@@ -40,9 +40,9 @@ VALUES ('default-ice-can11', E'\\x0d', '31|8@0+ (1,0) [0|255] "km/h"', 10, 'CAN1
 INSERT INTO pid_configs (template_name, pid, formula, interval_seconds, protocol, signal_name)
 VALUES ('default-ice-can11', E'\\x04', '31|8@0+ (0.39216,0) [0|100] "%"', 10, 'CAN11_500', 'engineLoad');
 INSERT INTO pid_configs (template_name, pid, formula, interval_seconds, protocol, signal_name)
-VALUES ('default-ice-can11', E'\\x46', '31|8@0+ (1,-40) [-40|215] "Celcius"', 60, 'CAN11_500', 'ambientAir_Temp');
+VALUES ('default-ice-can11', E'\\x46', '31|8@0+ (1,-40) [-40|215] "Celcius"', 60, 'CAN11_500', 'ambientAirTemp');
 INSERT INTO pid_configs (template_name, pid, formula, interval_seconds, protocol, signal_name)
-VALUES ('default-ice-can11', E'\\x0f', '31|8@0+ (1,-40) [-40|215] "Celcius"', 10, 'CAN11_500', 'intake_Temp');
+VALUES ('default-ice-can11', E'\\x0f', '31|8@0+ (1,-40) [-40|215] "Celcius"', 10, 'CAN11_500', 'intakeTemp');
 INSERT INTO pid_configs (template_name, pid, formula, interval_seconds, protocol, signal_name)
 VALUES ('default-ice-can11', E'\\x2f', '31|8@0+ (0.392156862745098,0) [0|100] "%"', 60, 'CAN11_500', 'fuelLevel');
 INSERT INTO pid_configs (template_name, pid, formula, interval_seconds, protocol, signal_name)
