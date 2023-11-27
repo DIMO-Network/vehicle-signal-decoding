@@ -141,6 +141,32 @@ message DownloadCanBusDumpFileContentResponse {
   bytes content = 1;
 }
 
+message GetJobByEtherumAddressRequest {
+  string etherum_address = 1;
+}
+
+message GetJobByEtherumAddressResponse {
+  repeated GetJobByEtherumAddressItemResponse items = 1;
+}
+
+message GetJobByEtherumAddressItemResponse {
+  string id = 1;
+  string command = 2;
+  string status = 3;
+  google.protobuf.Timestamp created_at = 4;
+  google.protobuf.Timestamp last_execution = 5;
+}
+
+message CreateJobByEtherumAddressRequest {
+  string etherum_address = 1;
+  string command = 2;
+}
+
+message DeleteJobByEtherumAddressRequest {
+  string etherum_address = 1;
+  string id = 2;
+}
+
 service VehicleSignalDecodingService {
   rpc CreateDBCCode(CreateDBCCodeRequest) returns (VehicleSignalBaseResponse);
   rpc UpdateDBCCode(UpdateDBCCodeRequest) returns (VehicleSignalBaseResponse);
@@ -157,4 +183,8 @@ service VehicleSignalDecodingService {
 
   rpc GetCanBusDumpFiles(GetCanBusDumpFileRequest) returns (GetCanBusDumpFileResponse);
   rpc DownloadCanBusDumpFile(DownloadCanBusDumpFileContentRequest) returns (DownloadCanBusDumpFileContentResponse);
+
+  rpc GetJobsByEtherumAddress(GetJobByEtherumAddressRequest) returns (GetJobByEtherumAddressResponse);
+  rpc CreateJobsByEtherumAddress(CreateJobByEtherumAddressRequest) returns (GetJobByEtherumAddressItemResponse);
+  rpc DeleteJobsByEtherumAddress(DeleteJobByEtherumAddressRequest) returns (google.protobuf.Empty);
 }

@@ -212,3 +212,43 @@ func (s *GrpcService) DownloadCanBusDumpFile(ctx context.Context, in *p_grpc.Dow
 
 	return response, nil
 }
+
+func (s *GrpcService) GetJobsByEtherumAddress(ctx context.Context, in *p_grpc.GetJobByEtherumAddressRequest) (*p_grpc.GetJobByEtherumAddressResponse, error) {
+	service := queries.NewGetJobByEthereumAddressQueryHandler(s.DBS, s.logger)
+	response, err := service.Handle(ctx, &queries.GetJobByyEthereumAddressQueryRequest{
+		EtherumAddress: in.EtherumAddress,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+
+func (s *GrpcService) CreateJobsByEtherumAddress(ctx context.Context, in *p_grpc.CreateJobByEtherumAddressRequest) (*p_grpc.GetJobByEtherumAddressItemResponse, error) {
+	service := commands.NewCreateJobByEtherumAddressCommandHandler(s.DBS)
+	response, err := service.Execute(ctx, &commands.CreateJobCommandRequest{
+		EtherumAddress: in.EtherumAddress,
+		Name:           in.Name,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+
+func (s *GrpcService) DeleteJobsByEtherumAddress(ctx context.Context, in *p_grpc.DeleteJobByEtherumAddressRequest) (*emptypb.Empty, error) {
+	service := commands.NewDeleteJobByEtherumAddressCommandHandler(s.DBS)
+	_, err := service.Execute(ctx, &commands.DeleteJobCommandRequest{
+		ID: in.Id,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &emptypb.Empty{}, nil
+}
