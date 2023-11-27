@@ -22,7 +22,8 @@ type Settings struct {
 	DefinitionsGRPCAddr         string      `yaml:"DEFINITIONS_GRPC_ADDR"`
 	CandumpsAWSAccessKeyID      string      `yaml:"CANDUMPS_AWS_ACCESS_KEY_ID"`
 	CandumpsAWSSecretsAccessKey string      `yaml:"CANDUMPS_AWS_SECRET_ACCESS_KEY"`
-	CandumpsAWSEndpoint         string      `yaml:"CANDUMPS_AWS_ENDPOINT"`
-	AWSCandumpsBucketName       string      `yaml:"AWS_CANDUMPS_BUCKET_NAME"`
-	AWSRegion                   string      `yaml:"AWS_REGION"`
+	// CandumpsAWSEndpoint is only used for local development
+	CandumpsAWSEndpoint   string `yaml:"CANDUMPS_AWS_ENDPOINT"`
+	AWSCandumpsBucketName string `yaml:"AWS_CANDUMPS_BUCKET_NAME"`
+	AWSRegion             string `yaml:"AWS_REGION"`
 }

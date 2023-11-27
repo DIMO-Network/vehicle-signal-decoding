@@ -45,7 +45,7 @@ func (h CreateDeviceSettingsCommandHandler) Execute(ctx context.Context, req *Cr
 	}
 	if exists {
 		return nil, &exceptions.ConflictError{
-			Err: errors.Wrapf(err, "device setting with name %s already exists", req.TemplateName),
+			Err: errors.Errorf("device setting already exists: %s", req.TemplateName),
 		}
 	}
 

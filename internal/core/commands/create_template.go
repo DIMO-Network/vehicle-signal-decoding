@@ -44,7 +44,7 @@ func (h CreateTemplateCommandHandler) Execute(ctx context.Context, req *CreateTe
 	}
 	if exists {
 		return nil, &exceptions.ConflictError{
-			Err: errors.Wrapf(err, "template with name %s already exists", req.Name),
+			Err: errors.Errorf("template already exists: %s", req.Name),
 		}
 	}
 

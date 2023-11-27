@@ -40,15 +40,15 @@ VALUES ('default-ice-can11', E'\\x0d', '31|8@0+ (1,0) [0|255] "km/h"', 10, 'CAN1
 INSERT INTO pid_configs (template_name, pid, formula, interval_seconds, protocol, signal_name)
 VALUES ('default-ice-can11', E'\\x04', '31|8@0+ (0.39216,0) [0|100] "%"', 10, 'CAN11_500', 'engineLoad');
 INSERT INTO pid_configs (template_name, pid, formula, interval_seconds, protocol, signal_name)
-VALUES ('default-ice-can11', E'\\x46', '31|8@0+ (1,-40) [-40|215] "Celcius"', 60, 'CAN11_500', 'ambientAir_Temp');
+VALUES ('default-ice-can11', E'\\x46', '31|8@0+ (1,-40) [-40|215] "Celcius"', 60, 'CAN11_500', 'ambientAirTemp');
 INSERT INTO pid_configs (template_name, pid, formula, interval_seconds, protocol, signal_name)
-VALUES ('default-ice-can11', E'\\x0f', '31|8@0+ (1,-40) [-40|215] "Celcius"', 10, 'CAN11_500', 'intake_Temp');
+VALUES ('default-ice-can11', E'\\x0f', '31|8@0+ (1,-40) [-40|215] "Celcius"', 10, 'CAN11_500', 'intakeTemp');
 INSERT INTO pid_configs (template_name, pid, formula, interval_seconds, protocol, signal_name)
 VALUES ('default-ice-can11', E'\\x2f', '31|8@0+ (0.392156862745098,0) [0|100] "%"', 60, 'CAN11_500', 'fuelLevel');
 INSERT INTO pid_configs (template_name, pid, formula, interval_seconds, protocol, signal_name)
 VALUES ('default-ice-can11', E'\\x0c', '31|16@0+ (0.25,0) [0|16383.75] "rpm"', 5, 'CAN11_500', 'rpm');
 INSERT INTO pid_configs (template_name, pid, formula, interval_seconds, protocol, signal_name)
-VALUES ('default-ice-can11', E'\\x05', 'JOB: 31|8@0+ (1,-40) [-40|215] "Celcius"', 30, 'CAN11_500', 'coolantTemp');
+VALUES ('default-ice-can11', E'\\x05', 'dbc: 31|8@0+ (1,-40) [-40|215] "Celcius"', 30, 'CAN11_500', 'coolantTemp');
 
 -- 2019+ with odometer
 INSERT INTO pid_configs (template_name, pid, formula, interval_seconds, protocol, signal_name)
@@ -90,7 +90,7 @@ VALUES (E'\\x18DB33F1', 'default-ice-can29', E'\\x2f', '31|8@0+ (0.3921568627450
 INSERT INTO pid_configs (header, template_name, pid, formula, interval_seconds, protocol, signal_name)
 VALUES (E'\\x18DB33F1', 'default-ice-can29', E'\\x0c', '31|16@0+ (0.25,0) [0|16383.75] "rpm"', 5, 'CAN29_500', 'rpm');
 INSERT INTO pid_configs (header, template_name, pid, formula, interval_seconds, protocol, signal_name)
-VALUES (E'\\x18DB33F1', 'default-ice-can29', E'\\x05', 'JOB: 31|8@0+ (1,-40) [-40|215] "Celcius"', 30, 'CAN29_500', 'coolantTemp');
+VALUES (E'\\x18DB33F1', 'default-ice-can29', E'\\x05', 'dbc: 31|8@0+ (1,-40) [-40|215] "Celcius"', 30, 'CAN29_500', 'coolantTemp');
 
 -- 2019+ odometer
 INSERT INTO templates (template_name, parent_template_name, template_type, version, protocol, powertrain)

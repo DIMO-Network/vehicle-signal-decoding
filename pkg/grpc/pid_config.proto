@@ -20,8 +20,8 @@ message PidConfig {
   int32 bytes_returned = 10;
   google.protobuf.Timestamp created_at = 11;
   google.protobuf.Timestamp updated_at = 12;
-
 }
+
 message PidSummary {
   int64 id = 1;
   string template_name = 2;
@@ -32,23 +32,25 @@ message PidSummary {
   int32 interval_seconds = 7;
   string protocol = 8;
   string signal_name = 9;
-
+  bool is_parent_pid = 10;
 }
+
 message GetPidListRequest {
   string template_name = 1;
 }
+
 message GetPidListResponse {
   repeated PidSummary pid = 1;
-
 }
+
 message GetPidByIDRequest {
   int64 id = 1;
-
 }
+
 message GetPidByIDResponse {
   PidConfig pid = 1;
-
 }
+
 message UpdatePidRequest {
   PidConfig pid = 1;
 }

@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+option go_package = "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc";
+
+package grpc;
+
+message VehicleTemplate {
+    int32 StartYear = 1;
+    int32 EndYear = 2;
+    string Make = 3;
+    string Template = 4;
+    repeated string Models = 5;
+}
+
+message GetVehicleTemplatesRequest {
+    int32 YearStart = 1;
+    int32 YearEnd = 2;
+    string Make = 3;
+}
+
+message GetVehicleTemplatesResponse {
+    repeated VehicleTemplate Templates = 1;
+}
+
+message GetVehicleTemplateRequest {
+    string Make = 1;
+    int32 YearStart = 2;
+    int32 YearEnd = 3;
+}
+
+service VehicleTemplateService {
+    rpc GetVehicleTemplates(GetVehicleTemplatesRequest) returns (GetVehicleTemplatesResponse) {}
+    rpc GetVehicleTemplate(GetVehicleTemplateRequest) returns (VehicleTemplate) {}
+    rpc CreateVehicleTemplate(VehicleTemplate) returns (google.protobuf.Empty) {}
+}

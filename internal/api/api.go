@@ -8,8 +8,15 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"strings"
 	"syscall"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/exceptions"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/commands"
 
@@ -163,18 +170,24 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 	return app
 }
 
-// Code below copied from device-data-api/main.go
+// ErrorHandler handles errors returned from fiber handlers / controllers
 func ErrorHandler(c *fiber.Ctx, err error, logger zerolog.Logger) error {
-	code := fiber.StatusInternalServerError // Default 500 statuscode
-	message := "Internal error."
+	// Default error info
+	code := fiber.StatusInternalServerError
+	message := "An error occurred while processing your request."
 
 	var e *fiber.Error
+	var evnf *exceptions.NotFoundError
 	if errors.As(err, &e) {
 		code = e.Code
 		message = e.Message
+	} else if errors.As(err, &evnf) {
+		code = fiber.StatusNotFound
+		message = e.Message
 	}
 
-	logger.Err(err).Int("code", code).Str("path", strings.TrimPrefix(c.Path(), "/")).Msg("Failed request.")
+	logger.Err(err).Int("code", code).Str("path", strings.TrimPrefix(c.Path(), "/")).
+		Str("stack", string(debug.Stack())).Msg("Failed request.")
 
 	return c.Status(code).JSON(CodeResp{Code: code, Message: message})
 }

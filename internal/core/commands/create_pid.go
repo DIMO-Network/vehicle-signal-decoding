@@ -38,7 +38,7 @@ type CreatePidCommandResponse struct {
 
 func (h CreatePidCommandHandler) Execute(ctx context.Context, req *CreatePidCommandRequest) (*CreatePidCommandResponse, error) {
 
-	exists, err := models.PidConfigs(models.PidConfigWhere.TemplateName.EQ(req.TemplateName)).Exists(ctx, h.DBS().Reader)
+	exists, err := models.PidConfigs(models.PidConfigWhere.SignalName.EQ(req.SignalName)).Exists(ctx, h.DBS().Reader)
 	if err != nil {
 		return nil, &exceptions.InternalError{
 			Err: errors.Wrapf(err, "error checking if pid config exists: %s", req.TemplateName),
@@ -46,7 +46,7 @@ func (h CreatePidCommandHandler) Execute(ctx context.Context, req *CreatePidComm
 	}
 	if exists {
 		return nil, &exceptions.ConflictError{
-			Err: errors.Wrapf(err, "pid with name %s already exists", req.TemplateName),
+			Err: errors.Errorf("pid config already exists: %s", req.TemplateName),
 		}
 	}
 
