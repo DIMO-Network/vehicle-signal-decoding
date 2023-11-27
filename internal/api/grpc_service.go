@@ -213,32 +213,6 @@ func (s *GrpcService) DownloadCanBusDumpFile(ctx context.Context, in *p_grpc.Dow
 	return response, nil
 }
 
-func (s *GrpcService) GetCanBusDumpFiles(ctx context.Context, in *p_grpc.GetCanBusDumpFileRequest) (*p_grpc.GetCanBusDumpFileResponse, error) {
-	service := queries.NewGetCanBusDumpFileByEthAddressQueryHandler(s.logger, s.s3Client, s.settings)
-	response, err := service.Handle(ctx, &queries.GetCanBusDumpFileByEthAddressQueryRequest{
-		EthAddress: in.EthAddr,
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return response, nil
-}
-
-func (s *GrpcService) DownloadCanBusDumpFile(ctx context.Context, in *p_grpc.DownloadCanBusDumpFileContentRequest) (*p_grpc.DownloadCanBusDumpFileContentResponse, error) {
-	service := queries.NewDownloadCanBusDumpFileByFileNameQueryHandler(s.logger, s.s3Client, s.settings)
-	response, err := service.Handle(ctx, &queries.DownloadCanBusDumpFileByFileNameQueryRequest{
-		FileName: in.Id,
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return response, nil
-}
-
 func (s *GrpcService) GetJobsByEtherumAddress(ctx context.Context, in *p_grpc.GetJobByEtherumAddressRequest) (*p_grpc.GetJobByEtherumAddressResponse, error) {
 	service := queries.NewGetJobByEthereumAddressQueryHandler(s.DBS, s.logger)
 	response, err := service.Handle(ctx, &queries.GetJobByyEthereumAddressQueryRequest{
@@ -256,7 +230,7 @@ func (s *GrpcService) CreateJobsByEtherumAddress(ctx context.Context, in *p_grpc
 	service := commands.NewCreateJobByEtherumAddressCommandHandler(s.DBS)
 	response, err := service.Execute(ctx, &commands.CreateJobCommandRequest{
 		EtherumAddress: in.EtherumAddress,
-		Name:           in.Name,
+		Command:        in.Command,
 	})
 
 	if err != nil {
