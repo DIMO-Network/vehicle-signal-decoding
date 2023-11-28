@@ -42,16 +42,9 @@ func (h GetDeviceSettingsByTemplateNameQueryHandler) Handle(ctx context.Context,
 
 	result := &grpc.GetDeviceSettingByTemplateNameResponse{
 		DeviceSettings: &grpc.DeviceSettings{
-			TemplateName:                           item.TemplateName,
-			BatteryCriticalLevelVoltage:            item.BatteryCriticalLevelVoltage,
-			SafetyCutOutVoltage:                    item.SafetyCutOutVoltage,
-			SleepTimerEventDrivenInterval:          item.SleepTimerEventDrivenInterval,
-			SleepTimerEventDrivenPeriod:            item.SleepTimerEventDrivenPeriod,
-			SleepTimerInactivityAfterSleepInterval: item.SleepTimerInactivityAfterSleepInterval,
-			SleepTimerInactivityFallbackInterval:   item.SleepTimerInactivityFallbackInterval,
-			WakeTriggerVoltageLevel:                item.WakeTriggerVoltageLevel,
-			CreatedAt:                              timestamppb.New(item.CreatedAt),
-			UpdatedAt:                              timestamppb.New(item.UpdatedAt),
+			TemplateName: item.TemplateName,
+			CreatedAt:    timestamppb.New(item.CreatedAt),
+			UpdatedAt:    timestamppb.New(item.UpdatedAt),
 		},
 	}
 

@@ -20,15 +20,7 @@ func NewCreateDeviceSettingsCommandHandler(dbs func() *db.ReaderWriter) CreateDe
 }
 
 type CreateDeviceSettingsCommandRequest struct {
-	ID                                     int64
-	TemplateName                           string
-	BatteryCriticalLevelVoltage            float64
-	SafetyCutOutVoltage                    float64
-	SleepTimerEventDrivenInterval          float64
-	SleepTimerEventDrivenPeriod            float64
-	SleepTimerInactivityAfterSleepInterval float64
-	SleepTimerInactivityFallbackInterval   float64
-	WakeTriggerVoltageLevel                float64
+	TemplateName string
 }
 
 type CreateDeviceSettingsCommandResponse struct {
@@ -50,15 +42,7 @@ func (h CreateDeviceSettingsCommandHandler) Execute(ctx context.Context, req *Cr
 	}
 
 	deviceSetting := &models.DeviceSetting{
-		ID:                                     req.ID,
-		TemplateName:                           req.TemplateName,
-		BatteryCriticalLevelVoltage:            req.BatteryCriticalLevelVoltage,
-		SafetyCutOutVoltage:                    req.SafetyCutOutVoltage,
-		SleepTimerEventDrivenInterval:          req.SleepTimerEventDrivenInterval,
-		SleepTimerEventDrivenPeriod:            req.SleepTimerEventDrivenPeriod,
-		SleepTimerInactivityAfterSleepInterval: req.SleepTimerInactivityAfterSleepInterval,
-		SleepTimerInactivityFallbackInterval:   req.SleepTimerInactivityFallbackInterval,
-		WakeTriggerVoltageLevel:                req.WakeTriggerVoltageLevel,
+		TemplateName: req.TemplateName,
 	}
 
 	err = deviceSetting.Insert(ctx, h.DBS().Writer, boil.Infer())

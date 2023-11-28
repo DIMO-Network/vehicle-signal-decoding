@@ -154,12 +154,7 @@ func TestGetDeviceSettingsByTemplate(t *testing.T) {
 	assert.NoError(t, err)
 
 	ds := models.DeviceSetting{
-		ID:                            1,
-		TemplateName:                  "testTemplate",
-		BatteryCriticalLevelVoltage:   3.2,
-		SafetyCutOutVoltage:           2.8,
-		SleepTimerEventDrivenInterval: 5,
-		//etc
+		TemplateName: "testTemplate",
 	}
 
 	err = ds.Insert(ctx, pdb.DBS().Writer, boil.Infer())
@@ -187,10 +182,6 @@ func TestGetDeviceSettingsByTemplate(t *testing.T) {
 		var receivedDS grpc.DeviceSetting
 		err = json.Unmarshal(body, &receivedDS)
 		assert.NoError(t, err)
-
-		assert.Equal(t, float32(ds.BatteryCriticalLevelVoltage), receivedDS.BatteryCriticalLevelVoltage)
-		assert.Equal(t, float32(ds.SafetyCutOutVoltage), receivedDS.SafetyCutOutVoltage)
-		assert.Equal(t, float32(ds.SleepTimerEventDrivenInterval), receivedDS.SleepTimerEventDrivenIntervalSecs)
 
 		// Testing Version
 		templateFromDB, err := models.Templates(models.TemplateWhere.TemplateName.EQ(template.TemplateName)).One(context.Background(), pdb.DBS().Reader.DB)

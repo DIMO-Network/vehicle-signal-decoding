@@ -37,14 +37,7 @@ func (h GetDeviceSettingsAllQueryHandler) Handle(ctx context.Context, _ *GetDevi
 
 	for _, item := range all {
 		deviceSettingsSummaries = append(deviceSettingsSummaries, &grpc.DeviceSettingsSummary{
-			TemplateName:                           item.TemplateName,
-			BatteryCriticalLevelVoltage:            item.BatteryCriticalLevelVoltage,
-			SafetyCutOutVoltage:                    item.SafetyCutOutVoltage,
-			SleepTimerEventDrivenInterval:          item.SleepTimerEventDrivenInterval,
-			SleepTimerEventDrivenPeriod:            item.SleepTimerEventDrivenPeriod,
-			SleepTimerInactivityAfterSleepInterval: item.SleepTimerInactivityAfterSleepInterval,
-			SleepTimerInactivityFallbackInterval:   item.SleepTimerInactivityFallbackInterval,
-			WakeTriggerVoltageLevel:                item.WakeTriggerVoltageLevel,
+			TemplateName: item.TemplateName,
 		})
 	}
 

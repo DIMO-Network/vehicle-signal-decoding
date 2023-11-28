@@ -25,14 +25,7 @@ func NewDeviceSettingsConfigService(logger *zerolog.Logger, dbs func() *db.Reade
 func (s *DeviceSettingsConfigService) CreateDeviceSettings(ctx context.Context, in *grpc.UpdateDeviceSettingsRequest) (*emptypb.Empty, error) {
 	service := commands.NewCreateDeviceSettingsCommandHandler(s.dbs)
 	_, err := service.Execute(ctx, &commands.CreateDeviceSettingsCommandRequest{
-		TemplateName:                           in.DeviceSettings.TemplateName,
-		BatteryCriticalLevelVoltage:            in.DeviceSettings.BatteryCriticalLevelVoltage,
-		SafetyCutOutVoltage:                    in.DeviceSettings.SafetyCutOutVoltage,
-		SleepTimerEventDrivenInterval:          in.DeviceSettings.SleepTimerEventDrivenInterval,
-		SleepTimerEventDrivenPeriod:            in.DeviceSettings.SleepTimerEventDrivenPeriod,
-		SleepTimerInactivityAfterSleepInterval: in.DeviceSettings.SleepTimerInactivityAfterSleepInterval,
-		SleepTimerInactivityFallbackInterval:   in.DeviceSettings.SleepTimerInactivityFallbackInterval,
-		WakeTriggerVoltageLevel:                in.DeviceSettings.WakeTriggerVoltageLevel,
+		TemplateName: in.DeviceSettings.TemplateName,
 	})
 
 	if err != nil {
@@ -44,14 +37,7 @@ func (s *DeviceSettingsConfigService) CreateDeviceSettings(ctx context.Context, 
 func (s *DeviceSettingsConfigService) UpdateDeviceSettings(ctx context.Context, in *grpc.UpdateDeviceSettingsRequest) (*emptypb.Empty, error) {
 	service := commands.NewUpdateDeviceSettingsCommandHandler(s.dbs)
 	_, err := service.Execute(ctx, &commands.UpdateDeviceSettingsCommandRequest{
-		TemplateName:                           in.DeviceSettings.TemplateName,
-		BatteryCriticalLevelVoltage:            in.DeviceSettings.BatteryCriticalLevelVoltage,
-		SafetyCutOutVoltage:                    in.DeviceSettings.SafetyCutOutVoltage,
-		SleepTimerEventDrivenInterval:          in.DeviceSettings.SleepTimerEventDrivenInterval,
-		SleepTimerEventDrivenPeriod:            in.DeviceSettings.SleepTimerEventDrivenPeriod,
-		SleepTimerInactivityAfterSleepInterval: in.DeviceSettings.SleepTimerInactivityAfterSleepInterval,
-		SleepTimerInactivityFallbackInterval:   in.DeviceSettings.SleepTimerInactivityFallbackInterval,
-		WakeTriggerVoltageLevel:                in.DeviceSettings.WakeTriggerVoltageLevel,
+		TemplateName: in.DeviceSettings.TemplateName,
 	})
 
 	if err != nil {
