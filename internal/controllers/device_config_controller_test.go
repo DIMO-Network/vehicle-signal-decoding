@@ -9,6 +9,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/volatiletech/null/v8"
+
 	_ "github.com/lib/pq"
 
 	"github.com/volatiletech/sqlboiler/v4/types"
@@ -153,8 +155,17 @@ func TestGetDeviceSettingsByTemplate(t *testing.T) {
 	err := template.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	assert.NoError(t, err)
 
+	exampleSettingsJSON := []byte(`{
+        "safety_cut_out_voltage": 12.5,
+        "sleep_timer_event_driven_period_secs": 30,
+        "wake_trigger_voltage_level": 3.3
+    }`)
+
+	settingsJSON := null.JSONFrom(exampleSettingsJSON)
+
 	ds := models.DeviceSetting{
 		TemplateName: "testTemplate",
+		Settings:     settingsJSON,
 	}
 
 	err = ds.Insert(ctx, pdb.DBS().Writer, boil.Infer())
@@ -174,14 +185,20 @@ func TestGetDeviceSettingsByTemplate(t *testing.T) {
 		response, _ := app.Test(request)
 		body, _ := io.ReadAll(response.Body)
 
-		// Assert: check the results
-		if assert.Equal(t, fiber.StatusOK, response.StatusCode) == false {
-			fmt.Println("response body: " + string(body))
-		}
+		// Assert
+		assert.Equal(t, fiber.StatusOK, response.StatusCode, "response body: "+string(body))
 
 		var receivedDS grpc.DeviceSetting
 		err = json.Unmarshal(body, &receivedDS)
 		assert.NoError(t, err)
+
+		expectedSettings := &grpc.SettingsData{
+			SafetyCutOutVoltage:             12.5,
+			SleepTimerEventDrivenPeriodSecs: 30,
+			WakeTriggerVoltageLevel:         3.3,
+		}
+
+		assert.Equal(t, expectedSettings, receivedDS.Settings)
 
 		// Testing Version
 		templateFromDB, err := models.Templates(models.TemplateWhere.TemplateName.EQ(template.TemplateName)).One(context.Background(), pdb.DBS().Reader.DB)
