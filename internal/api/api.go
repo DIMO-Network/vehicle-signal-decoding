@@ -156,6 +156,7 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 	v1.Get("/device-config/:templateName/device-settings", deviceConfigController.GetDeviceSettingsByTemplate)
 	v1.Get("/device-config/:templateName/dbc", deviceConfigController.GetDBCFileByTemplateName)
 
+	// Jobs endpoint
 	v1.Get("/device-config/eth-addr/:ethAddr/jobs", jobsController.GetJobsFromEthAddr)
 	v1.Get("/device-config/eth-addr/:ethAddr/jobs/pending", jobsController.GetJobsPendingFromEthAddr)
 	v1.Patch("/device-config/eth-addr/:ethAddr/jobs/:jobId/:status", jobsController.PatchJobsFromEthAddr)
