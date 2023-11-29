@@ -45,11 +45,10 @@ func NewDeviceConfigController(settings *config.Settings, logger *zerolog.Logger
 }
 
 type DeviceConfigResponse struct {
-	PidURL           string        `json:"pidUrl"`
-	DeviceSettingURL string        `json:"deviceSettingUrl"`
-	DbcURL           string        `json:"dbcURL,omitempty"`
-	Version          string        `json:"version"`
-	PendingJobs      []JobResponse `json:"pending_jobs"`
+	PidURL           string `json:"pidUrl"`
+	DeviceSettingURL string `json:"deviceSettingUrl"`
+	DbcURL           string `json:"dbcURL,omitempty"`
+	Version          string `json:"version"`
 }
 
 func bytesToUint32(b []byte) (uint32, error) {

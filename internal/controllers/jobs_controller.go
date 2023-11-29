@@ -76,6 +76,41 @@ func (d *DeviceConfigController) GetJobsFromEthAddr(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(jobResponse)
 }
 
+// GetJobsPendingFromEthAddr godoc
+// @Description  Retrieve the jobs based on device's Ethereum Address.
+// @Tags         vehicle-signal-decoding
+// @Produce      json
+// @Success      200 {object} JobResponse "Successfully retrieved jobs"
+// @Failure 400  "incorrect eth addr format"
+// @Param        ethAddr  path   string  false  "Ethereum Address"
+// @Router       /device-config/eth-addr/{ethAddr}/jobs/pending [get]
+func (d *DeviceConfigController) GetJobsPendingFromEthAddr(c *fiber.Ctx) error {
+	ethAddr := c.Params("ethAddr")
+
+	ethAddrBytes, err := common.ResolveEtherumAddressFromString(ethAddr)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": fmt.Sprintf("invalid ethereum address: %s", ethAddr)})
+	}
+
+	jobs, err := models.Jobs(models.JobWhere.DeviceEthereumAddress.EQ(ethAddrBytes),
+		models.JobWhere.Status.EQ("PENDING")).All(c.Context(), d.db)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": fmt.Sprint("Failed to get jobs")})
+	}
+
+	var jobResponse []JobResponse
+
+	for _, item := range jobs {
+		jobResponse = append(jobResponse, JobResponse{
+			ID:      item.ID,
+			Command: item.Command,
+			Status:  item.Status,
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(jobResponse)
+}
+
 // PatchJobsFromEthAddr godoc
 // @Description  Path job status based on device's Ethereum Address.
 // @Tags         vehicle-signal-decoding
