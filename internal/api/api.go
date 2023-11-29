@@ -12,10 +12,6 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/credentials"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
-
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/exceptions"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/commands"
@@ -147,6 +143,7 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 	})
 
 	deviceConfigController := controllers.NewDeviceConfigController(settings, &logger, database.DBS().Reader.DB, userDeviceSvc, deviceDefsvc)
+	jobsController := controllers.NewJobsController(settings, &logger, database.DBS().Reader.DB, userDeviceSvc, deviceDefsvc)
 
 	v1 := app.Group("/v1")
 
@@ -158,6 +155,10 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 	v1.Get("/device-config/:templateName/pids", deviceConfigController.GetPIDsByTemplate)
 	v1.Get("/device-config/:templateName/device-settings", deviceConfigController.GetDeviceSettingsByTemplate)
 	v1.Get("/device-config/:templateName/dbc", deviceConfigController.GetDBCFileByTemplateName)
+
+	v1.Get("/device-config/eth-addr/:ethAddr/jobs", jobsController.GetJobsFromEthAddr)
+	v1.Get("/device-config/eth-addr/:ethAddr/jobs/pending", jobsController.GetJobsPendingFromEthAddr)
+	v1.Patch("/device-config/eth-addr/:ethAddr/jobs/:jobId/:status", jobsController.PatchJobsFromEthAddr)
 
 	go func() {
 		if err := app.Listen(":" + settings.Port); err != nil {

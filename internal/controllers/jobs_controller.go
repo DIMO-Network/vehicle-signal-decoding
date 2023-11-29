@@ -50,7 +50,7 @@ type JobResponse struct {
 // @Failure 400  "incorrect eth addr format"
 // @Param        ethAddr  path   string  false  "Ethereum Address"
 // @Router       /device-config/eth-addr/{ethAddr}/jobs [get]
-func (d *DeviceConfigController) GetJobsFromEthAddr(c *fiber.Ctx) error {
+func (d *JobsController) GetJobsFromEthAddr(c *fiber.Ctx) error {
 	ethAddr := c.Params("ethAddr")
 
 	ethAddrBytes, err := common.ResolveEtherumAddressFromString(ethAddr)
@@ -84,7 +84,7 @@ func (d *DeviceConfigController) GetJobsFromEthAddr(c *fiber.Ctx) error {
 // @Failure 400  "incorrect eth addr format"
 // @Param        ethAddr  path   string  false  "Ethereum Address"
 // @Router       /device-config/eth-addr/{ethAddr}/jobs/pending [get]
-func (d *DeviceConfigController) GetJobsPendingFromEthAddr(c *fiber.Ctx) error {
+func (d *JobsController) GetJobsPendingFromEthAddr(c *fiber.Ctx) error {
 	ethAddr := c.Params("ethAddr")
 
 	ethAddrBytes, err := common.ResolveEtherumAddressFromString(ethAddr)
@@ -121,7 +121,7 @@ func (d *DeviceConfigController) GetJobsPendingFromEthAddr(c *fiber.Ctx) error {
 // @Param        ethAddr  path   string  false  "Ethereum Address"
 // @Param        jobId    path   string  false  "Job ID"
 // @Router       /device-config/eth-addr/{ethAddr}/jobs/{jobId}/{status} [patch]
-func (d *DeviceConfigController) PatchJobsFromEthAddr(c *fiber.Ctx) error {
+func (d *JobsController) PatchJobsFromEthAddr(c *fiber.Ctx) error {
 	id := c.Params("jobId")
 	status := c.Params("status")
 
