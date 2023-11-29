@@ -2,6 +2,7 @@ package commands
 
 import (
 	"context"
+
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/common"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
