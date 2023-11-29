@@ -1,6 +1,5 @@
 syntax = "proto3";
 
-import "google/protobuf/timestamp.proto";
 import "google/protobuf/empty.proto";
 
 option go_package = "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc";
@@ -9,47 +8,28 @@ package grpc;
 
 message DeviceSettings {
   string template_name = 1;
-  double battery_critical_level_voltage = 2;
-  double safety_cut_out_voltage = 3;
-  double sleep_timer_event_driven_interval = 4;
-  double sleep_timer_event_driven_period = 5;
-  double sleep_timer_inactivity_after_sleep_interval = 6;
-  double sleep_timer_inactivity_fallback_interval = 7;
-  double wake_trigger_voltage_level = 8;
-  google.protobuf.Timestamp created_at = 9;
-  google.protobuf.Timestamp updated_at = 10;
-
+  string settings = 2;
 }
-message DeviceSettingsSummary {
-  string template_name = 1;
-  double battery_critical_level_voltage = 2;
-  double safety_cut_out_voltage = 3;
-  double sleep_timer_event_driven_interval = 4;
-  double sleep_timer_event_driven_period = 5;
-  double sleep_timer_inactivity_after_sleep_interval = 6;
-  double sleep_timer_inactivity_fallback_interval = 7;
-  double wake_trigger_voltage_level = 8;
 
-}
+
 message GetDeviceSettingListRequest {
   optional string template_name = 1;
-
 }
+
 message GetDeviceSettingListResponse {
-  repeated DeviceSettingsSummary device_settings = 1;
-
+  repeated DeviceSettings device_settings = 1;
 }
+
 message GetDeviceSettingByTemplateNameRequest {
   string template_name = 1;
-
 }
+
 message GetDeviceSettingByTemplateNameResponse {
   DeviceSettings device_settings = 1;
-
 }
+
 message UpdateDeviceSettingsRequest {
   DeviceSettings device_settings = 1;
-
 }
 
 service DeviceSettingsService {

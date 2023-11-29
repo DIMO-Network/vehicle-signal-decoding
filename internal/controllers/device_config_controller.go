@@ -175,7 +175,6 @@ func (d *DeviceConfigController) GetDeviceSettingsByTemplate(c *fiber.Ctx) error
 	templateName := c.Params("templateName")
 
 	// Query the database to get the Device Settings based on the template name using SQLBoiler
-
 	dbDeviceSettings, err := models.DeviceSettings(
 		models.DeviceSettingWhere.TemplateName.EQ(templateName)).One(c.Context(), d.db)
 

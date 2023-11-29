@@ -6,8 +6,6 @@ import (
 	"errors"
 	"fmt"
 
-	"google.golang.org/protobuf/types/known/timestamppb"
-
 	"github.com/DIMO-Network/shared/db"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 	grpc "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
@@ -31,20 +29,26 @@ type GetDeviceSettingsByTemplateNameQueryRequest struct {
 }
 
 func (h GetDeviceSettingsByTemplateNameQueryHandler) Handle(ctx context.Context, query *GetDeviceSettingsByTemplateNameQueryRequest) (*grpc.GetDeviceSettingByTemplateNameResponse, error) {
-
 	item, err := models.DeviceSettings(models.DeviceSettingWhere.TemplateName.EQ(query.TemplateName)).One(ctx, h.DBS().Reader)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("device setting not found for template name: %s", query.TemplateName)
 		}
-		return nil, fmt.Errorf("failed to get device setting by template name: %s", err)
+		return nil, fmt.Errorf("failed to get device setting by template name: %w", err)
 	}
+
+	jsonBytes, err := item.Settings.MarshalJSON()
+	if err != nil {
+		h.logger.Error().Err(err).Msg("Failed to marshal settings JSON")
+		return nil, fmt.Errorf("failed to marshal settings JSON: %w", err)
+	}
+
+	settingsString := string(jsonBytes)
 
 	result := &grpc.GetDeviceSettingByTemplateNameResponse{
 		DeviceSettings: &grpc.DeviceSettings{
 			TemplateName: item.TemplateName,
-			CreatedAt:    timestamppb.New(item.CreatedAt),
-			UpdatedAt:    timestamppb.New(item.UpdatedAt),
+			Settings:     settingsString,
 		},
 	}
 
