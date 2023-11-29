@@ -29,7 +29,7 @@ type GetJobByyEthereumAddressQueryRequest struct {
 	EtherumAddress string
 }
 
-func (h GetJobByEthereumAddressQueryHandler) Handle(ctx context.Context, query *GetJobByyEthereumAddressQueryRequest) (*p_grpc.GetJobByEtherumAddressResponse, error) {
+func (h GetJobByEthereumAddressQueryHandler) Handle(ctx context.Context, query *GetJobByyEthereumAddressQueryRequest) (*p_grpc.GetJobsByEtherumAddressResponse, error) {
 
 	ethAddrBytes, err := common.ResolveEtherumAddressFromString(query.EtherumAddress)
 	if err != nil {
@@ -45,16 +45,21 @@ func (h GetJobByEthereumAddressQueryHandler) Handle(ctx context.Context, query *
 		}
 	}
 
-	result := &p_grpc.GetJobByEtherumAddressResponse{}
+	result := &p_grpc.GetJobsByEtherumAddressResponse{}
 
 	for _, item := range jobs {
-		result.Items = append(result.Items, &p_grpc.GetJobByEtherumAddressItemResponse{
-			Id:            item.ID,
-			Command:       item.Command,
-			Status:        item.Status,
-			CreatedAt:     timestamppb.New(item.CreatedAt),
-			LastExecution: timestamppb.New(item.LastExecution),
-		})
+		jobItem := &p_grpc.GetJobsByEtherumAddressItemResponse{
+			Id:        item.ID,
+			Command:   item.Command,
+			Status:    item.Status,
+			CreatedAt: timestamppb.New(item.CreatedAt),
+		}
+
+		if item.LastExecution.Valid {
+			jobItem.LastExecution = timestamppb.New(item.LastExecution.Time)
+		}
+
+		result.Items = append(result.Items, jobItem)
 	}
 
 	return result, nil

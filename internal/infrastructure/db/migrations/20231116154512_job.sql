@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS jobs
     status job_status_enum NOT NULL default 'PENDING',
     metadata jsonb,
     device_ethereum_address bytea NOT NULL,
-    last_execution timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_execution timestamp with time zone NULL,
     created_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
                              CONSTRAINT job_pkey PRIMARY KEY (id)

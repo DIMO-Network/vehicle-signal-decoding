@@ -213,7 +213,7 @@ func (s *GrpcService) DownloadCanBusDumpFile(ctx context.Context, in *p_grpc.Dow
 	return response, nil
 }
 
-func (s *GrpcService) GetJobsByEtherumAddress(ctx context.Context, in *p_grpc.GetJobByEtherumAddressRequest) (*p_grpc.GetJobByEtherumAddressResponse, error) {
+func (s *GrpcService) GetJobsByEtherumAddress(ctx context.Context, in *p_grpc.GetJobsByEtherumAddressRequest) (*p_grpc.GetJobsByEtherumAddressResponse, error) {
 	service := queries.NewGetJobByEthereumAddressQueryHandler(s.DBS, s.logger)
 	response, err := service.Handle(ctx, &queries.GetJobByyEthereumAddressQueryRequest{
 		EtherumAddress: in.EtherumAddress,
@@ -226,7 +226,7 @@ func (s *GrpcService) GetJobsByEtherumAddress(ctx context.Context, in *p_grpc.Ge
 	return response, nil
 }
 
-func (s *GrpcService) CreateJobsByEtherumAddress(ctx context.Context, in *p_grpc.CreateJobByEtherumAddressRequest) (*p_grpc.GetJobByEtherumAddressItemResponse, error) {
+func (s *GrpcService) CreateJobsByEtherumAddress(ctx context.Context, in *p_grpc.CreateJobByEtherumAddressRequest) (*p_grpc.GetJobsByEtherumAddressItemResponse, error) {
 	service := commands.NewCreateJobByEtherumAddressCommandHandler(s.DBS)
 	response, err := service.Execute(ctx, &commands.CreateJobCommandRequest{
 		EtherumAddress: in.EtherumAddress,

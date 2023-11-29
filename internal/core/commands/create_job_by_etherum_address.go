@@ -29,7 +29,7 @@ type CreateJobCommandRequest struct {
 	EtherumAddress string
 }
 
-func (h CreateJobByEtherumAddressCommandHandler) Execute(ctx context.Context, command *CreateJobCommandRequest) (*p_grpc.GetJobByEtherumAddressItemResponse, error) {
+func (h CreateJobByEtherumAddressCommandHandler) Execute(ctx context.Context, command *CreateJobCommandRequest) (*p_grpc.GetJobsByEtherumAddressItemResponse, error) {
 
 	ethAddrBytes, err := common.ResolveEtherumAddressFromString(command.EtherumAddress)
 	if err != nil {
@@ -55,12 +55,15 @@ func (h CreateJobByEtherumAddressCommandHandler) Execute(ctx context.Context, co
 		}
 	}
 
-	result := &p_grpc.GetJobByEtherumAddressItemResponse{
-		Id:            jobItem.ID,
-		Command:       jobItem.Command,
-		Status:        jobItem.Status,
-		CreatedAt:     timestamppb.New(jobItem.CreatedAt),
-		LastExecution: timestamppb.New(jobItem.LastExecution),
+	result := &p_grpc.GetJobsByEtherumAddressItemResponse{
+		Id:        jobItem.ID,
+		Command:   jobItem.Command,
+		Status:    jobItem.Status,
+		CreatedAt: timestamppb.New(jobItem.CreatedAt),
+	}
+
+	if jobItem.LastExecution.Valid {
+		result.LastExecution = timestamppb.New(jobItem.LastExecution.Time)
 	}
 
 	return result, nil

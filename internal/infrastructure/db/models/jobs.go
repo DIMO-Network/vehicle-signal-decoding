@@ -29,7 +29,7 @@ type Job struct {
 	Status                string    `boil:"status" json:"status" toml:"status" yaml:"status"`
 	Metadata              null.JSON `boil:"metadata" json:"metadata,omitempty" toml:"metadata" yaml:"metadata,omitempty"`
 	DeviceEthereumAddress []byte    `boil:"device_ethereum_address" json:"device_ethereum_address" toml:"device_ethereum_address" yaml:"device_ethereum_address"`
-	LastExecution         time.Time `boil:"last_execution" json:"last_execution" toml:"last_execution" yaml:"last_execution"`
+	LastExecution         null.Time `boil:"last_execution" json:"last_execution,omitempty" toml:"last_execution" yaml:"last_execution,omitempty"`
 	CreatedAt             time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 	UpdatedAt             time.Time `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
 
@@ -112,13 +112,37 @@ func (w whereHelper__byte) LTE(x []byte) qm.QueryMod { return qmhelper.Where(w.f
 func (w whereHelper__byte) GT(x []byte) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.GT, x) }
 func (w whereHelper__byte) GTE(x []byte) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
 
+type whereHelpernull_Time struct{ field string }
+
+func (w whereHelpernull_Time) EQ(x null.Time) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, false, x)
+}
+func (w whereHelpernull_Time) NEQ(x null.Time) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, true, x)
+}
+func (w whereHelpernull_Time) LT(x null.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LT, x)
+}
+func (w whereHelpernull_Time) LTE(x null.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LTE, x)
+}
+func (w whereHelpernull_Time) GT(x null.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GT, x)
+}
+func (w whereHelpernull_Time) GTE(x null.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GTE, x)
+}
+
+func (w whereHelpernull_Time) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
+func (w whereHelpernull_Time) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
+
 var JobWhere = struct {
 	ID                    whereHelperstring
 	Command               whereHelperstring
 	Status                whereHelperstring
 	Metadata              whereHelpernull_JSON
 	DeviceEthereumAddress whereHelper__byte
-	LastExecution         whereHelpertime_Time
+	LastExecution         whereHelpernull_Time
 	CreatedAt             whereHelpertime_Time
 	UpdatedAt             whereHelpertime_Time
 }{
@@ -127,7 +151,7 @@ var JobWhere = struct {
 	Status:                whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"jobs\".\"status\""},
 	Metadata:              whereHelpernull_JSON{field: "\"vehicle_signal_decoding_api\".\"jobs\".\"metadata\""},
 	DeviceEthereumAddress: whereHelper__byte{field: "\"vehicle_signal_decoding_api\".\"jobs\".\"device_ethereum_address\""},
-	LastExecution:         whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"jobs\".\"last_execution\""},
+	LastExecution:         whereHelpernull_Time{field: "\"vehicle_signal_decoding_api\".\"jobs\".\"last_execution\""},
 	CreatedAt:             whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"jobs\".\"created_at\""},
 	UpdatedAt:             whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"jobs\".\"updated_at\""},
 }

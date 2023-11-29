@@ -141,15 +141,15 @@ message DownloadCanBusDumpFileContentResponse {
   bytes content = 1;
 }
 
-message GetJobByEtherumAddressRequest {
+message GetJobsByEtherumAddressRequest {
   string etherum_address = 1;
 }
 
-message GetJobByEtherumAddressResponse {
-  repeated GetJobByEtherumAddressItemResponse items = 1;
+message GetJobsByEtherumAddressResponse {
+  repeated GetJobsByEtherumAddressItemResponse items = 1;
 }
 
-message GetJobByEtherumAddressItemResponse {
+message GetJobsByEtherumAddressItemResponse {
   string id = 1;
   string command = 2;
   string status = 3;
@@ -184,7 +184,7 @@ service VehicleSignalDecodingService {
   rpc GetCanBusDumpFiles(GetCanBusDumpFileRequest) returns (GetCanBusDumpFileResponse);
   rpc DownloadCanBusDumpFile(DownloadCanBusDumpFileContentRequest) returns (DownloadCanBusDumpFileContentResponse);
 
-  rpc GetJobsByEtherumAddress(GetJobByEtherumAddressRequest) returns (GetJobByEtherumAddressResponse);
-  rpc CreateJobsByEtherumAddress(CreateJobByEtherumAddressRequest) returns (GetJobByEtherumAddressItemResponse);
+  rpc GetJobsByEtherumAddress(GetJobsByEtherumAddressRequest) returns (GetJobsByEtherumAddressResponse);
+  rpc CreateJobsByEtherumAddress(CreateJobByEtherumAddressRequest) returns (GetJobsByEtherumAddressItemResponse);
   rpc DeleteJobsByEtherumAddress(DeleteJobByEtherumAddressRequest) returns (google.protobuf.Empty);
 }

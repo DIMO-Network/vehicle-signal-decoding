@@ -36,8 +36,8 @@ type VehicleSignalDecodingServiceClient interface {
 	GetTestSignalByID(ctx context.Context, in *GetByIdRequest, opts ...grpc.CallOption) (*GetTestSignalResponse, error)
 	GetCanBusDumpFiles(ctx context.Context, in *GetCanBusDumpFileRequest, opts ...grpc.CallOption) (*GetCanBusDumpFileResponse, error)
 	DownloadCanBusDumpFile(ctx context.Context, in *DownloadCanBusDumpFileContentRequest, opts ...grpc.CallOption) (*DownloadCanBusDumpFileContentResponse, error)
-	GetJobsByEtherumAddress(ctx context.Context, in *GetJobByEtherumAddressRequest, opts ...grpc.CallOption) (*GetJobByEtherumAddressResponse, error)
-	CreateJobsByEtherumAddress(ctx context.Context, in *CreateJobByEtherumAddressRequest, opts ...grpc.CallOption) (*GetJobByEtherumAddressItemResponse, error)
+	GetJobsByEtherumAddress(ctx context.Context, in *GetJobsByEtherumAddressRequest, opts ...grpc.CallOption) (*GetJobsByEtherumAddressResponse, error)
+	CreateJobsByEtherumAddress(ctx context.Context, in *CreateJobByEtherumAddressRequest, opts ...grpc.CallOption) (*GetJobsByEtherumAddressItemResponse, error)
 	DeleteJobsByEtherumAddress(ctx context.Context, in *DeleteJobByEtherumAddressRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
@@ -166,8 +166,8 @@ func (c *vehicleSignalDecodingServiceClient) DownloadCanBusDumpFile(ctx context.
 	return out, nil
 }
 
-func (c *vehicleSignalDecodingServiceClient) GetJobsByEtherumAddress(ctx context.Context, in *GetJobByEtherumAddressRequest, opts ...grpc.CallOption) (*GetJobByEtherumAddressResponse, error) {
-	out := new(GetJobByEtherumAddressResponse)
+func (c *vehicleSignalDecodingServiceClient) GetJobsByEtherumAddress(ctx context.Context, in *GetJobsByEtherumAddressRequest, opts ...grpc.CallOption) (*GetJobsByEtherumAddressResponse, error) {
+	out := new(GetJobsByEtherumAddressResponse)
 	err := c.cc.Invoke(ctx, "/grpc.VehicleSignalDecodingService/GetJobsByEtherumAddress", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -175,8 +175,8 @@ func (c *vehicleSignalDecodingServiceClient) GetJobsByEtherumAddress(ctx context
 	return out, nil
 }
 
-func (c *vehicleSignalDecodingServiceClient) CreateJobsByEtherumAddress(ctx context.Context, in *CreateJobByEtherumAddressRequest, opts ...grpc.CallOption) (*GetJobByEtherumAddressItemResponse, error) {
-	out := new(GetJobByEtherumAddressItemResponse)
+func (c *vehicleSignalDecodingServiceClient) CreateJobsByEtherumAddress(ctx context.Context, in *CreateJobByEtherumAddressRequest, opts ...grpc.CallOption) (*GetJobsByEtherumAddressItemResponse, error) {
+	out := new(GetJobsByEtherumAddressItemResponse)
 	err := c.cc.Invoke(ctx, "/grpc.VehicleSignalDecodingService/CreateJobsByEtherumAddress", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -210,8 +210,8 @@ type VehicleSignalDecodingServiceServer interface {
 	GetTestSignalByID(context.Context, *GetByIdRequest) (*GetTestSignalResponse, error)
 	GetCanBusDumpFiles(context.Context, *GetCanBusDumpFileRequest) (*GetCanBusDumpFileResponse, error)
 	DownloadCanBusDumpFile(context.Context, *DownloadCanBusDumpFileContentRequest) (*DownloadCanBusDumpFileContentResponse, error)
-	GetJobsByEtherumAddress(context.Context, *GetJobByEtherumAddressRequest) (*GetJobByEtherumAddressResponse, error)
-	CreateJobsByEtherumAddress(context.Context, *CreateJobByEtherumAddressRequest) (*GetJobByEtherumAddressItemResponse, error)
+	GetJobsByEtherumAddress(context.Context, *GetJobsByEtherumAddressRequest) (*GetJobsByEtherumAddressResponse, error)
+	CreateJobsByEtherumAddress(context.Context, *CreateJobByEtherumAddressRequest) (*GetJobsByEtherumAddressItemResponse, error)
 	DeleteJobsByEtherumAddress(context.Context, *DeleteJobByEtherumAddressRequest) (*emptypb.Empty, error)
 	mustEmbedUnimplementedVehicleSignalDecodingServiceServer()
 }
@@ -259,10 +259,10 @@ func (UnimplementedVehicleSignalDecodingServiceServer) GetCanBusDumpFiles(contex
 func (UnimplementedVehicleSignalDecodingServiceServer) DownloadCanBusDumpFile(context.Context, *DownloadCanBusDumpFileContentRequest) (*DownloadCanBusDumpFileContentResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DownloadCanBusDumpFile not implemented")
 }
-func (UnimplementedVehicleSignalDecodingServiceServer) GetJobsByEtherumAddress(context.Context, *GetJobByEtherumAddressRequest) (*GetJobByEtherumAddressResponse, error) {
+func (UnimplementedVehicleSignalDecodingServiceServer) GetJobsByEtherumAddress(context.Context, *GetJobsByEtherumAddressRequest) (*GetJobsByEtherumAddressResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetJobsByEtherumAddress not implemented")
 }
-func (UnimplementedVehicleSignalDecodingServiceServer) CreateJobsByEtherumAddress(context.Context, *CreateJobByEtherumAddressRequest) (*GetJobByEtherumAddressItemResponse, error) {
+func (UnimplementedVehicleSignalDecodingServiceServer) CreateJobsByEtherumAddress(context.Context, *CreateJobByEtherumAddressRequest) (*GetJobsByEtherumAddressItemResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateJobsByEtherumAddress not implemented")
 }
 func (UnimplementedVehicleSignalDecodingServiceServer) DeleteJobsByEtherumAddress(context.Context, *DeleteJobByEtherumAddressRequest) (*emptypb.Empty, error) {
@@ -517,7 +517,7 @@ func _VehicleSignalDecodingService_DownloadCanBusDumpFile_Handler(srv interface{
 }
 
 func _VehicleSignalDecodingService_GetJobsByEtherumAddress_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetJobByEtherumAddressRequest)
+	in := new(GetJobsByEtherumAddressRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -529,7 +529,7 @@ func _VehicleSignalDecodingService_GetJobsByEtherumAddress_Handler(srv interface
 		FullMethod: "/grpc.VehicleSignalDecodingService/GetJobsByEtherumAddress",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(VehicleSignalDecodingServiceServer).GetJobsByEtherumAddress(ctx, req.(*GetJobByEtherumAddressRequest))
+		return srv.(VehicleSignalDecodingServiceServer).GetJobsByEtherumAddress(ctx, req.(*GetJobsByEtherumAddressRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
