@@ -2,6 +2,7 @@ package commands
 
 import (
 	"context"
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/common"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/exceptions"
@@ -55,7 +56,7 @@ func (h CreatePidCommandHandler) Execute(ctx context.Context, req *CreatePidComm
 		Header:          req.Header,
 		Mode:            req.Mode,
 		Pid:             req.Pid,
-		Formula:         req.Formula,
+		Formula:         common.PrependFormulaTypeDefault(req.Formula),
 		IntervalSeconds: int(req.IntervalSeconds),
 		Protocol:        req.Protocol,
 		SignalName:      req.SignalName,

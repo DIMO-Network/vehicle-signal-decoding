@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/binary"
 	"fmt"
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/common"
 	"strings"
 
 	"github.com/volatiletech/sqlboiler/v4/types"
@@ -125,12 +126,13 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 			d.log.Err(err).Send()
 			return fiber.NewError(fiber.StatusInternalServerError, "invalid pid bytes configuration: "+err.Error())
 		}
+
 		pid := &grpc.PIDConfig{
 			Name:            pidConfig.SignalName,
 			Header:          headerUint32,
 			Mode:            modeUint32,
 			Pid:             pidUint32,
-			Formula:         pidConfig.Formula,
+			Formula:         common.PrependFormulaTypeDefault(pidConfig.Formula),
 			IntervalSeconds: uint32(pidConfig.IntervalSeconds),
 			Protocol:        pidConfig.Protocol,
 		}
