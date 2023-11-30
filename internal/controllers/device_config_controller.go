@@ -498,12 +498,6 @@ func (d *DeviceConfigController) getConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) 
 	baseURL := d.settings.DeploymentURL
 	templateName := matchedTemplate.TemplateName
 
-	var parentTemplateName string
-	if matchedTemplate.ParentTemplateName.Valid {
-		parentTemplateName = matchedTemplate.ParentTemplateName.String
-	} else {
-		parentTemplateName = templateName
-	}
 	version := matchedTemplate.Version
 
 	response := DeviceConfigResponse{
@@ -520,7 +514,9 @@ func (d *DeviceConfigController) getConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) 
 
 	// only set device settings url if we have one
 	if matchedTemplate.R.TemplateNameDeviceSetting != nil {
-		response.DeviceSettingURL = fmt.Sprintf("%s/v1/device-config/%s/device-settings", baseURL, parentTemplateName)
+		response.DeviceSettingURL = fmt.Sprintf("%s/v1/device-config/%s/device-settings", baseURL, matchedTemplate.TemplateName)
+	} else if matchedTemplate.ParentTemplateName.Valid {
+		response.DeviceSettingURL = fmt.Sprintf("%s/v1/device-config/%s/device-settings", baseURL, matchedTemplate.ParentTemplateName.String)
 	} else {
 		response.DeviceSettingURL = ""
 	}
