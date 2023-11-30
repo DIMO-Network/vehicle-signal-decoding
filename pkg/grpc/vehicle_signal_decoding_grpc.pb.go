@@ -36,6 +36,9 @@ type VehicleSignalDecodingServiceClient interface {
 	GetTestSignalByID(ctx context.Context, in *GetByIdRequest, opts ...grpc.CallOption) (*GetTestSignalResponse, error)
 	GetCanBusDumpFiles(ctx context.Context, in *GetCanBusDumpFileRequest, opts ...grpc.CallOption) (*GetCanBusDumpFileResponse, error)
 	DownloadCanBusDumpFile(ctx context.Context, in *DownloadCanBusDumpFileContentRequest, opts ...grpc.CallOption) (*DownloadCanBusDumpFileContentResponse, error)
+	GetJobsByEtherumAddress(ctx context.Context, in *GetJobsByEtherumAddressRequest, opts ...grpc.CallOption) (*GetJobsByEtherumAddressResponse, error)
+	CreateJobsByEtherumAddress(ctx context.Context, in *CreateJobByEtherumAddressRequest, opts ...grpc.CallOption) (*GetJobsByEtherumAddressItemResponse, error)
+	DeleteJobsByEtherumAddress(ctx context.Context, in *DeleteJobByEtherumAddressRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
 type vehicleSignalDecodingServiceClient struct {
@@ -163,6 +166,33 @@ func (c *vehicleSignalDecodingServiceClient) DownloadCanBusDumpFile(ctx context.
 	return out, nil
 }
 
+func (c *vehicleSignalDecodingServiceClient) GetJobsByEtherumAddress(ctx context.Context, in *GetJobsByEtherumAddressRequest, opts ...grpc.CallOption) (*GetJobsByEtherumAddressResponse, error) {
+	out := new(GetJobsByEtherumAddressResponse)
+	err := c.cc.Invoke(ctx, "/grpc.VehicleSignalDecodingService/GetJobsByEtherumAddress", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *vehicleSignalDecodingServiceClient) CreateJobsByEtherumAddress(ctx context.Context, in *CreateJobByEtherumAddressRequest, opts ...grpc.CallOption) (*GetJobsByEtherumAddressItemResponse, error) {
+	out := new(GetJobsByEtherumAddressItemResponse)
+	err := c.cc.Invoke(ctx, "/grpc.VehicleSignalDecodingService/CreateJobsByEtherumAddress", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *vehicleSignalDecodingServiceClient) DeleteJobsByEtherumAddress(ctx context.Context, in *DeleteJobByEtherumAddressRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, "/grpc.VehicleSignalDecodingService/DeleteJobsByEtherumAddress", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // VehicleSignalDecodingServiceServer is the server API for VehicleSignalDecodingService service.
 // All implementations must embed UnimplementedVehicleSignalDecodingServiceServer
 // for forward compatibility
@@ -180,6 +210,9 @@ type VehicleSignalDecodingServiceServer interface {
 	GetTestSignalByID(context.Context, *GetByIdRequest) (*GetTestSignalResponse, error)
 	GetCanBusDumpFiles(context.Context, *GetCanBusDumpFileRequest) (*GetCanBusDumpFileResponse, error)
 	DownloadCanBusDumpFile(context.Context, *DownloadCanBusDumpFileContentRequest) (*DownloadCanBusDumpFileContentResponse, error)
+	GetJobsByEtherumAddress(context.Context, *GetJobsByEtherumAddressRequest) (*GetJobsByEtherumAddressResponse, error)
+	CreateJobsByEtherumAddress(context.Context, *CreateJobByEtherumAddressRequest) (*GetJobsByEtherumAddressItemResponse, error)
+	DeleteJobsByEtherumAddress(context.Context, *DeleteJobByEtherumAddressRequest) (*emptypb.Empty, error)
 	mustEmbedUnimplementedVehicleSignalDecodingServiceServer()
 }
 
@@ -225,6 +258,15 @@ func (UnimplementedVehicleSignalDecodingServiceServer) GetCanBusDumpFiles(contex
 }
 func (UnimplementedVehicleSignalDecodingServiceServer) DownloadCanBusDumpFile(context.Context, *DownloadCanBusDumpFileContentRequest) (*DownloadCanBusDumpFileContentResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DownloadCanBusDumpFile not implemented")
+}
+func (UnimplementedVehicleSignalDecodingServiceServer) GetJobsByEtherumAddress(context.Context, *GetJobsByEtherumAddressRequest) (*GetJobsByEtherumAddressResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetJobsByEtherumAddress not implemented")
+}
+func (UnimplementedVehicleSignalDecodingServiceServer) CreateJobsByEtherumAddress(context.Context, *CreateJobByEtherumAddressRequest) (*GetJobsByEtherumAddressItemResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateJobsByEtherumAddress not implemented")
+}
+func (UnimplementedVehicleSignalDecodingServiceServer) DeleteJobsByEtherumAddress(context.Context, *DeleteJobByEtherumAddressRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteJobsByEtherumAddress not implemented")
 }
 func (UnimplementedVehicleSignalDecodingServiceServer) mustEmbedUnimplementedVehicleSignalDecodingServiceServer() {
 }
@@ -474,6 +516,60 @@ func _VehicleSignalDecodingService_DownloadCanBusDumpFile_Handler(srv interface{
 	return interceptor(ctx, in, info, handler)
 }
 
+func _VehicleSignalDecodingService_GetJobsByEtherumAddress_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetJobsByEtherumAddressRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(VehicleSignalDecodingServiceServer).GetJobsByEtherumAddress(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/grpc.VehicleSignalDecodingService/GetJobsByEtherumAddress",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(VehicleSignalDecodingServiceServer).GetJobsByEtherumAddress(ctx, req.(*GetJobsByEtherumAddressRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _VehicleSignalDecodingService_CreateJobsByEtherumAddress_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateJobByEtherumAddressRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(VehicleSignalDecodingServiceServer).CreateJobsByEtherumAddress(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/grpc.VehicleSignalDecodingService/CreateJobsByEtherumAddress",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(VehicleSignalDecodingServiceServer).CreateJobsByEtherumAddress(ctx, req.(*CreateJobByEtherumAddressRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _VehicleSignalDecodingService_DeleteJobsByEtherumAddress_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteJobByEtherumAddressRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(VehicleSignalDecodingServiceServer).DeleteJobsByEtherumAddress(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/grpc.VehicleSignalDecodingService/DeleteJobsByEtherumAddress",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(VehicleSignalDecodingServiceServer).DeleteJobsByEtherumAddress(ctx, req.(*DeleteJobByEtherumAddressRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // VehicleSignalDecodingService_ServiceDesc is the grpc.ServiceDesc for VehicleSignalDecodingService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -532,6 +628,18 @@ var VehicleSignalDecodingService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DownloadCanBusDumpFile",
 			Handler:    _VehicleSignalDecodingService_DownloadCanBusDumpFile_Handler,
+		},
+		{
+			MethodName: "GetJobsByEtherumAddress",
+			Handler:    _VehicleSignalDecodingService_GetJobsByEtherumAddress_Handler,
+		},
+		{
+			MethodName: "CreateJobsByEtherumAddress",
+			Handler:    _VehicleSignalDecodingService_CreateJobsByEtherumAddress_Handler,
+		},
+		{
+			MethodName: "DeleteJobsByEtherumAddress",
+			Handler:    _VehicleSignalDecodingService_DeleteJobsByEtherumAddress_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

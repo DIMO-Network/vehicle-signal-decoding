@@ -127,8 +127,8 @@ In current state this only produces a single message, but should be good enough 
 
 ### Create decoding topic 
 
-`kafka-topics --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 --topic topic.dbc.decoding`
+`kafka-topics --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 --topic topic.JOB.decoding`
 
 ### Sample read messages in the topic
 
-`kafka-console-consumer --bootstrap-server localhost:9092 --topic topic.dbc.decoding --from-beginning`
+`kafka-console-consumer --bootstrap-server localhost:9092 --topic topic.JOB.decoding --from-beginning`

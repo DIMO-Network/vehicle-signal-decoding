@@ -442,7 +442,7 @@ func (d *DeviceConfigController) selectAndFetchTemplate(ctx context.Context, ud 
 	// Fallback to default template if still no match is found
 	if matchedTemplateName == "" {
 		defaultTemplates, err := models.Templates(
-			models.TemplateWhere.TemplateName.LIKE("default%"),
+			qm.Where("template_name like 'default%'"),
 		).All(ctx, d.db)
 
 		if err != nil {
