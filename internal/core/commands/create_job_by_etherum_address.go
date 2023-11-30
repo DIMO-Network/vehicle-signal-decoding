@@ -3,6 +3,7 @@ package commands
 import (
 	"context"
 	"fmt"
+
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/common"
 	p_grpc "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
 	"github.com/segmentio/ksuid"

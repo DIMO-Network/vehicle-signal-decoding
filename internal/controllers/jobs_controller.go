@@ -3,6 +3,8 @@ package controllers
 import (
 	"database/sql"
 	"fmt"
+	"time"
+
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/common"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/services"
@@ -13,7 +15,6 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
-	"time"
 )
 
 type JobsController struct {
@@ -60,10 +61,10 @@ func (d *JobsController) GetJobsFromEthAddr(c *fiber.Ctx) error {
 
 	jobs, err := models.Jobs(models.JobWhere.DeviceEthereumAddress.EQ(ethAddrBytes)).All(c.Context(), d.db)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": fmt.Sprint("Failed to get jobs")})
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to get jobs"})
 	}
 
-	var jobResponse []JobResponse
+	jobResponse := make([]JobResponse, 0)
 
 	for _, item := range jobs {
 		jobResponse = append(jobResponse, JobResponse{
@@ -95,10 +96,10 @@ func (d *JobsController) GetJobsPendingFromEthAddr(c *fiber.Ctx) error {
 	jobs, err := models.Jobs(models.JobWhere.DeviceEthereumAddress.EQ(ethAddrBytes),
 		models.JobWhere.Status.EQ("PENDING")).All(c.Context(), d.db)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": fmt.Sprint("Failed to get jobs")})
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to get jobs"})
 	}
 
-	var jobResponse []JobResponse
+	jobResponse := make([]JobResponse, 0)
 
 	for _, item := range jobs {
 		jobResponse = append(jobResponse, JobResponse{
@@ -128,7 +129,7 @@ func (d *JobsController) PatchJobsFromEthAddr(c *fiber.Ctx) error {
 	job, err := models.Jobs(models.JobWhere.ID.EQ(id)).One(c.Context(), d.db)
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": fmt.Sprint("Failed to get job")})
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to get job"})
 		}
 
 		if errors.Is(err, sql.ErrNoRows) {
@@ -140,7 +141,7 @@ func (d *JobsController) PatchJobsFromEthAddr(c *fiber.Ctx) error {
 	job.LastExecution = null.NewTime(time.Now(), true)
 
 	if _, err := job.Update(c.Context(), d.db, boil.Infer()); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": fmt.Sprint("Failed to update the job")})
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to update the job"})
 	}
 
 	var jobResponse JobResponse

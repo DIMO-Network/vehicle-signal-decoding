@@ -3,6 +3,7 @@ package queries
 import (
 	"context"
 	"fmt"
+
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/DIMO-Network/shared/db"

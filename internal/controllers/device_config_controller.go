@@ -5,8 +5,9 @@ import (
 	"database/sql"
 	"encoding/binary"
 	"fmt"
-	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/common"
 	"strings"
+
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/common"
 
 	"github.com/volatiletech/sqlboiler/v4/types"
 
@@ -441,7 +442,7 @@ func (d *DeviceConfigController) selectAndFetchTemplate(ctx context.Context, ud 
 	// Fallback to default template if still no match is found
 	if matchedTemplateName == "" {
 		defaultTemplates, err := models.Templates(
-			models.TemplateWhere.TemplateName.LIKE("default%"),
+			qm.Where("template_name like 'default%'"),
 		).All(ctx, d.db)
 
 		if err != nil {
