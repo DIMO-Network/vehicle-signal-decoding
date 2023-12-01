@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/DIMO-Network/shared/db"
 	"github.com/DIMO-Network/vehicle-signal-decoding/models"
@@ -86,10 +87,7 @@ func (s *VehicleTemplateService) GetVehicleTemplate(ctx context.Context, request
 		StartYear: int32(vehicleTemplate.YearStart),
 		EndYear:   int32(vehicleTemplate.YearEnd),
 		Template:  vehicleTemplate.TemplateName,
-	}
-
-	for _, model := range vehicleTemplate.ModelWhitelist {
-		vt.Models = append(vt.Models, model)
+		Models:    vehicleTemplate.ModelWhitelist,
 	}
 
 	return vt, nil
@@ -97,17 +95,41 @@ func (s *VehicleTemplateService) GetVehicleTemplate(ctx context.Context, request
 
 func (s *VehicleTemplateService) CreateVehicleTemplate(ctx context.Context, request *grpc.VehicleTemplate) (*emptypb.Empty, error) {
 
-	vehicleTemplate := &models.TemplateVehicle{
-		MakeSlug:  request.Make,
-		YearStart: int(request.StartYear),
-		YearEnd:   int(request.EndYear),
-	}
+	fmt.Println(request)
 
-	for _, model := range request.Models {
-		vehicleTemplate.ModelWhitelist = append(vehicleTemplate.ModelWhitelist, model)
+	vehicleTemplate := &models.TemplateVehicle{
+		MakeSlug:       request.Make,
+		YearStart:      int(request.StartYear),
+		YearEnd:        int(request.EndYear),
+		ModelWhitelist: request.Models,
+		TemplateName:   request.Template,
 	}
 
 	err := vehicleTemplate.Insert(ctx, s.dbs().Writer, boil.Infer())
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &emptypb.Empty{}, nil
+}
+
+func (s *VehicleTemplateService) UpdateVehicleTemplate(ctx context.Context, request *grpc.VehicleTemplate) (*emptypb.Empty, error) {
+
+	vehicleTemplate, err := models.TemplateVehicles(
+		models.TemplateVehicleWhere.MakeSlug.EQ(request.Make),
+		models.TemplateVehicleWhere.YearStart.EQ(int(request.StartYear)),
+		models.TemplateVehicleWhere.YearEnd.EQ(int(request.EndYear)),
+	).One(ctx, s.dbs().Reader)
+
+	if err != nil {
+		return nil, err
+	}
+
+	vehicleTemplate.ModelWhitelist = request.Models
+	vehicleTemplate.TemplateName = request.Template
+
+	_, err = vehicleTemplate.Update(ctx, s.dbs().Writer, boil.Infer())
 
 	if err != nil {
 		return nil, err

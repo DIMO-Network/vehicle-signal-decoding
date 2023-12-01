@@ -34,4 +34,5 @@ service VehicleTemplateService {
     rpc GetVehicleTemplates(GetVehicleTemplatesRequest) returns (GetVehicleTemplatesResponse) {}
     rpc GetVehicleTemplate(GetVehicleTemplateRequest) returns (VehicleTemplate) {}
     rpc CreateVehicleTemplate(VehicleTemplate) returns (google.protobuf.Empty) {}
+    rpc UpdateVehicleTemplate(VehicleTemplate) returns (google.protobuf.Empty) {}
 }
