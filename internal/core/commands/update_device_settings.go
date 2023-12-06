@@ -3,8 +3,11 @@ package commands
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
+
+	"github.com/volatiletech/null/v8"
 
 	"github.com/DIMO-Network/shared/db"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
@@ -21,14 +24,8 @@ func NewUpdateDeviceSettingsCommandHandler(dbs func() *db.ReaderWriter) UpdateDe
 }
 
 type UpdateDeviceSettingsCommandRequest struct {
-	TemplateName                           string
-	BatteryCriticalLevelVoltage            float64
-	SafetyCutOutVoltage                    float64
-	SleepTimerEventDrivenInterval          float64
-	SleepTimerEventDrivenPeriod            float64
-	SleepTimerInactivityAfterSleepInterval float64
-	SleepTimerInactivityFallbackInterval   float64
-	WakeTriggerVoltageLevel                float64
+	TemplateName string
+	Settings     SettingsData `json:"settings"`
 }
 
 type UpdateDeviceSettingsCommandResponse struct {
@@ -48,15 +45,15 @@ func (h UpdateDeviceSettingsCommandHandler) Execute(ctx context.Context, req *Up
 			Err: err,
 		}
 	}
+	settingsJSON, err := json.Marshal(req.Settings)
+	if err != nil {
+		return nil, &exceptions.InternalError{
+			Err: fmt.Errorf("failed to marshal settings to JSON: %w", err),
+		}
+	}
 
 	deviceSettings.TemplateName = req.TemplateName
-	deviceSettings.BatteryCriticalLevelVoltage = req.BatteryCriticalLevelVoltage
-	deviceSettings.SafetyCutOutVoltage = req.SafetyCutOutVoltage
-	deviceSettings.SleepTimerEventDrivenInterval = req.SleepTimerEventDrivenInterval
-	deviceSettings.SleepTimerEventDrivenPeriod = req.SleepTimerEventDrivenPeriod
-	deviceSettings.SleepTimerInactivityAfterSleepInterval = req.SleepTimerInactivityAfterSleepInterval
-	deviceSettings.SleepTimerInactivityFallbackInterval = req.SleepTimerInactivityFallbackInterval
-	deviceSettings.WakeTriggerVoltageLevel = req.WakeTriggerVoltageLevel
+	deviceSettings.Settings = null.NewJSON(settingsJSON, true)
 
 	if _, err := deviceSettings.Update(ctx, h.DBS().Writer.DB, boil.Infer()); err != nil {
 		return nil, &exceptions.InternalError{

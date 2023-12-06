@@ -2,6 +2,9 @@ package commands
 
 import (
 	"context"
+	"encoding/json"
+
+	"github.com/volatiletech/null/v8"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/exceptions"
@@ -19,16 +22,15 @@ func NewCreateDeviceSettingsCommandHandler(dbs func() *db.ReaderWriter) CreateDe
 	return CreateDeviceSettingsCommandHandler{DBS: dbs}
 }
 
+type SettingsData struct {
+	SafetyCutOutVoltage             float64 `json:"safety_cut_out_voltage"`
+	SleepTimerEventDrivenPeriodSecs float64 `json:"sleep_timer_event_driven_period_secs"`
+	WakeTriggerVoltageLevel         float64 `json:"wake_trigger_voltage_level"`
+}
+
 type CreateDeviceSettingsCommandRequest struct {
-	ID                                     int64
-	TemplateName                           string
-	BatteryCriticalLevelVoltage            float64
-	SafetyCutOutVoltage                    float64
-	SleepTimerEventDrivenInterval          float64
-	SleepTimerEventDrivenPeriod            float64
-	SleepTimerInactivityAfterSleepInterval float64
-	SleepTimerInactivityFallbackInterval   float64
-	WakeTriggerVoltageLevel                float64
+	TemplateName string
+	Settings     SettingsData `json:"settings"`
 }
 
 type CreateDeviceSettingsCommandResponse struct {
@@ -49,16 +51,18 @@ func (h CreateDeviceSettingsCommandHandler) Execute(ctx context.Context, req *Cr
 		}
 	}
 
+	settingsBytes, err := json.Marshal(req.Settings)
+	if err != nil {
+		return nil, &exceptions.InternalError{
+			Err: errors.Wrapf(err, "error serializing settings for device setting: %s", req.TemplateName),
+		}
+	}
+
+	settingsJSON := null.JSONFrom(settingsBytes)
+
 	deviceSetting := &models.DeviceSetting{
-		ID:                                     req.ID,
-		TemplateName:                           req.TemplateName,
-		BatteryCriticalLevelVoltage:            req.BatteryCriticalLevelVoltage,
-		SafetyCutOutVoltage:                    req.SafetyCutOutVoltage,
-		SleepTimerEventDrivenInterval:          req.SleepTimerEventDrivenInterval,
-		SleepTimerEventDrivenPeriod:            req.SleepTimerEventDrivenPeriod,
-		SleepTimerInactivityAfterSleepInterval: req.SleepTimerInactivityAfterSleepInterval,
-		SleepTimerInactivityFallbackInterval:   req.SleepTimerInactivityFallbackInterval,
-		WakeTriggerVoltageLevel:                req.WakeTriggerVoltageLevel,
+		TemplateName: req.TemplateName,
+		Settings:     settingsJSON,
 	}
 
 	err = deviceSetting.Insert(ctx, h.DBS().Writer, boil.Infer())

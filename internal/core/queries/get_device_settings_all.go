@@ -33,23 +33,27 @@ func (h GetDeviceSettingsAllQueryHandler) Handle(ctx context.Context, _ *GetDevi
 		return nil, fmt.Errorf("failed to get DeviceSettings: %w", err)
 	}
 
-	deviceSettingsSummaries := make([]*grpc.DeviceSettingsSummary, 0, len(all))
+	deviceSettingsList := make([]*grpc.DeviceSettings, 0, len(all))
 
 	for _, item := range all {
-		deviceSettingsSummaries = append(deviceSettingsSummaries, &grpc.DeviceSettingsSummary{
-			TemplateName:                           item.TemplateName,
-			BatteryCriticalLevelVoltage:            item.BatteryCriticalLevelVoltage,
-			SafetyCutOutVoltage:                    item.SafetyCutOutVoltage,
-			SleepTimerEventDrivenInterval:          item.SleepTimerEventDrivenInterval,
-			SleepTimerEventDrivenPeriod:            item.SleepTimerEventDrivenPeriod,
-			SleepTimerInactivityAfterSleepInterval: item.SleepTimerInactivityAfterSleepInterval,
-			SleepTimerInactivityFallbackInterval:   item.SleepTimerInactivityFallbackInterval,
-			WakeTriggerVoltageLevel:                item.WakeTriggerVoltageLevel,
-		})
+		// Convert null.JSON to []byte
+		jsonBytes, err := item.Settings.MarshalJSON()
+		if err != nil {
+			h.logger.Error().Err(err).Msgf("Failed to marshal settings for template: %s", item.TemplateName)
+			continue
+		}
+
+		settingsString := string(jsonBytes)
+
+		deviceSettings := &grpc.DeviceSettings{
+			TemplateName: item.TemplateName,
+			Settings:     settingsString,
+		}
+		deviceSettingsList = append(deviceSettingsList, deviceSettings)
 	}
 
 	result := &grpc.GetDeviceSettingListResponse{
-		DeviceSettings: deviceSettingsSummaries,
+		DeviceSettings: deviceSettingsList,
 	}
 
 	return result, nil

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -51,6 +52,12 @@ type DeviceConfigResponse struct {
 	DeviceSettingURL string `json:"deviceSettingUrl"`
 	DbcURL           string `json:"dbcURL,omitempty"`
 	Version          string `json:"version"`
+}
+
+type SettingsData struct {
+	SafetyCutOutVoltage             float64 `json:"safety_cut_out_voltage"`
+	SleepTimerEventDrivenPeriodSecs float64 `json:"sleep_timer_event_driven_period_secs"`
+	WakeTriggerVoltageLevel         float64 `json:"wake_trigger_voltage_level"`
 }
 
 func bytesToUint32(b []byte) (uint32, error) {
@@ -169,8 +176,7 @@ func (d *DeviceConfigController) GetDeviceSettingsByTemplate(c *fiber.Ctx) error
 
 	// Query the database to get the Device Settings based on the template name using SQLBoiler
 	dbDeviceSettings, err := models.DeviceSettings(
-		models.DeviceSettingWhere.TemplateName.EQ(templateName),
-	).One(c.Context(), d.db)
+		models.DeviceSettingWhere.TemplateName.EQ(templateName)).One(c.Context(), d.db)
 
 	// Error handling
 	if err != nil {
@@ -180,15 +186,26 @@ func (d *DeviceConfigController) GetDeviceSettingsByTemplate(c *fiber.Ctx) error
 		return errors.Wrap(err, "Failed to retrieve Device Settings")
 	}
 
+	// Deserialize the settings JSONB into the SettingsData struct
+	var settings SettingsData
+	if dbDeviceSettings.Settings.Valid {
+		jsonBytes, err := dbDeviceSettings.Settings.MarshalJSON()
+		if err != nil {
+			return errors.Wrap(err, "Failed to marshal settings JSON")
+		}
+		if err = json.Unmarshal(jsonBytes, &settings); err != nil {
+			return errors.Wrap(err, "Failed to deserialize settings data")
+		}
+	} else {
+		return fiber.NewError(fiber.StatusNotFound, "Settings data is null or not found")
+	}
 	protoDeviceSettings := &grpc.DeviceSetting{
-		TemplateName:                             templateName,
-		BatteryCriticalLevelVoltage:              float32(dbDeviceSettings.BatteryCriticalLevelVoltage),
-		SafetyCutOutVoltage:                      float32(dbDeviceSettings.SafetyCutOutVoltage),
-		SleepTimerEventDrivenIntervalSecs:        float32(dbDeviceSettings.SleepTimerEventDrivenInterval),
-		SleepTimerEventDrivenPeriodSecs:          float32(dbDeviceSettings.SleepTimerEventDrivenPeriod),
-		SleepTimerInactivityAfterSleepSecs:       float32(dbDeviceSettings.SleepTimerInactivityAfterSleepInterval),
-		SleepTimerInactivityFallbackIntervalSecs: float32(dbDeviceSettings.SleepTimerInactivityFallbackInterval),
-		WakeTriggerVoltageLevel:                  float32(dbDeviceSettings.WakeTriggerVoltageLevel),
+		TemplateName: templateName,
+		Settings: &grpc.SettingsData{
+			SafetyCutOutVoltage:             settings.SafetyCutOutVoltage,
+			SleepTimerEventDrivenPeriodSecs: settings.SleepTimerEventDrivenPeriodSecs,
+			WakeTriggerVoltageLevel:         settings.WakeTriggerVoltageLevel,
+		},
 	}
 
 	acceptHeader := c.Get("Accept", "application/json")

@@ -2,6 +2,10 @@ package api
 
 import (
 	"context"
+	"encoding/json"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/commands"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/queries"
@@ -24,38 +28,42 @@ func NewDeviceSettingsConfigService(logger *zerolog.Logger, dbs func() *db.Reade
 
 func (s *DeviceSettingsConfigService) CreateDeviceSettings(ctx context.Context, in *grpc.UpdateDeviceSettingsRequest) (*emptypb.Empty, error) {
 	service := commands.NewCreateDeviceSettingsCommandHandler(s.dbs)
-	_, err := service.Execute(ctx, &commands.CreateDeviceSettingsCommandRequest{
-		TemplateName:                           in.DeviceSettings.TemplateName,
-		BatteryCriticalLevelVoltage:            in.DeviceSettings.BatteryCriticalLevelVoltage,
-		SafetyCutOutVoltage:                    in.DeviceSettings.SafetyCutOutVoltage,
-		SleepTimerEventDrivenInterval:          in.DeviceSettings.SleepTimerEventDrivenInterval,
-		SleepTimerEventDrivenPeriod:            in.DeviceSettings.SleepTimerEventDrivenPeriod,
-		SleepTimerInactivityAfterSleepInterval: in.DeviceSettings.SleepTimerInactivityAfterSleepInterval,
-		SleepTimerInactivityFallbackInterval:   in.DeviceSettings.SleepTimerInactivityFallbackInterval,
-		WakeTriggerVoltageLevel:                in.DeviceSettings.WakeTriggerVoltageLevel,
+
+	// Deserialize the JSON settings into SettingsData
+	var settingsData commands.SettingsData
+	err := json.Unmarshal([]byte(in.DeviceSettings.Settings), &settingsData)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Failed to parse settings JSON: %v", err)
+	}
+
+	_, err = service.Execute(ctx, &commands.CreateDeviceSettingsCommandRequest{
+		TemplateName: in.DeviceSettings.TemplateName,
+		Settings:     settingsData,
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "Error executing CreateDeviceSettingsCommand: %v", err)
 	}
+
 	return &emptypb.Empty{}, nil
 }
 
 func (s *DeviceSettingsConfigService) UpdateDeviceSettings(ctx context.Context, in *grpc.UpdateDeviceSettingsRequest) (*emptypb.Empty, error) {
 	service := commands.NewUpdateDeviceSettingsCommandHandler(s.dbs)
-	_, err := service.Execute(ctx, &commands.UpdateDeviceSettingsCommandRequest{
-		TemplateName:                           in.DeviceSettings.TemplateName,
-		BatteryCriticalLevelVoltage:            in.DeviceSettings.BatteryCriticalLevelVoltage,
-		SafetyCutOutVoltage:                    in.DeviceSettings.SafetyCutOutVoltage,
-		SleepTimerEventDrivenInterval:          in.DeviceSettings.SleepTimerEventDrivenInterval,
-		SleepTimerEventDrivenPeriod:            in.DeviceSettings.SleepTimerEventDrivenPeriod,
-		SleepTimerInactivityAfterSleepInterval: in.DeviceSettings.SleepTimerInactivityAfterSleepInterval,
-		SleepTimerInactivityFallbackInterval:   in.DeviceSettings.SleepTimerInactivityFallbackInterval,
-		WakeTriggerVoltageLevel:                in.DeviceSettings.WakeTriggerVoltageLevel,
+
+	// Deserialize the JSON settings into SettingsData
+	var settingsData commands.SettingsData
+	err := json.Unmarshal([]byte(in.DeviceSettings.Settings), &settingsData)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Failed to parse settings JSON: %v", err)
+	}
+
+	_, err = service.Execute(ctx, &commands.UpdateDeviceSettingsCommandRequest{
+		TemplateName: in.DeviceSettings.TemplateName,
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "Error executing UpdateDeviceSettingsCommand: %v", err)
 	}
 
 	return &emptypb.Empty{}, nil
