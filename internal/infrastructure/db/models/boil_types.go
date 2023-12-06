@@ -64,6 +64,23 @@ func AllTriggerEnum() []string {
 	}
 }
 
+// Enum values for JobStatusEnum
+const (
+	JobStatusEnumPENDING   string = "PENDING"
+	JobStatusEnumRUNNING   string = "RUNNING"
+	JobStatusEnumCOMPLETED string = "COMPLETED"
+	JobStatusEnumFAILED    string = "FAILED"
+)
+
+func AllJobStatusEnum() []string {
+	return []string{
+		JobStatusEnumPENDING,
+		JobStatusEnumRUNNING,
+		JobStatusEnumCOMPLETED,
+		JobStatusEnumFAILED,
+	}
+}
+
 // Enum values for CanProtocolType
 const (
 	CanProtocolTypeCAN11_500 string = "CAN11_500"
