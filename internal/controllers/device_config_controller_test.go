@@ -124,7 +124,7 @@ func TestGetPIDsByTemplate(t *testing.T) {
 	})
 }
 
-func TestGetDeviceSettingsByTemplate(t *testing.T) {
+func TestGetDeviceSettingsByName(t *testing.T) {
 
 	// arrange global db and route setup
 	mockCtrl := gomock.NewController(t)
@@ -164,8 +164,8 @@ func TestGetDeviceSettingsByTemplate(t *testing.T) {
 	settingsJSON := null.JSONFrom(exampleSettingsJSON)
 
 	ds := models.DeviceSetting{
-		Name:     "testTemplate",
-		Settings: settingsJSON,
+		TemplateName: null.NewString(template.TemplateName, template.TemplateName != ""),
+		Settings:     settingsJSON,
 	}
 
 	err = ds.Insert(ctx, pdb.DBS().Writer, boil.Infer())
@@ -342,7 +342,7 @@ func TestGetConfigURLsEmptyDBC(t *testing.T) {
 	require.NoError(t, err)
 	// insert device settings
 	ds := &models.DeviceSetting{
-		Name: "some-template",
+		TemplateName: null.NewString(template.TemplateName, template.TemplateName != ""),
 	}
 	err = ds.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err)
