@@ -7,13 +7,13 @@ option go_package = "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc";
 package grpc;
 
 message DeviceSettings {
-  string template_name = 1;
+  string name = 1;
   string settings = 2;
 }
 
 
 message GetDeviceSettingListRequest {
-  optional string template_name = 1;
+  optional string name = 1;
 }
 
 message GetDeviceSettingListResponse {
@@ -21,7 +21,7 @@ message GetDeviceSettingListResponse {
 }
 
 message GetDeviceSettingByTemplateNameRequest {
-  string template_name = 1;
+  string name = 1;
 }
 
 message GetDeviceSettingByTemplateNameResponse {

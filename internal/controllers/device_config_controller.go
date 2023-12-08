@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"github.com/volatiletech/null/v8"
 	"strings"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/common"
@@ -174,14 +175,25 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 func (d *DeviceConfigController) GetDeviceSettingsByTemplate(c *fiber.Ctx) error {
 	templateName := c.Params("templateName")
 
-	// Query the database to get the Device Settings based on the template name using SQLBoiler
-	dbDeviceSettings, err := models.DeviceSettings(
-		models.DeviceSettingWhere.TemplateName.EQ(templateName)).One(c.Context(), d.db)
+	var dbDeviceSettings *models.DeviceSetting
+	var err error
 
-	// Error handling
+	if templateName != "" {
+		// Fetch based on templateName
+		templateNameString := null.NewString(templateName, true)
+		dbDeviceSettings, err = models.DeviceSettings(
+			models.DeviceSettingWhere.TemplateName.EQ(templateNameString)).One(c.Context(), d.db)
+	} else {
+		// Fetch based on PowerTrainType and Name containing "default"
+		dbDeviceSettings, err = models.DeviceSettings(
+			models.DeviceSettingWhere.Name.LIKE("default%"),
+			//powertrain does not exist here
+		).One(c.Context(), d.db)
+	}
+
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return fiber.NewError(fiber.StatusNotFound, "No Device Settings data found for the given template name.")
+			return fiber.NewError(fiber.StatusNotFound, "No Device Settings data found.")
 		}
 		return errors.Wrap(err, "Failed to retrieve Device Settings")
 	}
@@ -199,6 +211,7 @@ func (d *DeviceConfigController) GetDeviceSettingsByTemplate(c *fiber.Ctx) error
 	} else {
 		return fiber.NewError(fiber.StatusNotFound, "Settings data is null or not found")
 	}
+
 	protoDeviceSettings := &grpc.DeviceSetting{
 		TemplateName: templateName,
 		Settings: &grpc.SettingsData{
@@ -219,7 +232,6 @@ func (d *DeviceConfigController) GetDeviceSettingsByTemplate(c *fiber.Ctx) error
 	}
 
 	return c.JSON(protoDeviceSettings)
-
 }
 
 // GetDBCFileByTemplateName godoc
@@ -477,7 +489,7 @@ func (d *DeviceConfigController) selectAndFetchTemplate(ctx context.Context, ud 
 	matchedTemplate, err := models.Templates(
 		models.TemplateWhere.TemplateName.EQ(matchedTemplateName),
 		qm.Load(models.TemplateRels.TemplateNameDBCFile),
-		qm.Load(models.TemplateRels.TemplateNameDeviceSetting),
+		qm.Load(models.TemplateRels.TemplateNameDeviceSettings),
 	).One(ctx, d.db)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch template by name %s: %w", matchedTemplateName, err)
@@ -529,13 +541,20 @@ func (d *DeviceConfigController) getConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) 
 		response.DbcURL = ""
 	}
 
-	// only set device settings url if we have one
-	if matchedTemplate.R.TemplateNameDeviceSetting != nil {
+	if matchedTemplate.TemplateName != "" && len(matchedTemplate.R.TemplateNameDeviceSettings) > 0 {
 		response.DeviceSettingURL = fmt.Sprintf("%s/v1/device-config/%s/device-settings", baseURL, matchedTemplate.TemplateName)
-	} else if matchedTemplate.ParentTemplateName.Valid {
-		response.DeviceSettingURL = fmt.Sprintf("%s/v1/device-config/%s/device-settings", baseURL, matchedTemplate.ParentTemplateName.String)
 	} else {
-		response.DeviceSettingURL = ""
+		deviceSettings, err := models.DeviceSettings(
+			//DeviceSettingWhere does not have powertrain
+			models.DeviceSettingWhere.Name.LIKE("default%"),
+		).All(c.Context(), d.db)
+
+		if err == nil && len(deviceSettings) > 0 {
+			// Use the first matched device setting
+			response.DeviceSettingURL = fmt.Sprintf("%s/v1/device-config/%s/device-settings", baseURL, deviceSettings[0].Name)
+		} else {
+			response.DeviceSettingURL = ""
+		}
 	}
 
 	return c.JSON(response)

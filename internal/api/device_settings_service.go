@@ -37,8 +37,8 @@ func (s *DeviceSettingsConfigService) CreateDeviceSettings(ctx context.Context, 
 	}
 
 	_, err = service.Execute(ctx, &commands.CreateDeviceSettingsCommandRequest{
-		TemplateName: in.DeviceSettings.TemplateName,
-		Settings:     settingsData,
+		Name:     in.DeviceSettings.Name,
+		Settings: settingsData,
 	})
 
 	if err != nil {
@@ -59,7 +59,7 @@ func (s *DeviceSettingsConfigService) UpdateDeviceSettings(ctx context.Context, 
 	}
 
 	_, err = service.Execute(ctx, &commands.UpdateDeviceSettingsCommandRequest{
-		TemplateName: in.DeviceSettings.TemplateName,
+		Name: in.DeviceSettings.Name,
 	})
 
 	if err != nil {
@@ -72,7 +72,7 @@ func (s *DeviceSettingsConfigService) UpdateDeviceSettings(ctx context.Context, 
 func (s *DeviceSettingsConfigService) GetDeviceSettingList(ctx context.Context, in *grpc.GetDeviceSettingListRequest) (*grpc.GetDeviceSettingListResponse, error) {
 	service := queries.NewGetDeviceSettingsAllQueryHandler(s.dbs, s.logger)
 	response, err := service.Handle(ctx, &queries.GetDeviceSettingsAllQueryRequest{
-		TemplateName: *in.TemplateName,
+		Name: *in.Name,
 	})
 	if err != nil {
 		return nil, err
@@ -83,7 +83,7 @@ func (s *DeviceSettingsConfigService) GetDeviceSettingList(ctx context.Context, 
 func (s *DeviceSettingsConfigService) GetDeviceSettingByTemplateName(ctx context.Context, in *grpc.GetDeviceSettingByTemplateNameRequest) (*grpc.GetDeviceSettingByTemplateNameResponse, error) {
 	service := queries.NewGetDeviceSettingsByTemplateNameQueryHandler(s.dbs, s.logger)
 	response, err := service.Handle(ctx, &queries.GetDeviceSettingsByTemplateNameQueryRequest{
-		TemplateName: in.TemplateName,
+		Name: in.Name,
 	})
 
 	if err != nil {

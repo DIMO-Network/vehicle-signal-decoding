@@ -25,14 +25,14 @@ func NewGetDeviceSettingsByTemplateNameQueryHandler(dbs func() *db.ReaderWriter,
 }
 
 type GetDeviceSettingsByTemplateNameQueryRequest struct {
-	TemplateName string
+	Name string
 }
 
 func (h GetDeviceSettingsByTemplateNameQueryHandler) Handle(ctx context.Context, query *GetDeviceSettingsByTemplateNameQueryRequest) (*grpc.GetDeviceSettingByTemplateNameResponse, error) {
-	item, err := models.DeviceSettings(models.DeviceSettingWhere.TemplateName.EQ(query.TemplateName)).One(ctx, h.DBS().Reader)
+	item, err := models.DeviceSettings(models.DeviceSettingWhere.Name.EQ(query.Name)).One(ctx, h.DBS().Reader)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf("device setting not found for template name: %s", query.TemplateName)
+			return nil, fmt.Errorf("device setting not found for template name: %s", query.Name)
 		}
 		return nil, fmt.Errorf("failed to get device setting by template name: %w", err)
 	}
@@ -47,8 +47,8 @@ func (h GetDeviceSettingsByTemplateNameQueryHandler) Handle(ctx context.Context,
 
 	result := &grpc.GetDeviceSettingByTemplateNameResponse{
 		DeviceSettings: &grpc.DeviceSettings{
-			TemplateName: item.TemplateName,
-			Settings:     settingsString,
+			Name:     item.Name,
+			Settings: settingsString,
 		},
 	}
 
