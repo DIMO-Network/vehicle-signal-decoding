@@ -103,14 +103,14 @@ var TemplateWhere = struct {
 var TemplateRels = struct {
 	TemplateTemplateType                  string
 	TemplateNameDBCFile                   string
-	TemplateNameDeviceSetting             string
+	TemplateNameDeviceSettings            string
 	TemplateNamePidConfigs                string
 	TemplateNameTemplateDeviceDefinitions string
 	TemplateNameTemplateVehicles          string
 }{
 	TemplateTemplateType:                  "TemplateTemplateType",
 	TemplateNameDBCFile:                   "TemplateNameDBCFile",
-	TemplateNameDeviceSetting:             "TemplateNameDeviceSetting",
+	TemplateNameDeviceSettings:            "TemplateNameDeviceSettings",
 	TemplateNamePidConfigs:                "TemplateNamePidConfigs",
 	TemplateNameTemplateDeviceDefinitions: "TemplateNameTemplateDeviceDefinitions",
 	TemplateNameTemplateVehicles:          "TemplateNameTemplateVehicles",
@@ -120,7 +120,7 @@ var TemplateRels = struct {
 type templateR struct {
 	TemplateTemplateType                  *TemplateType                 `boil:"TemplateTemplateType" json:"TemplateTemplateType" toml:"TemplateTemplateType" yaml:"TemplateTemplateType"`
 	TemplateNameDBCFile                   *DBCFile                      `boil:"TemplateNameDBCFile" json:"TemplateNameDBCFile" toml:"TemplateNameDBCFile" yaml:"TemplateNameDBCFile"`
-	TemplateNameDeviceSetting             *DeviceSetting                `boil:"TemplateNameDeviceSetting" json:"TemplateNameDeviceSetting" toml:"TemplateNameDeviceSetting" yaml:"TemplateNameDeviceSetting"`
+	TemplateNameDeviceSettings            DeviceSettingSlice            `boil:"TemplateNameDeviceSettings" json:"TemplateNameDeviceSettings" toml:"TemplateNameDeviceSettings" yaml:"TemplateNameDeviceSettings"`
 	TemplateNamePidConfigs                PidConfigSlice                `boil:"TemplateNamePidConfigs" json:"TemplateNamePidConfigs" toml:"TemplateNamePidConfigs" yaml:"TemplateNamePidConfigs"`
 	TemplateNameTemplateDeviceDefinitions TemplateDeviceDefinitionSlice `boil:"TemplateNameTemplateDeviceDefinitions" json:"TemplateNameTemplateDeviceDefinitions" toml:"TemplateNameTemplateDeviceDefinitions" yaml:"TemplateNameTemplateDeviceDefinitions"`
 	TemplateNameTemplateVehicles          TemplateVehicleSlice          `boil:"TemplateNameTemplateVehicles" json:"TemplateNameTemplateVehicles" toml:"TemplateNameTemplateVehicles" yaml:"TemplateNameTemplateVehicles"`
@@ -145,11 +145,11 @@ func (r *templateR) GetTemplateNameDBCFile() *DBCFile {
 	return r.TemplateNameDBCFile
 }
 
-func (r *templateR) GetTemplateNameDeviceSetting() *DeviceSetting {
+func (r *templateR) GetTemplateNameDeviceSettings() DeviceSettingSlice {
 	if r == nil {
 		return nil
 	}
-	return r.TemplateNameDeviceSetting
+	return r.TemplateNameDeviceSettings
 }
 
 func (r *templateR) GetTemplateNamePidConfigs() PidConfigSlice {
@@ -484,13 +484,16 @@ func (o *Template) TemplateNameDBCFile(mods ...qm.QueryMod) dbcFileQuery {
 	return DBCFiles(queryMods...)
 }
 
-// TemplateNameDeviceSetting pointed to by the foreign key.
-func (o *Template) TemplateNameDeviceSetting(mods ...qm.QueryMod) deviceSettingQuery {
-	queryMods := []qm.QueryMod{
-		qm.Where("\"template_name\" = ?", o.TemplateName),
+// TemplateNameDeviceSettings retrieves all the device_setting's DeviceSettings with an executor via template_name column.
+func (o *Template) TemplateNameDeviceSettings(mods ...qm.QueryMod) deviceSettingQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
 	}
 
-	queryMods = append(queryMods, mods...)
+	queryMods = append(queryMods,
+		qm.Where("\"vehicle_signal_decoding_api\".\"device_settings\".\"template_name\"=?", o.TemplateName),
+	)
 
 	return DeviceSettings(queryMods...)
 }
@@ -778,9 +781,9 @@ func (templateL) LoadTemplateNameDBCFile(ctx context.Context, e boil.ContextExec
 	return nil
 }
 
-// LoadTemplateNameDeviceSetting allows an eager lookup of values, cached into the
-// loaded structs of the objects. This is for a 1-1 relationship.
-func (templateL) LoadTemplateNameDeviceSetting(ctx context.Context, e boil.ContextExecutor, singular bool, maybeTemplate interface{}, mods queries.Applicator) error {
+// LoadTemplateNameDeviceSettings allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (templateL) LoadTemplateNameDeviceSettings(ctx context.Context, e boil.ContextExecutor, singular bool, maybeTemplate interface{}, mods queries.Applicator) error {
 	var slice []*Template
 	var object *Template
 
@@ -820,7 +823,7 @@ func (templateL) LoadTemplateNameDeviceSetting(ctx context.Context, e boil.Conte
 			}
 
 			for _, a := range args {
-				if a == obj.TemplateName {
+				if queries.Equal(a, obj.TemplateName) {
 					continue Outer
 				}
 			}
@@ -843,16 +846,16 @@ func (templateL) LoadTemplateNameDeviceSetting(ctx context.Context, e boil.Conte
 
 	results, err := query.QueryContext(ctx, e)
 	if err != nil {
-		return errors.Wrap(err, "failed to eager load DeviceSetting")
+		return errors.Wrap(err, "failed to eager load device_settings")
 	}
 
 	var resultSlice []*DeviceSetting
 	if err = queries.Bind(results, &resultSlice); err != nil {
-		return errors.Wrap(err, "failed to bind eager loaded slice DeviceSetting")
+		return errors.Wrap(err, "failed to bind eager loaded slice device_settings")
 	}
 
 	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results of eager load for device_settings")
+		return errors.Wrap(err, "failed to close results in eager load on device_settings")
 	}
 	if err = results.Err(); err != nil {
 		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for device_settings")
@@ -865,24 +868,21 @@ func (templateL) LoadTemplateNameDeviceSetting(ctx context.Context, e boil.Conte
 			}
 		}
 	}
-
-	if len(resultSlice) == 0 {
+	if singular {
+		object.R.TemplateNameDeviceSettings = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &deviceSettingR{}
+			}
+			foreign.R.TemplateNameTemplate = object
+		}
 		return nil
 	}
 
-	if singular {
-		foreign := resultSlice[0]
-		object.R.TemplateNameDeviceSetting = foreign
-		if foreign.R == nil {
-			foreign.R = &deviceSettingR{}
-		}
-		foreign.R.TemplateNameTemplate = object
-	}
-
-	for _, local := range slice {
-		for _, foreign := range resultSlice {
-			if local.TemplateName == foreign.TemplateName {
-				local.R.TemplateNameDeviceSetting = foreign
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if queries.Equal(local.TemplateName, foreign.TemplateName) {
+				local.R.TemplateNameDeviceSettings = append(local.R.TemplateNameDeviceSettings, foreign)
 				if foreign.R == nil {
 					foreign.R = &deviceSettingR{}
 				}
@@ -1367,53 +1367,130 @@ func (o *Template) SetTemplateNameDBCFile(ctx context.Context, exec boil.Context
 	return nil
 }
 
-// SetTemplateNameDeviceSetting of the template to the related item.
-// Sets o.R.TemplateNameDeviceSetting to related.
-// Adds o to related.R.TemplateNameTemplate.
-func (o *Template) SetTemplateNameDeviceSetting(ctx context.Context, exec boil.ContextExecutor, insert bool, related *DeviceSetting) error {
+// AddTemplateNameDeviceSettings adds the given related objects to the existing relationships
+// of the template, optionally inserting them as new records.
+// Appends related to o.R.TemplateNameDeviceSettings.
+// Sets related.R.TemplateNameTemplate appropriately.
+func (o *Template) AddTemplateNameDeviceSettings(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*DeviceSetting) error {
 	var err error
+	for _, rel := range related {
+		if insert {
+			queries.Assign(&rel.TemplateName, o.TemplateName)
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"vehicle_signal_decoding_api\".\"device_settings\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"template_name"}),
+				strmangle.WhereClause("\"", "\"", 2, deviceSettingPrimaryKeyColumns),
+			)
+			values := []interface{}{o.TemplateName, rel.Name}
 
-	if insert {
-		related.TemplateName = o.TemplateName
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
 
-		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
-			return errors.Wrap(err, "failed to insert into foreign table")
+			queries.Assign(&rel.TemplateName, o.TemplateName)
 		}
-	} else {
-		updateQuery := fmt.Sprintf(
-			"UPDATE \"vehicle_signal_decoding_api\".\"device_settings\" SET %s WHERE %s",
-			strmangle.SetParamNames("\"", "\"", 1, []string{"template_name"}),
-			strmangle.WhereClause("\"", "\"", 2, deviceSettingPrimaryKeyColumns),
-		)
-		values := []interface{}{o.TemplateName, related.TemplateName}
-
-		if boil.IsDebug(ctx) {
-			writer := boil.DebugWriterFrom(ctx)
-			fmt.Fprintln(writer, updateQuery)
-			fmt.Fprintln(writer, values)
-		}
-		if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
-			return errors.Wrap(err, "failed to update foreign table")
-		}
-
-		related.TemplateName = o.TemplateName
 	}
 
 	if o.R == nil {
 		o.R = &templateR{
-			TemplateNameDeviceSetting: related,
+			TemplateNameDeviceSettings: related,
 		}
 	} else {
-		o.R.TemplateNameDeviceSetting = related
+		o.R.TemplateNameDeviceSettings = append(o.R.TemplateNameDeviceSettings, related...)
 	}
 
-	if related.R == nil {
-		related.R = &deviceSettingR{
-			TemplateNameTemplate: o,
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &deviceSettingR{
+				TemplateNameTemplate: o,
+			}
+		} else {
+			rel.R.TemplateNameTemplate = o
 		}
-	} else {
-		related.R.TemplateNameTemplate = o
 	}
+	return nil
+}
+
+// SetTemplateNameDeviceSettings removes all previously related items of the
+// template replacing them completely with the passed
+// in related items, optionally inserting them as new records.
+// Sets o.R.TemplateNameTemplate's TemplateNameDeviceSettings accordingly.
+// Replaces o.R.TemplateNameDeviceSettings with related.
+// Sets related.R.TemplateNameTemplate's TemplateNameDeviceSettings accordingly.
+func (o *Template) SetTemplateNameDeviceSettings(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*DeviceSetting) error {
+	query := "update \"vehicle_signal_decoding_api\".\"device_settings\" set \"template_name\" = null where \"template_name\" = $1"
+	values := []interface{}{o.TemplateName}
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, query)
+		fmt.Fprintln(writer, values)
+	}
+	_, err := exec.ExecContext(ctx, query, values...)
+	if err != nil {
+		return errors.Wrap(err, "failed to remove relationships before set")
+	}
+
+	if o.R != nil {
+		for _, rel := range o.R.TemplateNameDeviceSettings {
+			queries.SetScanner(&rel.TemplateName, nil)
+			if rel.R == nil {
+				continue
+			}
+
+			rel.R.TemplateNameTemplate = nil
+		}
+		o.R.TemplateNameDeviceSettings = nil
+	}
+
+	return o.AddTemplateNameDeviceSettings(ctx, exec, insert, related...)
+}
+
+// RemoveTemplateNameDeviceSettings relationships from objects passed in.
+// Removes related items from R.TemplateNameDeviceSettings (uses pointer comparison, removal does not keep order)
+// Sets related.R.TemplateNameTemplate.
+func (o *Template) RemoveTemplateNameDeviceSettings(ctx context.Context, exec boil.ContextExecutor, related ...*DeviceSetting) error {
+	if len(related) == 0 {
+		return nil
+	}
+
+	var err error
+	for _, rel := range related {
+		queries.SetScanner(&rel.TemplateName, nil)
+		if rel.R != nil {
+			rel.R.TemplateNameTemplate = nil
+		}
+		if _, err = rel.Update(ctx, exec, boil.Whitelist("template_name")); err != nil {
+			return err
+		}
+	}
+	if o.R == nil {
+		return nil
+	}
+
+	for _, rel := range related {
+		for i, ri := range o.R.TemplateNameDeviceSettings {
+			if rel != ri {
+				continue
+			}
+
+			ln := len(o.R.TemplateNameDeviceSettings)
+			if ln > 1 && i < ln-1 {
+				o.R.TemplateNameDeviceSettings[i] = o.R.TemplateNameDeviceSettings[ln-1]
+			}
+			o.R.TemplateNameDeviceSettings = o.R.TemplateNameDeviceSettings[:ln-1]
+			break
+		}
+	}
+
 	return nil
 }
 

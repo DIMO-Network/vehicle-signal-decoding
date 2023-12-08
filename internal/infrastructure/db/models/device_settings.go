@@ -24,10 +24,11 @@ import (
 
 // DeviceSetting is an object representing the database table.
 type DeviceSetting struct {
-	TemplateName string    `boil:"template_name" json:"template_name" toml:"template_name" yaml:"template_name"`
-	CreatedAt    time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	UpdatedAt    time.Time `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
-	Settings     null.JSON `boil:"settings" json:"settings,omitempty" toml:"settings" yaml:"settings,omitempty"`
+	TemplateName null.String `boil:"template_name" json:"template_name,omitempty" toml:"template_name" yaml:"template_name,omitempty"`
+	CreatedAt    time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UpdatedAt    time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	Settings     null.JSON   `boil:"settings" json:"settings,omitempty" toml:"settings" yaml:"settings,omitempty"`
+	Name         string      `boil:"name" json:"name" toml:"name" yaml:"name"`
 
 	R *deviceSettingR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L deviceSettingL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -38,11 +39,13 @@ var DeviceSettingColumns = struct {
 	CreatedAt    string
 	UpdatedAt    string
 	Settings     string
+	Name         string
 }{
 	TemplateName: "template_name",
 	CreatedAt:    "created_at",
 	UpdatedAt:    "updated_at",
 	Settings:     "settings",
+	Name:         "name",
 }
 
 var DeviceSettingTableColumns = struct {
@@ -50,11 +53,13 @@ var DeviceSettingTableColumns = struct {
 	CreatedAt    string
 	UpdatedAt    string
 	Settings     string
+	Name         string
 }{
 	TemplateName: "device_settings.template_name",
 	CreatedAt:    "device_settings.created_at",
 	UpdatedAt:    "device_settings.updated_at",
 	Settings:     "device_settings.settings",
+	Name:         "device_settings.name",
 }
 
 // Generated where
@@ -84,15 +89,17 @@ func (w whereHelpernull_JSON) IsNull() qm.QueryMod    { return qmhelper.WhereIsN
 func (w whereHelpernull_JSON) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
 
 var DeviceSettingWhere = struct {
-	TemplateName whereHelperstring
+	TemplateName whereHelpernull_String
 	CreatedAt    whereHelpertime_Time
 	UpdatedAt    whereHelpertime_Time
 	Settings     whereHelpernull_JSON
+	Name         whereHelperstring
 }{
-	TemplateName: whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"device_settings\".\"template_name\""},
+	TemplateName: whereHelpernull_String{field: "\"vehicle_signal_decoding_api\".\"device_settings\".\"template_name\""},
 	CreatedAt:    whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"device_settings\".\"created_at\""},
 	UpdatedAt:    whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"device_settings\".\"updated_at\""},
 	Settings:     whereHelpernull_JSON{field: "\"vehicle_signal_decoding_api\".\"device_settings\".\"settings\""},
+	Name:         whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"device_settings\".\"name\""},
 }
 
 // DeviceSettingRels is where relationship names are stored.
@@ -123,10 +130,10 @@ func (r *deviceSettingR) GetTemplateNameTemplate() *Template {
 type deviceSettingL struct{}
 
 var (
-	deviceSettingAllColumns            = []string{"template_name", "created_at", "updated_at", "settings"}
-	deviceSettingColumnsWithoutDefault = []string{"template_name"}
-	deviceSettingColumnsWithDefault    = []string{"created_at", "updated_at", "settings"}
-	deviceSettingPrimaryKeyColumns     = []string{"template_name"}
+	deviceSettingAllColumns            = []string{"template_name", "created_at", "updated_at", "settings", "name"}
+	deviceSettingColumnsWithoutDefault = []string{"name"}
+	deviceSettingColumnsWithDefault    = []string{"template_name", "created_at", "updated_at", "settings"}
+	deviceSettingPrimaryKeyColumns     = []string{"name"}
 	deviceSettingGeneratedColumns      = []string{}
 )
 
@@ -452,7 +459,9 @@ func (deviceSettingL) LoadTemplateNameTemplate(ctx context.Context, e boil.Conte
 		if object.R == nil {
 			object.R = &deviceSettingR{}
 		}
-		args = append(args, object.TemplateName)
+		if !queries.IsNil(object.TemplateName) {
+			args = append(args, object.TemplateName)
+		}
 
 	} else {
 	Outer:
@@ -462,12 +471,14 @@ func (deviceSettingL) LoadTemplateNameTemplate(ctx context.Context, e boil.Conte
 			}
 
 			for _, a := range args {
-				if a == obj.TemplateName {
+				if queries.Equal(a, obj.TemplateName) {
 					continue Outer
 				}
 			}
 
-			args = append(args, obj.TemplateName)
+			if !queries.IsNil(obj.TemplateName) {
+				args = append(args, obj.TemplateName)
+			}
 
 		}
 	}
@@ -519,18 +530,18 @@ func (deviceSettingL) LoadTemplateNameTemplate(ctx context.Context, e boil.Conte
 		if foreign.R == nil {
 			foreign.R = &templateR{}
 		}
-		foreign.R.TemplateNameDeviceSetting = object
+		foreign.R.TemplateNameDeviceSettings = append(foreign.R.TemplateNameDeviceSettings, object)
 		return nil
 	}
 
 	for _, local := range slice {
 		for _, foreign := range resultSlice {
-			if local.TemplateName == foreign.TemplateName {
+			if queries.Equal(local.TemplateName, foreign.TemplateName) {
 				local.R.TemplateNameTemplate = foreign
 				if foreign.R == nil {
 					foreign.R = &templateR{}
 				}
-				foreign.R.TemplateNameDeviceSetting = local
+				foreign.R.TemplateNameDeviceSettings = append(foreign.R.TemplateNameDeviceSettings, local)
 				break
 			}
 		}
@@ -541,7 +552,7 @@ func (deviceSettingL) LoadTemplateNameTemplate(ctx context.Context, e boil.Conte
 
 // SetTemplateNameTemplate of the deviceSetting to the related item.
 // Sets o.R.TemplateNameTemplate to related.
-// Adds o to related.R.TemplateNameDeviceSetting.
+// Adds o to related.R.TemplateNameDeviceSettings.
 func (o *DeviceSetting) SetTemplateNameTemplate(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Template) error {
 	var err error
 	if insert {
@@ -555,7 +566,7 @@ func (o *DeviceSetting) SetTemplateNameTemplate(ctx context.Context, exec boil.C
 		strmangle.SetParamNames("\"", "\"", 1, []string{"template_name"}),
 		strmangle.WhereClause("\"", "\"", 2, deviceSettingPrimaryKeyColumns),
 	)
-	values := []interface{}{related.TemplateName, o.TemplateName}
+	values := []interface{}{related.TemplateName, o.Name}
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -566,7 +577,7 @@ func (o *DeviceSetting) SetTemplateNameTemplate(ctx context.Context, exec boil.C
 		return errors.Wrap(err, "failed to update local table")
 	}
 
-	o.TemplateName = related.TemplateName
+	queries.Assign(&o.TemplateName, related.TemplateName)
 	if o.R == nil {
 		o.R = &deviceSettingR{
 			TemplateNameTemplate: related,
@@ -577,12 +588,45 @@ func (o *DeviceSetting) SetTemplateNameTemplate(ctx context.Context, exec boil.C
 
 	if related.R == nil {
 		related.R = &templateR{
-			TemplateNameDeviceSetting: o,
+			TemplateNameDeviceSettings: DeviceSettingSlice{o},
 		}
 	} else {
-		related.R.TemplateNameDeviceSetting = o
+		related.R.TemplateNameDeviceSettings = append(related.R.TemplateNameDeviceSettings, o)
 	}
 
+	return nil
+}
+
+// RemoveTemplateNameTemplate relationship.
+// Sets o.R.TemplateNameTemplate to nil.
+// Removes o from all passed in related items' relationships struct.
+func (o *DeviceSetting) RemoveTemplateNameTemplate(ctx context.Context, exec boil.ContextExecutor, related *Template) error {
+	var err error
+
+	queries.SetScanner(&o.TemplateName, nil)
+	if _, err = o.Update(ctx, exec, boil.Whitelist("template_name")); err != nil {
+		return errors.Wrap(err, "failed to update local table")
+	}
+
+	if o.R != nil {
+		o.R.TemplateNameTemplate = nil
+	}
+	if related == nil || related.R == nil {
+		return nil
+	}
+
+	for i, ri := range related.R.TemplateNameDeviceSettings {
+		if queries.Equal(o.TemplateName, ri.TemplateName) {
+			continue
+		}
+
+		ln := len(related.R.TemplateNameDeviceSettings)
+		if ln > 1 && i < ln-1 {
+			related.R.TemplateNameDeviceSettings[i] = related.R.TemplateNameDeviceSettings[ln-1]
+		}
+		related.R.TemplateNameDeviceSettings = related.R.TemplateNameDeviceSettings[:ln-1]
+		break
+	}
 	return nil
 }
 
@@ -599,7 +643,7 @@ func DeviceSettings(mods ...qm.QueryMod) deviceSettingQuery {
 
 // FindDeviceSetting retrieves a single record by ID with an executor.
 // If selectCols is empty Find will return all columns.
-func FindDeviceSetting(ctx context.Context, exec boil.ContextExecutor, templateName string, selectCols ...string) (*DeviceSetting, error) {
+func FindDeviceSetting(ctx context.Context, exec boil.ContextExecutor, name string, selectCols ...string) (*DeviceSetting, error) {
 	deviceSettingObj := &DeviceSetting{}
 
 	sel := "*"
@@ -607,10 +651,10 @@ func FindDeviceSetting(ctx context.Context, exec boil.ContextExecutor, templateN
 		sel = strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, selectCols), ",")
 	}
 	query := fmt.Sprintf(
-		"select %s from \"vehicle_signal_decoding_api\".\"device_settings\" where \"template_name\"=$1", sel,
+		"select %s from \"vehicle_signal_decoding_api\".\"device_settings\" where \"name\"=$1", sel,
 	)
 
-	q := queries.Raw(query, templateName)
+	q := queries.Raw(query, name)
 
 	err := q.Bind(ctx, exec, deviceSettingObj)
 	if err != nil {
@@ -986,7 +1030,7 @@ func (o *DeviceSetting) Delete(ctx context.Context, exec boil.ContextExecutor) (
 	}
 
 	args := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), deviceSettingPrimaryKeyMapping)
-	sql := "DELETE FROM \"vehicle_signal_decoding_api\".\"device_settings\" WHERE \"template_name\"=$1"
+	sql := "DELETE FROM \"vehicle_signal_decoding_api\".\"device_settings\" WHERE \"name\"=$1"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -1083,7 +1127,7 @@ func (o DeviceSettingSlice) DeleteAll(ctx context.Context, exec boil.ContextExec
 // Reload refetches the object from the database
 // using the primary keys with an executor.
 func (o *DeviceSetting) Reload(ctx context.Context, exec boil.ContextExecutor) error {
-	ret, err := FindDeviceSetting(ctx, exec, o.TemplateName)
+	ret, err := FindDeviceSetting(ctx, exec, o.Name)
 	if err != nil {
 		return err
 	}
@@ -1122,16 +1166,16 @@ func (o *DeviceSettingSlice) ReloadAll(ctx context.Context, exec boil.ContextExe
 }
 
 // DeviceSettingExists checks if the DeviceSetting row exists.
-func DeviceSettingExists(ctx context.Context, exec boil.ContextExecutor, templateName string) (bool, error) {
+func DeviceSettingExists(ctx context.Context, exec boil.ContextExecutor, name string) (bool, error) {
 	var exists bool
-	sql := "select exists(select 1 from \"vehicle_signal_decoding_api\".\"device_settings\" where \"template_name\"=$1 limit 1)"
+	sql := "select exists(select 1 from \"vehicle_signal_decoding_api\".\"device_settings\" where \"name\"=$1 limit 1)"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
 		fmt.Fprintln(writer, sql)
-		fmt.Fprintln(writer, templateName)
+		fmt.Fprintln(writer, name)
 	}
-	row := exec.QueryRowContext(ctx, sql, templateName)
+	row := exec.QueryRowContext(ctx, sql, name)
 
 	err := row.Scan(&exists)
 	if err != nil {
@@ -1143,5 +1187,5 @@ func DeviceSettingExists(ctx context.Context, exec boil.ContextExecutor, templat
 
 // Exists checks if the DeviceSetting row exists.
 func (o *DeviceSetting) Exists(ctx context.Context, exec boil.ContextExecutor) (bool, error) {
-	return DeviceSettingExists(ctx, exec, o.TemplateName)
+	return DeviceSettingExists(ctx, exec, o.Name)
 }
