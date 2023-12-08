@@ -80,7 +80,7 @@ func (s *DeviceSettingsConfigService) GetDeviceSettingList(ctx context.Context, 
 	return response, nil
 }
 
-func (s *DeviceSettingsConfigService) GetDeviceSettingByTemplateName(ctx context.Context, in *grpc.GetDeviceSettingByTemplateNameRequest) (*grpc.GetDeviceSettingByTemplateNameResponse, error) {
+func (s *DeviceSettingsConfigService) GetDeviceSettingByTemplateName(ctx context.Context, in *grpc.GetDeviceSettingByNameRequest) (*grpc.GetDeviceSettingByNameResponse, error) {
 	service := queries.NewGetDeviceSettingsByTemplateNameQueryHandler(s.dbs, s.logger)
 	response, err := service.Handle(ctx, &queries.GetDeviceSettingsByTemplateNameQueryRequest{
 		Name: in.Name,

@@ -28,7 +28,7 @@ type GetDeviceSettingsByTemplateNameQueryRequest struct {
 	Name string
 }
 
-func (h GetDeviceSettingsByTemplateNameQueryHandler) Handle(ctx context.Context, query *GetDeviceSettingsByTemplateNameQueryRequest) (*grpc.GetDeviceSettingByTemplateNameResponse, error) {
+func (h GetDeviceSettingsByTemplateNameQueryHandler) Handle(ctx context.Context, query *GetDeviceSettingsByTemplateNameQueryRequest) (*grpc.GetDeviceSettingByNameResponse, error) {
 	item, err := models.DeviceSettings(models.DeviceSettingWhere.Name.EQ(query.Name)).One(ctx, h.DBS().Reader)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -45,7 +45,7 @@ func (h GetDeviceSettingsByTemplateNameQueryHandler) Handle(ctx context.Context,
 
 	settingsString := string(jsonBytes)
 
-	result := &grpc.GetDeviceSettingByTemplateNameResponse{
+	result := &grpc.GetDeviceSettingByNameResponse{
 		DeviceSettings: &grpc.DeviceSettings{
 			Name:     item.Name,
 			Settings: settingsString,

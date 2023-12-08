@@ -164,8 +164,8 @@ func TestGetDeviceSettingsByTemplate(t *testing.T) {
 	settingsJSON := null.JSONFrom(exampleSettingsJSON)
 
 	ds := models.DeviceSetting{
-		TemplateName: "testTemplate",
-		Settings:     settingsJSON,
+		Name:     "testTemplate",
+		Settings: settingsJSON,
 	}
 
 	err = ds.Insert(ctx, pdb.DBS().Writer, boil.Infer())
@@ -176,7 +176,7 @@ func TestGetDeviceSettingsByTemplate(t *testing.T) {
 	c := NewDeviceConfigController(&config.Settings{Port: "3000"}, &logger, pdb.DBS().Reader.DB, mockUserDeviceSvc, mockDeviceDefSvc)
 
 	app := fiber.New()
-	app.Get("/device-config/:templateName", c.GetDeviceSettingsByTemplate)
+	app.Get("/device-config/:templateName", c.GetDeviceSettingsByName)
 
 	t.Run("GET - Device Settings by Template", func(t *testing.T) {
 
@@ -342,7 +342,7 @@ func TestGetConfigURLsEmptyDBC(t *testing.T) {
 	require.NoError(t, err)
 	// insert device settings
 	ds := &models.DeviceSetting{
-		TemplateName: "some-template",
+		Name: "some-template",
 	}
 	err = ds.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err)
@@ -521,7 +521,7 @@ func TestGetConfigURLsDecodeVIN(t *testing.T) {
 
 	// Insert device settings for "some-template"
 	ds := &models.DeviceSetting{
-		TemplateName: template.TemplateName,
+		TemplateName: null.NewString(template.TemplateName, template.TemplateName != ""),
 	}
 	err = ds.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err)
@@ -618,7 +618,7 @@ func TestGetConfigURLs_ProtocolOverrideQS(t *testing.T) {
 
 	// Insert device settings for "some-template"
 	ds := &models.DeviceSetting{
-		TemplateName: template.TemplateName,
+		TemplateName: null.NewString(template.TemplateName, template.TemplateName != ""),
 	}
 	err = ds.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err)

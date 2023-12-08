@@ -39,7 +39,7 @@ func (h GetDeviceSettingsAllQueryHandler) Handle(ctx context.Context, _ *GetDevi
 		// Convert null.JSON to []byte
 		jsonBytes, err := item.Settings.MarshalJSON()
 		if err != nil {
-			h.logger.Error().Err(err).Msgf("Failed to marshal settings for template: %s", item.TemplateName)
+			h.logger.Error().Err(err).Msgf("Failed to marshal settings for template: %s", item.Name)
 			continue
 		}
 

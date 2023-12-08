@@ -6,8 +6,9 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	"github.com/volatiletech/null/v8"
 	"strings"
+
+	"github.com/volatiletech/null/v8"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/common"
 
@@ -164,17 +165,17 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 
 }
 
-// GetDeviceSettingsByTemplate godoc
-// @Description  Fetches the device settings configurations from device_settings table given a template name
+// GetDeviceSettingsByName godoc
+// @Description  Fetches the device settings configurations from device_settings table given a name
 // @Tags         vehicle-signal-decoding
 // @Produce      json
 // @Success      200 {object} grpc.DeviceSetting "Successfully retrieved Device Settings"
-// @Failure 404 "No Device Settings data found for the given template name."
-// @Param        templateName  path   string  true   "template name"
+// @Failure 404 "No Device Settings data found for the given name."
+// @Param        templateName  path   string  true   "name"
 // @Router       /device-config/{templateName}/device-settings [get]
 func (d *DeviceConfigController) GetDeviceSettingsByName(c *fiber.Ctx) error {
 	templateName := c.Params("templateName")
-
+	var ud pb.UserDevice
 	var dbDeviceSettings *models.DeviceSetting
 	var err error
 
@@ -186,8 +187,8 @@ func (d *DeviceConfigController) GetDeviceSettingsByName(c *fiber.Ctx) error {
 	} else {
 		// Fetch based on PowerTrainType and Name containing "default"
 		dbDeviceSettings, err = models.DeviceSettings(
+			models.DeviceSettingWhere.Powertrain.EQ(ud.PowerTrainType),
 			models.DeviceSettingWhere.Name.LIKE("default%"),
-			//powertrain does not exist here
 		).One(c.Context(), d.db)
 	}
 
@@ -541,20 +542,13 @@ func (d *DeviceConfigController) getConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) 
 		response.DbcURL = ""
 	}
 
-	if matchedTemplate.TemplateName != "" && len(matchedTemplate.R.TemplateNameDeviceSettings) > 0 {
+	// only set device settings url if we have one
+	if matchedTemplate.R.TemplateNameDeviceSettings != nil {
 		response.DeviceSettingURL = fmt.Sprintf("%s/v1/device-config/%s/device-settings", baseURL, matchedTemplate.TemplateName)
+	} else if matchedTemplate.ParentTemplateName.Valid {
+		response.DeviceSettingURL = fmt.Sprintf("%s/v1/device-config/%s/device-settings", baseURL, matchedTemplate.ParentTemplateName.String)
 	} else {
-		deviceSettings, err := models.DeviceSettings(
-			//DeviceSettingWhere does not have powertrain
-			models.DeviceSettingWhere.Name.LIKE("default%"),
-		).All(c.Context(), d.db)
-
-		if err == nil && len(deviceSettings) > 0 {
-			// Use the first matched device setting
-			response.DeviceSettingURL = fmt.Sprintf("%s/v1/device-config/%s/device-settings", baseURL, deviceSettings[0].Name)
-		} else {
-			response.DeviceSettingURL = ""
-		}
+		response.DeviceSettingURL = ""
 	}
 
 	return c.JSON(response)
