@@ -172,7 +172,7 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 // @Failure 404 "No Device Settings data found for the given template name."
 // @Param        templateName  path   string  true   "template name"
 // @Router       /device-config/{templateName}/device-settings [get]
-func (d *DeviceConfigController) GetDeviceSettingsByTemplate(c *fiber.Ctx) error {
+func (d *DeviceConfigController) GetDeviceSettingsByName(c *fiber.Ctx) error {
 	templateName := c.Params("templateName")
 
 	var dbDeviceSettings *models.DeviceSetting
