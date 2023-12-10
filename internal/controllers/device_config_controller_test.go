@@ -146,15 +146,6 @@ func TestGetDeviceSettingsByName(t *testing.T) {
 		}
 	}()
 
-	template := models.Template{
-		TemplateName: "testTemplate",
-		Version:      "2.0",
-		Protocol:     models.CanProtocolTypeCAN11_500,
-		Powertrain:   "ICE",
-	}
-	err := template.Insert(ctx, pdb.DBS().Writer, boil.Infer())
-	assert.NoError(t, err)
-
 	exampleSettingsJSON := []byte(`{
         "safety_cut_out_voltage": 12.5,
         "sleep_timer_event_driven_period_secs": 30,
@@ -162,13 +153,13 @@ func TestGetDeviceSettingsByName(t *testing.T) {
     }`)
 
 	settingsJSON := null.JSONFrom(exampleSettingsJSON)
-
+	const name = "default-ice-settings"
 	ds := models.DeviceSetting{
-		TemplateName: null.NewString(template.TemplateName, template.TemplateName != ""),
-		Settings:     settingsJSON,
+		Name:     name,
+		Settings: settingsJSON,
 	}
 
-	err = ds.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	err := ds.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	assert.NoError(t, err)
 
 	mockUserDeviceSvc := mock_services.NewMockUserDeviceService(mockCtrl)
@@ -176,12 +167,12 @@ func TestGetDeviceSettingsByName(t *testing.T) {
 	c := NewDeviceConfigController(&config.Settings{Port: "3000"}, &logger, pdb.DBS().Reader.DB, mockUserDeviceSvc, mockDeviceDefSvc)
 
 	app := fiber.New()
-	app.Get("/device-config/:templateName", c.GetDeviceSettingsByName)
+	app.Get("/device-config/:name/settings", c.GetDeviceSettingsByName)
 
 	t.Run("GET - Device Settings by Template", func(t *testing.T) {
 
 		// Act: make the request
-		request := test.BuildRequest("GET", "/device-config/"+template.TemplateName, "")
+		request := test.BuildRequest("GET", "/device-config/"+name+"/settings", "")
 		response, _ := app.Test(request)
 		body, _ := io.ReadAll(response.Body)
 
@@ -199,11 +190,6 @@ func TestGetDeviceSettingsByName(t *testing.T) {
 		}
 
 		assert.Equal(t, expectedSettings, receivedDS.Settings)
-
-		// Testing Version
-		templateFromDB, err := models.Templates(models.TemplateWhere.TemplateName.EQ(template.TemplateName)).One(context.Background(), pdb.DBS().Reader.DB)
-		assert.NoError(t, err)
-		assert.Equal(t, template.Version, templateFromDB.Version)
 
 		// Teardown: cleanup after test
 		test.TruncateTables(pdb.DBS().Writer.DB, t)
