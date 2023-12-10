@@ -8,7 +8,7 @@ ALTER TABLE device_settings
     DROP CONSTRAINT IF EXISTS device_settings_pkey;
 
 ALTER TABLE device_settings
-    ADD COLUMN name TEXT default 'default-ice' PRIMARY KEY;
+    ADD COLUMN name TEXT PRIMARY KEY;
 
 ALTER TABLE device_settings
     ALTER COLUMN template_name DROP NOT NULL;
