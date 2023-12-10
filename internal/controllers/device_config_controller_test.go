@@ -196,6 +196,7 @@ func TestGetDeviceSettingsByName(t *testing.T) {
 
 	})
 }
+
 func TestGetDBCFileByTemplateName(t *testing.T) {
 
 	// arrange global db and route setup
@@ -267,7 +268,7 @@ func TestGetDBCFileByTemplateName(t *testing.T) {
 	})
 }
 
-func TestGetConfigURLsEmptyDBC(t *testing.T) {
+func TestGetConfigURLs_EmptyDBC(t *testing.T) {
 	// Arrange
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
@@ -372,7 +373,7 @@ func TestGetConfigURLsEmptyDBC(t *testing.T) {
 
 }
 
-func TestGetConfigURLsEmptyDeviceSettings(t *testing.T) {
+func TestGetConfigURLs_EmptyDeviceSettings(t *testing.T) {
 	// Arrange
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
@@ -475,7 +476,8 @@ func TestGetConfigURLsEmptyDeviceSettings(t *testing.T) {
 	})
 
 }
-func TestGetConfigURLsDecodeVIN(t *testing.T) {
+
+func TestGetConfigURLs_DecodeVIN(t *testing.T) {
 	// Arrange
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
@@ -708,6 +710,7 @@ func TestRetrieveAndSetVehicleInfo(t *testing.T) {
 	assert.Equal(t, 2021, vehicleYear)
 
 }
+
 func TestSetPowerTrainType(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()

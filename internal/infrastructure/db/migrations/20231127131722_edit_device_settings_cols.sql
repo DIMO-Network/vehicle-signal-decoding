@@ -2,6 +2,8 @@
 -- +goose StatementBegin
 SELECT 'up SQL query';
 
+SET search_path = vehicle_signal_decoding_api, public;
+
 ALTER TABLE device_settings
     DROP COLUMN IF EXISTS id,
     DROP COLUMN IF EXISTS battery_critical_level_voltage,

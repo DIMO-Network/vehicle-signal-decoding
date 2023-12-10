@@ -2,11 +2,13 @@
 -- +goose StatementBegin
 SELECT 'up SQL query';
 
+SET search_path = vehicle_signal_decoding_api, public;
+
 ALTER TABLE device_settings
     DROP CONSTRAINT IF EXISTS device_settings_pkey;
 
 ALTER TABLE device_settings
-    ADD COLUMN name TEXT PRIMARY KEY;
+    ADD COLUMN name TEXT default 'default-ice' PRIMARY KEY;
 
 ALTER TABLE device_settings
     ALTER COLUMN template_name DROP NOT NULL;
