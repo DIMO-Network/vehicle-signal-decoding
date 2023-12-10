@@ -8,8 +8,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/volatiletech/null/v8"
-
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/common"
 
 	"github.com/volatiletech/sqlboiler/v4/types"
@@ -166,35 +164,24 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 }
 
 // GetDeviceSettingsByName godoc
-// @Description  Fetches the device settings configurations from device_settings table given a name
+// @Description  Fetches the device settings configurations from device_settings table given a name. Note that device settings mostly only vary by powertrain and
+// @Description  may or may not be attached to a specific template.
 // @Tags         vehicle-signal-decoding
 // @Produce      json
 // @Success      200 {object} grpc.DeviceSetting "Successfully retrieved Device Settings"
 // @Failure 404 "No Device Settings data found for the given name."
-// @Param        templateName  path   string  true   "name"
-// @Router       /device-config/{templateName}/device-settings [get]
+// @Param        name  path   string  true   "name"
+// @Router       /device-config/{name}/device-settings [get]
 func (d *DeviceConfigController) GetDeviceSettingsByName(c *fiber.Ctx) error {
-	templateName := c.Params("templateName")
-	var ud pb.UserDevice
-	var dbDeviceSettings *models.DeviceSetting
-	var err error
-
-	if templateName != "" {
-		// Fetch based on templateName
-		templateNameString := null.NewString(templateName, true)
-		dbDeviceSettings, err = models.DeviceSettings(
-			models.DeviceSettingWhere.TemplateName.EQ(templateNameString)).One(c.Context(), d.db)
-	} else {
-		// Fetch based on PowerTrainType and Name containing "default"
-		dbDeviceSettings, err = models.DeviceSettings(
-			models.DeviceSettingWhere.Powertrain.EQ(ud.PowerTrainType),
-			models.DeviceSettingWhere.Name.LIKE("default%"),
-		).One(c.Context(), d.db)
+	name := c.Params("name")
+	if len(name) == 0 {
+		return fiber.NewError(fiber.StatusBadRequest, "name for settings empty")
 	}
 
+	dbDeviceSettings, err := models.FindDeviceSetting(c.Context(), d.db, name)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return fiber.NewError(fiber.StatusNotFound, "No Device Settings data found.")
+			return fiber.NewError(fiber.StatusNotFound, "No Device Settings data found with name: "+name)
 		}
 		return errors.Wrap(err, "Failed to retrieve Device Settings")
 	}
@@ -210,11 +197,12 @@ func (d *DeviceConfigController) GetDeviceSettingsByName(c *fiber.Ctx) error {
 			return errors.Wrap(err, "Failed to deserialize settings data")
 		}
 	} else {
-		return fiber.NewError(fiber.StatusNotFound, "Settings data is null or not found")
+		return fiber.NewError(fiber.StatusNotFound, "Settings data is null")
 	}
 
 	protoDeviceSettings := &grpc.DeviceSetting{
-		TemplateName: templateName,
+		Name:         name,
+		TemplateName: dbDeviceSettings.TemplateName.String,
 		Settings: &grpc.SettingsData{
 			SafetyCutOutVoltage:             settings.SafetyCutOutVoltage,
 			SleepTimerEventDrivenPeriodSecs: settings.SleepTimerEventDrivenPeriodSecs,
