@@ -526,6 +526,7 @@ func (d *DeviceConfigController) getConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) 
 		response.DeviceSettingURL = fmt.Sprintf("%s/v1/device-config/%s/device-settings", baseURL, matchedTemplate.R.TemplateNameDeviceSettings[0].Name)
 		// todo - what about parent template... should we fallback to that
 	} else {
+		// todo - this block does not have test coverage
 		var powertrain string
 		if ud.PowerTrainType != "" {
 			powertrain = ud.PowerTrainType

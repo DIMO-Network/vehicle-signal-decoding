@@ -36,6 +36,8 @@ import (
 
 const migrationsDirRelPath = "../infrastructure/db/migrations"
 
+// todo: migrate to TestSuite approach for tests that re-use same setup
+
 func TestGetPIDsByTemplate(t *testing.T) {
 
 	// arrange global db and route setup
