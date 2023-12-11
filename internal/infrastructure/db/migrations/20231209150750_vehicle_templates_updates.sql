@@ -6,8 +6,6 @@ SET search_path = vehicle_signal_decoding_api, public;
 alter table template_vehicles
     drop constraint template_vehicles_pkey;
 
-drop index template_vehicles_pkey;
-
 alter table template_vehicles
     alter column make_slug drop not null;
 

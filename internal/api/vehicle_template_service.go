@@ -2,7 +2,7 @@ package api
 
 import (
 	"context"
-	"fmt"
+	"github.com/volatiletech/null/v8"
 
 	"github.com/DIMO-Network/shared/db"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
@@ -27,11 +27,10 @@ func NewVehicleTemplateService(logger *zerolog.Logger, dbs func() *db.ReaderWrit
 }
 
 func (s *VehicleTemplateService) GetVehicleTemplates(ctx context.Context, request *grpc.GetVehicleTemplatesRequest) (*grpc.GetVehicleTemplatesResponse, error) {
-
 	mods := make([]qm.QueryMod, 0)
 
-	if len(request.Make) > 0 {
-		mods = append(mods, models.TemplateVehicleWhere.MakeSlug.EQ(request.Make))
+	if request.Make != "" {
+		mods = append(mods, models.TemplateVehicleWhere.MakeSlug.EQ(null.StringFrom(request.Make)))
 	}
 
 	if request.YearStart > 0 {
@@ -53,10 +52,11 @@ func (s *VehicleTemplateService) GetVehicleTemplates(ctx context.Context, reques
 	for _, vehicleTemplate := range vehicleTemplates {
 
 		vt := &grpc.VehicleTemplate{
-			Make:      vehicleTemplate.MakeSlug,
-			StartYear: int32(vehicleTemplate.YearStart),
-			EndYear:   int32(vehicleTemplate.YearEnd),
+			Make:      vehicleTemplate.MakeSlug.String,
+			YearStart: int32(vehicleTemplate.YearStart),
+			YearEnd:   int32(vehicleTemplate.YearEnd),
 			Template:  vehicleTemplate.TemplateName,
+			Id:        int64(vehicleTemplate.ID),
 		}
 
 		for _, model := range vehicleTemplate.ModelWhitelist {
@@ -73,9 +73,7 @@ func (s *VehicleTemplateService) GetVehicleTemplates(ctx context.Context, reques
 
 func (s *VehicleTemplateService) GetVehicleTemplate(ctx context.Context, request *grpc.GetVehicleTemplateRequest) (*grpc.VehicleTemplate, error) {
 	vehicleTemplate, err := models.TemplateVehicles(
-		models.TemplateVehicleWhere.MakeSlug.EQ(request.Make),
-		models.TemplateVehicleWhere.YearStart.EQ(int(request.YearStart)),
-		models.TemplateVehicleWhere.YearEnd.EQ(int(request.YearEnd)),
+		models.TemplateVehicleWhere.ID.EQ(int(request.Id)),
 	).One(ctx, s.dbs().Reader)
 
 	if err != nil {
@@ -83,9 +81,10 @@ func (s *VehicleTemplateService) GetVehicleTemplate(ctx context.Context, request
 	}
 
 	vt := &grpc.VehicleTemplate{
-		Make:      vehicleTemplate.MakeSlug,
-		StartYear: int32(vehicleTemplate.YearStart),
-		EndYear:   int32(vehicleTemplate.YearEnd),
+		Make:      vehicleTemplate.MakeSlug.String,
+		Id:        int64(vehicleTemplate.ID),
+		YearStart: int32(vehicleTemplate.YearStart),
+		YearEnd:   int32(vehicleTemplate.YearEnd),
 		Template:  vehicleTemplate.TemplateName,
 		Models:    vehicleTemplate.ModelWhitelist,
 	}
@@ -94,19 +93,17 @@ func (s *VehicleTemplateService) GetVehicleTemplate(ctx context.Context, request
 }
 
 func (s *VehicleTemplateService) CreateVehicleTemplate(ctx context.Context, request *grpc.VehicleTemplate) (*emptypb.Empty, error) {
-
-	fmt.Println(request)
-
 	vehicleTemplate := &models.TemplateVehicle{
-		MakeSlug:       request.Make,
-		YearStart:      int(request.StartYear),
-		YearEnd:        int(request.EndYear),
+		YearStart:      int(request.YearStart),
+		YearEnd:        int(request.YearEnd),
 		ModelWhitelist: request.Models,
 		TemplateName:   request.Template,
 	}
+	if request.Make != "" {
+		vehicleTemplate.MakeSlug = null.StringFrom(request.Make)
+	}
 
 	err := vehicleTemplate.Insert(ctx, s.dbs().Writer, boil.Infer())
-
 	if err != nil {
 		return nil, err
 	}
@@ -115,11 +112,8 @@ func (s *VehicleTemplateService) CreateVehicleTemplate(ctx context.Context, requ
 }
 
 func (s *VehicleTemplateService) UpdateVehicleTemplate(ctx context.Context, request *grpc.VehicleTemplate) (*emptypb.Empty, error) {
-
 	vehicleTemplate, err := models.TemplateVehicles(
-		models.TemplateVehicleWhere.MakeSlug.EQ(request.Make),
-		models.TemplateVehicleWhere.YearStart.EQ(int(request.StartYear)),
-		models.TemplateVehicleWhere.YearEnd.EQ(int(request.EndYear)),
+		models.TemplateVehicleWhere.ID.EQ(int(request.Id)),
 	).One(ctx, s.dbs().Reader)
 
 	if err != nil {
@@ -128,6 +122,14 @@ func (s *VehicleTemplateService) UpdateVehicleTemplate(ctx context.Context, requ
 
 	vehicleTemplate.ModelWhitelist = request.Models
 	vehicleTemplate.TemplateName = request.Template
+	vehicleTemplate.YearStart = int(request.YearStart)
+	vehicleTemplate.YearEnd = int(request.YearEnd)
+
+	if request.Make != "" {
+		vehicleTemplate.MakeSlug = null.StringFrom(request.Make)
+	} else {
+		vehicleTemplate.MakeSlug = null.String{}
+	}
 
 	_, err = vehicleTemplate.Update(ctx, s.dbs().Writer, boil.Infer())
 
