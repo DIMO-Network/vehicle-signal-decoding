@@ -414,22 +414,22 @@ func (d *DeviceConfigController) selectAndFetchTemplate(ctx context.Context, ud 
 			return nil, fmt.Errorf("failed to query templates for make: %s, model: %s, year: %d: %w", vehicleMake, vehicleModel, vehicleYear, err)
 		}
 		// if anything is returned, try finding a match by make and/or model
-		if len(templateVehicles) > 0 {
-			for _, tv := range templateVehicles {
-				// any matches for year & same protocol
-				if tv.R.TemplateNameTemplate.Protocol == ud.CANProtocol {
+		for _, tv := range templateVehicles {
+			// any matches for year & same protocol
+			if tv.R.TemplateNameTemplate.Protocol == ud.CANProtocol {
+				matchedTemplateName = tv.TemplateName
+				// now any matches for make
+				if tv.MakeSlug.String == vehicleMake {
 					matchedTemplateName = tv.TemplateName
-					// now any matches for make
-					if tv.MakeSlug == vehicleMake {
-						matchedTemplateName = tv.TemplateName
-						// now see if there is also a model match
-						if modelMatch(tv.ModelWhitelist, vehicleModel) {
-							break
-						}
+					// now see if there is also a model match
+					if modelMatch(tv.ModelWhitelist, vehicleModel) {
+						break
 					}
+					// todo: @lauradeng add test that has two templateVehicle's, each with different ModelWhiteList and check it picks the right one
 				}
 			}
 		}
+
 	}
 
 	// Third, fallback to query by protocol and powertrain. Match by protocol first
