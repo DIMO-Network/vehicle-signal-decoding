@@ -2,7 +2,7 @@ replicaCount: 2
 image:
   repository: dimozone/vehicle-signal-decoding
   pullPolicy: IfNotPresent
-  tag: d915fc0
+  tag: ba685b3
 cronJob:
   enabled: false
   schedule: 0 0 * * 0
