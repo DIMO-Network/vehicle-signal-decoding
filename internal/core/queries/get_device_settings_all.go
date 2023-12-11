@@ -23,7 +23,7 @@ func NewGetDeviceSettingsAllQueryHandler(dbs func() *db.ReaderWriter, logger *ze
 }
 
 type GetDeviceSettingsAllQueryRequest struct {
-	TemplateName string
+	Name string
 }
 
 func (h GetDeviceSettingsAllQueryHandler) Handle(ctx context.Context, _ *GetDeviceSettingsAllQueryRequest) (*grpc.GetDeviceSettingListResponse, error) {
@@ -39,15 +39,15 @@ func (h GetDeviceSettingsAllQueryHandler) Handle(ctx context.Context, _ *GetDevi
 		// Convert null.JSON to []byte
 		jsonBytes, err := item.Settings.MarshalJSON()
 		if err != nil {
-			h.logger.Error().Err(err).Msgf("Failed to marshal settings for template: %s", item.TemplateName)
+			h.logger.Error().Err(err).Msgf("Failed to marshal settings for template: %s", item.Name)
 			continue
 		}
 
 		settingsString := string(jsonBytes)
 
 		deviceSettings := &grpc.DeviceSettings{
-			TemplateName: item.TemplateName,
-			Settings:     settingsString,
+			Name:     item.Name,
+			Settings: settingsString,
 		}
 		deviceSettingsList = append(deviceSettingsList, deviceSettings)
 	}

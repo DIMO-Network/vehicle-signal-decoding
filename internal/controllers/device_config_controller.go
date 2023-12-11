@@ -163,25 +163,25 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 
 }
 
-// GetDeviceSettingsByTemplate godoc
-// @Description  Fetches the device settings configurations from device_settings table given a template name
+// GetDeviceSettingsByName godoc
+// @Description  Fetches the device settings configurations from device_settings table given a name. Note that device settings mostly only vary by powertrain and
+// @Description  may or may not be attached to a specific template.
 // @Tags         vehicle-signal-decoding
 // @Produce      json
 // @Success      200 {object} grpc.DeviceSetting "Successfully retrieved Device Settings"
-// @Failure 404 "No Device Settings data found for the given template name."
-// @Param        templateName  path   string  true   "template name"
-// @Router       /device-config/{templateName}/device-settings [get]
-func (d *DeviceConfigController) GetDeviceSettingsByTemplate(c *fiber.Ctx) error {
-	templateName := c.Params("templateName")
+// @Failure 404 "No Device Settings data found for the given name."
+// @Param        name  path   string  true   "name"
+// @Router       /device-config/{name}/device-settings [get]
+func (d *DeviceConfigController) GetDeviceSettingsByName(c *fiber.Ctx) error {
+	name := c.Params("name")
+	if len(name) == 0 {
+		return fiber.NewError(fiber.StatusBadRequest, "name for settings empty")
+	}
 
-	// Query the database to get the Device Settings based on the template name using SQLBoiler
-	dbDeviceSettings, err := models.DeviceSettings(
-		models.DeviceSettingWhere.TemplateName.EQ(templateName)).One(c.Context(), d.db)
-
-	// Error handling
+	dbDeviceSettings, err := models.FindDeviceSetting(c.Context(), d.db, name)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return fiber.NewError(fiber.StatusNotFound, "No Device Settings data found for the given template name.")
+			return fiber.NewError(fiber.StatusNotFound, "No Device Settings data found with name: "+name)
 		}
 		return errors.Wrap(err, "Failed to retrieve Device Settings")
 	}
@@ -197,10 +197,12 @@ func (d *DeviceConfigController) GetDeviceSettingsByTemplate(c *fiber.Ctx) error
 			return errors.Wrap(err, "Failed to deserialize settings data")
 		}
 	} else {
-		return fiber.NewError(fiber.StatusNotFound, "Settings data is null or not found")
+		return fiber.NewError(fiber.StatusNotFound, "Settings data is null")
 	}
+
 	protoDeviceSettings := &grpc.DeviceSetting{
-		TemplateName: templateName,
+		Name:         name,
+		TemplateName: dbDeviceSettings.TemplateName.String,
 		Settings: &grpc.SettingsData{
 			SafetyCutOutVoltage:             settings.SafetyCutOutVoltage,
 			SleepTimerEventDrivenPeriodSecs: settings.SleepTimerEventDrivenPeriodSecs,
@@ -219,7 +221,6 @@ func (d *DeviceConfigController) GetDeviceSettingsByTemplate(c *fiber.Ctx) error
 	}
 
 	return c.JSON(protoDeviceSettings)
-
 }
 
 // GetDBCFileByTemplateName godoc
@@ -274,18 +275,15 @@ func (d *DeviceConfigController) GetConfigURLsFromVIN(c *fiber.Ctx) error {
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": fmt.Sprintf("could not decode VIN, contact support if you're sure this is valid VIN: %s", vin)})
 		}
-		// todo: when DecodeVIN supports powertrain, add to below ud
 
 		ud = &pb.UserDevice{
 			DeviceDefinitionId: definitionResp.DeviceDefinitionId,
+			PowerTrainType:     definitionResp.Powertrain,
+			CANProtocol:        protocol,
 		}
 		if len(definitionResp.DeviceStyleId) > 0 {
 			ud.DeviceStyleId = &definitionResp.DeviceStyleId
 		}
-	}
-
-	if protocol != "" {
-		ud.CANProtocol = protocol
 	}
 
 	return d.getConfigURLs(c, ud)
@@ -477,7 +475,7 @@ func (d *DeviceConfigController) selectAndFetchTemplate(ctx context.Context, ud 
 	matchedTemplate, err := models.Templates(
 		models.TemplateWhere.TemplateName.EQ(matchedTemplateName),
 		qm.Load(models.TemplateRels.TemplateNameDBCFile),
-		qm.Load(models.TemplateRels.TemplateNameDeviceSetting),
+		qm.Load(models.TemplateRels.TemplateNameDeviceSettings),
 	).One(ctx, d.db)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch template by name %s: %w", matchedTemplateName, err)
@@ -511,31 +509,42 @@ func (d *DeviceConfigController) getConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) 
 	if matchedTemplate == nil {
 		return errors.New("matched template is nil")
 	}
-
 	baseURL := d.settings.DeploymentURL
-	templateName := matchedTemplate.TemplateName
-
-	version := matchedTemplate.Version
 
 	response := DeviceConfigResponse{
-		PidURL:  fmt.Sprintf("%s/v1/device-config/%s/pids", baseURL, templateName),
-		Version: version,
+		PidURL:  fmt.Sprintf("%s/v1/device-config/%s/pids", baseURL, matchedTemplate.TemplateName),
+		Version: matchedTemplate.Version,
 	}
 
 	// only set dbc url if we have dbc
 	if matchedTemplate.R.TemplateNameDBCFile != nil && len(matchedTemplate.R.TemplateNameDBCFile.DBCFile) > 0 {
-		response.DbcURL = fmt.Sprintf("%s/v1/device-config/%s/dbc", baseURL, templateName)
-	} else {
-		response.DbcURL = ""
+		response.DbcURL = fmt.Sprintf("%s/v1/device-config/%s/dbc", baseURL, matchedTemplate.TemplateName)
 	}
 
-	// only set device settings url if we have one
-	if matchedTemplate.R.TemplateNameDeviceSetting != nil {
-		response.DeviceSettingURL = fmt.Sprintf("%s/v1/device-config/%s/device-settings", baseURL, matchedTemplate.TemplateName)
-	} else if matchedTemplate.ParentTemplateName.Valid {
-		response.DeviceSettingURL = fmt.Sprintf("%s/v1/device-config/%s/device-settings", baseURL, matchedTemplate.ParentTemplateName.String)
+	// set device settings from template, or based on powertrain default
+	if len(matchedTemplate.R.TemplateNameDeviceSettings) > 0 {
+		response.DeviceSettingURL = fmt.Sprintf("%s/v1/device-config/%s/device-settings", baseURL, matchedTemplate.R.TemplateNameDeviceSettings[0].Name)
+		// todo - what about parent template... should we fallback to that
 	} else {
-		response.DeviceSettingURL = ""
+		// todo - this block does not have test coverage
+		var powertrain string
+		if ud.PowerTrainType != "" {
+			powertrain = ud.PowerTrainType
+		} else {
+			powertrain = matchedTemplate.Powertrain
+		}
+		// default will be whatever gets ordered first
+		deviceSetting, dbErr := models.DeviceSettings(models.DeviceSettingWhere.Powertrain.EQ(powertrain),
+			qm.OrderBy(models.DeviceSettingColumns.Name)).One(c.Context(), d.db)
+		if errors.Is(dbErr, sql.ErrNoRows) {
+			// grab the first record in db
+			deviceSetting, dbErr = models.DeviceSettings(qm.OrderBy(models.DeviceSettingColumns.Name)).One(c.Context(), d.db)
+		}
+		if dbErr != nil {
+			return errors.Wrap(err, fmt.Sprintf("Failed to retrieve device setting. Powertrain: %s", powertrain))
+		}
+		// device settings have a name key separate from templateName since simpler setup
+		response.DeviceSettingURL = fmt.Sprintf("%s/v1/device-config/%s/device-settings", baseURL, deviceSetting.Name)
 	}
 
 	return c.JSON(response)

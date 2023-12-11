@@ -7,24 +7,27 @@ option go_package = "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc";
 package grpc;
 
 message DeviceSettings {
-  string template_name = 1;
-  string settings = 2;
+  string name = 1;
+  string template_name = 2;
+  string settings = 3;
+  string powertrain = 4;
+
 }
 
 
 message GetDeviceSettingListRequest {
-  optional string template_name = 1;
+  optional string name = 1;
 }
 
 message GetDeviceSettingListResponse {
   repeated DeviceSettings device_settings = 1;
 }
 
-message GetDeviceSettingByTemplateNameRequest {
-  string template_name = 1;
+message GetDeviceSettingByNameRequest {
+  string name = 1;
 }
 
-message GetDeviceSettingByTemplateNameResponse {
+message GetDeviceSettingByNameResponse {
   DeviceSettings device_settings = 1;
 }
 
@@ -36,5 +39,5 @@ service DeviceSettingsService {
   rpc CreateDeviceSettings (UpdateDeviceSettingsRequest) returns (google.protobuf.Empty);
   rpc UpdateDeviceSettings (UpdateDeviceSettingsRequest) returns (google.protobuf.Empty);
   rpc GetDeviceSettingList (GetDeviceSettingListRequest) returns (GetDeviceSettingListResponse);
-  rpc GetDeviceSettingByTemplateName (GetDeviceSettingByTemplateNameRequest) returns (GetDeviceSettingByTemplateNameResponse);
+  rpc GetDeviceSettingByTemplateName (GetDeviceSettingByNameRequest) returns (GetDeviceSettingByNameResponse);
 }

@@ -24,21 +24,21 @@ func NewUpdateDeviceSettingsCommandHandler(dbs func() *db.ReaderWriter) UpdateDe
 }
 
 type UpdateDeviceSettingsCommandRequest struct {
-	TemplateName string
-	Settings     SettingsData `json:"settings"`
+	Name     string
+	Settings SettingsData `json:"settings"`
 }
 
 type UpdateDeviceSettingsCommandResponse struct {
-	TemplateName string
+	Name string
 }
 
 func (h UpdateDeviceSettingsCommandHandler) Execute(ctx context.Context, req *UpdateDeviceSettingsCommandRequest) (*UpdateDeviceSettingsCommandResponse, error) {
 
-	deviceSettings, err := models.DeviceSettings(models.DeviceSettingWhere.TemplateName.EQ(req.TemplateName)).One(ctx, h.DBS().Reader)
+	deviceSettings, err := models.DeviceSettings(models.DeviceSettingWhere.Name.EQ(req.Name)).One(ctx, h.DBS().Reader)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, &exceptions.NotFoundError{
-				Err: fmt.Errorf("device settings not found with template name: %s", req.TemplateName),
+				Err: fmt.Errorf("device settings not found with template name: %s", req.Name),
 			}
 		}
 		return nil, &exceptions.InternalError{
@@ -52,7 +52,7 @@ func (h UpdateDeviceSettingsCommandHandler) Execute(ctx context.Context, req *Up
 		}
 	}
 
-	deviceSettings.TemplateName = req.TemplateName
+	deviceSettings.Name = req.Name
 	deviceSettings.Settings = null.NewJSON(settingsJSON, true)
 
 	if _, err := deviceSettings.Update(ctx, h.DBS().Writer.DB, boil.Infer()); err != nil {
@@ -61,5 +61,5 @@ func (h UpdateDeviceSettingsCommandHandler) Execute(ctx context.Context, req *Up
 		}
 	}
 
-	return &UpdateDeviceSettingsCommandResponse{TemplateName: deviceSettings.TemplateName}, nil
+	return &UpdateDeviceSettingsCommandResponse{Name: deviceSettings.Name}, nil
 }

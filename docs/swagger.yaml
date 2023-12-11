@@ -2,22 +2,12 @@ basePath: /v1
 definitions:
   github_com_DIMO-Network_vehicle-signal-decoding_pkg_grpc.DeviceSetting:
     properties:
-      battery_critical_level_voltage:
-        type: number
-      safety_cut_out_voltage:
-        type: number
-      sleep_timer_event_driven_interval_secs:
-        type: number
-      sleep_timer_event_driven_period_secs:
-        type: number
-      sleep_timer_inactivity_after_sleep_secs:
-        type: number
-      sleep_timer_inactivity_fallback_interval_secs:
-        type: number
+      name:
+        type: string
+      settings:
+        $ref: '#/definitions/github_com_DIMO-Network_vehicle-signal-decoding_pkg_grpc.SettingsData'
       template_name:
         type: string
-      wake_trigger_voltage_level:
-        type: number
     type: object
   github_com_DIMO-Network_vehicle-signal-decoding_pkg_grpc.PIDConfig:
     properties:
@@ -47,6 +37,15 @@ definitions:
       version:
         type: string
     type: object
+  github_com_DIMO-Network_vehicle-signal-decoding_pkg_grpc.SettingsData:
+    properties:
+      safety_cut_out_voltage:
+        type: number
+      sleep_timer_event_driven_period_secs:
+        type: number
+      wake_trigger_voltage_level:
+        type: number
+    type: object
   internal_controllers.DeviceConfigResponse:
     properties:
       dbcURL:
@@ -58,11 +57,42 @@ definitions:
       version:
         type: string
     type: object
+  internal_controllers.JobResponse:
+    properties:
+      command:
+        type: string
+      id:
+        type: string
+      status:
+        type: string
+    type: object
 info:
   contact: {}
   title: DIMO Vehicle-Signal-Decoding
   version: "1.0"
 paths:
+  /device-config/{name}/device-settings:
+    get:
+      description: |-
+        Fetches the device settings configurations from device_settings table given a name. Note that device settings mostly only vary by powertrain and
+        may or may not be attached to a specific template.
+      parameters:
+      - description: name
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved Device Settings
+          schema:
+            $ref: '#/definitions/github_com_DIMO-Network_vehicle-signal-decoding_pkg_grpc.DeviceSetting'
+        "404":
+          description: No Device Settings data found for the given name.
+      tags:
+      - vehicle-signal-decoding
   /device-config/{templateName}/dbc:
     get:
       description: Fetches the DBC file from the dbc_files table given a template
@@ -82,27 +112,6 @@ paths:
             type: string
         "404":
           description: No DBC file found for the given template name.
-      tags:
-      - vehicle-signal-decoding
-  /device-config/{templateName}/device-settings:
-    get:
-      description: Fetches the device settings configurations from device_settings
-        table given a template name
-      parameters:
-      - description: template name
-        in: path
-        name: templateName
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Successfully retrieved Device Settings
-          schema:
-            $ref: '#/definitions/github_com_DIMO-Network_vehicle-signal-decoding_pkg_grpc.DeviceSetting'
-        "404":
-          description: No Device Settings data found for the given template name.
       tags:
       - vehicle-signal-decoding
   /device-config/{templateName}/pids:
@@ -126,6 +135,69 @@ paths:
           description: No PID Config data found for the given template name.
       tags:
       - vehicle-signal-decoding
+  /device-config/eth-addr/{ethAddr}/jobs:
+    get:
+      description: Retrieve the jobs based on device's Ethereum Address.
+      parameters:
+      - description: Ethereum Address
+        in: path
+        name: ethAddr
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved jobs
+          schema:
+            $ref: '#/definitions/internal_controllers.JobResponse'
+        "400":
+          description: incorrect eth addr format
+      tags:
+      - vehicle-signal-decoding
+  /device-config/eth-addr/{ethAddr}/jobs/{jobId}/{status}:
+    patch:
+      description: Path job status based on device's Ethereum Address.
+      parameters:
+      - description: Ethereum Address
+        in: path
+        name: ethAddr
+        type: string
+      - description: Job ID
+        in: path
+        name: jobId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved configuration URLs
+          schema:
+            $ref: '#/definitions/internal_controllers.DeviceConfigResponse'
+        "400":
+          description: incorrect eth addr format
+        "404":
+          description: Not Found - No templates available for the given parameters
+      tags:
+      - vehicle-signal-decoding
+  /device-config/eth-addr/{ethAddr}/jobs/pending:
+    get:
+      description: Retrieve the jobs based on device's Ethereum Address.
+      parameters:
+      - description: Ethereum Address
+        in: path
+        name: ethAddr
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved jobs
+          schema:
+            $ref: '#/definitions/internal_controllers.JobResponse'
+        "400":
+          description: incorrect eth addr format
+      tags:
+      - vehicle-signal-decoding
   /device-config/eth-addr/{ethAddr}/urls:
     get:
       description: Retrieve the URLs for PID, DeviceSettings, and DBC configuration
@@ -136,7 +208,7 @@ paths:
         name: ethAddr
         required: true
         type: string
-      - description: CAN Protocol
+      - description: CAN Protocol, '6' or '7'
         in: query
         name: protocol
         type: string
@@ -163,7 +235,7 @@ paths:
         name: vin
         required: true
         type: string
-      - description: CAN Protocol
+      - description: CAN Protocol, '6' or '7'
         in: query
         name: protocol
         type: string

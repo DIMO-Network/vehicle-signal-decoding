@@ -7,11 +7,14 @@ VALUES ('2019plus-ice-can11', 'default-ice-can11', null, 'v1.0.0', 'CAN11_500', 
 INSERT INTO templates (template_name, parent_template_name, template_type, version, protocol, powertrain)
 VALUES ('default-ice-can29', null, null, 'v1.0.0', 'CAN29_500', 'ICE');
 
-INSERT INTO device_settings (template_name, battery_critical_level_voltage, safety_cut_out_voltage, sleep_timer_event_driven_interval, sleep_timer_event_driven_period, sleep_timer_inactivity_after_sleep_interval, sleep_timer_inactivity_fallback_interval, wake_trigger_voltage_level)
-  VALUES ('default-ice-can11', 12.3, 12.2, 3600, 1800, 21600, 21600, 13.2);
-INSERT INTO device_settings (template_name, battery_critical_level_voltage, safety_cut_out_voltage, sleep_timer_event_driven_interval, sleep_timer_event_driven_period, sleep_timer_inactivity_after_sleep_interval, sleep_timer_inactivity_fallback_interval, wake_trigger_voltage_level)
-  VALUES ('default-ice-can29', 12.3, 12.2, 3600, 1800, 21600, 21600, 13.2);
-
+INSERT INTO device_settings (name, template_name, powertrain, settings)
+VALUES ('default-ice', null, 'ICE', '{"safety_cut_out_voltage": 12.2, "sleep_timer_event_driven_period_secs": 30, "wake_trigger_voltage_level": 12.8}');
+INSERT INTO device_settings (name, template_name, powertrain, settings)
+VALUES ('default-hev', null, 'HEV', '{"safety_cut_out_voltage": 12.2, "sleep_timer_event_driven_period_secs": 30, "wake_trigger_voltage_level": 12.8}');
+INSERT INTO device_settings (name, template_name, powertrain, settings)
+VALUES ('default-phev', null, 'PHEV', '{"safety_cut_out_voltage": 12.2, "sleep_timer_event_driven_period_secs": 30, "wake_trigger_voltage_level": 12.8}');
+INSERT INTO device_settings (name, template_name, powertrain, settings)
+VALUES ('default-bev', null, 'BEV', '{"safety_cut_out_voltage": 12.2, "sleep_timer_event_driven_period_secs": 30, "wake_trigger_voltage_level": 12.8}');
 
 INSERT INTO pid_configs (template_name, pid, formula, interval_seconds, protocol, signal_name)
 VALUES ('default-ice-can11', E'\\x30', 'dbc: 31|8@0+ (1,0) [0|255] "count"', 0, 'CAN11_500', 'warmupsSinceDtcClear');

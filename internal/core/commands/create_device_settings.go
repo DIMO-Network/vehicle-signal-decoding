@@ -29,8 +29,8 @@ type SettingsData struct {
 }
 
 type CreateDeviceSettingsCommandRequest struct {
-	TemplateName string
-	Settings     SettingsData `json:"settings"`
+	Name     string
+	Settings SettingsData `json:"settings"`
 }
 
 type CreateDeviceSettingsCommandResponse struct {
@@ -39,38 +39,38 @@ type CreateDeviceSettingsCommandResponse struct {
 
 func (h CreateDeviceSettingsCommandHandler) Execute(ctx context.Context, req *CreateDeviceSettingsCommandRequest) (*CreateDeviceSettingsCommandResponse, error) {
 
-	exists, err := models.DeviceSettings(models.DeviceSettingWhere.TemplateName.EQ(req.TemplateName)).Exists(ctx, h.DBS().Reader)
+	exists, err := models.DeviceSettings(models.DeviceSettingWhere.Name.EQ(req.Name)).Exists(ctx, h.DBS().Reader)
 	if err != nil {
 		return nil, &exceptions.InternalError{
-			Err: errors.Wrapf(err, "error checking if device setting exists: %s", req.TemplateName),
+			Err: errors.Wrapf(err, "error checking if device setting exists: %s", req.Name),
 		}
 	}
 	if exists {
 		return nil, &exceptions.ConflictError{
-			Err: errors.Errorf("device setting already exists: %s", req.TemplateName),
+			Err: errors.Errorf("device setting already exists: %s", req.Name),
 		}
 	}
 
 	settingsBytes, err := json.Marshal(req.Settings)
 	if err != nil {
 		return nil, &exceptions.InternalError{
-			Err: errors.Wrapf(err, "error serializing settings for device setting: %s", req.TemplateName),
+			Err: errors.Wrapf(err, "error serializing settings for device setting: %s", req.Name),
 		}
 	}
 
 	settingsJSON := null.JSONFrom(settingsBytes)
 
 	deviceSetting := &models.DeviceSetting{
-		TemplateName: req.TemplateName,
-		Settings:     settingsJSON,
+		Name:     req.Name,
+		Settings: settingsJSON,
 	}
 
 	err = deviceSetting.Insert(ctx, h.DBS().Writer, boil.Infer())
 	if err != nil {
 		return nil, &exceptions.InternalError{
-			Err: errors.Wrapf(err, "error inserting device setting with template name: %s", req.TemplateName),
+			Err: errors.Wrapf(err, "error inserting device setting with template name: %s", req.Name),
 		}
 	}
 
-	return &CreateDeviceSettingsCommandResponse{Name: deviceSetting.TemplateName}, nil
+	return &CreateDeviceSettingsCommandResponse{Name: deviceSetting.Name}, nil
 }

@@ -3,7 +3,7 @@ module github.com/DIMO-Network/vehicle-signal-decoding
 go 1.21
 
 require (
-	github.com/DIMO-Network/device-definitions-api v1.0.23
+	github.com/DIMO-Network/device-definitions-api v1.0.30
 	github.com/DIMO-Network/devices-api v1.23.1
 	github.com/DIMO-Network/shared v0.10.4
 	github.com/DIMO-Network/users-api v0.6.4
@@ -95,7 +95,7 @@ require (
 	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/spf13/cast v1.5.1 // indirect
 	github.com/swaggo/files/v2 v2.0.0 // indirect
-	github.com/tidwall/gjson v1.14.4 // indirect
+	github.com/tidwall/gjson v1.17.0 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/volatiletech/inflect v0.0.1 // indirect

@@ -33,7 +33,7 @@ type DeviceSettingsServiceClient interface {
 	CreateDeviceSettings(ctx context.Context, in *UpdateDeviceSettingsRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	UpdateDeviceSettings(ctx context.Context, in *UpdateDeviceSettingsRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	GetDeviceSettingList(ctx context.Context, in *GetDeviceSettingListRequest, opts ...grpc.CallOption) (*GetDeviceSettingListResponse, error)
-	GetDeviceSettingByTemplateName(ctx context.Context, in *GetDeviceSettingByTemplateNameRequest, opts ...grpc.CallOption) (*GetDeviceSettingByTemplateNameResponse, error)
+	GetDeviceSettingByTemplateName(ctx context.Context, in *GetDeviceSettingByNameRequest, opts ...grpc.CallOption) (*GetDeviceSettingByNameResponse, error)
 }
 
 type deviceSettingsServiceClient struct {
@@ -71,8 +71,8 @@ func (c *deviceSettingsServiceClient) GetDeviceSettingList(ctx context.Context, 
 	return out, nil
 }
 
-func (c *deviceSettingsServiceClient) GetDeviceSettingByTemplateName(ctx context.Context, in *GetDeviceSettingByTemplateNameRequest, opts ...grpc.CallOption) (*GetDeviceSettingByTemplateNameResponse, error) {
-	out := new(GetDeviceSettingByTemplateNameResponse)
+func (c *deviceSettingsServiceClient) GetDeviceSettingByTemplateName(ctx context.Context, in *GetDeviceSettingByNameRequest, opts ...grpc.CallOption) (*GetDeviceSettingByNameResponse, error) {
+	out := new(GetDeviceSettingByNameResponse)
 	err := c.cc.Invoke(ctx, DeviceSettingsService_GetDeviceSettingByTemplateName_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -87,7 +87,7 @@ type DeviceSettingsServiceServer interface {
 	CreateDeviceSettings(context.Context, *UpdateDeviceSettingsRequest) (*emptypb.Empty, error)
 	UpdateDeviceSettings(context.Context, *UpdateDeviceSettingsRequest) (*emptypb.Empty, error)
 	GetDeviceSettingList(context.Context, *GetDeviceSettingListRequest) (*GetDeviceSettingListResponse, error)
-	GetDeviceSettingByTemplateName(context.Context, *GetDeviceSettingByTemplateNameRequest) (*GetDeviceSettingByTemplateNameResponse, error)
+	GetDeviceSettingByTemplateName(context.Context, *GetDeviceSettingByNameRequest) (*GetDeviceSettingByNameResponse, error)
 	mustEmbedUnimplementedDeviceSettingsServiceServer()
 }
 
@@ -104,7 +104,7 @@ func (UnimplementedDeviceSettingsServiceServer) UpdateDeviceSettings(context.Con
 func (UnimplementedDeviceSettingsServiceServer) GetDeviceSettingList(context.Context, *GetDeviceSettingListRequest) (*GetDeviceSettingListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetDeviceSettingList not implemented")
 }
-func (UnimplementedDeviceSettingsServiceServer) GetDeviceSettingByTemplateName(context.Context, *GetDeviceSettingByTemplateNameRequest) (*GetDeviceSettingByTemplateNameResponse, error) {
+func (UnimplementedDeviceSettingsServiceServer) GetDeviceSettingByTemplateName(context.Context, *GetDeviceSettingByNameRequest) (*GetDeviceSettingByNameResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetDeviceSettingByTemplateName not implemented")
 }
 func (UnimplementedDeviceSettingsServiceServer) mustEmbedUnimplementedDeviceSettingsServiceServer() {}
@@ -175,7 +175,7 @@ func _DeviceSettingsService_GetDeviceSettingList_Handler(srv interface{}, ctx co
 }
 
 func _DeviceSettingsService_GetDeviceSettingByTemplateName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetDeviceSettingByTemplateNameRequest)
+	in := new(GetDeviceSettingByNameRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -187,7 +187,7 @@ func _DeviceSettingsService_GetDeviceSettingByTemplateName_Handler(srv interface
 		FullMethod: DeviceSettingsService_GetDeviceSettingByTemplateName_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DeviceSettingsServiceServer).GetDeviceSettingByTemplateName(ctx, req.(*GetDeviceSettingByTemplateNameRequest))
+		return srv.(DeviceSettingsServiceServer).GetDeviceSettingByTemplateName(ctx, req.(*GetDeviceSettingByNameRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
