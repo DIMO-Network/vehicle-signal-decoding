@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+
 	"github.com/volatiletech/null/v8"
 
 	"github.com/DIMO-Network/shared/db"
