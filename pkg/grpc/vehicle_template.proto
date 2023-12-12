@@ -7,13 +7,14 @@ option go_package = "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc";
 package grpc;
 
 message VehicleTemplate {
-    int32 StartYear = 1;
-    int32 EndYear = 2;
+    int32 YearStart = 1;
+    int32 YearEnd = 2;
     string Make = 3;
     string Template = 4;
     repeated string Models = 5;
+    int64 id = 6;
 }
-
+// used for listing items in admin
 message GetVehicleTemplatesRequest {
     int32 YearStart = 1;
     int32 YearEnd = 2;
@@ -23,11 +24,9 @@ message GetVehicleTemplatesRequest {
 message GetVehicleTemplatesResponse {
     repeated VehicleTemplate Templates = 1;
 }
-
+// used to view a specific vehicles to template setup
 message GetVehicleTemplateRequest {
-    string Make = 1;
-    int32 YearStart = 2;
-    int32 YearEnd = 3;
+    int64 id = 1;
 }
 
 service VehicleTemplateService {

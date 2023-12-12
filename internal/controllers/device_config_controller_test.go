@@ -844,7 +844,7 @@ func TestSelectAndFetchTemplate_MMY(t *testing.T) {
 	// Insert a template vehicle that matches the MMY
 	templateVehicle := &models.TemplateVehicle{
 		TemplateName:   template.TemplateName,
-		MakeSlug:       "Ford",
+		MakeSlug:       null.StringFrom("Ford"),
 		ModelWhitelist: types.StringArray{"Mustang"},
 		YearStart:      2010,
 		YearEnd:        2025,
