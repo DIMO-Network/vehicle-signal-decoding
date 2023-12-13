@@ -647,6 +647,66 @@ func (s *DeviceConfigControllerTestSuite) TestSelectAndFetchTemplate_MMY() {
 	assert.Equal(s.T(), template.TemplateName, fetchedTemplate.TemplateName)
 }
 
+func (s *DeviceConfigControllerTestSuite) TestSelectAndFetchTemplate_ModelWhitelistMatch() {
+
+	decoyTemplate := &models.Template{
+		TemplateName: "decoy-template",
+		Version:      "1.0",
+		Protocol:     models.CanProtocolTypeCAN11_500,
+		Powertrain:   "ICE",
+	}
+	err := decoyTemplate.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
+
+	template := &models.Template{
+		TemplateName: "template",
+		Version:      "1.0",
+		Protocol:     models.CanProtocolTypeCAN11_500,
+		Powertrain:   "ICE",
+	}
+	err = template.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
+
+	// template vehicles with different model whitelists
+	decoyTemplateVehicle := &models.TemplateVehicle{
+		TemplateName:   decoyTemplate.TemplateName,
+		MakeSlug:       null.StringFrom("Ford"),
+		ModelWhitelist: types.StringArray{"Fiesta"},
+		YearStart:      2010,
+		YearEnd:        2025,
+	}
+	err = decoyTemplateVehicle.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
+
+	templateVehicle := &models.TemplateVehicle{
+		TemplateName:   template.TemplateName,
+		MakeSlug:       null.StringFrom("Ford"),
+		ModelWhitelist: types.StringArray{"Mustang"},
+		YearStart:      2010,
+		YearEnd:        2025,
+	}
+	err = templateVehicle.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
+
+	mockedUserDevice := &pb.UserDevice{
+		Id:                 ksuid.New().String(),
+		UserId:             ksuid.New().String(),
+		DeviceDefinitionId: "non-existing-def-id",
+		CANProtocol:        models.CanProtocolTypeCAN11_500,
+		PowerTrainType:     "ICE",
+	}
+
+	vehicleMake := "Ford"
+	vehicleModel := "Mustang"
+	vehicleYear := 2021
+
+	fetchedTemplate, err := s.controller.selectAndFetchTemplate(s.ctx, mockedUserDevice, vehicleMake, vehicleModel, vehicleYear)
+
+	require.NoError(s.T(), err)
+	assert.NotNil(s.T(), fetchedTemplate)
+	assert.Equal(s.T(), template.TemplateName, fetchedTemplate.TemplateName)
+}
+
 func (s *DeviceConfigControllerTestSuite) TestSelectAndFetchTemplate_YearRange() {
 
 	template2 := &models.Template{

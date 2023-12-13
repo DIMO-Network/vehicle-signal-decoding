@@ -425,7 +425,6 @@ func (d *DeviceConfigController) selectAndFetchTemplate(ctx context.Context, ud 
 					if modelMatch(tv.ModelWhitelist, vehicleModel) {
 						break
 					}
-					// todo: @lauradeng add test that has two templateVehicle's, each with different ModelWhiteList and check it picks the right one
 				}
 			}
 		}
