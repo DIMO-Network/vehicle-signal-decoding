@@ -5,12 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/DIMO-Network/shared/db"
-	"github.com/stretchr/testify/suite"
-	"github.com/testcontainers/testcontainers-go"
 	"io"
 	"os"
 	"testing"
+
+	"github.com/DIMO-Network/shared/db"
+	"github.com/stretchr/testify/suite"
+	"github.com/testcontainers/testcontainers-go"
 
 	"github.com/volatiletech/null/v8"
 
@@ -197,6 +198,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetDBCFileByTemplateName() {
 
 	request := test.BuildRequest("GET", "/device-config/"+template.TemplateName+"/dbc-file", "")
 	response, err := s.app.Test(request)
+	require.NoError(s.T(), err)
 
 	require.Equal(s.T(), fiber.StatusOK, response.StatusCode)
 
