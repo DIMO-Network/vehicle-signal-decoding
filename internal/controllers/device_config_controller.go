@@ -524,24 +524,35 @@ func (d *DeviceConfigController) getConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) 
 	// set device settings from template, or based on powertrain default
 	if len(matchedTemplate.R.TemplateNameDeviceSettings) > 0 {
 		response.DeviceSettingURL = fmt.Sprintf("%s/v1/device-config/%s/device-settings", baseURL, matchedTemplate.R.TemplateNameDeviceSettings[0].Name)
-		// todo - what about parent template... should we fallback to that
 	} else {
-		// todo - this block does not have test coverage
-		var powertrain string
-		if ud.PowerTrainType != "" {
-			powertrain = ud.PowerTrainType
-		} else {
-			powertrain = matchedTemplate.Powertrain
+		// todo2 - this block does not have test coverage
+		var deviceSetting *models.DeviceSetting
+		var dbErr error
+		if matchedTemplate.ParentTemplateName.Valid {
+			deviceSetting, dbErr = models.DeviceSettings(models.DeviceSettingWhere.TemplateName.EQ(matchedTemplate.ParentTemplateName),
+				qm.OrderBy(models.DeviceSettingColumns.Name)).One(c.Context(), d.db)
+			if dbErr != nil && !errors.Is(dbErr, sql.ErrNoRows) {
+				return errors.Wrap(dbErr, "Failed to retrieve device setting for parent template")
+			}
 		}
-		// default will be whatever gets ordered first
-		deviceSetting, dbErr := models.DeviceSettings(models.DeviceSettingWhere.Powertrain.EQ(powertrain),
-			qm.OrderBy(models.DeviceSettingColumns.Name)).One(c.Context(), d.db)
-		if errors.Is(dbErr, sql.ErrNoRows) {
-			// grab the first record in db
-			deviceSetting, dbErr = models.DeviceSettings(qm.OrderBy(models.DeviceSettingColumns.Name)).One(c.Context(), d.db)
-		}
-		if dbErr != nil {
-			return errors.Wrap(err, fmt.Sprintf("Failed to retrieve device setting. Powertrain: %s", powertrain))
+
+		if deviceSetting == nil {
+			var powertrain string
+			if ud.PowerTrainType != "" {
+				powertrain = ud.PowerTrainType
+			} else {
+				powertrain = matchedTemplate.Powertrain
+			}
+			// default will be whatever gets ordered first
+			deviceSetting, dbErr = models.DeviceSettings(models.DeviceSettingWhere.Powertrain.EQ(powertrain),
+				qm.OrderBy(models.DeviceSettingColumns.Name)).One(c.Context(), d.db)
+			if errors.Is(dbErr, sql.ErrNoRows) {
+				// grab the first record in db
+				deviceSetting, dbErr = models.DeviceSettings(qm.OrderBy(models.DeviceSettingColumns.Name)).One(c.Context(), d.db)
+			}
+			if dbErr != nil {
+				return errors.Wrap(err, fmt.Sprintf("Failed to retrieve device setting. Powertrain: %s", powertrain))
+			}
 		}
 		// device settings have a name key separate from templateName since simpler setup
 		response.DeviceSettingURL = fmt.Sprintf("%s/v1/device-config/%s/device-settings", baseURL, deviceSetting.Name)
