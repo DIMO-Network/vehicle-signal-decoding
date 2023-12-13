@@ -5,6 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/DIMO-Network/shared/db"
+	"github.com/stretchr/testify/suite"
+	"github.com/testcontainers/testcontainers-go"
 	"io"
 	"os"
 	"testing"
@@ -38,27 +41,49 @@ const migrationsDirRelPath = "../infrastructure/db/migrations"
 
 // todo: migrate to TestSuite approach for tests that re-use same setup
 
-func TestGetPIDsByTemplate(t *testing.T) {
+type DeviceConfigControllerTestSuite struct {
+	suite.Suite
+	ctx               context.Context
+	pdb               db.Store
+	container         testcontainers.Container
+	mockCtrl          *gomock.Controller
+	logger            *zerolog.Logger
+	mockUserDeviceSvc *mock_services.MockUserDeviceService
+	mockDeviceDefSvc  *mock_services.MockDeviceDefinitionsService
+	controller        *DeviceConfigController
+	app               *fiber.App
+}
 
-	// arrange global db and route setup
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
+func (s *DeviceConfigControllerTestSuite) SetupSuite() {
+	s.ctx = context.Background()
+	s.pdb, s.container = test.StartContainerDatabase(s.ctx, s.T(), migrationsDirRelPath)
+	logger := zerolog.New(os.Stdout).With().Timestamp().Logger()
+	s.logger = &logger
+	s.mockCtrl = gomock.NewController(s.T())
+	s.mockUserDeviceSvc = mock_services.NewMockUserDeviceService(s.mockCtrl)
+	s.mockDeviceDefSvc = mock_services.NewMockDeviceDefinitionsService(s.mockCtrl)
+	ctrl := NewDeviceConfigController(&config.Settings{Port: "3000"}, s.logger, s.pdb.DBS().Reader.DB, s.mockUserDeviceSvc, s.mockDeviceDefSvc)
+	s.controller = &ctrl
+	s.app = fiber.New()
+}
 
-	// Arrange: db and route setup
-	logger := zerolog.New(os.Stdout).With().
-		Timestamp().
-		Str("app", "vehicle-signal-decoding").
-		Logger()
+func (s *DeviceConfigControllerTestSuite) TearDownSuite() {
+	if err := s.container.Terminate(s.ctx); err != nil {
+		s.T().Fatal(err)
+	}
+	s.mockCtrl.Finish()
+}
 
-	ctx := context.Background()
+func (s *DeviceConfigControllerTestSuite) TearDownTest() {
+	test.TruncateTables(s.pdb.DBS().Writer.DB, s.T())
+}
 
-	//Spin up test database in a Docker container
-	pdb, container := test.StartContainerDatabase(ctx, t, migrationsDirRelPath)
-	defer func() {
-		if err := container.Terminate(ctx); err != nil {
-			t.Fatal(err)
-		}
-	}()
+func TestDeviceConfigControllerTestSuite(t *testing.T) {
+	suite.Run(t, new(DeviceConfigControllerTestSuite))
+}
+
+/* Actual Tests */
+func (s *DeviceConfigControllerTestSuite) TestGetPIDsByTemplate() {
 
 	template := models.Template{
 		TemplateName: "exampleTemplate",
@@ -66,14 +91,14 @@ func TestGetPIDsByTemplate(t *testing.T) {
 		Protocol:     models.CanProtocolTypeCAN11_500,
 		Powertrain:   "ICE",
 	}
-	err := template.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
-	require.NoError(t, err)
+	err := template.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	s.Require().NoError(err)
 
 	pc := models.PidConfig{
 		ID:              1,
 		SignalName:      "odometer",
 		TemplateName:    "exampleTemplate",
-		Header:          []byte{0x07, 0xdf}, // short notation without padding
+		Header:          []byte{0x07, 0xdf},
 		Mode:            []byte{0x01},
 		Pid:             []byte{0xa6},
 		Formula:         "A*5",
@@ -81,72 +106,37 @@ func TestGetPIDsByTemplate(t *testing.T) {
 		Protocol:        models.CanProtocolTypeCAN11_500,
 	}
 
-	err = pc.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
-	require.NoError(t, err)
+	err = pc.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	s.Require().NoError(err)
 
-	mockUserDeviceSvc := mock_services.NewMockUserDeviceService(mockCtrl)
-	mockDeviceDefSvc := mock_services.NewMockDeviceDefinitionsService(mockCtrl)
-	c := NewDeviceConfigController(&config.Settings{Port: "3000"}, &logger, pdb.DBS().Reader.DB, mockUserDeviceSvc, mockDeviceDefSvc)
+	s.app.Get("/device-config/:templateName/pids", s.controller.GetPIDsByTemplate)
 
-	app := fiber.New()
-	app.Get("/device-config/:templateName/pids", c.GetPIDsByTemplate)
+	request := test.BuildRequest("GET", "/device-config/"+template.TemplateName+"/pids", "")
+	response, err := s.app.Test(request)
+	s.Require().NoError(err)
 
-	t.Run("GET - PIDs by Template", func(t *testing.T) {
+	body, err := io.ReadAll(response.Body)
+	s.Require().NoError(err)
 
-		// Act: make the request
-		request := test.BuildRequest("GET", "/device-config/"+template.TemplateName+"/pids", "")
-		response, _ := app.Test(request)
-		body, _ := io.ReadAll(response.Body)
+	s.Equal(fiber.StatusOK, response.StatusCode)
+	pids := grpc.PIDRequests{}
+	err = json.Unmarshal(body, &pids)
+	s.Require().NoError(err)
 
-		// Assert: check the results
-		if assert.Equal(t, fiber.StatusOK, response.StatusCode) == false {
-			fmt.Println("response body: " + string(body))
-		}
-		fmt.Printf("Received response: %s", body)
-
-		pids := grpc.PIDRequests{}
-		err = json.Unmarshal(body, &pids)
-		assert.NoError(t, err)
-
-		require.Equal(t, 1, len(pids.Requests))
-		assert.Equal(t, pc.SignalName, pids.Requests[0].Name)
-		// use known values uint32 that we expect above bytes to convert to as uint32 decimal
-		assert.Equal(t, uint32(2015), pids.Requests[0].Header)
-		assert.Equal(t, uint32(1), pids.Requests[0].Mode)
-		assert.Equal(t, uint32(166), pids.Requests[0].Pid)
-
-		assert.Equal(t, pc.Formula, pids.Requests[0].Formula)
-		assert.Equal(t, pc.IntervalSeconds, int(pids.Requests[0].IntervalSeconds))
-		assert.Equal(t, pc.Protocol, pids.Requests[0].Protocol)
-		assert.Equal(t, template.Version, pids.Version)
-
-		// Teardown: cleanup after test
-		test.TruncateTables(pdb.DBS().Writer.DB, t)
-
-	})
+	s.Equal(1, len(pids.Requests))
+	s.Equal(pc.SignalName, pids.Requests[0].Name)
+	s.Equal(uint32(2015), pids.Requests[0].Header)
+	s.Equal(uint32(1), pids.Requests[0].Mode)
+	s.Equal(uint32(166), pids.Requests[0].Pid)
+	s.Equal(pc.Formula, pids.Requests[0].Formula)
+	s.Equal(pc.IntervalSeconds, int(pids.Requests[0].IntervalSeconds))
+	s.Equal(pc.Protocol, pids.Requests[0].Protocol)
+	s.Equal(template.Version, pids.Version)
 }
 
-func TestGetDeviceSettingsByName(t *testing.T) {
-	// arrange global db and route setup
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
+func (s *DeviceConfigControllerTestSuite) TestGetDeviceSettingsByName() {
 
-	// Arrange: db and route setup
-	logger := zerolog.New(os.Stdout).With().
-		Timestamp().
-		Str("app", "vehicle-signal-decoding").
-		Logger()
-
-	ctx := context.Background()
-
-	// Spin up test database in a Docker container
-	pdb, container := test.StartContainerDatabase(ctx, t, migrationsDirRelPath)
-	defer func() {
-		if err := container.Terminate(ctx); err != nil {
-			t.Fatal(err)
-		}
-	}()
-
+	const name = "default-ice-settings"
 	exampleSettingsJSON := []byte(`{
         "safety_cut_out_voltage": 12.5,
         "sleep_timer_event_driven_period_secs": 30,
@@ -154,139 +144,72 @@ func TestGetDeviceSettingsByName(t *testing.T) {
     }`)
 
 	settingsJSON := null.JSONFrom(exampleSettingsJSON)
-	const name = "default-ice-settings"
 	ds := models.DeviceSetting{
 		Name:       name,
 		Settings:   settingsJSON,
 		Powertrain: "ICE",
 	}
 
-	err := ds.Insert(ctx, pdb.DBS().Writer, boil.Infer())
-	require.NoError(t, err)
+	err := ds.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
 
-	mockUserDeviceSvc := mock_services.NewMockUserDeviceService(mockCtrl)
-	mockDeviceDefSvc := mock_services.NewMockDeviceDefinitionsService(mockCtrl)
-	c := NewDeviceConfigController(&config.Settings{Port: "3000"}, &logger, pdb.DBS().Reader.DB, mockUserDeviceSvc, mockDeviceDefSvc)
+	s.app.Get("/device-config/:name/settings", s.controller.GetDeviceSettingsByName)
 
-	app := fiber.New()
-	app.Get("/device-config/:name/settings", c.GetDeviceSettingsByName)
+	request := test.BuildRequest("GET", "/device-config/"+name+"/settings", "")
+	response, _ := s.app.Test(request)
 
-	t.Run("GET - Device Settings by Template", func(t *testing.T) {
-		// Act: make the request
-		request := test.BuildRequest("GET", "/device-config/"+name+"/settings", "")
-		response, _ := app.Test(request)
-		body, _ := io.ReadAll(response.Body)
+	assert.Equal(s.T(), fiber.StatusOK, response.StatusCode)
 
-		// Assert
-		assert.Equal(t, fiber.StatusOK, response.StatusCode, "response body: "+string(body))
+	var receivedDS grpc.DeviceSetting
+	body, _ := io.ReadAll(response.Body)
+	err = json.Unmarshal(body, &receivedDS)
+	assert.NoError(s.T(), err)
 
-		var receivedDS grpc.DeviceSetting
-		err = json.Unmarshal(body, &receivedDS)
-		assert.NoError(t, err)
+	expectedSettings := &grpc.SettingsData{
+		SafetyCutOutVoltage:             12.5,
+		SleepTimerEventDrivenPeriodSecs: 30,
+		WakeTriggerVoltageLevel:         3.3,
+	}
 
-		expectedSettings := &grpc.SettingsData{
-			SafetyCutOutVoltage:             12.5,
-			SleepTimerEventDrivenPeriodSecs: 30,
-			WakeTriggerVoltageLevel:         3.3,
-		}
-
-		assert.Equal(t, expectedSettings, receivedDS.Settings)
-
-		// Teardown: cleanup after test
-		test.TruncateTables(pdb.DBS().Writer.DB, t)
-	})
+	assert.Equal(s.T(), expectedSettings, receivedDS.Settings)
 }
 
-func TestGetDBCFileByTemplateName(t *testing.T) {
-
-	// arrange global db and route setup
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	// Arrange: db and route setup
-	logger := zerolog.New(os.Stdout).With().
-		Timestamp().
-		Str("app", "vehicle-signal-decoding").
-		Logger()
-
-	ctx := context.Background()
-
-	// Spin up test database in a Docker container
-	pdb, container := test.StartContainerDatabase(ctx, t, migrationsDirRelPath)
-	defer func() {
-		if err := container.Terminate(ctx); err != nil {
-			t.Fatal(err)
-		}
-	}()
+func (s *DeviceConfigControllerTestSuite) TestGetDBCFileByTemplateName() {
 
 	template := models.Template{
 		TemplateName: "exampleDBCFileTemplate",
 		Version:      "3.0",
 		Protocol:     models.CanProtocolTypeCAN11_500,
 		Powertrain:   "ICE",
-		// etc
 	}
-	err := template.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
-	assert.NoError(t, err)
+	err := template.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
 
 	dbcf := models.DBCFile{
 		TemplateName: "exampleDBCFileTemplate",
 		DBCFile:      "ThisIsTheDBCFileContent",
 	}
 
-	err = dbcf.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
-	assert.NoError(t, err)
+	err = dbcf.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
 
-	mockUserDeviceSvc := mock_services.NewMockUserDeviceService(mockCtrl)
+	s.app.Get("/device-config/:templateName/dbc-file", s.controller.GetDBCFileByTemplateName)
 
-	mockDeviceDefSvc := mock_services.NewMockDeviceDefinitionsService(mockCtrl)
-	c := NewDeviceConfigController(&config.Settings{Port: "3000"}, &logger, pdb.DBS().Reader.DB, mockUserDeviceSvc, mockDeviceDefSvc)
+	request := test.BuildRequest("GET", "/device-config/"+template.TemplateName+"/dbc-file", "")
+	response, err := s.app.Test(request)
 
-	app := fiber.New()
-	app.Get("/device-config/:templateName/dbc-file", c.GetDBCFileByTemplateName)
+	require.Equal(s.T(), fiber.StatusOK, response.StatusCode)
 
-	t.Run("GET - DBCFile by TemplateName", func(t *testing.T) {
-		// Act: make the request
-		request := test.BuildRequest("GET", "/device-config/"+template.TemplateName+"/dbc-file", "")
-		response, _ := app.Test(request)
-		body, _ := io.ReadAll(response.Body)
+	body, _ := io.ReadAll(response.Body)
+	assert.Equal(s.T(), dbcf.DBCFile, string(body))
 
-		// Assert: check the results
-		if assert.Equal(t, fiber.StatusOK, response.StatusCode) == false {
-			fmt.Println("response body: " + string(body))
-		}
-
-		assert.Equal(t, dbcf.DBCFile, string(body))
-
-		// Testing Version
-		templateFromDB, err := models.Templates(models.TemplateWhere.TemplateName.EQ(template.TemplateName)).One(context.Background(), pdb.DBS().Reader.DB)
-		assert.NoError(t, err)
-		assert.Equal(t, template.Version, templateFromDB.Version)
-
-		// Teardown: cleanup after test
-		test.TruncateTables(pdb.DBS().Writer.DB, t)
-	})
+	templateFromDB, err := models.Templates(models.TemplateWhere.TemplateName.EQ(template.TemplateName)).One(s.ctx, s.pdb.DBS().Reader.DB)
+	require.NoError(s.T(), err)
+	assert.Equal(s.T(), template.Version, templateFromDB.Version)
 }
 
-func TestGetConfigURLs_EmptyDBC(t *testing.T) {
-	// Arrange
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
+func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_EmptyDBC() {
 
-	logger := zerolog.New(os.Stdout).With().
-		Timestamp().
-		Str("app", "vehicle-signal-decoding").
-		Logger()
-
-	ctx := context.Background()
-
-	// Spin up test database in a Docker container
-	pdb, container := test.StartContainerDatabase(ctx, t, migrationsDirRelPath)
-	defer func() {
-		if err := container.Terminate(ctx); err != nil {
-			t.Fatal(err)
-		}
-	}()
 	vin := "TMBEK6NW1N3088739"
 
 	mockedUserDevice := &pb.UserDevice{
@@ -302,119 +225,73 @@ func TestGetConfigURLs_EmptyDBC(t *testing.T) {
 		GeoDecodedCountry:   "USA",
 		GeoDecodedStateProv: "MI",
 	}
+	s.mockUserDeviceSvc.EXPECT().GetUserDeviceByVIN(gomock.Any(), vin).Return(mockedUserDevice, nil)
 
-	mockUserDeviceSvc := mock_services.NewMockUserDeviceService(mockCtrl)
-	mockUserDeviceSvc.EXPECT().GetUserDeviceByVIN(gomock.Any(), vin).Return(mockedUserDevice, nil)
-
-	// Mock the device definition service
 	mockedDeviceDefinition := &p_grpc.GetDeviceDefinitionItemResponse{
 		DeviceDefinitionId: ksuid.New().String(),
 		Type: &p_grpc.DeviceType{
 			Year: 2020,
 		},
 	}
+	s.mockDeviceDefSvc.EXPECT().GetDeviceDefinitionByID(gomock.Any(), gomock.Any()).Return(mockedDeviceDefinition, nil)
 
-	mockDeviceDefSvc := mock_services.NewMockDeviceDefinitionsService(mockCtrl)
-	mockDeviceDefSvc.EXPECT().GetDeviceDefinitionByID(gomock.Any(), gomock.Any()).Return(mockedDeviceDefinition, nil)
-	c := NewDeviceConfigController(&config.Settings{Port: "3000", DeploymentURL: "http://localhost:3000"}, &logger, pdb.DBS().Reader.DB, mockUserDeviceSvc, mockDeviceDefSvc)
-
-	// insert template in DB
 	template := &models.Template{
 		TemplateName: "some-template",
 		Version:      "1.0",
 		Protocol:     models.CanProtocolTypeCAN29_500,
 		Powertrain:   "HEV",
 	}
-	err := template.Insert(ctx, pdb.DBS().Writer, boil.Infer())
-	require.NoError(t, err)
-	// insert device settings
+	err := template.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
+
+	templateVehicle := &models.TemplateVehicle{
+		TemplateName: template.TemplateName,
+		YearStart:    2010,
+		YearEnd:      2025,
+	}
+	err = templateVehicle.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
+
 	ds := &models.DeviceSetting{
 		Name:         "default-hev",
 		Powertrain:   "HEV",
-		TemplateName: null.NewString(template.TemplateName, template.TemplateName != ""),
+		TemplateName: null.NewString(template.TemplateName, true),
 	}
-	err = ds.Insert(ctx, pdb.DBS().Writer, boil.Infer())
-	require.NoError(t, err)
+	err = ds.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
 
-	app := fiber.New()
-	app.Get("/config-urls/:vin", c.GetConfigURLsFromVIN)
+	s.app.Get("/config-urls/:vin", s.controller.GetConfigURLsFromVIN)
 
-	t.Run("GET - Config URLs by VIN with Empty DbcURL", func(t *testing.T) {
-		// Add vehicle year range to the template
-		templateVehicle := &models.TemplateVehicle{
-			TemplateName: template.TemplateName,
-			YearStart:    2010,
-			YearEnd:      2025,
-		}
-		err2 := templateVehicle.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
-		require.NoError(t, err2)
-		// Act: make the request
-		request := test.BuildRequest("GET", "/config-urls/"+vin, "")
-		response, err := app.Test(request)
-		require.NoError(t, err)
-		body, _ := io.ReadAll(response.Body)
+	request := test.BuildRequest("GET", "/config-urls/"+vin, "")
+	response, err := s.app.Test(request)
+	require.NoError(s.T(), err)
 
-		// Assert: check the results
-		if !assert.Equal(t, fiber.StatusOK, response.StatusCode) {
-			fmt.Println("response body: " + string(body))
-		}
+	body, _ := io.ReadAll(response.Body)
+	require.Equal(s.T(), fiber.StatusOK, response.StatusCode)
 
-		var receivedResp DeviceConfigResponse
-		err = json.Unmarshal(body, &receivedResp)
-		assert.NoError(t, err)
+	var receivedResp DeviceConfigResponse
+	err = json.Unmarshal(body, &receivedResp)
+	require.NoError(s.T(), err)
 
-		assert.Equal(t, fmt.Sprintf("http://localhost:3000/v1/device-config/%s/pids", template.TemplateName), receivedResp.PidURL)
-		assert.Equal(t, fmt.Sprintf("http://localhost:3000/v1/device-config/%s/device-settings", ds.Name), receivedResp.DeviceSettingURL)
-		assert.Equal(t, "", receivedResp.DbcURL)
-
-		assert.Equal(t, template.Version, receivedResp.Version)
-
-		// Teardown: cleanup after test
-		test.TruncateTables(pdb.DBS().Writer.DB, t)
-	})
-
+	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/%s/pids", template.TemplateName), receivedResp.PidURL)
+	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/%s/device-settings", ds.Name), receivedResp.DeviceSettingURL)
+	assert.Empty(s.T(), receivedResp.DbcURL)
+	assert.Equal(s.T(), template.Version, receivedResp.Version)
 }
 
-func TestGetConfigURLs_DecodeVIN(t *testing.T) {
-	// Arrange
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
+func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_DecodeVIN() {
 
-	logger := zerolog.New(os.Stdout).With().
-		Timestamp().
-		Str("app", "vehicle-signal-decoding").
-		Logger()
-
-	ctx := context.Background()
-
-	pdb, container := test.StartContainerDatabase(ctx, t, migrationsDirRelPath)
-	defer func() {
-		if err := container.Terminate(ctx); err != nil {
-			t.Fatal(err)
-		}
-	}()
 	vin := "TMBEK6NW1N3088739"
 
-	// Insert template "some-template" into the database
 	template := &models.Template{
 		TemplateName: "some-template",
 		Version:      "1.0",
 		Protocol:     models.CanProtocolTypeCAN11_500,
 		Powertrain:   "HEV",
 	}
-	err := template.Insert(ctx, pdb.DBS().Writer, boil.Infer())
-	require.NoError(t, err)
+	err := template.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
 
-	// Insert device settings for "some-template"
-	ds := &models.DeviceSetting{
-		Name:         "default-hev",
-		Powertrain:   "HEV",
-		TemplateName: null.NewString(template.TemplateName, template.TemplateName != ""),
-	}
-	err = ds.Insert(ctx, pdb.DBS().Writer, boil.Infer())
-	require.NoError(t, err)
-
-	// Mock the device definition service
 	mockedDeviceDefinition := &p_grpc.GetDeviceDefinitionItemResponse{
 		DeviceDefinitionId: ksuid.New().String(),
 		Type: &p_grpc.DeviceType{
@@ -428,61 +305,42 @@ func TestGetConfigURLs_DecodeVIN(t *testing.T) {
 		}},
 	}
 
-	mockUserDeviceSvc := mock_services.NewMockUserDeviceService(mockCtrl)
-	mockUserDeviceSvc.EXPECT().GetUserDeviceByVIN(gomock.Any(), vin).Return(nil, errors.New("user device not found"))
+	ds := &models.DeviceSetting{
+		Name:         "default-hev",
+		Powertrain:   "HEV",
+		TemplateName: null.NewString(template.TemplateName, true),
+	}
+	err = ds.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
 
-	mockDeviceDefSvc := mock_services.NewMockDeviceDefinitionsService(mockCtrl)
-	mockDeviceDefSvc.EXPECT().DecodeVIN(gomock.Any(), vin).Return(&p_grpc.DecodeVinResponse{
+	s.mockUserDeviceSvc.EXPECT().GetUserDeviceByVIN(gomock.Any(), vin).Return(nil, errors.New("user device not found"))
+
+	s.mockDeviceDefSvc.EXPECT().DecodeVIN(gomock.Any(), vin).Return(&p_grpc.DecodeVinResponse{
 		DeviceDefinitionId: mockedDeviceDefinition.DeviceDefinitionId,
 	}, nil)
-	mockDeviceDefSvc.EXPECT().GetDeviceDefinitionByID(gomock.Any(), mockedDeviceDefinition.DeviceDefinitionId).Return(mockedDeviceDefinition, nil)
+	s.mockDeviceDefSvc.EXPECT().GetDeviceDefinitionByID(gomock.Any(), mockedDeviceDefinition.DeviceDefinitionId).Return(mockedDeviceDefinition, nil)
 
-	c := NewDeviceConfigController(&config.Settings{Port: "3000", DeploymentURL: "http://localhost:3000"}, &logger, pdb.DBS().Reader.DB, mockUserDeviceSvc, mockDeviceDefSvc)
+	s.app.Get("/config-urls/:vin", s.controller.GetConfigURLsFromVIN)
 
-	app := fiber.New()
-	app.Get("/config-urls/:vin", c.GetConfigURLsFromVIN)
-
-	// Act
 	request := test.BuildRequest("GET", "/config-urls/"+vin, "")
-	response, err := app.Test(request)
-	require.NoError(t, err)
+	response, err := s.app.Test(request)
+	require.NoError(s.T(), err)
 
 	body, _ := io.ReadAll(response.Body)
-
-	// Assert
-	assert.Equal(t, fiber.StatusOK, response.StatusCode, "response body: "+string(body))
+	require.Equal(s.T(), fiber.StatusOK, response.StatusCode)
 
 	var receivedResp DeviceConfigResponse
 	err = json.Unmarshal(body, &receivedResp)
-	assert.NoError(t, err)
+	require.NoError(s.T(), err)
 
-	//"some-template"
-	assert.Equal(t, fmt.Sprintf("http://localhost:3000/v1/device-config/%s/pids", template.TemplateName), receivedResp.PidURL)
-	assert.Equal(t, fmt.Sprintf("http://localhost:3000/v1/device-config/%s/device-settings", ds.Name), receivedResp.DeviceSettingURL)
-	assert.Equal(t, "", receivedResp.DbcURL)
-	assert.Equal(t, template.Version, receivedResp.Version)
-
-	test.TruncateTables(pdb.DBS().Writer.DB, t)
+	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/%s/pids", template.TemplateName), receivedResp.PidURL)
+	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/%s/device-settings", ds.Name), receivedResp.DeviceSettingURL)
+	assert.Empty(s.T(), receivedResp.DbcURL)
+	assert.Equal(s.T(), template.Version, receivedResp.Version)
 }
 
-func TestGetConfigURLs_ProtocolOverrideQS(t *testing.T) {
-	// Arrange
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
+func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_ProtocolOverrideQS() {
 
-	logger := zerolog.New(os.Stdout).With().
-		Timestamp().
-		Str("app", "vehicle-signal-decoding").
-		Logger()
-
-	ctx := context.Background()
-
-	pdb, container := test.StartContainerDatabase(ctx, t, migrationsDirRelPath)
-	defer func() {
-		if err := container.Terminate(ctx); err != nil {
-			t.Fatal(err)
-		}
-	}()
 	vin := "TMBEK6NW1N3088739"
 
 	decoy := &models.Template{
@@ -491,29 +349,26 @@ func TestGetConfigURLs_ProtocolOverrideQS(t *testing.T) {
 		Protocol:     models.CanProtocolTypeCAN11_500,
 		Powertrain:   "HEV",
 	}
-	err := decoy.Insert(ctx, pdb.DBS().Writer, boil.Infer())
-	require.NoError(t, err)
+	err := decoy.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
 
-	// Insert template "some-template" into the database
 	template := &models.Template{
 		TemplateName: "some-template",
 		Version:      "1.0",
 		Protocol:     models.CanProtocolTypeCAN29_500,
 		Powertrain:   "HEV",
 	}
-	err = template.Insert(ctx, pdb.DBS().Writer, boil.Infer())
-	require.NoError(t, err)
+	err = template.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
 
-	// Insert device settings for "some-template"
 	ds := &models.DeviceSetting{
 		Name:         "default-hev",
 		Powertrain:   "HEV",
 		TemplateName: null.NewString(template.TemplateName, template.TemplateName != ""),
 	}
-	err = ds.Insert(ctx, pdb.DBS().Writer, boil.Infer())
-	require.NoError(t, err)
+	err = ds.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
 
-	// Mock the device definition service
 	mockedDeviceDefinition := &p_grpc.GetDeviceDefinitionItemResponse{
 		DeviceDefinitionId: ksuid.New().String(),
 		Type: &p_grpc.DeviceType{
@@ -526,71 +381,35 @@ func TestGetConfigURLs_ProtocolOverrideQS(t *testing.T) {
 			Value: "HEV",
 		}},
 	}
+	s.mockDeviceDefSvc.EXPECT().GetDeviceDefinitionByID(gomock.Any(), gomock.Any()).Return(mockedDeviceDefinition, nil)
+	s.mockUserDeviceSvc.EXPECT().GetUserDeviceByVIN(gomock.Any(), vin).Return(nil, errors.New("user device not found"))
+	s.mockDeviceDefSvc.EXPECT().DecodeVIN(gomock.Any(), vin).Return(&p_grpc.DecodeVinResponse{DeviceDefinitionId: mockedDeviceDefinition.DeviceDefinitionId}, nil)
 
-	mockUserDeviceSvc := mock_services.NewMockUserDeviceService(mockCtrl)
-	mockUserDeviceSvc.EXPECT().GetUserDeviceByVIN(gomock.Any(), vin).Return(nil, errors.New("user device not found"))
+	s.app.Get("/config-urls/:vin", s.controller.GetConfigURLsFromVIN)
 
-	mockDeviceDefSvc := mock_services.NewMockDeviceDefinitionsService(mockCtrl)
-	mockDeviceDefSvc.EXPECT().DecodeVIN(gomock.Any(), vin).Return(&p_grpc.DecodeVinResponse{
-		DeviceDefinitionId: mockedDeviceDefinition.DeviceDefinitionId,
-	}, nil)
-	mockDeviceDefSvc.EXPECT().GetDeviceDefinitionByID(gomock.Any(), mockedDeviceDefinition.DeviceDefinitionId).Return(mockedDeviceDefinition, nil)
-
-	c := NewDeviceConfigController(&config.Settings{Port: "3000", DeploymentURL: "http://localhost:3000"}, &logger, pdb.DBS().Reader.DB, mockUserDeviceSvc, mockDeviceDefSvc)
-
-	app := fiber.New()
-	app.Get("/config-urls/:vin", c.GetConfigURLsFromVIN)
-
-	// Act
-	request := test.BuildRequest("GET", "/config-urls/"+vin+"?protocol=7", "") // protocol 7 should match template above
-	response, err := app.Test(request)
-	require.NoError(t, err)
+	request := test.BuildRequest("GET", "/config-urls/"+vin+"?protocol=7", "")
+	response, err := s.app.Test(request, -1)
+	require.NoError(s.T(), err)
 
 	body, _ := io.ReadAll(response.Body)
 
-	// Assert
-	assert.Equal(t, fiber.StatusOK, response.StatusCode, "response body: "+string(body))
+	assert.Equal(s.T(), fiber.StatusOK, response.StatusCode, "response body: "+string(body))
 
 	var receivedResp DeviceConfigResponse
 	err = json.Unmarshal(body, &receivedResp)
-	assert.NoError(t, err)
+	assert.NoError(s.T(), err)
 
-	//"some-template"
-	assert.Equal(t, fmt.Sprintf("http://localhost:3000/v1/device-config/%s/pids", template.TemplateName), receivedResp.PidURL)
-	assert.Equal(t, fmt.Sprintf("http://localhost:3000/v1/device-config/%s/device-settings", ds.Name), receivedResp.DeviceSettingURL)
-	assert.Equal(t, template.Version, receivedResp.Version)
+	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/%s/pids", template.TemplateName), receivedResp.PidURL)
+	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/%s/device-settings", ds.Name), receivedResp.DeviceSettingURL)
+	assert.Equal(s.T(), template.Version, receivedResp.Version)
 
-	test.TruncateTables(pdb.DBS().Writer.DB, t)
 }
 
-func TestRetrieveAndSetVehicleInfo(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	mockDeviceDefSvc := mock_services.NewMockDeviceDefinitionsService(mockCtrl)
-	mockUserDeviceSvc := mock_services.NewMockUserDeviceService(mockCtrl)
-
-	logger := zerolog.New(os.Stdout)
-
-	pdb, container := test.StartContainerDatabase(context.Background(), t, migrationsDirRelPath)
-	defer func() {
-		if err := container.Terminate(context.Background()); err != nil {
-			t.Fatal(err)
-		}
-	}()
-
-	c := NewDeviceConfigController(
-		&config.Settings{Port: "3000"},
-		&logger,
-		pdb.DBS().Reader.DB,
-		mockUserDeviceSvc,
-		mockDeviceDefSvc,
-	)
+func (s *DeviceConfigControllerTestSuite) TestRetrieveAndSetVehicleInfo() {
 
 	ud := &pb.UserDevice{
 		DeviceDefinitionId: "some-definition-id",
 	}
-
 	expectedDDResponse := &p_grpc.GetDeviceDefinitionItemResponse{
 		Type: &p_grpc.DeviceType{
 			Year:      2021,
@@ -599,45 +418,20 @@ func TestRetrieveAndSetVehicleInfo(t *testing.T) {
 		},
 	}
 
-	mockDeviceDefSvc.EXPECT().
+	s.mockDeviceDefSvc.EXPECT().
 		GetDeviceDefinitionByID(gomock.Any(), ud.DeviceDefinitionId).
 		Return(expectedDDResponse, nil)
 
-	vehicleMake, vehicleModel, vehicleYear, err := c.retrieveAndSetVehicleInfo(context.Background(), ud)
+	vehicleMake, vehicleModel, vehicleYear, err := s.controller.retrieveAndSetVehicleInfo(s.ctx, ud)
 
-	// Assert:
-	require.NoError(t, err)
-	assert.Equal(t, "Ford", vehicleMake)
-	assert.Equal(t, "Mustang", vehicleModel)
-	assert.Equal(t, 2021, vehicleYear)
-
+	require.NoError(s.T(), err)
+	assert.Equal(s.T(), "Ford", vehicleMake)
+	assert.Equal(s.T(), "Mustang", vehicleModel)
+	assert.Equal(s.T(), 2021, vehicleYear)
 }
 
-func TestSetPowerTrainType(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
+func (s *DeviceConfigControllerTestSuite) TestSetPowerTrainType() {
 
-	mockDeviceDefSvc := mock_services.NewMockDeviceDefinitionsService(mockCtrl)
-	mockUserDeviceSvc := mock_services.NewMockUserDeviceService(mockCtrl)
-
-	logger := zerolog.New(os.Stdout)
-
-	pdb, container := test.StartContainerDatabase(context.Background(), t, migrationsDirRelPath)
-	defer func() {
-		if err := container.Terminate(context.Background()); err != nil {
-			t.Fatal(err)
-		}
-	}()
-
-	c := NewDeviceConfigController(
-		&config.Settings{Port: "3000"},
-		&logger,
-		pdb.DBS().Reader.DB,
-		mockUserDeviceSvc,
-		mockDeviceDefSvc,
-	)
-
-	// Define test cases
 	testCases := []struct {
 		name          string
 		deviceAttrs   []*p_grpc.DeviceTypeAttribute
@@ -658,48 +452,19 @@ func TestSetPowerTrainType(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			// Create a mock GetDeviceDefinitionItemResponse
+		s.Run(tc.name, func() {
 			ddResponse := &p_grpc.GetDeviceDefinitionItemResponse{
 				DeviceAttributes: tc.deviceAttrs,
 			}
-
 			ud := &pb.UserDevice{}
-
-			// Act:
-			c.setPowerTrainType(ddResponse, ud)
-
-			// Assert:
-			assert.Equal(t, tc.expectedPower, ud.PowerTrainType)
+			s.controller.setPowerTrainType(ddResponse, ud)
+			assert.Equal(s.T(), tc.expectedPower, ud.PowerTrainType)
 		})
 	}
 }
 
-func TestSetCANProtocol(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
+func (s *DeviceConfigControllerTestSuite) TestSetCANProtocol() {
 
-	mockDeviceDefSvc := mock_services.NewMockDeviceDefinitionsService(mockCtrl)
-	mockUserDeviceSvc := mock_services.NewMockUserDeviceService(mockCtrl)
-
-	logger := zerolog.New(os.Stdout)
-
-	pdb, container := test.StartContainerDatabase(context.Background(), t, migrationsDirRelPath)
-	defer func() {
-		if err := container.Terminate(context.Background()); err != nil {
-			t.Fatal(err)
-		}
-	}()
-
-	c := NewDeviceConfigController(
-		&config.Settings{Port: "3000"},
-		&logger,
-		pdb.DBS().Reader.DB,
-		mockUserDeviceSvc,
-		mockDeviceDefSvc,
-	)
-
-	// Define test cases
 	testCases := []struct {
 		name        string
 		initialCAN  string
@@ -723,60 +488,32 @@ func TestSetCANProtocol(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
+		s.Run(tc.name, func() {
 			ud := &pb.UserDevice{CANProtocol: tc.initialCAN}
-
-			// Act
-			c.setCANProtocol(ud)
-
-			// Assert
-			assert.Equal(t, tc.expectedCAN, ud.CANProtocol)
+			s.controller.setCANProtocol(ud)
+			assert.Equal(s.T(), tc.expectedCAN, ud.CANProtocol)
 		})
 	}
 }
 
-func TestSelectAndFetchTemplate_DeviceDefinitions(t *testing.T) {
-	// Arrange
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
+func (s *DeviceConfigControllerTestSuite) TestSelectAndFetchTemplate_DeviceDefinitions() {
 
-	logger := zerolog.New(os.Stdout).With().
-		Timestamp().
-		Str("app", "vehicle-signal-decoding").
-		Logger()
-
-	ctx := context.Background()
-
-	pdb, container := test.StartContainerDatabase(ctx, t, migrationsDirRelPath)
-	defer func() {
-		if err := container.Terminate(ctx); err != nil {
-			t.Fatal(err)
-		}
-	}()
-
-	mockUserDeviceSvc := mock_services.NewMockUserDeviceService(mockCtrl)
-	mockDeviceDefSvc := mock_services.NewMockDeviceDefinitionsService(mockCtrl)
-	c := NewDeviceConfigController(&config.Settings{Port: "3000"}, &logger, pdb.DBS().Reader.DB, mockUserDeviceSvc, mockDeviceDefSvc)
-
-	// Insert template into the database
 	template := &models.Template{
 		TemplateName: "some-template",
 		Version:      "1.0",
 		Protocol:     models.CanProtocolTypeCAN29_500,
 		Powertrain:   "HEV",
 	}
-	err := template.Insert(ctx, pdb.DBS().Writer, boil.Infer())
-	require.NoError(t, err)
+	err := template.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
 
-	// Insert a matching template device definition
 	deviceDef := &models.TemplateDeviceDefinition{
 		DeviceDefinitionID: "device-def-id",
 		TemplateName:       template.TemplateName,
 	}
-	err = deviceDef.Insert(ctx, pdb.DBS().Writer, boil.Infer())
-	require.NoError(t, err)
+	err = deviceDef.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
 
-	// Create a mocked user device
 	mockedUserDevice := &pb.UserDevice{
 		Id:                 ksuid.New().String(),
 		UserId:             ksuid.New().String(),
@@ -789,39 +526,14 @@ func TestSelectAndFetchTemplate_DeviceDefinitions(t *testing.T) {
 	vehicleModel := "Mustang"
 	vehicleYear := 2021
 
-	// Act
-	fetchedTemplate, err := c.selectAndFetchTemplate(ctx, mockedUserDevice, vehicleMake, vehicleModel, vehicleYear)
+	fetchedTemplate, err := s.controller.selectAndFetchTemplate(s.ctx, mockedUserDevice, vehicleMake, vehicleModel, vehicleYear)
 
-	// Assert
-	require.NoError(t, err)
-	assert.NotNil(t, fetchedTemplate)
-	assert.Equal(t, template.TemplateName, fetchedTemplate.TemplateName)
-
-	test.TruncateTables(pdb.DBS().Writer.DB, t)
+	require.NoError(s.T(), err)
+	assert.NotNil(s.T(), fetchedTemplate)
+	assert.Equal(s.T(), template.TemplateName, fetchedTemplate.TemplateName)
 }
 
-func TestSelectAndFetchTemplate_MMY(t *testing.T) {
-	// Arrange
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	logger := zerolog.New(os.Stdout).With().
-		Timestamp().
-		Str("app", "vehicle-signal-decoding").
-		Logger()
-
-	ctx := context.Background()
-
-	pdb, container := test.StartContainerDatabase(ctx, t, migrationsDirRelPath)
-	defer func() {
-		if err := container.Terminate(ctx); err != nil {
-			t.Fatal(err)
-		}
-	}()
-
-	mockUserDeviceSvc := mock_services.NewMockUserDeviceService(mockCtrl)
-	mockDeviceDefSvc := mock_services.NewMockDeviceDefinitionsService(mockCtrl)
-	c := NewDeviceConfigController(&config.Settings{Port: "3000"}, &logger, pdb.DBS().Reader.DB, mockUserDeviceSvc, mockDeviceDefSvc)
+func (s *DeviceConfigControllerTestSuite) TestSelectAndFetchTemplate_MMY() {
 
 	decoy := &models.Template{
 		TemplateName: "mmy-template-decoy",
@@ -829,19 +541,18 @@ func TestSelectAndFetchTemplate_MMY(t *testing.T) {
 		Protocol:     models.CanProtocolTypeCAN29_500,
 		Powertrain:   "HEV",
 	}
-	err := decoy.Insert(ctx, pdb.DBS().Writer, boil.Infer())
-	require.NoError(t, err)
-	// Insert template into the database
+	err := decoy.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
+
 	template := &models.Template{
 		TemplateName: "mmy-template",
 		Version:      "1.0",
 		Protocol:     models.CanProtocolTypeCAN29_500,
 		Powertrain:   "HEV",
 	}
-	err = template.Insert(ctx, pdb.DBS().Writer, boil.Infer())
-	require.NoError(t, err)
+	err = template.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
 
-	// Insert a template vehicle that matches the MMY
 	templateVehicle := &models.TemplateVehicle{
 		TemplateName:   template.TemplateName,
 		MakeSlug:       null.StringFrom("Ford"),
@@ -849,10 +560,9 @@ func TestSelectAndFetchTemplate_MMY(t *testing.T) {
 		YearStart:      2010,
 		YearEnd:        2025,
 	}
-	err = templateVehicle.Insert(ctx, pdb.DBS().Writer, boil.Infer())
-	require.NoError(t, err)
+	err = templateVehicle.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
 
-	// Create a mocked user device without a matching device definition
 	mockedUserDevice := &pb.UserDevice{
 		Id:                 ksuid.New().String(),
 		UserId:             ksuid.New().String(),
@@ -865,69 +575,41 @@ func TestSelectAndFetchTemplate_MMY(t *testing.T) {
 	vehicleModel := "Mustang"
 	vehicleYear := 2021
 
-	// Act
-	fetchedTemplate, err := c.selectAndFetchTemplate(ctx, mockedUserDevice, vehicleMake, vehicleModel, vehicleYear)
+	fetchedTemplate, err := s.controller.selectAndFetchTemplate(s.ctx, mockedUserDevice, vehicleMake, vehicleModel, vehicleYear)
 
-	// Assert
-	require.NoError(t, err)
-	assert.NotNil(t, fetchedTemplate)
-	assert.Equal(t, template.TemplateName, fetchedTemplate.TemplateName)
-
-	test.TruncateTables(pdb.DBS().Writer.DB, t)
+	require.NoError(s.T(), err)
+	assert.NotNil(s.T(), fetchedTemplate)
+	assert.Equal(s.T(), template.TemplateName, fetchedTemplate.TemplateName)
 }
 
-func TestSelectAndFetchTemplate_YearRange(t *testing.T) {
-	// Arrange
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
+func (s *DeviceConfigControllerTestSuite) TestSelectAndFetchTemplate_YearRange() {
 
-	logger := zerolog.New(os.Stdout).With().
-		Timestamp().
-		Str("app", "vehicle-signal-decoding").
-		Logger()
-
-	ctx := context.Background()
-
-	pdb, container := test.StartContainerDatabase(ctx, t, migrationsDirRelPath)
-	defer func() {
-		if err := container.Terminate(ctx); err != nil {
-			t.Fatal(err)
-		}
-	}()
-
-	mockUserDeviceSvc := mock_services.NewMockUserDeviceService(mockCtrl)
-	mockDeviceDefSvc := mock_services.NewMockDeviceDefinitionsService(mockCtrl)
-	c := NewDeviceConfigController(&config.Settings{Port: "3000"}, &logger, pdb.DBS().Reader.DB, mockUserDeviceSvc, mockDeviceDefSvc)
-	// insert another template to have more test data - we should not get this one
 	template2 := &models.Template{
 		TemplateName: "default-template",
 		Version:      "1.0",
 		Protocol:     models.CanProtocolTypeCAN11_500,
 		Powertrain:   "ICE",
 	}
-	err := template2.Insert(ctx, pdb.DBS().Writer, boil.Infer())
-	require.NoError(t, err)
+	err := template2.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
 
-	// Insert template we expect to get
 	template := &models.Template{
 		TemplateName: "2019plus-template",
 		Version:      "1.0",
 		Protocol:     models.CanProtocolTypeCAN11_500,
 		Powertrain:   "ICE",
 	}
-	err = template.Insert(ctx, pdb.DBS().Writer, boil.Infer())
-	require.NoError(t, err)
+	err = template.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
 
-	// Insert a template vehicle that matches the year range
 	templateVehicle := &models.TemplateVehicle{
 		TemplateName: template.TemplateName,
 		YearStart:    2019,
 		YearEnd:      2025,
 	}
-	err = templateVehicle.Insert(ctx, pdb.DBS().Writer, boil.Infer())
-	require.NoError(t, err)
+	err = templateVehicle.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
 
-	// Create a mocked user device without a matching device definition
 	mockedUserDevice := &pb.UserDevice{
 		Id:                 ksuid.New().String(),
 		UserId:             ksuid.New().String(),
@@ -940,39 +622,14 @@ func TestSelectAndFetchTemplate_YearRange(t *testing.T) {
 	vehicleModel := "Mustang"
 	vehicleYear := 2019
 
-	// Act
-	fetchedTemplate, err := c.selectAndFetchTemplate(ctx, mockedUserDevice, vehicleMake, vehicleModel, vehicleYear)
+	fetchedTemplate, err := s.controller.selectAndFetchTemplate(s.ctx, mockedUserDevice, vehicleMake, vehicleModel, vehicleYear)
 
-	// Assert
-	require.NoError(t, err)
-	assert.NotNil(t, fetchedTemplate)
-	assert.Equal(t, template.TemplateName, fetchedTemplate.TemplateName)
-
-	test.TruncateTables(pdb.DBS().Writer.DB, t)
+	require.NoError(s.T(), err)
+	assert.NotNil(s.T(), fetchedTemplate)
+	assert.Equal(s.T(), template.TemplateName, fetchedTemplate.TemplateName)
 }
 
-func TestSelectAndFetchTemplate_PowertrainProtocol(t *testing.T) {
-	// Arrange
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	logger := zerolog.New(os.Stdout).With().
-		Timestamp().
-		Str("app", "vehicle-signal-decoding").
-		Logger()
-
-	ctx := context.Background()
-
-	pdb, container := test.StartContainerDatabase(ctx, t, migrationsDirRelPath)
-	defer func() {
-		if err := container.Terminate(ctx); err != nil {
-			t.Fatal(err)
-		}
-	}()
-
-	mockUserDeviceSvc := mock_services.NewMockUserDeviceService(mockCtrl)
-	mockDeviceDefSvc := mock_services.NewMockDeviceDefinitionsService(mockCtrl)
-	c := NewDeviceConfigController(&config.Settings{Port: "3000"}, &logger, pdb.DBS().Reader.DB, mockUserDeviceSvc, mockDeviceDefSvc)
+func (s *DeviceConfigControllerTestSuite) TestSelectAndFetchTemplate_PowertrainProtocol() {
 
 	decoy := &models.Template{
 		TemplateName: "protocol-powertrain-template-decoy",
@@ -980,19 +637,18 @@ func TestSelectAndFetchTemplate_PowertrainProtocol(t *testing.T) {
 		Protocol:     models.CanProtocolTypeCAN29_500,
 		Powertrain:   "PHEV",
 	}
-	err := decoy.Insert(ctx, pdb.DBS().Writer, boil.Infer())
-	require.NoError(t, err)
-	// Insert template into the database
+	err := decoy.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
+
 	template := &models.Template{
 		TemplateName: "protocol-powertrain-template",
 		Version:      "1.0",
 		Protocol:     models.CanProtocolTypeCAN29_500,
 		Powertrain:   "HEV",
 	}
-	err = template.Insert(ctx, pdb.DBS().Writer, boil.Infer())
-	require.NoError(t, err)
+	err = template.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
 
-	// Create a mocked user device
 	mockedUserDevice := &pb.UserDevice{
 		Id:                 ksuid.New().String(),
 		UserId:             ksuid.New().String(),
@@ -1005,61 +661,33 @@ func TestSelectAndFetchTemplate_PowertrainProtocol(t *testing.T) {
 	vehicleModel := "Mustang"
 	vehicleYear := 2021
 
-	// Act
-	fetchedTemplate, err := c.selectAndFetchTemplate(ctx, mockedUserDevice, vehicleMake, vehicleModel, vehicleYear)
+	fetchedTemplate, err := s.controller.selectAndFetchTemplate(s.ctx, mockedUserDevice, vehicleMake, vehicleModel, vehicleYear)
 
-	// Assert
-	require.NoError(t, err)
-	assert.NotNil(t, fetchedTemplate)
-	assert.Equal(t, template.TemplateName, fetchedTemplate.TemplateName)
-
-	// Teardown
-	test.TruncateTables(pdb.DBS().Writer.DB, t)
+	require.NoError(s.T(), err)
+	assert.NotNil(s.T(), fetchedTemplate)
+	assert.Equal(s.T(), template.TemplateName, fetchedTemplate.TemplateName)
 }
 
-func TestSelectAndFetchTemplate_Default(t *testing.T) {
-	// Arrange
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
+func (s *DeviceConfigControllerTestSuite) TestSelectAndFetchTemplate_Default() {
 
-	logger := zerolog.New(os.Stdout).With().
-		Timestamp().
-		Str("app", "vehicle-signal-decoding").
-		Logger()
-
-	ctx := context.Background()
-
-	pdb, container := test.StartContainerDatabase(ctx, t, migrationsDirRelPath)
-	defer func() {
-		if err := container.Terminate(ctx); err != nil {
-			t.Fatal(err)
-		}
-	}()
-
-	mockUserDeviceSvc := mock_services.NewMockUserDeviceService(mockCtrl)
-	mockDeviceDefSvc := mock_services.NewMockDeviceDefinitionsService(mockCtrl)
-	c := NewDeviceConfigController(&config.Settings{Port: "3000"}, &logger, pdb.DBS().Reader.DB, mockUserDeviceSvc, mockDeviceDefSvc)
-
-	// decoy
 	nonDefaultTmpl := &models.Template{
 		TemplateName: "some-template-special",
 		Version:      "1.0",
 		Protocol:     "CAN11_500",
 		Powertrain:   "ICE",
 	}
-	err := nonDefaultTmpl.Insert(ctx, pdb.DBS().Writer, boil.Infer())
-	require.NoError(t, err)
-	// Insert a default template into the database
+	err := nonDefaultTmpl.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
+
 	defaultTemplate := &models.Template{
 		TemplateName: "default-some-template",
 		Version:      "1.0",
 		Protocol:     "CAN11_500",
 		Powertrain:   "ICE",
 	}
-	err = defaultTemplate.Insert(ctx, pdb.DBS().Writer, boil.Infer())
-	require.NoError(t, err)
+	err = defaultTemplate.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
 
-	// Create a mocked user device that does not match any existing definitions, vehicles, or powertrain/protocol
 	mockedUserDevice := &pb.UserDevice{
 		Id:                 ksuid.New().String(),
 		UserId:             ksuid.New().String(),
@@ -1072,15 +700,11 @@ func TestSelectAndFetchTemplate_Default(t *testing.T) {
 	vehicleModel := "NonExistingModel"
 	vehicleYear := 2010
 
-	// Act
-	fetchedTemplate, err := c.selectAndFetchTemplate(ctx, mockedUserDevice, vehicleMake, vehicleModel, vehicleYear)
+	fetchedTemplate, err := s.controller.selectAndFetchTemplate(s.ctx, mockedUserDevice, vehicleMake, vehicleModel, vehicleYear)
 
-	// Assert
-	require.NoError(t, err)
-	assert.NotNil(t, fetchedTemplate)
-	assert.Equal(t, defaultTemplate.TemplateName, fetchedTemplate.TemplateName)
-
-	test.TruncateTables(pdb.DBS().Writer.DB, t)
+	require.NoError(s.T(), err)
+	assert.NotNil(s.T(), fetchedTemplate)
+	assert.Equal(s.T(), defaultTemplate.TemplateName, fetchedTemplate.TemplateName)
 }
 
 func Test_modelMatch(t *testing.T) {
