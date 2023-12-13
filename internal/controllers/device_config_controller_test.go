@@ -63,7 +63,7 @@ func (s *DeviceConfigControllerTestSuite) SetupSuite() {
 	s.mockCtrl = gomock.NewController(s.T())
 	s.mockUserDeviceSvc = mock_services.NewMockUserDeviceService(s.mockCtrl)
 	s.mockDeviceDefSvc = mock_services.NewMockDeviceDefinitionsService(s.mockCtrl)
-	ctrl := NewDeviceConfigController(&config.Settings{Port: "3000"}, s.logger, s.pdb.DBS().Reader.DB, s.mockUserDeviceSvc, s.mockDeviceDefSvc)
+	ctrl := NewDeviceConfigController(&config.Settings{Port: "3000", DeploymentURL: "http://localhost:3000"}, s.logger, s.pdb.DBS().Reader.DB, s.mockUserDeviceSvc, s.mockDeviceDefSvc)
 	s.controller = &ctrl
 	s.app = fiber.New()
 }
@@ -238,7 +238,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_EmptyDBC() {
 	s.mockDeviceDefSvc.EXPECT().GetDeviceDefinitionByID(gomock.Any(), gomock.Any()).Return(mockedDeviceDefinition, nil)
 
 	template := &models.Template{
-		TemplateName: "some-template",
+		TemplateName: "some-template-emptydbc",
 		Version:      "1.0",
 		Protocol:     models.CanProtocolTypeCAN29_500,
 		Powertrain:   "HEV",
@@ -355,7 +355,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_ProtocolOverrideQS()
 	require.NoError(s.T(), err)
 
 	template := &models.Template{
-		TemplateName: "some-template",
+		TemplateName: "some-template-protocol-override",
 		Version:      "1.0",
 		Protocol:     models.CanProtocolTypeCAN29_500,
 		Powertrain:   "HEV",
