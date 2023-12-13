@@ -407,6 +407,69 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_ProtocolOverrideQS()
 
 }
 
+func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_FallbackLogic() {
+
+	vin := "TMBEK6NW1N3088739"
+
+	parentTemplate := &models.Template{
+		TemplateName: "parent-template",
+		Version:      "1.0",
+		Protocol:     models.CanProtocolTypeCAN11_500,
+		Powertrain:   "EV",
+	}
+	err := parentTemplate.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
+
+	parentDS := &models.DeviceSetting{
+		Name:         "parent-settings",
+		Powertrain:   "EV",
+		TemplateName: null.NewString(parentTemplate.TemplateName, true),
+	}
+	err = parentDS.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
+
+	// matched template without device settings but has a parent template
+	matchedTemplate := &models.Template{
+		TemplateName:       "matched-template",
+		Version:            "1.0",
+		Protocol:           models.CanProtocolTypeCAN29_500,
+		Powertrain:         "EV",
+		ParentTemplateName: null.NewString(parentTemplate.TemplateName, true),
+	}
+	err = matchedTemplate.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
+
+	mockedDeviceDefinition := &p_grpc.GetDeviceDefinitionItemResponse{
+		DeviceDefinitionId: ksuid.New().String(),
+		Type: &p_grpc.DeviceType{
+			Year:      2020,
+			MakeSlug:  "Ford",
+			ModelSlug: "Mustang",
+		},
+		DeviceAttributes: []*p_grpc.DeviceTypeAttribute{{
+			Name:  "powertrain_type",
+			Value: "HEV",
+		}},
+	}
+	s.mockDeviceDefSvc.EXPECT().GetDeviceDefinitionByID(gomock.Any(), gomock.Any()).Return(mockedDeviceDefinition, nil)
+	s.mockUserDeviceSvc.EXPECT().GetUserDeviceByVIN(gomock.Any(), vin).Return(nil, errors.New("user device not found"))
+	s.mockDeviceDefSvc.EXPECT().DecodeVIN(gomock.Any(), vin).Return(&p_grpc.DecodeVinResponse{DeviceDefinitionId: mockedDeviceDefinition.DeviceDefinitionId}, nil)
+
+	s.app.Get("/config-urls/:vin", s.controller.GetConfigURLsFromVIN)
+
+	request := test.BuildRequest("GET", "/config-urls/"+vin+"?protocol=7", "")
+	response, err := s.app.Test(request, -1)
+	require.NoError(s.T(), err)
+
+	body, _ := io.ReadAll(response.Body)
+
+	var receivedResp DeviceConfigResponse
+	err = json.Unmarshal(body, &receivedResp)
+	assert.NoError(s.T(), err)
+	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/%s/device-settings", parentDS.Name), receivedResp.DeviceSettingURL)
+	assert.Equal(s.T(), matchedTemplate.Version, receivedResp.Version)
+}
+
 func (s *DeviceConfigControllerTestSuite) TestRetrieveAndSetVehicleInfo() {
 
 	ud := &pb.UserDevice{
