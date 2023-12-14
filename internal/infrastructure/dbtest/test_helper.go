@@ -3,6 +3,7 @@ package dbtest
 import (
 	"context"
 	"database/sql"
+	"github.com/lib/pq"
 	"net/http"
 	"strings"
 
@@ -135,10 +136,11 @@ func handleContainerStartErr(ctx context.Context, err error, container testconta
 }
 
 // TruncateTables truncates tables for the test db, useful to run as teardown at end of each DB dependent test.
-func TruncateTables(db *sql.DB, t *testing.T) {
-	_, err := db.Exec(`SELECT truncate_tables();`)
+func TruncateTables(db *sql.DB, dbName string, t *testing.T) {
+	query := fmt.Sprintf(`SELECT %s.truncate_tables();`, pq.QuoteIdentifier(dbName))
+	_, err := db.Exec(query)
 	if err != nil {
-		fmt.Println("truncating tables failed.")
+		fmt.Printf("Error truncating tables in schema '%s': %s\n", dbName, err)
 		t.Fatal(err)
 	}
 }

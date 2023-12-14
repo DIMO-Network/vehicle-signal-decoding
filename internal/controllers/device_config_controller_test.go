@@ -76,7 +76,7 @@ func (s *DeviceConfigControllerTestSuite) TearDownSuite() {
 }
 
 func (s *DeviceConfigControllerTestSuite) TearDownTest() {
-	dbtest.TruncateTables(s.pdb.DBS().Writer.DB, s.T())
+	dbtest.TruncateTables(s.pdb.DBS().Writer.DB, "vehicle_signal_decoding", s.T())
 }
 
 func TestDeviceConfigControllerTestSuite(t *testing.T) {
