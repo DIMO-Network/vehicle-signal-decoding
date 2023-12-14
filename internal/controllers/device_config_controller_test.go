@@ -32,7 +32,7 @@ import (
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
 	mock_services "github.com/DIMO-Network/vehicle-signal-decoding/internal/core/services/mocks"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
-	"github.com/DIMO-Network/vehicle-signal-decoding/internal/test"
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/dbtest"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
@@ -57,7 +57,7 @@ type DeviceConfigControllerTestSuite struct {
 
 func (s *DeviceConfigControllerTestSuite) SetupSuite() {
 	s.ctx = context.Background()
-	s.pdb, s.container = test.StartContainerDatabase(s.ctx, s.T(), migrationsDirRelPath)
+	s.pdb, s.container = dbtest.StartContainerDatabase(s.ctx, "vehicle_signal_decoding", s.T(), migrationsDirRelPath)
 	logger := zerolog.New(os.Stdout).With().Timestamp().Logger()
 	s.logger = &logger
 	s.mockCtrl = gomock.NewController(s.T())
@@ -76,7 +76,7 @@ func (s *DeviceConfigControllerTestSuite) TearDownSuite() {
 }
 
 func (s *DeviceConfigControllerTestSuite) TearDownTest() {
-	test.TruncateTables(s.pdb.DBS().Writer.DB, s.T())
+	dbtest.TruncateTables(s.pdb.DBS().Writer.DB, s.T())
 }
 
 func TestDeviceConfigControllerTestSuite(t *testing.T) {
@@ -112,7 +112,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetPIDsByTemplate() {
 
 	s.app.Get("/device-config/:templateName/pids", s.controller.GetPIDsByTemplate)
 
-	request := test.BuildRequest("GET", "/device-config/"+template.TemplateName+"/pids", "")
+	request := dbtest.BuildRequest("GET", "/device-config/"+template.TemplateName+"/pids", "")
 	response, err := s.app.Test(request)
 	s.Require().NoError(err)
 
@@ -156,7 +156,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetDeviceSettingsByName() {
 
 	s.app.Get("/device-config/:name/settings", s.controller.GetDeviceSettingsByName)
 
-	request := test.BuildRequest("GET", "/device-config/"+name+"/settings", "")
+	request := dbtest.BuildRequest("GET", "/device-config/"+name+"/settings", "")
 	response, _ := s.app.Test(request)
 
 	assert.Equal(s.T(), fiber.StatusOK, response.StatusCode)
@@ -196,7 +196,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetDBCFileByTemplateName() {
 
 	s.app.Get("/device-config/:templateName/dbc-file", s.controller.GetDBCFileByTemplateName)
 
-	request := test.BuildRequest("GET", "/device-config/"+template.TemplateName+"/dbc-file", "")
+	request := dbtest.BuildRequest("GET", "/device-config/"+template.TemplateName+"/dbc-file", "")
 	response, err := s.app.Test(request)
 	require.NoError(s.T(), err)
 
@@ -264,7 +264,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_EmptyDBC() {
 
 	s.app.Get("/config-urls/:vin", s.controller.GetConfigURLsFromVIN)
 
-	request := test.BuildRequest("GET", "/config-urls/"+vin, "")
+	request := dbtest.BuildRequest("GET", "/config-urls/"+vin, "")
 	response, err := s.app.Test(request)
 	require.NoError(s.T(), err)
 
@@ -324,7 +324,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_DecodeVIN() {
 
 	s.app.Get("/config-urls/:vin", s.controller.GetConfigURLsFromVIN)
 
-	request := test.BuildRequest("GET", "/config-urls/"+vin, "")
+	request := dbtest.BuildRequest("GET", "/config-urls/"+vin, "")
 	response, err := s.app.Test(request)
 	require.NoError(s.T(), err)
 
@@ -389,7 +389,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_ProtocolOverrideQS()
 
 	s.app.Get("/config-urls/:vin", s.controller.GetConfigURLsFromVIN)
 
-	request := test.BuildRequest("GET", "/config-urls/"+vin+"?protocol=7", "")
+	request := dbtest.BuildRequest("GET", "/config-urls/"+vin+"?protocol=7", "")
 	response, err := s.app.Test(request, -1)
 	require.NoError(s.T(), err)
 
@@ -457,7 +457,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_FallbackLogic() {
 
 	s.app.Get("/config-urls/:vin", s.controller.GetConfigURLsFromVIN)
 
-	request := test.BuildRequest("GET", "/config-urls/"+vin+"?protocol=7", "")
+	request := dbtest.BuildRequest("GET", "/config-urls/"+vin+"?protocol=7", "")
 	response, err := s.app.Test(request, -1)
 	require.NoError(s.T(), err)
 

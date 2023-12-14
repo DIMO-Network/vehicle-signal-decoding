@@ -3,6 +3,8 @@ package dbtest
 import (
 	"context"
 	"database/sql"
+	"net/http"
+	"strings"
 
 	_ "embed" //nolint
 
@@ -108,6 +110,17 @@ func getTestDbSettings(dbName string) config.Settings {
 		ServiceName: "vehicle-signal-decoding",
 	}
 	return settings
+}
+
+func BuildRequest(method, url, body string) *http.Request {
+	req, _ := http.NewRequest(
+		method,
+		url,
+		strings.NewReader(body),
+	)
+	req.Header.Set("Content-Type", "application/json")
+
+	return req
 }
 
 func handleContainerStartErr(ctx context.Context, err error, container testcontainers.Container, t *testing.T) (db.Store, testcontainers.Container) {
