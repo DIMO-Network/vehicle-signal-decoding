@@ -40,8 +40,6 @@ import (
 
 const migrationsDirRelPath = "../infrastructure/db/migrations"
 
-// todo: migrate to TestSuite approach for tests that re-use same setup
-
 type DeviceConfigControllerTestSuite struct {
 	suite.Suite
 	ctx               context.Context
@@ -55,9 +53,11 @@ type DeviceConfigControllerTestSuite struct {
 	app               *fiber.App
 }
 
+const dbSchemaName = "vehicle_signal_decoding"
+
 func (s *DeviceConfigControllerTestSuite) SetupSuite() {
 	s.ctx = context.Background()
-	s.pdb, s.container = dbtest.StartContainerDatabase(s.ctx, "vehicle_signal_decoding", s.T(), migrationsDirRelPath)
+	s.pdb, s.container = dbtest.StartContainerDatabase(s.ctx, dbSchemaName, s.T(), migrationsDirRelPath)
 	logger := zerolog.New(os.Stdout).With().Timestamp().Logger()
 	s.logger = &logger
 	s.mockCtrl = gomock.NewController(s.T())
@@ -76,7 +76,7 @@ func (s *DeviceConfigControllerTestSuite) TearDownSuite() {
 }
 
 func (s *DeviceConfigControllerTestSuite) TearDownTest() {
-	dbtest.TruncateTables(s.pdb.DBS().Writer.DB, "vehicle_signal_decoding", s.T())
+	dbtest.TruncateTables(s.pdb.DBS().Writer.DB, dbSchemaName, s.T())
 }
 
 func TestDeviceConfigControllerTestSuite(t *testing.T) {
@@ -255,7 +255,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_EmptyDBC() {
 	require.NoError(s.T(), err)
 
 	ds := &models.DeviceSetting{
-		Name:         "default-hev",
+		Name:         "default-hev-emptydbc",
 		Powertrain:   "HEV",
 		TemplateName: null.NewString(template.TemplateName, true),
 	}
@@ -364,7 +364,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_ProtocolOverrideQS()
 	require.NoError(s.T(), err)
 
 	ds := &models.DeviceSetting{
-		Name:         "default-hev",
+		Name:         "default-hev-protocol-override",
 		Powertrain:   "HEV",
 		TemplateName: null.NewString(template.TemplateName, template.TemplateName != ""),
 	}
@@ -415,14 +415,14 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_FallbackLogic() {
 		TemplateName: "parent-template",
 		Version:      "1.0",
 		Protocol:     models.CanProtocolTypeCAN11_500,
-		Powertrain:   "EV",
+		Powertrain:   "BEV",
 	}
 	err := parentTemplate.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
 	require.NoError(s.T(), err)
 
 	parentDS := &models.DeviceSetting{
-		Name:         "parent-settings",
-		Powertrain:   "EV",
+		Name:         "parent-settings-fallback",
+		Powertrain:   "BEV",
 		TemplateName: null.NewString(parentTemplate.TemplateName, true),
 	}
 	err = parentDS.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
@@ -433,7 +433,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_FallbackLogic() {
 		TemplateName:       "matched-template",
 		Version:            "1.0",
 		Protocol:           models.CanProtocolTypeCAN29_500,
-		Powertrain:         "EV",
+		Powertrain:         "BEV",
 		ParentTemplateName: null.NewString(parentTemplate.TemplateName, true),
 	}
 	err = matchedTemplate.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
