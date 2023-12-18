@@ -439,6 +439,13 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_FallbackLogic() {
 	err = parentDS.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
 	require.NoError(s.T(), err)
 
+	decoyDS := &models.DeviceSetting{
+		Name:       "decoy-device-settings",
+		Powertrain: "BEV",
+	}
+	err = decoyDS.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
+
 	// matched template without device settings but has a parent template
 	matchedTemplate := &models.Template{
 		TemplateName:       "matched-template",
@@ -459,7 +466,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_FallbackLogic() {
 		},
 		DeviceAttributes: []*p_grpc.DeviceTypeAttribute{{
 			Name:  "powertrain_type",
-			Value: "HEV",
+			Value: "BEV",
 		}},
 	}
 	s.mockDeviceDefSvc.EXPECT().GetDeviceDefinitionByID(gomock.Any(), gomock.Any()).Return(mockedDeviceDefinition, nil)
@@ -469,7 +476,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_FallbackLogic() {
 	s.app.Get("/config-urls/:vin", s.controller.GetConfigURLsFromVIN)
 
 	request := dbtest.BuildRequest("GET", "/config-urls/"+vin+"?protocol=7", "")
-	response, err := s.app.Test(request, -1)
+	response, err := s.app.Test(request)
 	require.NoError(s.T(), err)
 
 	body, _ := io.ReadAll(response.Body)

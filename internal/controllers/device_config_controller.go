@@ -524,7 +524,6 @@ func (d *DeviceConfigController) getConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) 
 	if len(matchedTemplate.R.TemplateNameDeviceSettings) > 0 {
 		response.DeviceSettingURL = fmt.Sprintf("%s/v1/device-config/%s/device-settings", baseURL, matchedTemplate.R.TemplateNameDeviceSettings[0].Name)
 	} else {
-		// todo2 - this block does not have test coverage
 		var deviceSetting *models.DeviceSetting
 		var dbErr error
 		if matchedTemplate.ParentTemplateName.Valid {
