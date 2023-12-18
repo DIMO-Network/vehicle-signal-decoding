@@ -68,6 +68,10 @@ func (s *DeviceConfigControllerTestSuite) SetupSuite() {
 	s.app = fiber.New()
 }
 
+func (s *DeviceConfigControllerTestSuite) SetupTest() {
+	dbtest.TruncateTables(s.pdb.DBS().Writer.DB, dbSchemaName, s.T())
+}
+
 func (s *DeviceConfigControllerTestSuite) TearDownSuite() {
 	if err := s.container.Terminate(s.ctx); err != nil {
 		s.T().Fatal(err)
@@ -77,6 +81,13 @@ func (s *DeviceConfigControllerTestSuite) TearDownSuite() {
 
 func (s *DeviceConfigControllerTestSuite) TearDownTest() {
 	dbtest.TruncateTables(s.pdb.DBS().Writer.DB, dbSchemaName, s.T())
+	temps, err := models.Templates().All(context.Background(), s.pdb.DBS().Writer)
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
+	for _, temp := range temps {
+		fmt.Printf("template: %+v\n", temp)
+	}
 }
 
 func TestDeviceConfigControllerTestSuite(t *testing.T) {
