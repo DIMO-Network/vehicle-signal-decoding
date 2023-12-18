@@ -3,6 +3,8 @@ package dbtest
 import (
 	"context"
 	"database/sql"
+	"net/http"
+	"strings"
 
 	_ "embed" //nolint
 
@@ -68,7 +70,7 @@ func StartContainerDatabase(ctx context.Context, dbName string, t *testing.T, mi
 	logger.Info().Msgf("set default search_path for user postgres to %s", dbName)
 	// add truncate tables func
 	_, err = pdb.DBS().Writer.Exec(fmt.Sprintf(`
-CREATE OR REPLACE FUNCTION truncate_tables() RETURNS void AS $$
+CREATE OR REPLACE FUNCTION %s.truncate_tables() RETURNS void AS $$
 DECLARE
     statements CURSOR FOR
         SELECT tablename FROM pg_tables
@@ -79,7 +81,7 @@ BEGIN
     END LOOP;
 END;
 $$ LANGUAGE plpgsql;
-`, dbName))
+`, dbName, dbName))
 	if err != nil {
 		return handleContainerStartErr(ctx, errors.Wrap(err, "failed to create truncate func"), pgContainer, t)
 	}
@@ -110,6 +112,17 @@ func getTestDbSettings(dbName string) config.Settings {
 	return settings
 }
 
+func BuildRequest(method, url, body string) *http.Request {
+	req, _ := http.NewRequest(
+		method,
+		url,
+		strings.NewReader(body),
+	)
+	req.Header.Set("Content-Type", "application/json")
+
+	return req
+}
+
 func handleContainerStartErr(ctx context.Context, err error, container testcontainers.Container, t *testing.T) (db.Store, testcontainers.Container) {
 	if err != nil {
 		fmt.Println("start container error: " + err.Error())
@@ -122,12 +135,51 @@ func handleContainerStartErr(ctx context.Context, err error, container testconta
 }
 
 // TruncateTables truncates tables for the test db, useful to run as teardown at end of each DB dependent test.
-func TruncateTables(db *sql.DB, t *testing.T) {
-	_, err := db.Exec(`SELECT truncate_tables();`)
+func TruncateTables(db *sql.DB, dbName string, t *testing.T) {
+	query := fmt.Sprintf(`SELECT %s.truncate_tables();`, dbName)
+	_, err := db.Exec(query)
 	if err != nil {
-		fmt.Println("truncating tables failed.")
+		fmt.Printf("Error truncating tables in schema '%s': %s\n", dbName, err)
 		t.Fatal(err)
 	}
+	// TruncateTables not working, manually deleting for now
+
+	deleteDeviceSettingsQuery := `DELETE FROM device_settings CASCADE;`
+	_, err = db.Exec(deleteDeviceSettingsQuery)
+	if err != nil {
+		fmt.Println("error:", err)
+	}
+
+	deleteTemplateVehiclesQuery := `DELETE FROM template_vehicles CASCADE;`
+	_, err = db.Exec(deleteTemplateVehiclesQuery)
+	if err != nil {
+		fmt.Println("error:", err)
+	}
+
+	deleteDBCFilesQuery := `DELETE FROM dbc_files CASCADE;`
+	_, err = db.Exec(deleteDBCFilesQuery)
+	if err != nil {
+		fmt.Println("error:", err)
+	}
+
+	deletePidConfigsQuery := `DELETE FROM pid_configs CASCADE;`
+	_, err = db.Exec(deletePidConfigsQuery)
+	if err != nil {
+		fmt.Println("error:", err)
+	}
+
+	deleteTemplateDeviceDefinitionsQuery := `DELETE FROM template_device_definitions CASCADE;`
+	_, err = db.Exec(deleteTemplateDeviceDefinitionsQuery)
+	if err != nil {
+		fmt.Println("error:", err)
+	}
+
+	deleteTemplatesQuery := `DELETE FROM templates CASCADE;`
+	_, err = db.Exec(deleteTemplatesQuery)
+	if err != nil {
+		fmt.Println("error:", err)
+	}
+
 }
 
 func Logger() *zerolog.Logger {

@@ -53,7 +53,7 @@ func (s *RunTestSignalTestSuite) SetupTest() {
 }
 
 func (s *RunTestSignalTestSuite) TearDownTest() {
-	dbtesthelper.TruncateTables(s.pdb.DBS().Writer.DB, s.T())
+	dbtesthelper.TruncateTables(s.pdb.DBS().Writer.DB, dbName, s.T())
 	s.ctrl.Finish()
 }
 
