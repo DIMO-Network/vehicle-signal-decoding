@@ -46,8 +46,9 @@ func (h GetDeviceSettingsAllQueryHandler) Handle(ctx context.Context, _ *GetDevi
 		settingsString := string(jsonBytes)
 
 		deviceSettings := &grpc.DeviceSettings{
-			Name:     item.Name,
-			Settings: settingsString,
+			Name:       item.Name,
+			Settings:   settingsString,
+			Powertrain: item.Powertrain,
 		}
 		deviceSettingsList = append(deviceSettingsList, deviceSettings)
 	}

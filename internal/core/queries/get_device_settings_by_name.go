@@ -47,8 +47,9 @@ func (h GetDeviceSettingsByNameQueryHandler) Handle(ctx context.Context, query *
 
 	result := &grpc.GetDeviceSettingByNameResponse{
 		DeviceSettings: &grpc.DeviceSettings{
-			Name:     item.Name,
-			Settings: settingsString,
+			Name:       item.Name,
+			Settings:   settingsString,
+			Powertrain: item.Powertrain,
 		},
 	}
 
