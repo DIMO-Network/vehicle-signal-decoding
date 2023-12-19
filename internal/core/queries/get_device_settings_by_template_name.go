@@ -24,11 +24,11 @@ func NewGetDeviceSettingsByTemplateNameQueryHandler(dbs func() *db.ReaderWriter,
 	}
 }
 
-type GetDeviceSettingsByTemplateNameQueryRequest struct {
+type GetDeviceSettingsByNameQueryRequest struct {
 	Name string
 }
 
-func (h GetDeviceSettingsByTemplateNameQueryHandler) Handle(ctx context.Context, query *GetDeviceSettingsByTemplateNameQueryRequest) (*grpc.GetDeviceSettingByNameResponse, error) {
+func (h GetDeviceSettingsByTemplateNameQueryHandler) Handle(ctx context.Context, query *GetDeviceSettingsByNameQueryRequest) (*grpc.GetDeviceSettingByNameResponse, error) {
 	item, err := models.DeviceSettings(models.DeviceSettingWhere.Name.EQ(query.Name)).One(ctx, h.DBS().Reader)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

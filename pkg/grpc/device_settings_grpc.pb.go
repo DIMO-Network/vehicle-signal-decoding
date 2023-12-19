@@ -20,10 +20,10 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	DeviceSettingsService_CreateDeviceSettings_FullMethodName           = "/grpc.DeviceSettingsService/CreateDeviceSettings"
-	DeviceSettingsService_UpdateDeviceSettings_FullMethodName           = "/grpc.DeviceSettingsService/UpdateDeviceSettings"
-	DeviceSettingsService_GetDeviceSettingList_FullMethodName           = "/grpc.DeviceSettingsService/GetDeviceSettingList"
-	DeviceSettingsService_GetDeviceSettingByTemplateName_FullMethodName = "/grpc.DeviceSettingsService/GetDeviceSettingByTemplateName"
+	DeviceSettingsService_CreateDeviceSettings_FullMethodName   = "/grpc.DeviceSettingsService/CreateDeviceSettings"
+	DeviceSettingsService_UpdateDeviceSettings_FullMethodName   = "/grpc.DeviceSettingsService/UpdateDeviceSettings"
+	DeviceSettingsService_GetDeviceSettingList_FullMethodName   = "/grpc.DeviceSettingsService/GetDeviceSettingList"
+	DeviceSettingsService_GetDeviceSettingByName_FullMethodName = "/grpc.DeviceSettingsService/GetDeviceSettingByName"
 )
 
 // DeviceSettingsServiceClient is the client API for DeviceSettingsService service.
@@ -32,8 +32,8 @@ const (
 type DeviceSettingsServiceClient interface {
 	CreateDeviceSettings(ctx context.Context, in *UpdateDeviceSettingsRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	UpdateDeviceSettings(ctx context.Context, in *UpdateDeviceSettingsRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	GetDeviceSettingList(ctx context.Context, in *GetDeviceSettingListRequest, opts ...grpc.CallOption) (*GetDeviceSettingListResponse, error)
-	GetDeviceSettingByTemplateName(ctx context.Context, in *GetDeviceSettingByNameRequest, opts ...grpc.CallOption) (*GetDeviceSettingByNameResponse, error)
+	GetDeviceSettingList(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetDeviceSettingListResponse, error)
+	GetDeviceSettingByName(ctx context.Context, in *GetDeviceSettingByNameRequest, opts ...grpc.CallOption) (*GetDeviceSettingByNameResponse, error)
 }
 
 type deviceSettingsServiceClient struct {
@@ -62,7 +62,7 @@ func (c *deviceSettingsServiceClient) UpdateDeviceSettings(ctx context.Context, 
 	return out, nil
 }
 
-func (c *deviceSettingsServiceClient) GetDeviceSettingList(ctx context.Context, in *GetDeviceSettingListRequest, opts ...grpc.CallOption) (*GetDeviceSettingListResponse, error) {
+func (c *deviceSettingsServiceClient) GetDeviceSettingList(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetDeviceSettingListResponse, error) {
 	out := new(GetDeviceSettingListResponse)
 	err := c.cc.Invoke(ctx, DeviceSettingsService_GetDeviceSettingList_FullMethodName, in, out, opts...)
 	if err != nil {
@@ -71,9 +71,9 @@ func (c *deviceSettingsServiceClient) GetDeviceSettingList(ctx context.Context, 
 	return out, nil
 }
 
-func (c *deviceSettingsServiceClient) GetDeviceSettingByTemplateName(ctx context.Context, in *GetDeviceSettingByNameRequest, opts ...grpc.CallOption) (*GetDeviceSettingByNameResponse, error) {
+func (c *deviceSettingsServiceClient) GetDeviceSettingByName(ctx context.Context, in *GetDeviceSettingByNameRequest, opts ...grpc.CallOption) (*GetDeviceSettingByNameResponse, error) {
 	out := new(GetDeviceSettingByNameResponse)
-	err := c.cc.Invoke(ctx, DeviceSettingsService_GetDeviceSettingByTemplateName_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, DeviceSettingsService_GetDeviceSettingByName_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -86,8 +86,8 @@ func (c *deviceSettingsServiceClient) GetDeviceSettingByTemplateName(ctx context
 type DeviceSettingsServiceServer interface {
 	CreateDeviceSettings(context.Context, *UpdateDeviceSettingsRequest) (*emptypb.Empty, error)
 	UpdateDeviceSettings(context.Context, *UpdateDeviceSettingsRequest) (*emptypb.Empty, error)
-	GetDeviceSettingList(context.Context, *GetDeviceSettingListRequest) (*GetDeviceSettingListResponse, error)
-	GetDeviceSettingByTemplateName(context.Context, *GetDeviceSettingByNameRequest) (*GetDeviceSettingByNameResponse, error)
+	GetDeviceSettingList(context.Context, *emptypb.Empty) (*GetDeviceSettingListResponse, error)
+	GetDeviceSettingByName(context.Context, *GetDeviceSettingByNameRequest) (*GetDeviceSettingByNameResponse, error)
 	mustEmbedUnimplementedDeviceSettingsServiceServer()
 }
 
@@ -101,11 +101,11 @@ func (UnimplementedDeviceSettingsServiceServer) CreateDeviceSettings(context.Con
 func (UnimplementedDeviceSettingsServiceServer) UpdateDeviceSettings(context.Context, *UpdateDeviceSettingsRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateDeviceSettings not implemented")
 }
-func (UnimplementedDeviceSettingsServiceServer) GetDeviceSettingList(context.Context, *GetDeviceSettingListRequest) (*GetDeviceSettingListResponse, error) {
+func (UnimplementedDeviceSettingsServiceServer) GetDeviceSettingList(context.Context, *emptypb.Empty) (*GetDeviceSettingListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetDeviceSettingList not implemented")
 }
-func (UnimplementedDeviceSettingsServiceServer) GetDeviceSettingByTemplateName(context.Context, *GetDeviceSettingByNameRequest) (*GetDeviceSettingByNameResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetDeviceSettingByTemplateName not implemented")
+func (UnimplementedDeviceSettingsServiceServer) GetDeviceSettingByName(context.Context, *GetDeviceSettingByNameRequest) (*GetDeviceSettingByNameResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetDeviceSettingByName not implemented")
 }
 func (UnimplementedDeviceSettingsServiceServer) mustEmbedUnimplementedDeviceSettingsServiceServer() {}
 
@@ -157,7 +157,7 @@ func _DeviceSettingsService_UpdateDeviceSettings_Handler(srv interface{}, ctx co
 }
 
 func _DeviceSettingsService_GetDeviceSettingList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetDeviceSettingListRequest)
+	in := new(emptypb.Empty)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -169,25 +169,25 @@ func _DeviceSettingsService_GetDeviceSettingList_Handler(srv interface{}, ctx co
 		FullMethod: DeviceSettingsService_GetDeviceSettingList_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DeviceSettingsServiceServer).GetDeviceSettingList(ctx, req.(*GetDeviceSettingListRequest))
+		return srv.(DeviceSettingsServiceServer).GetDeviceSettingList(ctx, req.(*emptypb.Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _DeviceSettingsService_GetDeviceSettingByTemplateName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _DeviceSettingsService_GetDeviceSettingByName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetDeviceSettingByNameRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DeviceSettingsServiceServer).GetDeviceSettingByTemplateName(ctx, in)
+		return srv.(DeviceSettingsServiceServer).GetDeviceSettingByName(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: DeviceSettingsService_GetDeviceSettingByTemplateName_FullMethodName,
+		FullMethod: DeviceSettingsService_GetDeviceSettingByName_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DeviceSettingsServiceServer).GetDeviceSettingByTemplateName(ctx, req.(*GetDeviceSettingByNameRequest))
+		return srv.(DeviceSettingsServiceServer).GetDeviceSettingByName(ctx, req.(*GetDeviceSettingByNameRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -212,8 +212,8 @@ var DeviceSettingsService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _DeviceSettingsService_GetDeviceSettingList_Handler,
 		},
 		{
-			MethodName: "GetDeviceSettingByTemplateName",
-			Handler:    _DeviceSettingsService_GetDeviceSettingByTemplateName_Handler,
+			MethodName: "GetDeviceSettingByName",
+			Handler:    _DeviceSettingsService_GetDeviceSettingByName_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

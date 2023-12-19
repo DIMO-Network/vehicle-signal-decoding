@@ -69,20 +69,19 @@ func (s *DeviceSettingsConfigService) UpdateDeviceSettings(ctx context.Context, 
 	return &emptypb.Empty{}, nil
 }
 
-func (s *DeviceSettingsConfigService) GetDeviceSettingList(ctx context.Context, in *grpc.GetDeviceSettingListRequest) (*grpc.GetDeviceSettingListResponse, error) {
+func (s *DeviceSettingsConfigService) GetDeviceSettingList(ctx context.Context, _ *emptypb.Empty) (*grpc.GetDeviceSettingListResponse, error) {
 	service := queries.NewGetDeviceSettingsAllQueryHandler(s.dbs, s.logger)
-	response, err := service.Handle(ctx, &queries.GetDeviceSettingsAllQueryRequest{
-		Name: *in.Name,
-	})
+	response, err := service.Handle(ctx, &queries.GetDeviceSettingsAllQueryRequest{})
+
 	if err != nil {
 		return nil, err
 	}
 	return response, nil
 }
 
-func (s *DeviceSettingsConfigService) GetDeviceSettingByTemplateName(ctx context.Context, in *grpc.GetDeviceSettingByNameRequest) (*grpc.GetDeviceSettingByNameResponse, error) {
+func (s *DeviceSettingsConfigService) GetDeviceSettingByName(ctx context.Context, in *grpc.GetDeviceSettingByNameRequest) (*grpc.GetDeviceSettingByNameResponse, error) {
 	service := queries.NewGetDeviceSettingsByTemplateNameQueryHandler(s.dbs, s.logger)
-	response, err := service.Handle(ctx, &queries.GetDeviceSettingsByTemplateNameQueryRequest{
+	response, err := service.Handle(ctx, &queries.GetDeviceSettingsByNameQueryRequest{
 		Name: in.Name,
 	})
 
