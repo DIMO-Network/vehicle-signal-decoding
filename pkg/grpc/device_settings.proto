@@ -14,11 +14,6 @@ message DeviceSettings {
 
 }
 
-
-message GetDeviceSettingListRequest {
-  optional string name = 1;
-}
-
 message GetDeviceSettingListResponse {
   repeated DeviceSettings device_settings = 1;
 }
@@ -38,6 +33,6 @@ message UpdateDeviceSettingsRequest {
 service DeviceSettingsService {
   rpc CreateDeviceSettings (UpdateDeviceSettingsRequest) returns (google.protobuf.Empty);
   rpc UpdateDeviceSettings (UpdateDeviceSettingsRequest) returns (google.protobuf.Empty);
-  rpc GetDeviceSettingList (GetDeviceSettingListRequest) returns (GetDeviceSettingListResponse);
-  rpc GetDeviceSettingByTemplateName (GetDeviceSettingByNameRequest) returns (GetDeviceSettingByNameResponse);
+  rpc GetDeviceSettingList (google.protobuf.Empty) returns (GetDeviceSettingListResponse);
+  rpc GetDeviceSettingByName (GetDeviceSettingByNameRequest) returns (GetDeviceSettingByNameResponse);
 }

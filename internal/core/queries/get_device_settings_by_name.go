@@ -12,29 +12,29 @@ import (
 	"github.com/rs/zerolog"
 )
 
-type GetDeviceSettingsByTemplateNameQueryHandler struct {
+type GetDeviceSettingsByNameQueryHandler struct {
 	DBS    func() *db.ReaderWriter
 	logger *zerolog.Logger
 }
 
-func NewGetDeviceSettingsByTemplateNameQueryHandler(dbs func() *db.ReaderWriter, logger *zerolog.Logger) GetDeviceSettingsByTemplateNameQueryHandler {
-	return GetDeviceSettingsByTemplateNameQueryHandler{
+func NewGetDeviceSettingsByNameQueryHandler(dbs func() *db.ReaderWriter, logger *zerolog.Logger) GetDeviceSettingsByNameQueryHandler {
+	return GetDeviceSettingsByNameQueryHandler{
 		DBS:    dbs,
 		logger: logger,
 	}
 }
 
-type GetDeviceSettingsByTemplateNameQueryRequest struct {
+type GetDeviceSettingsByNameQueryRequest struct {
 	Name string
 }
 
-func (h GetDeviceSettingsByTemplateNameQueryHandler) Handle(ctx context.Context, query *GetDeviceSettingsByTemplateNameQueryRequest) (*grpc.GetDeviceSettingByNameResponse, error) {
+func (h GetDeviceSettingsByNameQueryHandler) Handle(ctx context.Context, query *GetDeviceSettingsByNameQueryRequest) (*grpc.GetDeviceSettingByNameResponse, error) {
 	item, err := models.DeviceSettings(models.DeviceSettingWhere.Name.EQ(query.Name)).One(ctx, h.DBS().Reader)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf("device setting not found for template name: %s", query.Name)
+			return nil, fmt.Errorf("device setting not found for name: %s", query.Name)
 		}
-		return nil, fmt.Errorf("failed to get device setting by template name: %w", err)
+		return nil, fmt.Errorf("failed to get device setting by name: %w", err)
 	}
 
 	jsonBytes, err := item.Settings.MarshalJSON()
