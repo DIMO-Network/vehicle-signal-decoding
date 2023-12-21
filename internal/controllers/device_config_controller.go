@@ -171,7 +171,7 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 // @Success      200 {object} grpc.DeviceSetting "Successfully retrieved Device Settings"
 // @Failure 404 "No Device Settings data found for the given name."
 // @Param        name  path   string  true   "name"
-// @Router       /device-config/{name}/device-settings [get]
+// @Router       /device-config/settings/{name} [get]
 func (d *DeviceConfigController) GetDeviceSettingsByName(c *fiber.Ctx) error {
 	name := c.Params("name")
 	if len(name) == 0 {
@@ -208,6 +208,7 @@ func (d *DeviceConfigController) GetDeviceSettingsByName(c *fiber.Ctx) error {
 			SleepTimerEventDrivenPeriodSecs: settings.SleepTimerEventDrivenPeriodSecs,
 			WakeTriggerVoltageLevel:         settings.WakeTriggerVoltageLevel,
 		},
+		Version: "v1.0.1", // todo pull from db
 	}
 
 	acceptHeader := c.Get("Accept", "application/json")
@@ -522,7 +523,7 @@ func (d *DeviceConfigController) getConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) 
 
 	// set device settings from template, or based on powertrain default
 	if len(matchedTemplate.R.TemplateNameDeviceSettings) > 0 {
-		response.DeviceSettingURL = fmt.Sprintf("%s/v1/device-config/%s/device-settings", baseURL, matchedTemplate.R.TemplateNameDeviceSettings[0].Name)
+		response.DeviceSettingURL = fmt.Sprintf("%s/v1/device-config/settings/%s", baseURL, matchedTemplate.R.TemplateNameDeviceSettings[0].Name)
 	} else {
 		var deviceSetting *models.DeviceSetting
 		var dbErr error
@@ -553,7 +554,7 @@ func (d *DeviceConfigController) getConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) 
 			}
 		}
 		// device settings have a name key separate from templateName since simpler setup
-		response.DeviceSettingURL = fmt.Sprintf("%s/v1/device-config/%s/device-settings", baseURL, deviceSetting.Name)
+		response.DeviceSettingURL = fmt.Sprintf("%s/v1/device-config/settings/%s", baseURL, deviceSetting.Name)
 	}
 
 	return c.JSON(response)

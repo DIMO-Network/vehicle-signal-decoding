@@ -33,6 +33,7 @@ message DeviceSetting {
   string template_name = 1;
   SettingsData settings = 2;
   string name = 3;
+  string version = 4;
 }
 
 message DeviceSettingsResponse {

@@ -8,6 +8,8 @@ definitions:
         $ref: '#/definitions/github_com_DIMO-Network_vehicle-signal-decoding_pkg_grpc.SettingsData'
       template_name:
         type: string
+      version:
+        type: string
     type: object
   github_com_DIMO-Network_vehicle-signal-decoding_pkg_grpc.PIDConfig:
     properties:
@@ -71,28 +73,6 @@ info:
   title: DIMO Vehicle-Signal-Decoding
   version: "1.0"
 paths:
-  /device-config/{name}/device-settings:
-    get:
-      description: |-
-        Fetches the device settings configurations from device_settings table given a name. Note that device settings mostly only vary by powertrain and
-        may or may not be attached to a specific template.
-      parameters:
-      - description: name
-        in: path
-        name: name
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Successfully retrieved Device Settings
-          schema:
-            $ref: '#/definitions/github_com_DIMO-Network_vehicle-signal-decoding_pkg_grpc.DeviceSetting'
-        "404":
-          description: No Device Settings data found for the given name.
-      tags:
-      - vehicle-signal-decoding
   /device-config/{templateName}/dbc:
     get:
       description: Fetches the DBC file from the dbc_files table given a template
@@ -223,6 +203,28 @@ paths:
           description: incorrect eth addr format
         "404":
           description: Not Found - No templates available for the given parameters
+      tags:
+      - vehicle-signal-decoding
+  /device-config/settings/{name}:
+    get:
+      description: |-
+        Fetches the device settings configurations from device_settings table given a name. Note that device settings mostly only vary by powertrain and
+        may or may not be attached to a specific template.
+      parameters:
+      - description: name
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved Device Settings
+          schema:
+            $ref: '#/definitions/github_com_DIMO-Network_vehicle-signal-decoding_pkg_grpc.DeviceSetting'
+        "404":
+          description: No Device Settings data found for the given name.
       tags:
       - vehicle-signal-decoding
   /device-config/vin/{vin}/urls:
