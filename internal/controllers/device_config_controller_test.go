@@ -289,7 +289,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_EmptyDBC() {
 	require.NoError(s.T(), err)
 
 	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/%s/pids", template.TemplateName), receivedResp.PidURL)
-	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/%s/device-settings", ds.Name), receivedResp.DeviceSettingURL)
+	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/settings/%s", ds.Name), receivedResp.DeviceSettingURL)
 	assert.Empty(s.T(), receivedResp.DbcURL)
 	assert.Equal(s.T(), template.Version, receivedResp.Version)
 }
@@ -349,7 +349,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_DecodeVIN() {
 	require.NoError(s.T(), err)
 
 	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/%s/pids", template.TemplateName), receivedResp.PidURL)
-	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/%s/device-settings", ds.Name), receivedResp.DeviceSettingURL)
+	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/settings/%s", ds.Name), receivedResp.DeviceSettingURL)
 	assert.Empty(s.T(), receivedResp.DbcURL)
 	assert.Equal(s.T(), template.Version, receivedResp.Version)
 }
@@ -415,7 +415,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_ProtocolOverrideQS()
 	assert.NoError(s.T(), err)
 
 	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/%s/pids", template.TemplateName), receivedResp.PidURL)
-	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/%s/device-settings", ds.Name), receivedResp.DeviceSettingURL)
+	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/settings/%s", ds.Name), receivedResp.DeviceSettingURL)
 	assert.Equal(s.T(), template.Version, receivedResp.Version)
 
 }
@@ -486,7 +486,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_FallbackLogic() {
 	var receivedResp DeviceConfigResponse
 	err = json.Unmarshal(body, &receivedResp)
 	assert.NoError(s.T(), err)
-	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/%s/device-settings", parentDS.Name), receivedResp.DeviceSettingURL)
+	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/settings/%s", parentDS.Name), receivedResp.DeviceSettingURL)
 	assert.Equal(s.T(), matchedTemplate.Version, receivedResp.Version)
 }
 
