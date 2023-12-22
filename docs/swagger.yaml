@@ -2,14 +2,22 @@ basePath: /v1
 definitions:
   github_com_DIMO-Network_vehicle-signal-decoding_pkg_grpc.DeviceSetting:
     properties:
-      name:
-        type: string
-      settings:
-        $ref: '#/definitions/github_com_DIMO-Network_vehicle-signal-decoding_pkg_grpc.SettingsData'
+      battery_critical_level_voltage:
+        type: number
+      safety_cut_out_voltage:
+        type: number
+      sleep_timer_event_driven_interval_secs:
+        type: number
+      sleep_timer_event_driven_period_secs:
+        type: number
+      sleep_timer_inactivity_after_sleep_secs:
+        type: number
+      sleep_timer_inactivity_fallback_interval_secs:
+        type: number
       template_name:
         type: string
-      version:
-        type: string
+      wake_trigger_voltage_level:
+        type: number
     type: object
   github_com_DIMO-Network_vehicle-signal-decoding_pkg_grpc.PIDConfig:
     properties:
@@ -38,15 +46,6 @@ definitions:
         type: string
       version:
         type: string
-    type: object
-  github_com_DIMO-Network_vehicle-signal-decoding_pkg_grpc.SettingsData:
-    properties:
-      safety_cut_out_voltage:
-        type: number
-      sleep_timer_event_driven_period_secs:
-        type: number
-      wake_trigger_voltage_level:
-        type: number
     type: object
   internal_controllers.DeviceConfigResponse:
     properties:
@@ -209,7 +208,8 @@ paths:
     get:
       description: |-
         Fetches the device settings configurations from device_settings table given a name. Note that device settings mostly only vary by powertrain and
-        may or may not be attached to a specific template.
+        may or may not be attached to a specific template. To return protobuf: "application/x-protobuf"
+        Note that the templateName returned here is actually the device setting name
       parameters:
       - description: name
         in: path

@@ -148,7 +148,7 @@
         },
         "/device-config/settings/{name}": {
             "get": {
-                "description": "Fetches the device settings configurations from device_settings table given a name. Note that device settings mostly only vary by powertrain and\nmay or may not be attached to a specific template.",
+                "description": "Fetches the device settings configurations from device_settings table given a name. Note that device settings mostly only vary by powertrain and\nmay or may not be attached to a specific template. To return protobuf: \"application/x-protobuf\"\nNote that the templateName returned here is actually the device setting name",
                 "produces": [
                     "application/json"
                 ],
@@ -281,17 +281,29 @@
         "github_com_DIMO-Network_vehicle-signal-decoding_pkg_grpc.DeviceSetting": {
             "type": "object",
             "properties": {
-                "name": {
-                    "type": "string"
+                "battery_critical_level_voltage": {
+                    "type": "number"
                 },
-                "settings": {
-                    "$ref": "#/definitions/github_com_DIMO-Network_vehicle-signal-decoding_pkg_grpc.SettingsData"
+                "safety_cut_out_voltage": {
+                    "type": "number"
+                },
+                "sleep_timer_event_driven_interval_secs": {
+                    "type": "number"
+                },
+                "sleep_timer_event_driven_period_secs": {
+                    "type": "number"
+                },
+                "sleep_timer_inactivity_after_sleep_secs": {
+                    "type": "number"
+                },
+                "sleep_timer_inactivity_fallback_interval_secs": {
+                    "type": "number"
                 },
                 "template_name": {
                     "type": "string"
                 },
-                "version": {
-                    "type": "string"
+                "wake_trigger_voltage_level": {
+                    "type": "number"
                 }
             }
         },
@@ -335,20 +347,6 @@
                 },
                 "version": {
                     "type": "string"
-                }
-            }
-        },
-        "github_com_DIMO-Network_vehicle-signal-decoding_pkg_grpc.SettingsData": {
-            "type": "object",
-            "properties": {
-                "safety_cut_out_voltage": {
-                    "type": "number"
-                },
-                "sleep_timer_event_driven_period_secs": {
-                    "type": "number"
-                },
-                "wake_trigger_voltage_level": {
-                    "type": "number"
                 }
             }
         },
