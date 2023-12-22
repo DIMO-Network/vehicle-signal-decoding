@@ -166,6 +166,7 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 // GetDeviceSettingsByName godoc
 // @Description  Fetches the device settings configurations from device_settings table given a name. Note that device settings mostly only vary by powertrain and
 // @Description  may or may not be attached to a specific template. To return protobuf: "application/x-protobuf"
+// @Description  Note that the templateName returned here is actually the device setting name
 // @Tags         vehicle-signal-decoding
 // @Produce      json
 // @Success      200 {object} grpc.DeviceSetting "Successfully retrieved Device Settings"
@@ -201,14 +202,15 @@ func (d *DeviceConfigController) GetDeviceSettingsByName(c *fiber.Ctx) error {
 	}
 
 	protoDeviceSettings := &grpc.DeviceSetting{
-		Name:         name,
-		TemplateName: dbDeviceSettings.TemplateName.String,
-		Settings: &grpc.SettingsData{
-			SafetyCutOutVoltage:             settings.SafetyCutOutVoltage,
-			SleepTimerEventDrivenPeriodSecs: settings.SleepTimerEventDrivenPeriodSecs,
-			WakeTriggerVoltageLevel:         settings.WakeTriggerVoltageLevel,
-		},
-		Version: "v1.0.1", // todo pull from db
+		TemplateName:                             dbDeviceSettings.Name, // in future add a Name field, once safe to change proto
+		SafetyCutOutVoltage:                      float32(settings.SafetyCutOutVoltage),
+		SleepTimerEventDrivenPeriodSecs:          float32(settings.SleepTimerEventDrivenPeriodSecs),
+		WakeTriggerVoltageLevel:                  float32(settings.WakeTriggerVoltageLevel),
+		SleepTimerEventDrivenIntervalSecs:        float32(3600), // not used by Macaron
+		SleepTimerInactivityAfterSleepSecs:       float32(21600),
+		SleepTimerInactivityFallbackIntervalSecs: float32(21600),
+		//TemplateName: dbDeviceSettings.TemplateName.String, // in future we could do this, could be empty
+		//Version: "v1.0.1", // for future - once safe to change proto file
 	}
 
 	acceptHeader := c.Get("Accept", "application/json")
@@ -254,7 +256,6 @@ func (d *DeviceConfigController) GetDBCFileByTemplateName(c *fiber.Ctx) error {
 		return c.SendString(dbResult.DBCFile)
 	}
 	return c.Status(fiber.StatusNotAcceptable).SendString("Not Acceptable")
-
 }
 
 // GetConfigURLsFromVIN godoc

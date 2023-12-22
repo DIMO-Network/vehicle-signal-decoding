@@ -5,13 +5,12 @@ import "google/protobuf/empty.proto";
 option go_package = "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc";
 
 package grpc;
-
+// used in Admin - todo rename this to be more admin specific and update admin after
 message DeviceSettings {
   string name = 1;
   string template_name = 2;
   string settings = 3;
   string powertrain = 4;
-
 }
 
 message GetDeviceSettingListResponse {

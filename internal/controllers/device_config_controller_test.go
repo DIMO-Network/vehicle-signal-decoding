@@ -177,13 +177,15 @@ func (s *DeviceConfigControllerTestSuite) TestGetDeviceSettingsByName() {
 	err = json.Unmarshal(body, &receivedDS)
 	assert.NoError(s.T(), err)
 
-	expectedSettings := &grpc.SettingsData{
+	expectedSettings := &grpc.DeviceSetting{
 		SafetyCutOutVoltage:             12.5,
 		SleepTimerEventDrivenPeriodSecs: 30,
 		WakeTriggerVoltageLevel:         3.3,
 	}
 
-	assert.Equal(s.T(), expectedSettings, receivedDS.Settings)
+	assert.Equal(s.T(), expectedSettings.SafetyCutOutVoltage, receivedDS.SafetyCutOutVoltage)
+	assert.Equal(s.T(), expectedSettings.SleepTimerEventDrivenPeriodSecs, receivedDS.SleepTimerEventDrivenPeriodSecs)
+	assert.Equal(s.T(), expectedSettings.WakeTriggerVoltageLevel, receivedDS.WakeTriggerVoltageLevel)
 }
 
 func (s *DeviceConfigControllerTestSuite) TestGetDBCFileByTemplateName() {
