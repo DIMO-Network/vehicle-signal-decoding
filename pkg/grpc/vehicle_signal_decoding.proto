@@ -7,38 +7,25 @@ option go_package = "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc";
 
 package grpc;
 
-message PIDConfig {
-    string name = 1;
-    uint32 header = 2;
-    uint32 mode = 3;
-    uint32 pid = 4;
-    string formula = 5;
-    uint32 interval_seconds = 6;
-    string protocol = 7;
-}
 
-message PIDRequests {
-  string template_name = 1;
-  string version = 2;
-  repeated PIDConfig requests = 3;
-}
 
-message SettingsData {
-  double safety_cut_out_voltage = 1;
-  double sleep_timer_event_driven_period_secs = 2;
-  double wake_trigger_voltage_level = 3;
-}
-
-message DeviceSetting {
-  string template_name = 1;
-  SettingsData settings = 2;
-  string name = 3;
-}
-
-message DeviceSettingsResponse {
-  string template_name = 1;
-  DeviceSetting device_setting = 2;
-}
+//message SettingsData {
+//  double safety_cut_out_voltage = 1;
+//  double sleep_timer_event_driven_period_secs = 2;
+//  double wake_trigger_voltage_level = 3;
+//}
+//
+//message DeviceSetting {
+//  string template_name = 1;
+//  SettingsData settings = 2;
+//  string name = 3;
+//  string version = 4;
+//}
+//
+//message DeviceSettingsResponse {
+//  string template_name = 1;
+//  DeviceSetting device_setting = 2;
+//}
 
 message CreateDBCCodeRequest {
   string name = 1;

@@ -154,6 +154,8 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 	v1.Get("/device-config/eth-addr/:ethAddr/urls", deviceConfigController.GetConfigURLsFromEthAddr)
 
 	v1.Get("/device-config/:templateName/pids", deviceConfigController.GetPIDsByTemplate)
+	v1.Get("/device-config/settings/:name", deviceConfigController.GetDeviceSettingsByName)
+	// for backwards compatibility - remove after a month or 2
 	v1.Get("/device-config/:name/device-settings", deviceConfigController.GetDeviceSettingsByName)
 	v1.Get("/device-config/:templateName/dbc", deviceConfigController.GetDBCFileByTemplateName)
 

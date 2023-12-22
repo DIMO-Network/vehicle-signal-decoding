@@ -165,13 +165,14 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 
 // GetDeviceSettingsByName godoc
 // @Description  Fetches the device settings configurations from device_settings table given a name. Note that device settings mostly only vary by powertrain and
-// @Description  may or may not be attached to a specific template.
+// @Description  may or may not be attached to a specific template. To return protobuf: "application/x-protobuf"
+// @Description  Note that the templateName returned here is actually the device setting name
 // @Tags         vehicle-signal-decoding
 // @Produce      json
 // @Success      200 {object} grpc.DeviceSetting "Successfully retrieved Device Settings"
 // @Failure 404 "No Device Settings data found for the given name."
 // @Param        name  path   string  true   "name"
-// @Router       /device-config/{name}/device-settings [get]
+// @Router       /device-config/settings/{name} [get]
 func (d *DeviceConfigController) GetDeviceSettingsByName(c *fiber.Ctx) error {
 	name := c.Params("name")
 	if len(name) == 0 {
@@ -201,13 +202,15 @@ func (d *DeviceConfigController) GetDeviceSettingsByName(c *fiber.Ctx) error {
 	}
 
 	protoDeviceSettings := &grpc.DeviceSetting{
-		Name:         name,
-		TemplateName: dbDeviceSettings.TemplateName.String,
-		Settings: &grpc.SettingsData{
-			SafetyCutOutVoltage:             settings.SafetyCutOutVoltage,
-			SleepTimerEventDrivenPeriodSecs: settings.SleepTimerEventDrivenPeriodSecs,
-			WakeTriggerVoltageLevel:         settings.WakeTriggerVoltageLevel,
-		},
+		TemplateName:                             dbDeviceSettings.Name, // in future add a Name field, once safe to change proto
+		SafetyCutOutVoltage:                      float32(settings.SafetyCutOutVoltage),
+		SleepTimerEventDrivenPeriodSecs:          float32(settings.SleepTimerEventDrivenPeriodSecs),
+		WakeTriggerVoltageLevel:                  float32(settings.WakeTriggerVoltageLevel),
+		SleepTimerEventDrivenIntervalSecs:        float32(3600), // not used by Macaron
+		SleepTimerInactivityAfterSleepSecs:       float32(21600),
+		SleepTimerInactivityFallbackIntervalSecs: float32(21600),
+		//TemplateName: dbDeviceSettings.TemplateName.String, // in future we could do this, could be empty
+		//Version: "v1.0.1", // for future - once safe to change proto file
 	}
 
 	acceptHeader := c.Get("Accept", "application/json")
@@ -253,7 +256,6 @@ func (d *DeviceConfigController) GetDBCFileByTemplateName(c *fiber.Ctx) error {
 		return c.SendString(dbResult.DBCFile)
 	}
 	return c.Status(fiber.StatusNotAcceptable).SendString("Not Acceptable")
-
 }
 
 // GetConfigURLsFromVIN godoc
@@ -522,7 +524,7 @@ func (d *DeviceConfigController) getConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) 
 
 	// set device settings from template, or based on powertrain default
 	if len(matchedTemplate.R.TemplateNameDeviceSettings) > 0 {
-		response.DeviceSettingURL = fmt.Sprintf("%s/v1/device-config/%s/device-settings", baseURL, matchedTemplate.R.TemplateNameDeviceSettings[0].Name)
+		response.DeviceSettingURL = fmt.Sprintf("%s/v1/device-config/settings/%s", baseURL, matchedTemplate.R.TemplateNameDeviceSettings[0].Name)
 	} else {
 		var deviceSetting *models.DeviceSetting
 		var dbErr error
@@ -553,7 +555,7 @@ func (d *DeviceConfigController) getConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) 
 			}
 		}
 		// device settings have a name key separate from templateName since simpler setup
-		response.DeviceSettingURL = fmt.Sprintf("%s/v1/device-config/%s/device-settings", baseURL, deviceSetting.Name)
+		response.DeviceSettingURL = fmt.Sprintf("%s/v1/device-config/settings/%s", baseURL, deviceSetting.Name)
 	}
 
 	return c.JSON(response)
