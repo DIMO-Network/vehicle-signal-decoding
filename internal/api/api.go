@@ -39,16 +39,13 @@ import (
 )
 
 func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) {
-
 	//db
 	pdb := db.NewDbConnectionFromSettings(ctx, &settings.DB, true)
 	pdb.WaitForDB(logger)
 
-	//resolve s3 connection
 	s3Client := getS3ServiceClient(ctx, settings, logger)
 
 	go StartGrpcServer(logger, pdb.DBS, settings, s3Client)
-
 	startWebAPI(logger, settings, pdb)
 	startVehicleSignalConsumer(logger, settings, pdb)
 	startMonitoringServer(logger, settings)

@@ -34,6 +34,8 @@ go run ./cmd/vehicle-signal-decoding
 
 `swag init -g cmd/vehicle-signal-decoding/main.go --parseDependency --parseInternal --generatedTime true`
 
+https://github.com/swaggo/swag#declarative-comments-format
+
 ## Generating gRPC client and server code
 
 1. Install the protocol compiler plugins for Go using the following commands

@@ -69,6 +69,7 @@ func bytesToUint32(b []byte) (uint32, error) {
 // @Description  Retrieves a list of PID configurations from the database given a template name
 // @Tags         vehicle-signal-decoding
 // @Produce      json
+// @Produce      application/x-protobuf
 // @Success      200 {object} grpc.PIDRequests "Successfully retrieved PID Configurations"
 // @Failure 404 "No PID Config data found for the given template name."
 // @Param        templateName  path   string  true   "template name"
@@ -169,6 +170,7 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 // @Description  Note that the templateName returned here is actually the device setting name
 // @Tags         vehicle-signal-decoding
 // @Produce      json
+// @Produce      application/x-protobuf
 // @Success      200 {object} grpc.DeviceSetting "Successfully retrieved Device Settings"
 // @Failure 404 "No Device Settings data found for the given name."
 // @Param        name  path   string  true   "name"

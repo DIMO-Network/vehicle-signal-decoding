@@ -150,7 +150,8 @@
             "get": {
                 "description": "Fetches the device settings configurations from device_settings table given a name. Note that device settings mostly only vary by powertrain and\nmay or may not be attached to a specific template. To return protobuf: \"application/x-protobuf\"\nNote that the templateName returned here is actually the device setting name",
                 "produces": [
-                    "application/json"
+                    "application/json",
+                    "application/x-protobuf"
                 ],
                 "tags": [
                     "vehicle-signal-decoding"
@@ -249,7 +250,8 @@
             "get": {
                 "description": "Retrieves a list of PID configurations from the database given a template name",
                 "produces": [
-                    "application/json"
+                    "application/json",
+                    "application/x-protobuf"
                 ],
                 "tags": [
                     "vehicle-signal-decoding"
