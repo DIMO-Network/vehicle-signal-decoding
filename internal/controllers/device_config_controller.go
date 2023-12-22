@@ -165,7 +165,7 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 
 // GetDeviceSettingsByName godoc
 // @Description  Fetches the device settings configurations from device_settings table given a name. Note that device settings mostly only vary by powertrain and
-// @Description  may or may not be attached to a specific template.
+// @Description  may or may not be attached to a specific template. To return protobuf: "application/x-protobuf"
 // @Tags         vehicle-signal-decoding
 // @Produce      json
 // @Success      200 {object} grpc.DeviceSetting "Successfully retrieved Device Settings"
