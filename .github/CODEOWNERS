@@ -1,0 +1,2 @@
+# this file must be in sync btw hardware and us
+/pkg/grpc/hardware_v1.proto @mateuszpohl @zer0stars
