@@ -34,10 +34,12 @@ type DownloadCanBusDumpFileByFileNameQueryRequest struct {
 }
 
 func (h DownloadCanBusDumpFileByFileNameQueryHandler) Handle(ctx context.Context, query *DownloadCanBusDumpFileByFileNameQueryRequest) (*p_grpc.DownloadCanBusDumpFileContentResponse, error) {
+
 	response, err := h.s3Client.GetObject(ctx, &s3.GetObjectInput{
 		Bucket: aws.String(h.settings.AWSCandumpsBucketName),
 		Key:    aws.String(query.FileName),
 	})
+
 	if err != nil {
 		var nsk types.NoSuchKey
 		if errors.As(err, &nsk) {

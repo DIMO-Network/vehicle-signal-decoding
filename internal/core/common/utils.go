@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/volatiletech/null/v8"
@@ -41,4 +42,12 @@ func PrependFormulaTypeDefault(formula string) string {
 		return DBCFormulaType.String() + ": " + formula
 	}
 	return formula
+}
+
+func RemoveSpecialCharacter(input string) string {
+	expresionRegular := regexp.MustCompile(`[^\w]`)
+
+	cadenaSinEspeciales := expresionRegular.ReplaceAllString(input, "")
+
+	return cadenaSinEspeciales
 }

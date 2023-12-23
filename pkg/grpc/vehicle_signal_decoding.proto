@@ -115,10 +115,11 @@ message GetCanBusDumpFileResponse {
 }
 
 message GetCanBusDumpFileItemResponse {
-  string file_id = 1;
-  string file_name = 2;
-  string file_type = 3;
+  string id = 1;
+  string name = 2;
+  string type = 3;
   google.protobuf.Timestamp created_at = 4;
+  string full_name = 5;
 }
 
 message DownloadCanBusDumpFileContentRequest {

@@ -3,14 +3,15 @@ package queries
 import (
 	"context"
 	"fmt"
-
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/common"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/exceptions"
 	p_grpc "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"path/filepath"
 )
 
 type GetCanBusDumpFileByEthAddressQueryHandler struct {
@@ -47,12 +48,15 @@ func (h GetCanBusDumpFileByEthAddressQueryHandler) Handle(ctx context.Context, q
 	files := []*p_grpc.GetCanBusDumpFileItemResponse{}
 
 	for _, item := range response.Contents {
-		files = append(files, &p_grpc.GetCanBusDumpFileItemResponse{
-			FileId:    *item.ETag,
-			FileName:  *item.Key,
-			FileType:  "json",
-			CreatedAt: timestamppb.New(*item.LastModified),
-		})
+		if item.Size > 0 {
+			files = append(files, &p_grpc.GetCanBusDumpFileItemResponse{
+				Id:        common.RemoveSpecialCharacter(*item.ETag),
+				Name:      filepath.Base(*item.Key),
+				FullName:  *item.Key,
+				Type:      filepath.Ext(*item.Key),
+				CreatedAt: timestamppb.New(*item.LastModified),
+			})
+		}
 	}
 
 	return &p_grpc.GetCanBusDumpFileResponse{Items: files}, nil
