@@ -28,21 +28,23 @@ import (
 )
 
 type DeviceConfigController struct {
-	settings      *config.Settings
-	log           *zerolog.Logger
-	db            *sql.DB
-	userDeviceSvc services.UserDeviceService
-	deviceDefSvc  services.DeviceDefinitionsService
+	settings                  *config.Settings
+	log                       *zerolog.Logger
+	db                        *sql.DB
+	userDeviceSvc             services.UserDeviceService
+	deviceDefSvc              services.DeviceDefinitionsService
+	userDeviceTemplateService services.UserDeviceTemplateService
 }
 
 // NewDeviceConfigController constructor
-func NewDeviceConfigController(settings *config.Settings, logger *zerolog.Logger, database *sql.DB, userDeviceSvc services.UserDeviceService, deviceDefSvc services.DeviceDefinitionsService) DeviceConfigController {
+func NewDeviceConfigController(settings *config.Settings, logger *zerolog.Logger, database *sql.DB, userDeviceSvc services.UserDeviceService, deviceDefSvc services.DeviceDefinitionsService, userDeviceTemplateService services.UserDeviceTemplateService) DeviceConfigController {
 	return DeviceConfigController{
-		settings:      settings,
-		log:           logger,
-		db:            database,
-		userDeviceSvc: userDeviceSvc,
-		deviceDefSvc:  deviceDefSvc,
+		settings:                  settings,
+		log:                       logger,
+		db:                        database,
+		userDeviceSvc:             userDeviceSvc,
+		deviceDefSvc:              deviceDefSvc,
+		userDeviceTemplateService: userDeviceTemplateService,
 	}
 
 }
@@ -319,6 +321,26 @@ func (d *DeviceConfigController) GetConfigURLsFromEthAddr(c *fiber.Ctx) error {
 	return d.getConfigURLs(c, ud)
 }
 
+// GetConfigStatusFromEthAddr godoc
+// @Description  Retrieve the URLs for PID, DeviceSettings, and DBC configuration based on device's Ethereum Address. These could be empty if not configs available
+// @Tags         vehicle-signal-decoding
+// @Produce      json
+// @Success      200 {object} DeviceConfigResponse "Successfully retrieved configuration URLs"
+// @Failure 404  "Not Found - No templates available for the given parameters"
+// @Failure 400  "incorrect eth addr format"
+// @Param        ethAddr  path   string  true  "Ethereum Address"
+// @Router       /device-config/eth-addr/{ethAddr}/status [get]
+func (d *DeviceConfigController) GetConfigStatusFromEthAddr(c *fiber.Ctx) error {
+	ethAddr := c.Params("ethAddr")
+
+	_, err := d.userDeviceSvc.GetUserDeviceByEthAddr(c.Context(), ethAddr)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": fmt.Sprintf("no connected user device found for EthAddr: %s", ethAddr)})
+	}
+
+	return c.Send(nil)
+}
+
 func padByteArray(input []byte, targetLength int) []byte {
 	if len(input) >= targetLength {
 		return input // No need to pad if the input is already longer or equal to the target length
@@ -558,6 +580,17 @@ func (d *DeviceConfigController) getConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) 
 		}
 		// device settings have a name key separate from templateName since simpler setup
 		response.DeviceSettingURL = fmt.Sprintf("%s/v1/device-config/settings/%s", baseURL, deviceSetting.Name)
+	}
+
+	// Associate current template
+	currentVersion, err := d.userDeviceTemplateService.AssociateTemplate(c.Context(), "")
+	if err != nil {
+		return errors.Wrap(err, "Failed to associate template version")
+	}
+
+	// todo:?
+	if currentVersion.RequiresUpdateVersion {
+
 	}
 
 	return c.JSON(response)
