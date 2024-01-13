@@ -1853,7 +1853,7 @@ func (o *Template) AddTemplateDBCURLUserDeviceTemplates(ctx context.Context, exe
 				strmangle.SetParamNames("\"", "\"", 1, []string{"template_dbc_url"}),
 				strmangle.WhereClause("\"", "\"", 2, userDeviceTemplatePrimaryKeyColumns),
 			)
-			values := []interface{}{o.TemplateName, rel.DeviceEthereumAddress}
+			values := []interface{}{o.TemplateName, rel.Vin}
 
 			if boil.IsDebug(ctx) {
 				writer := boil.DebugWriterFrom(ctx)
@@ -1906,7 +1906,7 @@ func (o *Template) AddTemplatePidURLUserDeviceTemplates(ctx context.Context, exe
 				strmangle.SetParamNames("\"", "\"", 1, []string{"template_pid_url"}),
 				strmangle.WhereClause("\"", "\"", 2, userDeviceTemplatePrimaryKeyColumns),
 			)
-			values := []interface{}{o.TemplateName, rel.DeviceEthereumAddress}
+			values := []interface{}{o.TemplateName, rel.Vin}
 
 			if boil.IsDebug(ctx) {
 				writer := boil.DebugWriterFrom(ctx)
@@ -1959,7 +1959,7 @@ func (o *Template) AddTemplateSettingURLUserDeviceTemplates(ctx context.Context,
 				strmangle.SetParamNames("\"", "\"", 1, []string{"template_setting_url"}),
 				strmangle.WhereClause("\"", "\"", 2, userDeviceTemplatePrimaryKeyColumns),
 			)
-			values := []interface{}{o.TemplateName, rel.DeviceEthereumAddress}
+			values := []interface{}{o.TemplateName, rel.Vin}
 
 			if boil.IsDebug(ctx) {
 				writer := boil.DebugWriterFrom(ctx)

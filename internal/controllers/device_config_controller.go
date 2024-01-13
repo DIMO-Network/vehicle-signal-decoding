@@ -56,6 +56,11 @@ type DeviceConfigResponse struct {
 	Version          string `json:"version"`
 }
 
+type UserDeviceTemplateResponse struct {
+	IsTemplateUpdated bool   `json:"is_template_updated"`
+	Version           string `json:"version"`
+}
+
 type SettingsData struct {
 	SafetyCutOutVoltage             float64 `json:"safety_cut_out_voltage"`
 	SleepTimerEventDrivenPeriodSecs float64 `json:"sleep_timer_event_driven_period_secs"`
@@ -325,7 +330,7 @@ func (d *DeviceConfigController) GetConfigURLsFromEthAddr(c *fiber.Ctx) error {
 // @Description  Retrieve the URLs for PID, DeviceSettings, and DBC configuration based on device's Ethereum Address. These could be empty if not configs available
 // @Tags         vehicle-signal-decoding
 // @Produce      json
-// @Success      200 {object} DeviceConfigResponse "Successfully retrieved configuration URLs"
+// @Success      200 {object} UserDeviceTemplateResponse "Successfully retrieved configuration URLs"
 // @Failure 404  "Not Found - No templates available for the given parameters"
 // @Failure 400  "incorrect eth addr format"
 // @Param        ethAddr  path   string  true  "Ethereum Address"
@@ -333,12 +338,33 @@ func (d *DeviceConfigController) GetConfigURLsFromEthAddr(c *fiber.Ctx) error {
 func (d *DeviceConfigController) GetConfigStatusFromEthAddr(c *fiber.Ctx) error {
 	ethAddr := c.Params("ethAddr")
 
-	_, err := d.userDeviceSvc.GetUserDeviceByEthAddr(c.Context(), ethAddr)
+	ud, err := d.userDeviceSvc.GetUserDeviceByEthAddr(c.Context(), ethAddr)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": fmt.Sprintf("no connected user device found for EthAddr: %s", ethAddr)})
 	}
 
-	return c.Send(nil)
+	userDeviceTemplate, err := models.UserDeviceTemplates(models.UserDeviceTemplateWhere.Vin.EQ(*ud.Vin)).
+		One(c.Context(), d.db)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return err
+	}
+
+	var response UserDeviceTemplateResponse
+
+	if userDeviceTemplate == nil {
+		response = UserDeviceTemplateResponse{
+			IsTemplateUpdated: false,
+		}
+	}
+
+	if userDeviceTemplate != nil {
+		response = UserDeviceTemplateResponse{
+			IsTemplateUpdated: userDeviceTemplate.IsTemplateUpdated,
+			Version:           userDeviceTemplate.Version,
+		}
+	}
+
+	return c.JSON(response)
 }
 
 func padByteArray(input []byte, targetLength int) []byte {
@@ -583,14 +609,9 @@ func (d *DeviceConfigController) getConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) 
 	}
 
 	// Associate current template
-	currentVersion, err := d.userDeviceTemplateService.AssociateTemplate(c.Context(), "")
+	err = d.userDeviceTemplateService.AssociateTemplate(c.Context(), *ud.Vin, response.DbcURL, response.PidURL, response.DeviceSettingURL, response.Version)
 	if err != nil {
 		return errors.Wrap(err, "Failed to associate template version")
-	}
-
-	// todo:?
-	if currentVersion.RequiresUpdateVersion {
-
 	}
 
 	return c.JSON(response)

@@ -23,72 +23,79 @@ import (
 
 // UserDeviceTemplate is an object representing the database table.
 type UserDeviceTemplate struct {
-	DeviceEthereumAddress []byte    `boil:"device_ethereum_address" json:"device_ethereum_address" toml:"device_ethereum_address" yaml:"device_ethereum_address"`
-	TemplateDBCURL        string    `boil:"template_dbc_url" json:"template_dbc_url" toml:"template_dbc_url" yaml:"template_dbc_url"`
-	TemplatePidURL        string    `boil:"template_pid_url" json:"template_pid_url" toml:"template_pid_url" yaml:"template_pid_url"`
-	TemplateSettingURL    string    `boil:"template_setting_url" json:"template_setting_url" toml:"template_setting_url" yaml:"template_setting_url"`
-	Version               string    `boil:"version" json:"version" toml:"version" yaml:"version"`
-	CreatedAt             time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	UpdatedAt             time.Time `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	Vin                string    `boil:"vin" json:"vin" toml:"vin" yaml:"vin"`
+	TemplateDBCURL     string    `boil:"template_dbc_url" json:"template_dbc_url" toml:"template_dbc_url" yaml:"template_dbc_url"`
+	TemplatePidURL     string    `boil:"template_pid_url" json:"template_pid_url" toml:"template_pid_url" yaml:"template_pid_url"`
+	TemplateSettingURL string    `boil:"template_setting_url" json:"template_setting_url" toml:"template_setting_url" yaml:"template_setting_url"`
+	Version            string    `boil:"version" json:"version" toml:"version" yaml:"version"`
+	IsTemplateUpdated  bool      `boil:"is_template_updated" json:"is_template_updated" toml:"is_template_updated" yaml:"is_template_updated"`
+	CreatedAt          time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UpdatedAt          time.Time `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
 
 	R *userDeviceTemplateR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L userDeviceTemplateL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var UserDeviceTemplateColumns = struct {
-	DeviceEthereumAddress string
-	TemplateDBCURL        string
-	TemplatePidURL        string
-	TemplateSettingURL    string
-	Version               string
-	CreatedAt             string
-	UpdatedAt             string
+	Vin                string
+	TemplateDBCURL     string
+	TemplatePidURL     string
+	TemplateSettingURL string
+	Version            string
+	IsTemplateUpdated  string
+	CreatedAt          string
+	UpdatedAt          string
 }{
-	DeviceEthereumAddress: "device_ethereum_address",
-	TemplateDBCURL:        "template_dbc_url",
-	TemplatePidURL:        "template_pid_url",
-	TemplateSettingURL:    "template_setting_url",
-	Version:               "version",
-	CreatedAt:             "created_at",
-	UpdatedAt:             "updated_at",
+	Vin:                "vin",
+	TemplateDBCURL:     "template_dbc_url",
+	TemplatePidURL:     "template_pid_url",
+	TemplateSettingURL: "template_setting_url",
+	Version:            "version",
+	IsTemplateUpdated:  "is_template_updated",
+	CreatedAt:          "created_at",
+	UpdatedAt:          "updated_at",
 }
 
 var UserDeviceTemplateTableColumns = struct {
-	DeviceEthereumAddress string
-	TemplateDBCURL        string
-	TemplatePidURL        string
-	TemplateSettingURL    string
-	Version               string
-	CreatedAt             string
-	UpdatedAt             string
+	Vin                string
+	TemplateDBCURL     string
+	TemplatePidURL     string
+	TemplateSettingURL string
+	Version            string
+	IsTemplateUpdated  string
+	CreatedAt          string
+	UpdatedAt          string
 }{
-	DeviceEthereumAddress: "user_device_template.device_ethereum_address",
-	TemplateDBCURL:        "user_device_template.template_dbc_url",
-	TemplatePidURL:        "user_device_template.template_pid_url",
-	TemplateSettingURL:    "user_device_template.template_setting_url",
-	Version:               "user_device_template.version",
-	CreatedAt:             "user_device_template.created_at",
-	UpdatedAt:             "user_device_template.updated_at",
+	Vin:                "user_device_template.vin",
+	TemplateDBCURL:     "user_device_template.template_dbc_url",
+	TemplatePidURL:     "user_device_template.template_pid_url",
+	TemplateSettingURL: "user_device_template.template_setting_url",
+	Version:            "user_device_template.version",
+	IsTemplateUpdated:  "user_device_template.is_template_updated",
+	CreatedAt:          "user_device_template.created_at",
+	UpdatedAt:          "user_device_template.updated_at",
 }
 
 // Generated where
 
 var UserDeviceTemplateWhere = struct {
-	DeviceEthereumAddress whereHelper__byte
-	TemplateDBCURL        whereHelperstring
-	TemplatePidURL        whereHelperstring
-	TemplateSettingURL    whereHelperstring
-	Version               whereHelperstring
-	CreatedAt             whereHelpertime_Time
-	UpdatedAt             whereHelpertime_Time
+	Vin                whereHelperstring
+	TemplateDBCURL     whereHelperstring
+	TemplatePidURL     whereHelperstring
+	TemplateSettingURL whereHelperstring
+	Version            whereHelperstring
+	IsTemplateUpdated  whereHelperbool
+	CreatedAt          whereHelpertime_Time
+	UpdatedAt          whereHelpertime_Time
 }{
-	DeviceEthereumAddress: whereHelper__byte{field: "\"vehicle_signal_decoding_api\".\"user_device_template\".\"device_ethereum_address\""},
-	TemplateDBCURL:        whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"user_device_template\".\"template_dbc_url\""},
-	TemplatePidURL:        whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"user_device_template\".\"template_pid_url\""},
-	TemplateSettingURL:    whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"user_device_template\".\"template_setting_url\""},
-	Version:               whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"user_device_template\".\"version\""},
-	CreatedAt:             whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"user_device_template\".\"created_at\""},
-	UpdatedAt:             whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"user_device_template\".\"updated_at\""},
+	Vin:                whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"user_device_template\".\"vin\""},
+	TemplateDBCURL:     whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"user_device_template\".\"template_dbc_url\""},
+	TemplatePidURL:     whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"user_device_template\".\"template_pid_url\""},
+	TemplateSettingURL: whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"user_device_template\".\"template_setting_url\""},
+	Version:            whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"user_device_template\".\"version\""},
+	IsTemplateUpdated:  whereHelperbool{field: "\"vehicle_signal_decoding_api\".\"user_device_template\".\"is_template_updated\""},
+	CreatedAt:          whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"user_device_template\".\"created_at\""},
+	UpdatedAt:          whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"user_device_template\".\"updated_at\""},
 }
 
 // UserDeviceTemplateRels is where relationship names are stored.
@@ -139,10 +146,10 @@ func (r *userDeviceTemplateR) GetTemplateSettingURLTemplate() *Template {
 type userDeviceTemplateL struct{}
 
 var (
-	userDeviceTemplateAllColumns            = []string{"device_ethereum_address", "template_dbc_url", "template_pid_url", "template_setting_url", "version", "created_at", "updated_at"}
-	userDeviceTemplateColumnsWithoutDefault = []string{"device_ethereum_address", "template_dbc_url", "template_pid_url", "template_setting_url", "version"}
+	userDeviceTemplateAllColumns            = []string{"vin", "template_dbc_url", "template_pid_url", "template_setting_url", "version", "is_template_updated", "created_at", "updated_at"}
+	userDeviceTemplateColumnsWithoutDefault = []string{"vin", "template_dbc_url", "template_pid_url", "template_setting_url", "version", "is_template_updated"}
 	userDeviceTemplateColumnsWithDefault    = []string{"created_at", "updated_at"}
-	userDeviceTemplatePrimaryKeyColumns     = []string{"device_ethereum_address"}
+	userDeviceTemplatePrimaryKeyColumns     = []string{"vin"}
 	userDeviceTemplateGeneratedColumns      = []string{}
 )
 
@@ -833,7 +840,7 @@ func (o *UserDeviceTemplate) SetTemplateDBCURLTemplate(ctx context.Context, exec
 		strmangle.SetParamNames("\"", "\"", 1, []string{"template_dbc_url"}),
 		strmangle.WhereClause("\"", "\"", 2, userDeviceTemplatePrimaryKeyColumns),
 	)
-	values := []interface{}{related.TemplateName, o.DeviceEthereumAddress}
+	values := []interface{}{related.TemplateName, o.Vin}
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -880,7 +887,7 @@ func (o *UserDeviceTemplate) SetTemplatePidURLTemplate(ctx context.Context, exec
 		strmangle.SetParamNames("\"", "\"", 1, []string{"template_pid_url"}),
 		strmangle.WhereClause("\"", "\"", 2, userDeviceTemplatePrimaryKeyColumns),
 	)
-	values := []interface{}{related.TemplateName, o.DeviceEthereumAddress}
+	values := []interface{}{related.TemplateName, o.Vin}
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -927,7 +934,7 @@ func (o *UserDeviceTemplate) SetTemplateSettingURLTemplate(ctx context.Context, 
 		strmangle.SetParamNames("\"", "\"", 1, []string{"template_setting_url"}),
 		strmangle.WhereClause("\"", "\"", 2, userDeviceTemplatePrimaryKeyColumns),
 	)
-	values := []interface{}{related.TemplateName, o.DeviceEthereumAddress}
+	values := []interface{}{related.TemplateName, o.Vin}
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -971,7 +978,7 @@ func UserDeviceTemplates(mods ...qm.QueryMod) userDeviceTemplateQuery {
 
 // FindUserDeviceTemplate retrieves a single record by ID with an executor.
 // If selectCols is empty Find will return all columns.
-func FindUserDeviceTemplate(ctx context.Context, exec boil.ContextExecutor, deviceEthereumAddress []byte, selectCols ...string) (*UserDeviceTemplate, error) {
+func FindUserDeviceTemplate(ctx context.Context, exec boil.ContextExecutor, vin string, selectCols ...string) (*UserDeviceTemplate, error) {
 	userDeviceTemplateObj := &UserDeviceTemplate{}
 
 	sel := "*"
@@ -979,10 +986,10 @@ func FindUserDeviceTemplate(ctx context.Context, exec boil.ContextExecutor, devi
 		sel = strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, selectCols), ",")
 	}
 	query := fmt.Sprintf(
-		"select %s from \"vehicle_signal_decoding_api\".\"user_device_template\" where \"device_ethereum_address\"=$1", sel,
+		"select %s from \"vehicle_signal_decoding_api\".\"user_device_template\" where \"vin\"=$1", sel,
 	)
 
-	q := queries.Raw(query, deviceEthereumAddress)
+	q := queries.Raw(query, vin)
 
 	err := q.Bind(ctx, exec, userDeviceTemplateObj)
 	if err != nil {
@@ -1358,7 +1365,7 @@ func (o *UserDeviceTemplate) Delete(ctx context.Context, exec boil.ContextExecut
 	}
 
 	args := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), userDeviceTemplatePrimaryKeyMapping)
-	sql := "DELETE FROM \"vehicle_signal_decoding_api\".\"user_device_template\" WHERE \"device_ethereum_address\"=$1"
+	sql := "DELETE FROM \"vehicle_signal_decoding_api\".\"user_device_template\" WHERE \"vin\"=$1"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -1455,7 +1462,7 @@ func (o UserDeviceTemplateSlice) DeleteAll(ctx context.Context, exec boil.Contex
 // Reload refetches the object from the database
 // using the primary keys with an executor.
 func (o *UserDeviceTemplate) Reload(ctx context.Context, exec boil.ContextExecutor) error {
-	ret, err := FindUserDeviceTemplate(ctx, exec, o.DeviceEthereumAddress)
+	ret, err := FindUserDeviceTemplate(ctx, exec, o.Vin)
 	if err != nil {
 		return err
 	}
@@ -1494,16 +1501,16 @@ func (o *UserDeviceTemplateSlice) ReloadAll(ctx context.Context, exec boil.Conte
 }
 
 // UserDeviceTemplateExists checks if the UserDeviceTemplate row exists.
-func UserDeviceTemplateExists(ctx context.Context, exec boil.ContextExecutor, deviceEthereumAddress []byte) (bool, error) {
+func UserDeviceTemplateExists(ctx context.Context, exec boil.ContextExecutor, vin string) (bool, error) {
 	var exists bool
-	sql := "select exists(select 1 from \"vehicle_signal_decoding_api\".\"user_device_template\" where \"device_ethereum_address\"=$1 limit 1)"
+	sql := "select exists(select 1 from \"vehicle_signal_decoding_api\".\"user_device_template\" where \"vin\"=$1 limit 1)"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
 		fmt.Fprintln(writer, sql)
-		fmt.Fprintln(writer, deviceEthereumAddress)
+		fmt.Fprintln(writer, vin)
 	}
-	row := exec.QueryRowContext(ctx, sql, deviceEthereumAddress)
+	row := exec.QueryRowContext(ctx, sql, vin)
 
 	err := row.Scan(&exists)
 	if err != nil {
