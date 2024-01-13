@@ -2,16 +2,18 @@ package services
 
 import (
 	"context"
+
 	"github.com/pkg/errors"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 
 	"database/sql"
+
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 )
 
 //go:generate mockgen -source user_device_template_service.go -destination mocks/user_device_template_service_mock.go
 type UserDeviceTemplateService interface {
-	AssociateTemplate(ctx context.Context, vin, templateDbcUrl, templatePidUrl, templateSettingUrl, version string) error
+	AssociateTemplate(ctx context.Context, vin, templateDbcURL, templatePidURL, templateSettingURL, version string) error
 }
 
 type userDeviceTemplateService struct {
@@ -24,7 +26,7 @@ func NewUserDeviceTemplateService(database *sql.DB) UserDeviceTemplateService {
 	}
 }
 
-func (u userDeviceTemplateService) AssociateTemplate(ctx context.Context, vin, templateDbcUrl, templatePidUrl, templateSettingUrl, version string) error {
+func (u userDeviceTemplateService) AssociateTemplate(ctx context.Context, vin, templateDbcURL, templatePidURL, templateSettingURL, version string) error {
 
 	userDeviceTemplate, err := models.UserDeviceTemplates(models.UserDeviceTemplateWhere.Vin.EQ(vin)).
 		One(ctx, u.db)
@@ -34,13 +36,13 @@ func (u userDeviceTemplateService) AssociateTemplate(ctx context.Context, vin, t
 
 	if userDeviceTemplate != nil {
 		userDeviceTemplate.Version = version
-		if userDeviceTemplate.TemplateDBCURL != templateDbcUrl {
+		if userDeviceTemplate.TemplateDBCURL != templateDbcURL {
 			userDeviceTemplate.IsTemplateUpdated = false
 		}
-		if userDeviceTemplate.TemplatePidURL != templatePidUrl {
+		if userDeviceTemplate.TemplatePidURL != templatePidURL {
 			userDeviceTemplate.IsTemplateUpdated = false
 		}
-		if userDeviceTemplate.TemplateSettingURL != templateSettingUrl {
+		if userDeviceTemplate.TemplateSettingURL != templateSettingURL {
 			userDeviceTemplate.IsTemplateUpdated = false
 		}
 
@@ -52,9 +54,9 @@ func (u userDeviceTemplateService) AssociateTemplate(ctx context.Context, vin, t
 	if userDeviceTemplate == nil {
 		userDeviceTemplate = &models.UserDeviceTemplate{
 			Vin:                vin,
-			TemplateDBCURL:     templateDbcUrl,
-			TemplatePidURL:     templatePidUrl,
-			TemplateSettingURL: templateSettingUrl,
+			TemplateDBCURL:     templateDbcURL,
+			TemplatePidURL:     templatePidURL,
+			TemplateSettingURL: templateSettingURL,
 			IsTemplateUpdated:  true,
 		}
 
