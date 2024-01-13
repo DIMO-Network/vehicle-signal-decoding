@@ -64,6 +64,7 @@ func (s *DeviceConfigControllerTestSuite) SetupSuite() {
 	s.mockCtrl = gomock.NewController(s.T())
 	s.mockUserDeviceSvc = mock_services.NewMockUserDeviceService(s.mockCtrl)
 	s.mockDeviceDefSvc = mock_services.NewMockDeviceDefinitionsService(s.mockCtrl)
+	s.mockUserDeviceTemplateSvc = mock_services.NewMockUserDeviceTemplateService(s.mockCtrl)
 	ctrl := NewDeviceConfigController(&config.Settings{Port: "3000", DeploymentURL: "http://localhost:3000"}, s.logger, s.pdb.DBS().Reader.DB, s.mockUserDeviceSvc, s.mockDeviceDefSvc, s.mockUserDeviceTemplateSvc)
 	s.controller = &ctrl
 	s.app = fiber.New()
@@ -335,7 +336,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_DecodeVIN() {
 		DeviceDefinitionId: mockedDeviceDefinition.DeviceDefinitionId,
 	}, nil)
 	s.mockDeviceDefSvc.EXPECT().GetDeviceDefinitionByID(gomock.Any(), mockedDeviceDefinition.DeviceDefinitionId).Return(mockedDeviceDefinition, nil)
-
+	s.mockUserDeviceTemplateSvc.EXPECT().AssociateTemplate(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 	s.app.Get("/config-urls/:vin", s.controller.GetConfigURLsFromVIN)
 
 	request := dbtest.BuildRequest("GET", "/config-urls/"+vin, "")
