@@ -51,9 +51,9 @@ func (h GetTemplateByNameQueryHandler) Handle(ctx context.Context, query *GetTem
 		pidsCount = len(item.R.GetTemplateNamePidConfigs())
 	}
 
-	hasDbc := "false"
+	hasDbc := false
 	if item.R.TemplateNameDBCFile != nil {
-		hasDbc = "true" // ! todo: this should not be a string
+		hasDbc = true
 	}
 
 	result := &grpc.GetTemplateByNameResponse{

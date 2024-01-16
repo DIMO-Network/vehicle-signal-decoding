@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"google.golang.org/protobuf/types/known/timestamppb"
+
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/exceptions"
 	"github.com/pkg/errors"
 
@@ -71,12 +73,13 @@ func (h GetTemplatesAllQueryHandler) Handle(ctx context.Context, query *GetTempl
 			Version:    item.Version,
 			Protocol:   item.Protocol,
 			Powertrain: item.Powertrain,
+			UpdatedAt:  timestamppb.New(item.UpdatedAt),
 		}
 		if item.R.TemplateNamePidConfigs != nil {
 			ts.PidsCount = int32(len(item.R.GetTemplateNamePidConfigs()))
 		}
 		if item.R.TemplateNameDBCFile != nil {
-			ts.HasDbc = "true" // ! todo: this should not be a string
+			ts.HasDbc = true
 		}
 		result.Templates = append(result.Templates, ts)
 	}
