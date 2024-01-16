@@ -3,6 +3,8 @@ package queries
 import (
 	"context"
 	"fmt"
+	"path/filepath"
+
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/common"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/exceptions"
@@ -11,7 +13,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	"path/filepath"
 )
 
 type GetCanBusDumpFileByEthAddressQueryHandler struct {
