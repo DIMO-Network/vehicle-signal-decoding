@@ -277,6 +277,11 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_EmptyDBC() {
 	err = ds.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
 	require.NoError(s.T(), err)
 
+	dt := models.DeviceTemplate{
+		IsTemplateUpdated: false,
+	}
+	s.mockDeviceTemplateSvc.EXPECT().AssociateTemplate(gomock.Any(), vin, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(&dt, nil)
+
 	s.app.Get("/config-urls/:vin", s.controller.GetConfigURLsFromVIN)
 
 	request := dbtest.BuildRequest("GET", "/config-urls/"+vin, "")
@@ -407,6 +412,11 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_ProtocolOverrideQS()
 	s.mockUserDeviceSvc.EXPECT().GetUserDeviceByVIN(gomock.Any(), vin).Return(nil, errors.New("user device not found"))
 	s.mockDeviceDefSvc.EXPECT().DecodeVIN(gomock.Any(), vin).Return(&p_grpc.DecodeVinResponse{DeviceDefinitionId: mockedDeviceDefinition.DeviceDefinitionId}, nil)
 
+	dt := models.DeviceTemplate{
+		IsTemplateUpdated: false,
+	}
+	s.mockDeviceTemplateSvc.EXPECT().AssociateTemplate(gomock.Any(), vin, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(&dt, nil)
+
 	s.app.Get("/config-urls/:vin", s.controller.GetConfigURLsFromVIN)
 
 	request := dbtest.BuildRequest("GET", "/config-urls/"+vin+"?protocol=7", "")
@@ -481,6 +491,11 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_FallbackLogic() {
 	s.mockDeviceDefSvc.EXPECT().GetDeviceDefinitionByID(gomock.Any(), gomock.Any()).Return(mockedDeviceDefinition, nil)
 	s.mockUserDeviceSvc.EXPECT().GetUserDeviceByVIN(gomock.Any(), vin).Return(nil, errors.New("user device not found"))
 	s.mockDeviceDefSvc.EXPECT().DecodeVIN(gomock.Any(), vin).Return(&p_grpc.DecodeVinResponse{DeviceDefinitionId: mockedDeviceDefinition.DeviceDefinitionId}, nil)
+
+	dt := models.DeviceTemplate{
+		IsTemplateUpdated: false,
+	}
+	s.mockDeviceTemplateSvc.EXPECT().AssociateTemplate(gomock.Any(), vin, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(&dt, nil)
 
 	s.app.Get("/config-urls/:vin", s.controller.GetConfigURLsFromVIN)
 

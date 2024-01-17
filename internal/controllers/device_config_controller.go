@@ -350,14 +350,10 @@ func (d *DeviceConfigController) GetConfigStatusFromEthAddr(c *fiber.Ctx) error 
 		return err
 	}
 
-	var response DeviceTemplateResponse
-
-	response = DeviceTemplateResponse{
+	return c.JSON(DeviceTemplateResponse{
 		IsTemplateUpdated: deviceConfiguration.IsTemplateUpdated,
 		Version:           deviceConfiguration.Version,
-	}
-
-	return c.JSON(response)
+	})
 }
 
 func padByteArray(input []byte, targetLength int) []byte {
