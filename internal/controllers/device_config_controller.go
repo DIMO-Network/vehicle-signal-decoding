@@ -28,23 +28,23 @@ import (
 )
 
 type DeviceConfigController struct {
-	settings                  *config.Settings
-	log                       *zerolog.Logger
-	db                        *sql.DB
-	userDeviceSvc             services.UserDeviceService
-	deviceDefSvc              services.DeviceDefinitionsService
-	userDeviceTemplateService services.UserDeviceTemplateService
+	settings              *config.Settings
+	log                   *zerolog.Logger
+	db                    *sql.DB
+	userDeviceSvc         services.UserDeviceService
+	deviceDefSvc          services.DeviceDefinitionsService
+	deviceTemplateService services.DeviceTemplateService
 }
 
 // NewDeviceConfigController constructor
-func NewDeviceConfigController(settings *config.Settings, logger *zerolog.Logger, database *sql.DB, userDeviceSvc services.UserDeviceService, deviceDefSvc services.DeviceDefinitionsService, userDeviceTemplateService services.UserDeviceTemplateService) DeviceConfigController {
+func NewDeviceConfigController(settings *config.Settings, logger *zerolog.Logger, database *sql.DB, userDeviceSvc services.UserDeviceService, deviceDefSvc services.DeviceDefinitionsService, deviceTemplateService services.DeviceTemplateService) DeviceConfigController {
 	return DeviceConfigController{
-		settings:                  settings,
-		log:                       logger,
-		db:                        database,
-		userDeviceSvc:             userDeviceSvc,
-		deviceDefSvc:              deviceDefSvc,
-		userDeviceTemplateService: userDeviceTemplateService,
+		settings:              settings,
+		log:                   logger,
+		db:                    database,
+		userDeviceSvc:         userDeviceSvc,
+		deviceDefSvc:          deviceDefSvc,
+		deviceTemplateService: deviceTemplateService,
 	}
 
 }
@@ -56,7 +56,7 @@ type DeviceConfigResponse struct {
 	Version          string `json:"version"`
 }
 
-type UserDeviceTemplateResponse struct {
+type DeviceTemplateResponse struct {
 	IsTemplateUpdated bool   `json:"is_template_updated"`
 	Version           string `json:"version"`
 }
@@ -330,7 +330,7 @@ func (d *DeviceConfigController) GetConfigURLsFromEthAddr(c *fiber.Ctx) error {
 // @Description  Retrieve the URLs for PID, DeviceSettings, and DBC configuration based on device's Ethereum Address. These could be empty if not configs available
 // @Tags         vehicle-signal-decoding
 // @Produce      json
-// @Success      200 {object} UserDeviceTemplateResponse "Successfully retrieved configuration URLs"
+// @Success      200 {object} DeviceTemplateResponse "Successfully retrieved configuration URLs"
 // @Failure 404  "Not Found - No templates available for the given parameters"
 // @Failure 400  "incorrect eth addr format"
 // @Param        ethAddr  path   string  true  "Ethereum Address"
@@ -343,22 +343,22 @@ func (d *DeviceConfigController) GetConfigStatusFromEthAddr(c *fiber.Ctx) error 
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": fmt.Sprintf("no connected user device found for EthAddr: %s", ethAddr)})
 	}
 
-	userDeviceTemplate, err := models.UserDeviceTemplates(models.UserDeviceTemplateWhere.Vin.EQ(*ud.Vin)).
+	userDeviceTemplate, err := models.DeviceTemplates(models.DeviceTemplateWhere.Vin.EQ(*ud.Vin)).
 		One(c.Context(), d.db)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return err
 	}
 
-	var response UserDeviceTemplateResponse
+	var response DeviceTemplateResponse
 
 	if userDeviceTemplate == nil {
-		response = UserDeviceTemplateResponse{
+		response = DeviceTemplateResponse{
 			IsTemplateUpdated: false,
 		}
 	}
 
 	if userDeviceTemplate != nil {
-		response = UserDeviceTemplateResponse{
+		response = DeviceTemplateResponse{
 			IsTemplateUpdated: userDeviceTemplate.IsTemplateUpdated,
 			Version:           userDeviceTemplate.Version,
 		}
@@ -609,7 +609,7 @@ func (d *DeviceConfigController) getConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) 
 	}
 
 	// Associate current template
-	err = d.userDeviceTemplateService.AssociateTemplate(c.Context(), *ud.Vin, response.DbcURL, response.PidURL, response.DeviceSettingURL, response.Version)
+	err = d.deviceTemplateService.AssociateTemplate(c.Context(), *ud.Vin, response.DbcURL, response.PidURL, response.DeviceSettingURL, response.Version)
 	if err != nil {
 		return errors.Wrap(err, "Failed to associate template version")
 	}

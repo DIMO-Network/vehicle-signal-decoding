@@ -7,6 +7,7 @@ var TableNames = struct {
 	DBCCodes                  string
 	DBCFiles                  string
 	DeviceSettings            string
+	DeviceTemplate            string
 	Jobs                      string
 	PidConfigs                string
 	SerialToTemplateOverrides string
@@ -15,11 +16,11 @@ var TableNames = struct {
 	TemplateVehicles          string
 	Templates                 string
 	TestSignals               string
-	UserDeviceTemplate        string
 }{
 	DBCCodes:                  "dbc_codes",
 	DBCFiles:                  "dbc_files",
 	DeviceSettings:            "device_settings",
+	DeviceTemplate:            "device_template",
 	Jobs:                      "jobs",
 	PidConfigs:                "pid_configs",
 	SerialToTemplateOverrides: "serial_to_template_overrides",
@@ -28,5 +29,4 @@ var TableNames = struct {
 	TemplateVehicles:          "template_vehicles",
 	Templates:                 "templates",
 	TestSignals:               "test_signals",
-	UserDeviceTemplate:        "user_device_template",
 }

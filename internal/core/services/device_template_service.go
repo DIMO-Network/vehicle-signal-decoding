@@ -11,8 +11,8 @@ import (
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 )
 
-//go:generate mockgen -source user_device_template_service.go -destination mocks/user_device_template_service_mock.go
-type UserDeviceTemplateService interface {
+//go:generate mockgen -source device_template_service.go -destination mocks/device_template_service_mock.go
+type DeviceTemplateService interface {
 	AssociateTemplate(ctx context.Context, vin, templateDbcURL, templatePidURL, templateSettingURL, version string) error
 }
 
@@ -20,7 +20,7 @@ type userDeviceTemplateService struct {
 	db *sql.DB
 }
 
-func NewUserDeviceTemplateService(database *sql.DB) UserDeviceTemplateService {
+func NewUserDeviceTemplateService(database *sql.DB) DeviceTemplateService {
 	return &userDeviceTemplateService{
 		db: database,
 	}
@@ -28,7 +28,7 @@ func NewUserDeviceTemplateService(database *sql.DB) UserDeviceTemplateService {
 
 func (u userDeviceTemplateService) AssociateTemplate(ctx context.Context, vin, templateDbcURL, templatePidURL, templateSettingURL, version string) error {
 
-	userDeviceTemplate, err := models.UserDeviceTemplates(models.UserDeviceTemplateWhere.Vin.EQ(vin)).
+	userDeviceTemplate, err := models.DeviceTemplates(models.DeviceTemplateWhere.Vin.EQ(vin)).
 		One(ctx, u.db)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return err
@@ -52,7 +52,7 @@ func (u userDeviceTemplateService) AssociateTemplate(ctx context.Context, vin, t
 	}
 
 	if userDeviceTemplate == nil {
-		userDeviceTemplate = &models.UserDeviceTemplate{
+		userDeviceTemplate = &models.DeviceTemplate{
 			Vin:                vin,
 			TemplateDBCURL:     templateDbcURL,
 			TemplatePidURL:     templatePidURL,

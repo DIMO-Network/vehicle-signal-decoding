@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/friendsofgo/errors"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -21,23 +22,25 @@ import (
 	"github.com/volatiletech/strmangle"
 )
 
-// UserDeviceTemplate is an object representing the database table.
-type UserDeviceTemplate struct {
-	Vin                string    `boil:"vin" json:"vin" toml:"vin" yaml:"vin"`
-	TemplateDBCURL     string    `boil:"template_dbc_url" json:"template_dbc_url" toml:"template_dbc_url" yaml:"template_dbc_url"`
-	TemplatePidURL     string    `boil:"template_pid_url" json:"template_pid_url" toml:"template_pid_url" yaml:"template_pid_url"`
-	TemplateSettingURL string    `boil:"template_setting_url" json:"template_setting_url" toml:"template_setting_url" yaml:"template_setting_url"`
-	Version            string    `boil:"version" json:"version" toml:"version" yaml:"version"`
-	IsTemplateUpdated  bool      `boil:"is_template_updated" json:"is_template_updated" toml:"is_template_updated" yaml:"is_template_updated"`
-	CreatedAt          time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	UpdatedAt          time.Time `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+// DeviceTemplate is an object representing the database table.
+type DeviceTemplate struct {
+	Vin                string     `boil:"vin" json:"vin" toml:"vin" yaml:"vin"`
+	DeviceEthAddr      null.Bytes `boil:"device_eth_addr" json:"device_eth_addr,omitempty" toml:"device_eth_addr" yaml:"device_eth_addr,omitempty"`
+	TemplateDBCURL     string     `boil:"template_dbc_url" json:"template_dbc_url" toml:"template_dbc_url" yaml:"template_dbc_url"`
+	TemplatePidURL     string     `boil:"template_pid_url" json:"template_pid_url" toml:"template_pid_url" yaml:"template_pid_url"`
+	TemplateSettingURL string     `boil:"template_setting_url" json:"template_setting_url" toml:"template_setting_url" yaml:"template_setting_url"`
+	Version            string     `boil:"version" json:"version" toml:"version" yaml:"version"`
+	IsTemplateUpdated  bool       `boil:"is_template_updated" json:"is_template_updated" toml:"is_template_updated" yaml:"is_template_updated"`
+	CreatedAt          time.Time  `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UpdatedAt          time.Time  `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
 
-	R *userDeviceTemplateR `boil:"-" json:"-" toml:"-" yaml:"-"`
-	L userDeviceTemplateL  `boil:"-" json:"-" toml:"-" yaml:"-"`
+	R *deviceTemplateR `boil:"-" json:"-" toml:"-" yaml:"-"`
+	L deviceTemplateL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
-var UserDeviceTemplateColumns = struct {
+var DeviceTemplateColumns = struct {
 	Vin                string
+	DeviceEthAddr      string
 	TemplateDBCURL     string
 	TemplatePidURL     string
 	TemplateSettingURL string
@@ -47,6 +50,7 @@ var UserDeviceTemplateColumns = struct {
 	UpdatedAt          string
 }{
 	Vin:                "vin",
+	DeviceEthAddr:      "device_eth_addr",
 	TemplateDBCURL:     "template_dbc_url",
 	TemplatePidURL:     "template_pid_url",
 	TemplateSettingURL: "template_setting_url",
@@ -56,8 +60,9 @@ var UserDeviceTemplateColumns = struct {
 	UpdatedAt:          "updated_at",
 }
 
-var UserDeviceTemplateTableColumns = struct {
+var DeviceTemplateTableColumns = struct {
 	Vin                string
+	DeviceEthAddr      string
 	TemplateDBCURL     string
 	TemplatePidURL     string
 	TemplateSettingURL string
@@ -66,20 +71,46 @@ var UserDeviceTemplateTableColumns = struct {
 	CreatedAt          string
 	UpdatedAt          string
 }{
-	Vin:                "user_device_template.vin",
-	TemplateDBCURL:     "user_device_template.template_dbc_url",
-	TemplatePidURL:     "user_device_template.template_pid_url",
-	TemplateSettingURL: "user_device_template.template_setting_url",
-	Version:            "user_device_template.version",
-	IsTemplateUpdated:  "user_device_template.is_template_updated",
-	CreatedAt:          "user_device_template.created_at",
-	UpdatedAt:          "user_device_template.updated_at",
+	Vin:                "device_template.vin",
+	DeviceEthAddr:      "device_template.device_eth_addr",
+	TemplateDBCURL:     "device_template.template_dbc_url",
+	TemplatePidURL:     "device_template.template_pid_url",
+	TemplateSettingURL: "device_template.template_setting_url",
+	Version:            "device_template.version",
+	IsTemplateUpdated:  "device_template.is_template_updated",
+	CreatedAt:          "device_template.created_at",
+	UpdatedAt:          "device_template.updated_at",
 }
 
 // Generated where
 
-var UserDeviceTemplateWhere = struct {
+type whereHelpernull_Bytes struct{ field string }
+
+func (w whereHelpernull_Bytes) EQ(x null.Bytes) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, false, x)
+}
+func (w whereHelpernull_Bytes) NEQ(x null.Bytes) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, true, x)
+}
+func (w whereHelpernull_Bytes) LT(x null.Bytes) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LT, x)
+}
+func (w whereHelpernull_Bytes) LTE(x null.Bytes) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LTE, x)
+}
+func (w whereHelpernull_Bytes) GT(x null.Bytes) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GT, x)
+}
+func (w whereHelpernull_Bytes) GTE(x null.Bytes) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GTE, x)
+}
+
+func (w whereHelpernull_Bytes) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
+func (w whereHelpernull_Bytes) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
+
+var DeviceTemplateWhere = struct {
 	Vin                whereHelperstring
+	DeviceEthAddr      whereHelpernull_Bytes
 	TemplateDBCURL     whereHelperstring
 	TemplatePidURL     whereHelperstring
 	TemplateSettingURL whereHelperstring
@@ -88,18 +119,19 @@ var UserDeviceTemplateWhere = struct {
 	CreatedAt          whereHelpertime_Time
 	UpdatedAt          whereHelpertime_Time
 }{
-	Vin:                whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"user_device_template\".\"vin\""},
-	TemplateDBCURL:     whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"user_device_template\".\"template_dbc_url\""},
-	TemplatePidURL:     whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"user_device_template\".\"template_pid_url\""},
-	TemplateSettingURL: whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"user_device_template\".\"template_setting_url\""},
-	Version:            whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"user_device_template\".\"version\""},
-	IsTemplateUpdated:  whereHelperbool{field: "\"vehicle_signal_decoding_api\".\"user_device_template\".\"is_template_updated\""},
-	CreatedAt:          whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"user_device_template\".\"created_at\""},
-	UpdatedAt:          whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"user_device_template\".\"updated_at\""},
+	Vin:                whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"device_template\".\"vin\""},
+	DeviceEthAddr:      whereHelpernull_Bytes{field: "\"vehicle_signal_decoding_api\".\"device_template\".\"device_eth_addr\""},
+	TemplateDBCURL:     whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"device_template\".\"template_dbc_url\""},
+	TemplatePidURL:     whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"device_template\".\"template_pid_url\""},
+	TemplateSettingURL: whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"device_template\".\"template_setting_url\""},
+	Version:            whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"device_template\".\"version\""},
+	IsTemplateUpdated:  whereHelperbool{field: "\"vehicle_signal_decoding_api\".\"device_template\".\"is_template_updated\""},
+	CreatedAt:          whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"device_template\".\"created_at\""},
+	UpdatedAt:          whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"device_template\".\"updated_at\""},
 }
 
-// UserDeviceTemplateRels is where relationship names are stored.
-var UserDeviceTemplateRels = struct {
+// DeviceTemplateRels is where relationship names are stored.
+var DeviceTemplateRels = struct {
 	TemplateDBCURLTemplate     string
 	TemplatePidURLTemplate     string
 	TemplateSettingURLTemplate string
@@ -109,73 +141,73 @@ var UserDeviceTemplateRels = struct {
 	TemplateSettingURLTemplate: "TemplateSettingURLTemplate",
 }
 
-// userDeviceTemplateR is where relationships are stored.
-type userDeviceTemplateR struct {
+// deviceTemplateR is where relationships are stored.
+type deviceTemplateR struct {
 	TemplateDBCURLTemplate     *Template `boil:"TemplateDBCURLTemplate" json:"TemplateDBCURLTemplate" toml:"TemplateDBCURLTemplate" yaml:"TemplateDBCURLTemplate"`
 	TemplatePidURLTemplate     *Template `boil:"TemplatePidURLTemplate" json:"TemplatePidURLTemplate" toml:"TemplatePidURLTemplate" yaml:"TemplatePidURLTemplate"`
 	TemplateSettingURLTemplate *Template `boil:"TemplateSettingURLTemplate" json:"TemplateSettingURLTemplate" toml:"TemplateSettingURLTemplate" yaml:"TemplateSettingURLTemplate"`
 }
 
 // NewStruct creates a new relationship struct
-func (*userDeviceTemplateR) NewStruct() *userDeviceTemplateR {
-	return &userDeviceTemplateR{}
+func (*deviceTemplateR) NewStruct() *deviceTemplateR {
+	return &deviceTemplateR{}
 }
 
-func (r *userDeviceTemplateR) GetTemplateDBCURLTemplate() *Template {
+func (r *deviceTemplateR) GetTemplateDBCURLTemplate() *Template {
 	if r == nil {
 		return nil
 	}
 	return r.TemplateDBCURLTemplate
 }
 
-func (r *userDeviceTemplateR) GetTemplatePidURLTemplate() *Template {
+func (r *deviceTemplateR) GetTemplatePidURLTemplate() *Template {
 	if r == nil {
 		return nil
 	}
 	return r.TemplatePidURLTemplate
 }
 
-func (r *userDeviceTemplateR) GetTemplateSettingURLTemplate() *Template {
+func (r *deviceTemplateR) GetTemplateSettingURLTemplate() *Template {
 	if r == nil {
 		return nil
 	}
 	return r.TemplateSettingURLTemplate
 }
 
-// userDeviceTemplateL is where Load methods for each relationship are stored.
-type userDeviceTemplateL struct{}
+// deviceTemplateL is where Load methods for each relationship are stored.
+type deviceTemplateL struct{}
 
 var (
-	userDeviceTemplateAllColumns            = []string{"vin", "template_dbc_url", "template_pid_url", "template_setting_url", "version", "is_template_updated", "created_at", "updated_at"}
-	userDeviceTemplateColumnsWithoutDefault = []string{"vin", "template_dbc_url", "template_pid_url", "template_setting_url", "version", "is_template_updated"}
-	userDeviceTemplateColumnsWithDefault    = []string{"created_at", "updated_at"}
-	userDeviceTemplatePrimaryKeyColumns     = []string{"vin"}
-	userDeviceTemplateGeneratedColumns      = []string{}
+	deviceTemplateAllColumns            = []string{"vin", "device_eth_addr", "template_dbc_url", "template_pid_url", "template_setting_url", "version", "is_template_updated", "created_at", "updated_at"}
+	deviceTemplateColumnsWithoutDefault = []string{"vin", "template_dbc_url", "template_pid_url", "template_setting_url", "version", "is_template_updated"}
+	deviceTemplateColumnsWithDefault    = []string{"device_eth_addr", "created_at", "updated_at"}
+	deviceTemplatePrimaryKeyColumns     = []string{"vin"}
+	deviceTemplateGeneratedColumns      = []string{}
 )
 
 type (
-	// UserDeviceTemplateSlice is an alias for a slice of pointers to UserDeviceTemplate.
-	// This should almost always be used instead of []UserDeviceTemplate.
-	UserDeviceTemplateSlice []*UserDeviceTemplate
-	// UserDeviceTemplateHook is the signature for custom UserDeviceTemplate hook methods
-	UserDeviceTemplateHook func(context.Context, boil.ContextExecutor, *UserDeviceTemplate) error
+	// DeviceTemplateSlice is an alias for a slice of pointers to DeviceTemplate.
+	// This should almost always be used instead of []DeviceTemplate.
+	DeviceTemplateSlice []*DeviceTemplate
+	// DeviceTemplateHook is the signature for custom DeviceTemplate hook methods
+	DeviceTemplateHook func(context.Context, boil.ContextExecutor, *DeviceTemplate) error
 
-	userDeviceTemplateQuery struct {
+	deviceTemplateQuery struct {
 		*queries.Query
 	}
 )
 
 // Cache for insert, update and upsert
 var (
-	userDeviceTemplateType                 = reflect.TypeOf(&UserDeviceTemplate{})
-	userDeviceTemplateMapping              = queries.MakeStructMapping(userDeviceTemplateType)
-	userDeviceTemplatePrimaryKeyMapping, _ = queries.BindMapping(userDeviceTemplateType, userDeviceTemplateMapping, userDeviceTemplatePrimaryKeyColumns)
-	userDeviceTemplateInsertCacheMut       sync.RWMutex
-	userDeviceTemplateInsertCache          = make(map[string]insertCache)
-	userDeviceTemplateUpdateCacheMut       sync.RWMutex
-	userDeviceTemplateUpdateCache          = make(map[string]updateCache)
-	userDeviceTemplateUpsertCacheMut       sync.RWMutex
-	userDeviceTemplateUpsertCache          = make(map[string]insertCache)
+	deviceTemplateType                 = reflect.TypeOf(&DeviceTemplate{})
+	deviceTemplateMapping              = queries.MakeStructMapping(deviceTemplateType)
+	deviceTemplatePrimaryKeyMapping, _ = queries.BindMapping(deviceTemplateType, deviceTemplateMapping, deviceTemplatePrimaryKeyColumns)
+	deviceTemplateInsertCacheMut       sync.RWMutex
+	deviceTemplateInsertCache          = make(map[string]insertCache)
+	deviceTemplateUpdateCacheMut       sync.RWMutex
+	deviceTemplateUpdateCache          = make(map[string]updateCache)
+	deviceTemplateUpsertCacheMut       sync.RWMutex
+	deviceTemplateUpsertCache          = make(map[string]insertCache)
 )
 
 var (
@@ -186,27 +218,27 @@ var (
 	_ = qmhelper.Where
 )
 
-var userDeviceTemplateAfterSelectHooks []UserDeviceTemplateHook
+var deviceTemplateAfterSelectHooks []DeviceTemplateHook
 
-var userDeviceTemplateBeforeInsertHooks []UserDeviceTemplateHook
-var userDeviceTemplateAfterInsertHooks []UserDeviceTemplateHook
+var deviceTemplateBeforeInsertHooks []DeviceTemplateHook
+var deviceTemplateAfterInsertHooks []DeviceTemplateHook
 
-var userDeviceTemplateBeforeUpdateHooks []UserDeviceTemplateHook
-var userDeviceTemplateAfterUpdateHooks []UserDeviceTemplateHook
+var deviceTemplateBeforeUpdateHooks []DeviceTemplateHook
+var deviceTemplateAfterUpdateHooks []DeviceTemplateHook
 
-var userDeviceTemplateBeforeDeleteHooks []UserDeviceTemplateHook
-var userDeviceTemplateAfterDeleteHooks []UserDeviceTemplateHook
+var deviceTemplateBeforeDeleteHooks []DeviceTemplateHook
+var deviceTemplateAfterDeleteHooks []DeviceTemplateHook
 
-var userDeviceTemplateBeforeUpsertHooks []UserDeviceTemplateHook
-var userDeviceTemplateAfterUpsertHooks []UserDeviceTemplateHook
+var deviceTemplateBeforeUpsertHooks []DeviceTemplateHook
+var deviceTemplateAfterUpsertHooks []DeviceTemplateHook
 
 // doAfterSelectHooks executes all "after Select" hooks.
-func (o *UserDeviceTemplate) doAfterSelectHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *DeviceTemplate) doAfterSelectHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range userDeviceTemplateAfterSelectHooks {
+	for _, hook := range deviceTemplateAfterSelectHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -216,12 +248,12 @@ func (o *UserDeviceTemplate) doAfterSelectHooks(ctx context.Context, exec boil.C
 }
 
 // doBeforeInsertHooks executes all "before insert" hooks.
-func (o *UserDeviceTemplate) doBeforeInsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *DeviceTemplate) doBeforeInsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range userDeviceTemplateBeforeInsertHooks {
+	for _, hook := range deviceTemplateBeforeInsertHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -231,12 +263,12 @@ func (o *UserDeviceTemplate) doBeforeInsertHooks(ctx context.Context, exec boil.
 }
 
 // doAfterInsertHooks executes all "after Insert" hooks.
-func (o *UserDeviceTemplate) doAfterInsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *DeviceTemplate) doAfterInsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range userDeviceTemplateAfterInsertHooks {
+	for _, hook := range deviceTemplateAfterInsertHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -246,12 +278,12 @@ func (o *UserDeviceTemplate) doAfterInsertHooks(ctx context.Context, exec boil.C
 }
 
 // doBeforeUpdateHooks executes all "before Update" hooks.
-func (o *UserDeviceTemplate) doBeforeUpdateHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *DeviceTemplate) doBeforeUpdateHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range userDeviceTemplateBeforeUpdateHooks {
+	for _, hook := range deviceTemplateBeforeUpdateHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -261,12 +293,12 @@ func (o *UserDeviceTemplate) doBeforeUpdateHooks(ctx context.Context, exec boil.
 }
 
 // doAfterUpdateHooks executes all "after Update" hooks.
-func (o *UserDeviceTemplate) doAfterUpdateHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *DeviceTemplate) doAfterUpdateHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range userDeviceTemplateAfterUpdateHooks {
+	for _, hook := range deviceTemplateAfterUpdateHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -276,12 +308,12 @@ func (o *UserDeviceTemplate) doAfterUpdateHooks(ctx context.Context, exec boil.C
 }
 
 // doBeforeDeleteHooks executes all "before Delete" hooks.
-func (o *UserDeviceTemplate) doBeforeDeleteHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *DeviceTemplate) doBeforeDeleteHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range userDeviceTemplateBeforeDeleteHooks {
+	for _, hook := range deviceTemplateBeforeDeleteHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -291,12 +323,12 @@ func (o *UserDeviceTemplate) doBeforeDeleteHooks(ctx context.Context, exec boil.
 }
 
 // doAfterDeleteHooks executes all "after Delete" hooks.
-func (o *UserDeviceTemplate) doAfterDeleteHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *DeviceTemplate) doAfterDeleteHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range userDeviceTemplateAfterDeleteHooks {
+	for _, hook := range deviceTemplateAfterDeleteHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -306,12 +338,12 @@ func (o *UserDeviceTemplate) doAfterDeleteHooks(ctx context.Context, exec boil.C
 }
 
 // doBeforeUpsertHooks executes all "before Upsert" hooks.
-func (o *UserDeviceTemplate) doBeforeUpsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *DeviceTemplate) doBeforeUpsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range userDeviceTemplateBeforeUpsertHooks {
+	for _, hook := range deviceTemplateBeforeUpsertHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -321,12 +353,12 @@ func (o *UserDeviceTemplate) doBeforeUpsertHooks(ctx context.Context, exec boil.
 }
 
 // doAfterUpsertHooks executes all "after Upsert" hooks.
-func (o *UserDeviceTemplate) doAfterUpsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *DeviceTemplate) doAfterUpsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range userDeviceTemplateAfterUpsertHooks {
+	for _, hook := range deviceTemplateAfterUpsertHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -335,33 +367,33 @@ func (o *UserDeviceTemplate) doAfterUpsertHooks(ctx context.Context, exec boil.C
 	return nil
 }
 
-// AddUserDeviceTemplateHook registers your hook function for all future operations.
-func AddUserDeviceTemplateHook(hookPoint boil.HookPoint, userDeviceTemplateHook UserDeviceTemplateHook) {
+// AddDeviceTemplateHook registers your hook function for all future operations.
+func AddDeviceTemplateHook(hookPoint boil.HookPoint, deviceTemplateHook DeviceTemplateHook) {
 	switch hookPoint {
 	case boil.AfterSelectHook:
-		userDeviceTemplateAfterSelectHooks = append(userDeviceTemplateAfterSelectHooks, userDeviceTemplateHook)
+		deviceTemplateAfterSelectHooks = append(deviceTemplateAfterSelectHooks, deviceTemplateHook)
 	case boil.BeforeInsertHook:
-		userDeviceTemplateBeforeInsertHooks = append(userDeviceTemplateBeforeInsertHooks, userDeviceTemplateHook)
+		deviceTemplateBeforeInsertHooks = append(deviceTemplateBeforeInsertHooks, deviceTemplateHook)
 	case boil.AfterInsertHook:
-		userDeviceTemplateAfterInsertHooks = append(userDeviceTemplateAfterInsertHooks, userDeviceTemplateHook)
+		deviceTemplateAfterInsertHooks = append(deviceTemplateAfterInsertHooks, deviceTemplateHook)
 	case boil.BeforeUpdateHook:
-		userDeviceTemplateBeforeUpdateHooks = append(userDeviceTemplateBeforeUpdateHooks, userDeviceTemplateHook)
+		deviceTemplateBeforeUpdateHooks = append(deviceTemplateBeforeUpdateHooks, deviceTemplateHook)
 	case boil.AfterUpdateHook:
-		userDeviceTemplateAfterUpdateHooks = append(userDeviceTemplateAfterUpdateHooks, userDeviceTemplateHook)
+		deviceTemplateAfterUpdateHooks = append(deviceTemplateAfterUpdateHooks, deviceTemplateHook)
 	case boil.BeforeDeleteHook:
-		userDeviceTemplateBeforeDeleteHooks = append(userDeviceTemplateBeforeDeleteHooks, userDeviceTemplateHook)
+		deviceTemplateBeforeDeleteHooks = append(deviceTemplateBeforeDeleteHooks, deviceTemplateHook)
 	case boil.AfterDeleteHook:
-		userDeviceTemplateAfterDeleteHooks = append(userDeviceTemplateAfterDeleteHooks, userDeviceTemplateHook)
+		deviceTemplateAfterDeleteHooks = append(deviceTemplateAfterDeleteHooks, deviceTemplateHook)
 	case boil.BeforeUpsertHook:
-		userDeviceTemplateBeforeUpsertHooks = append(userDeviceTemplateBeforeUpsertHooks, userDeviceTemplateHook)
+		deviceTemplateBeforeUpsertHooks = append(deviceTemplateBeforeUpsertHooks, deviceTemplateHook)
 	case boil.AfterUpsertHook:
-		userDeviceTemplateAfterUpsertHooks = append(userDeviceTemplateAfterUpsertHooks, userDeviceTemplateHook)
+		deviceTemplateAfterUpsertHooks = append(deviceTemplateAfterUpsertHooks, deviceTemplateHook)
 	}
 }
 
-// One returns a single userDeviceTemplate record from the query.
-func (q userDeviceTemplateQuery) One(ctx context.Context, exec boil.ContextExecutor) (*UserDeviceTemplate, error) {
-	o := &UserDeviceTemplate{}
+// One returns a single deviceTemplate record from the query.
+func (q deviceTemplateQuery) One(ctx context.Context, exec boil.ContextExecutor) (*DeviceTemplate, error) {
+	o := &DeviceTemplate{}
 
 	queries.SetLimit(q.Query, 1)
 
@@ -370,7 +402,7 @@ func (q userDeviceTemplateQuery) One(ctx context.Context, exec boil.ContextExecu
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, sql.ErrNoRows
 		}
-		return nil, errors.Wrap(err, "models: failed to execute a one query for user_device_template")
+		return nil, errors.Wrap(err, "models: failed to execute a one query for device_template")
 	}
 
 	if err := o.doAfterSelectHooks(ctx, exec); err != nil {
@@ -380,16 +412,16 @@ func (q userDeviceTemplateQuery) One(ctx context.Context, exec boil.ContextExecu
 	return o, nil
 }
 
-// All returns all UserDeviceTemplate records from the query.
-func (q userDeviceTemplateQuery) All(ctx context.Context, exec boil.ContextExecutor) (UserDeviceTemplateSlice, error) {
-	var o []*UserDeviceTemplate
+// All returns all DeviceTemplate records from the query.
+func (q deviceTemplateQuery) All(ctx context.Context, exec boil.ContextExecutor) (DeviceTemplateSlice, error) {
+	var o []*DeviceTemplate
 
 	err := q.Bind(ctx, exec, &o)
 	if err != nil {
-		return nil, errors.Wrap(err, "models: failed to assign all query results to UserDeviceTemplate slice")
+		return nil, errors.Wrap(err, "models: failed to assign all query results to DeviceTemplate slice")
 	}
 
-	if len(userDeviceTemplateAfterSelectHooks) != 0 {
+	if len(deviceTemplateAfterSelectHooks) != 0 {
 		for _, obj := range o {
 			if err := obj.doAfterSelectHooks(ctx, exec); err != nil {
 				return o, err
@@ -400,8 +432,8 @@ func (q userDeviceTemplateQuery) All(ctx context.Context, exec boil.ContextExecu
 	return o, nil
 }
 
-// Count returns the count of all UserDeviceTemplate records in the query.
-func (q userDeviceTemplateQuery) Count(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
+// Count returns the count of all DeviceTemplate records in the query.
+func (q deviceTemplateQuery) Count(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
 	var count int64
 
 	queries.SetSelect(q.Query, nil)
@@ -409,14 +441,14 @@ func (q userDeviceTemplateQuery) Count(ctx context.Context, exec boil.ContextExe
 
 	err := q.Query.QueryRowContext(ctx, exec).Scan(&count)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to count user_device_template rows")
+		return 0, errors.Wrap(err, "models: failed to count device_template rows")
 	}
 
 	return count, nil
 }
 
 // Exists checks if the row exists in the table.
-func (q userDeviceTemplateQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (bool, error) {
+func (q deviceTemplateQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (bool, error) {
 	var count int64
 
 	queries.SetSelect(q.Query, nil)
@@ -425,14 +457,14 @@ func (q userDeviceTemplateQuery) Exists(ctx context.Context, exec boil.ContextEx
 
 	err := q.Query.QueryRowContext(ctx, exec).Scan(&count)
 	if err != nil {
-		return false, errors.Wrap(err, "models: failed to check if user_device_template exists")
+		return false, errors.Wrap(err, "models: failed to check if device_template exists")
 	}
 
 	return count > 0, nil
 }
 
 // TemplateDBCURLTemplate pointed to by the foreign key.
-func (o *UserDeviceTemplate) TemplateDBCURLTemplate(mods ...qm.QueryMod) templateQuery {
+func (o *DeviceTemplate) TemplateDBCURLTemplate(mods ...qm.QueryMod) templateQuery {
 	queryMods := []qm.QueryMod{
 		qm.Where("\"template_name\" = ?", o.TemplateDBCURL),
 	}
@@ -443,7 +475,7 @@ func (o *UserDeviceTemplate) TemplateDBCURLTemplate(mods ...qm.QueryMod) templat
 }
 
 // TemplatePidURLTemplate pointed to by the foreign key.
-func (o *UserDeviceTemplate) TemplatePidURLTemplate(mods ...qm.QueryMod) templateQuery {
+func (o *DeviceTemplate) TemplatePidURLTemplate(mods ...qm.QueryMod) templateQuery {
 	queryMods := []qm.QueryMod{
 		qm.Where("\"template_name\" = ?", o.TemplatePidURL),
 	}
@@ -454,7 +486,7 @@ func (o *UserDeviceTemplate) TemplatePidURLTemplate(mods ...qm.QueryMod) templat
 }
 
 // TemplateSettingURLTemplate pointed to by the foreign key.
-func (o *UserDeviceTemplate) TemplateSettingURLTemplate(mods ...qm.QueryMod) templateQuery {
+func (o *DeviceTemplate) TemplateSettingURLTemplate(mods ...qm.QueryMod) templateQuery {
 	queryMods := []qm.QueryMod{
 		qm.Where("\"template_name\" = ?", o.TemplateSettingURL),
 	}
@@ -466,28 +498,28 @@ func (o *UserDeviceTemplate) TemplateSettingURLTemplate(mods ...qm.QueryMod) tem
 
 // LoadTemplateDBCURLTemplate allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for an N-1 relationship.
-func (userDeviceTemplateL) LoadTemplateDBCURLTemplate(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUserDeviceTemplate interface{}, mods queries.Applicator) error {
-	var slice []*UserDeviceTemplate
-	var object *UserDeviceTemplate
+func (deviceTemplateL) LoadTemplateDBCURLTemplate(ctx context.Context, e boil.ContextExecutor, singular bool, maybeDeviceTemplate interface{}, mods queries.Applicator) error {
+	var slice []*DeviceTemplate
+	var object *DeviceTemplate
 
 	if singular {
 		var ok bool
-		object, ok = maybeUserDeviceTemplate.(*UserDeviceTemplate)
+		object, ok = maybeDeviceTemplate.(*DeviceTemplate)
 		if !ok {
-			object = new(UserDeviceTemplate)
-			ok = queries.SetFromEmbeddedStruct(&object, &maybeUserDeviceTemplate)
+			object = new(DeviceTemplate)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeDeviceTemplate)
 			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeUserDeviceTemplate))
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeDeviceTemplate))
 			}
 		}
 	} else {
-		s, ok := maybeUserDeviceTemplate.(*[]*UserDeviceTemplate)
+		s, ok := maybeDeviceTemplate.(*[]*DeviceTemplate)
 		if ok {
 			slice = *s
 		} else {
-			ok = queries.SetFromEmbeddedStruct(&slice, maybeUserDeviceTemplate)
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeDeviceTemplate)
 			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeUserDeviceTemplate))
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeDeviceTemplate))
 			}
 		}
 	}
@@ -495,7 +527,7 @@ func (userDeviceTemplateL) LoadTemplateDBCURLTemplate(ctx context.Context, e boi
 	args := make([]interface{}, 0, 1)
 	if singular {
 		if object.R == nil {
-			object.R = &userDeviceTemplateR{}
+			object.R = &deviceTemplateR{}
 		}
 		args = append(args, object.TemplateDBCURL)
 
@@ -503,7 +535,7 @@ func (userDeviceTemplateL) LoadTemplateDBCURLTemplate(ctx context.Context, e boi
 	Outer:
 		for _, obj := range slice {
 			if obj.R == nil {
-				obj.R = &userDeviceTemplateR{}
+				obj.R = &deviceTemplateR{}
 			}
 
 			for _, a := range args {
@@ -546,7 +578,7 @@ func (userDeviceTemplateL) LoadTemplateDBCURLTemplate(ctx context.Context, e boi
 		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for templates")
 	}
 
-	if len(userDeviceTemplateAfterSelectHooks) != 0 {
+	if len(deviceTemplateAfterSelectHooks) != 0 {
 		for _, obj := range resultSlice {
 			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
 				return err
@@ -564,7 +596,7 @@ func (userDeviceTemplateL) LoadTemplateDBCURLTemplate(ctx context.Context, e boi
 		if foreign.R == nil {
 			foreign.R = &templateR{}
 		}
-		foreign.R.TemplateDBCURLUserDeviceTemplates = append(foreign.R.TemplateDBCURLUserDeviceTemplates, object)
+		foreign.R.TemplateDBCURLDeviceTemplates = append(foreign.R.TemplateDBCURLDeviceTemplates, object)
 		return nil
 	}
 
@@ -575,7 +607,7 @@ func (userDeviceTemplateL) LoadTemplateDBCURLTemplate(ctx context.Context, e boi
 				if foreign.R == nil {
 					foreign.R = &templateR{}
 				}
-				foreign.R.TemplateDBCURLUserDeviceTemplates = append(foreign.R.TemplateDBCURLUserDeviceTemplates, local)
+				foreign.R.TemplateDBCURLDeviceTemplates = append(foreign.R.TemplateDBCURLDeviceTemplates, local)
 				break
 			}
 		}
@@ -586,28 +618,28 @@ func (userDeviceTemplateL) LoadTemplateDBCURLTemplate(ctx context.Context, e boi
 
 // LoadTemplatePidURLTemplate allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for an N-1 relationship.
-func (userDeviceTemplateL) LoadTemplatePidURLTemplate(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUserDeviceTemplate interface{}, mods queries.Applicator) error {
-	var slice []*UserDeviceTemplate
-	var object *UserDeviceTemplate
+func (deviceTemplateL) LoadTemplatePidURLTemplate(ctx context.Context, e boil.ContextExecutor, singular bool, maybeDeviceTemplate interface{}, mods queries.Applicator) error {
+	var slice []*DeviceTemplate
+	var object *DeviceTemplate
 
 	if singular {
 		var ok bool
-		object, ok = maybeUserDeviceTemplate.(*UserDeviceTemplate)
+		object, ok = maybeDeviceTemplate.(*DeviceTemplate)
 		if !ok {
-			object = new(UserDeviceTemplate)
-			ok = queries.SetFromEmbeddedStruct(&object, &maybeUserDeviceTemplate)
+			object = new(DeviceTemplate)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeDeviceTemplate)
 			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeUserDeviceTemplate))
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeDeviceTemplate))
 			}
 		}
 	} else {
-		s, ok := maybeUserDeviceTemplate.(*[]*UserDeviceTemplate)
+		s, ok := maybeDeviceTemplate.(*[]*DeviceTemplate)
 		if ok {
 			slice = *s
 		} else {
-			ok = queries.SetFromEmbeddedStruct(&slice, maybeUserDeviceTemplate)
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeDeviceTemplate)
 			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeUserDeviceTemplate))
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeDeviceTemplate))
 			}
 		}
 	}
@@ -615,7 +647,7 @@ func (userDeviceTemplateL) LoadTemplatePidURLTemplate(ctx context.Context, e boi
 	args := make([]interface{}, 0, 1)
 	if singular {
 		if object.R == nil {
-			object.R = &userDeviceTemplateR{}
+			object.R = &deviceTemplateR{}
 		}
 		args = append(args, object.TemplatePidURL)
 
@@ -623,7 +655,7 @@ func (userDeviceTemplateL) LoadTemplatePidURLTemplate(ctx context.Context, e boi
 	Outer:
 		for _, obj := range slice {
 			if obj.R == nil {
-				obj.R = &userDeviceTemplateR{}
+				obj.R = &deviceTemplateR{}
 			}
 
 			for _, a := range args {
@@ -666,7 +698,7 @@ func (userDeviceTemplateL) LoadTemplatePidURLTemplate(ctx context.Context, e boi
 		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for templates")
 	}
 
-	if len(userDeviceTemplateAfterSelectHooks) != 0 {
+	if len(deviceTemplateAfterSelectHooks) != 0 {
 		for _, obj := range resultSlice {
 			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
 				return err
@@ -684,7 +716,7 @@ func (userDeviceTemplateL) LoadTemplatePidURLTemplate(ctx context.Context, e boi
 		if foreign.R == nil {
 			foreign.R = &templateR{}
 		}
-		foreign.R.TemplatePidURLUserDeviceTemplates = append(foreign.R.TemplatePidURLUserDeviceTemplates, object)
+		foreign.R.TemplatePidURLDeviceTemplates = append(foreign.R.TemplatePidURLDeviceTemplates, object)
 		return nil
 	}
 
@@ -695,7 +727,7 @@ func (userDeviceTemplateL) LoadTemplatePidURLTemplate(ctx context.Context, e boi
 				if foreign.R == nil {
 					foreign.R = &templateR{}
 				}
-				foreign.R.TemplatePidURLUserDeviceTemplates = append(foreign.R.TemplatePidURLUserDeviceTemplates, local)
+				foreign.R.TemplatePidURLDeviceTemplates = append(foreign.R.TemplatePidURLDeviceTemplates, local)
 				break
 			}
 		}
@@ -706,28 +738,28 @@ func (userDeviceTemplateL) LoadTemplatePidURLTemplate(ctx context.Context, e boi
 
 // LoadTemplateSettingURLTemplate allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for an N-1 relationship.
-func (userDeviceTemplateL) LoadTemplateSettingURLTemplate(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUserDeviceTemplate interface{}, mods queries.Applicator) error {
-	var slice []*UserDeviceTemplate
-	var object *UserDeviceTemplate
+func (deviceTemplateL) LoadTemplateSettingURLTemplate(ctx context.Context, e boil.ContextExecutor, singular bool, maybeDeviceTemplate interface{}, mods queries.Applicator) error {
+	var slice []*DeviceTemplate
+	var object *DeviceTemplate
 
 	if singular {
 		var ok bool
-		object, ok = maybeUserDeviceTemplate.(*UserDeviceTemplate)
+		object, ok = maybeDeviceTemplate.(*DeviceTemplate)
 		if !ok {
-			object = new(UserDeviceTemplate)
-			ok = queries.SetFromEmbeddedStruct(&object, &maybeUserDeviceTemplate)
+			object = new(DeviceTemplate)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeDeviceTemplate)
 			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeUserDeviceTemplate))
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeDeviceTemplate))
 			}
 		}
 	} else {
-		s, ok := maybeUserDeviceTemplate.(*[]*UserDeviceTemplate)
+		s, ok := maybeDeviceTemplate.(*[]*DeviceTemplate)
 		if ok {
 			slice = *s
 		} else {
-			ok = queries.SetFromEmbeddedStruct(&slice, maybeUserDeviceTemplate)
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeDeviceTemplate)
 			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeUserDeviceTemplate))
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeDeviceTemplate))
 			}
 		}
 	}
@@ -735,7 +767,7 @@ func (userDeviceTemplateL) LoadTemplateSettingURLTemplate(ctx context.Context, e
 	args := make([]interface{}, 0, 1)
 	if singular {
 		if object.R == nil {
-			object.R = &userDeviceTemplateR{}
+			object.R = &deviceTemplateR{}
 		}
 		args = append(args, object.TemplateSettingURL)
 
@@ -743,7 +775,7 @@ func (userDeviceTemplateL) LoadTemplateSettingURLTemplate(ctx context.Context, e
 	Outer:
 		for _, obj := range slice {
 			if obj.R == nil {
-				obj.R = &userDeviceTemplateR{}
+				obj.R = &deviceTemplateR{}
 			}
 
 			for _, a := range args {
@@ -786,7 +818,7 @@ func (userDeviceTemplateL) LoadTemplateSettingURLTemplate(ctx context.Context, e
 		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for templates")
 	}
 
-	if len(userDeviceTemplateAfterSelectHooks) != 0 {
+	if len(deviceTemplateAfterSelectHooks) != 0 {
 		for _, obj := range resultSlice {
 			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
 				return err
@@ -804,7 +836,7 @@ func (userDeviceTemplateL) LoadTemplateSettingURLTemplate(ctx context.Context, e
 		if foreign.R == nil {
 			foreign.R = &templateR{}
 		}
-		foreign.R.TemplateSettingURLUserDeviceTemplates = append(foreign.R.TemplateSettingURLUserDeviceTemplates, object)
+		foreign.R.TemplateSettingURLDeviceTemplates = append(foreign.R.TemplateSettingURLDeviceTemplates, object)
 		return nil
 	}
 
@@ -815,7 +847,7 @@ func (userDeviceTemplateL) LoadTemplateSettingURLTemplate(ctx context.Context, e
 				if foreign.R == nil {
 					foreign.R = &templateR{}
 				}
-				foreign.R.TemplateSettingURLUserDeviceTemplates = append(foreign.R.TemplateSettingURLUserDeviceTemplates, local)
+				foreign.R.TemplateSettingURLDeviceTemplates = append(foreign.R.TemplateSettingURLDeviceTemplates, local)
 				break
 			}
 		}
@@ -824,10 +856,10 @@ func (userDeviceTemplateL) LoadTemplateSettingURLTemplate(ctx context.Context, e
 	return nil
 }
 
-// SetTemplateDBCURLTemplate of the userDeviceTemplate to the related item.
+// SetTemplateDBCURLTemplate of the deviceTemplate to the related item.
 // Sets o.R.TemplateDBCURLTemplate to related.
-// Adds o to related.R.TemplateDBCURLUserDeviceTemplates.
-func (o *UserDeviceTemplate) SetTemplateDBCURLTemplate(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Template) error {
+// Adds o to related.R.TemplateDBCURLDeviceTemplates.
+func (o *DeviceTemplate) SetTemplateDBCURLTemplate(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Template) error {
 	var err error
 	if insert {
 		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
@@ -836,9 +868,9 @@ func (o *UserDeviceTemplate) SetTemplateDBCURLTemplate(ctx context.Context, exec
 	}
 
 	updateQuery := fmt.Sprintf(
-		"UPDATE \"vehicle_signal_decoding_api\".\"user_device_template\" SET %s WHERE %s",
+		"UPDATE \"vehicle_signal_decoding_api\".\"device_template\" SET %s WHERE %s",
 		strmangle.SetParamNames("\"", "\"", 1, []string{"template_dbc_url"}),
-		strmangle.WhereClause("\"", "\"", 2, userDeviceTemplatePrimaryKeyColumns),
+		strmangle.WhereClause("\"", "\"", 2, deviceTemplatePrimaryKeyColumns),
 	)
 	values := []interface{}{related.TemplateName, o.Vin}
 
@@ -853,7 +885,7 @@ func (o *UserDeviceTemplate) SetTemplateDBCURLTemplate(ctx context.Context, exec
 
 	o.TemplateDBCURL = related.TemplateName
 	if o.R == nil {
-		o.R = &userDeviceTemplateR{
+		o.R = &deviceTemplateR{
 			TemplateDBCURLTemplate: related,
 		}
 	} else {
@@ -862,19 +894,19 @@ func (o *UserDeviceTemplate) SetTemplateDBCURLTemplate(ctx context.Context, exec
 
 	if related.R == nil {
 		related.R = &templateR{
-			TemplateDBCURLUserDeviceTemplates: UserDeviceTemplateSlice{o},
+			TemplateDBCURLDeviceTemplates: DeviceTemplateSlice{o},
 		}
 	} else {
-		related.R.TemplateDBCURLUserDeviceTemplates = append(related.R.TemplateDBCURLUserDeviceTemplates, o)
+		related.R.TemplateDBCURLDeviceTemplates = append(related.R.TemplateDBCURLDeviceTemplates, o)
 	}
 
 	return nil
 }
 
-// SetTemplatePidURLTemplate of the userDeviceTemplate to the related item.
+// SetTemplatePidURLTemplate of the deviceTemplate to the related item.
 // Sets o.R.TemplatePidURLTemplate to related.
-// Adds o to related.R.TemplatePidURLUserDeviceTemplates.
-func (o *UserDeviceTemplate) SetTemplatePidURLTemplate(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Template) error {
+// Adds o to related.R.TemplatePidURLDeviceTemplates.
+func (o *DeviceTemplate) SetTemplatePidURLTemplate(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Template) error {
 	var err error
 	if insert {
 		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
@@ -883,9 +915,9 @@ func (o *UserDeviceTemplate) SetTemplatePidURLTemplate(ctx context.Context, exec
 	}
 
 	updateQuery := fmt.Sprintf(
-		"UPDATE \"vehicle_signal_decoding_api\".\"user_device_template\" SET %s WHERE %s",
+		"UPDATE \"vehicle_signal_decoding_api\".\"device_template\" SET %s WHERE %s",
 		strmangle.SetParamNames("\"", "\"", 1, []string{"template_pid_url"}),
-		strmangle.WhereClause("\"", "\"", 2, userDeviceTemplatePrimaryKeyColumns),
+		strmangle.WhereClause("\"", "\"", 2, deviceTemplatePrimaryKeyColumns),
 	)
 	values := []interface{}{related.TemplateName, o.Vin}
 
@@ -900,7 +932,7 @@ func (o *UserDeviceTemplate) SetTemplatePidURLTemplate(ctx context.Context, exec
 
 	o.TemplatePidURL = related.TemplateName
 	if o.R == nil {
-		o.R = &userDeviceTemplateR{
+		o.R = &deviceTemplateR{
 			TemplatePidURLTemplate: related,
 		}
 	} else {
@@ -909,19 +941,19 @@ func (o *UserDeviceTemplate) SetTemplatePidURLTemplate(ctx context.Context, exec
 
 	if related.R == nil {
 		related.R = &templateR{
-			TemplatePidURLUserDeviceTemplates: UserDeviceTemplateSlice{o},
+			TemplatePidURLDeviceTemplates: DeviceTemplateSlice{o},
 		}
 	} else {
-		related.R.TemplatePidURLUserDeviceTemplates = append(related.R.TemplatePidURLUserDeviceTemplates, o)
+		related.R.TemplatePidURLDeviceTemplates = append(related.R.TemplatePidURLDeviceTemplates, o)
 	}
 
 	return nil
 }
 
-// SetTemplateSettingURLTemplate of the userDeviceTemplate to the related item.
+// SetTemplateSettingURLTemplate of the deviceTemplate to the related item.
 // Sets o.R.TemplateSettingURLTemplate to related.
-// Adds o to related.R.TemplateSettingURLUserDeviceTemplates.
-func (o *UserDeviceTemplate) SetTemplateSettingURLTemplate(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Template) error {
+// Adds o to related.R.TemplateSettingURLDeviceTemplates.
+func (o *DeviceTemplate) SetTemplateSettingURLTemplate(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Template) error {
 	var err error
 	if insert {
 		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
@@ -930,9 +962,9 @@ func (o *UserDeviceTemplate) SetTemplateSettingURLTemplate(ctx context.Context, 
 	}
 
 	updateQuery := fmt.Sprintf(
-		"UPDATE \"vehicle_signal_decoding_api\".\"user_device_template\" SET %s WHERE %s",
+		"UPDATE \"vehicle_signal_decoding_api\".\"device_template\" SET %s WHERE %s",
 		strmangle.SetParamNames("\"", "\"", 1, []string{"template_setting_url"}),
-		strmangle.WhereClause("\"", "\"", 2, userDeviceTemplatePrimaryKeyColumns),
+		strmangle.WhereClause("\"", "\"", 2, deviceTemplatePrimaryKeyColumns),
 	)
 	values := []interface{}{related.TemplateName, o.Vin}
 
@@ -947,7 +979,7 @@ func (o *UserDeviceTemplate) SetTemplateSettingURLTemplate(ctx context.Context, 
 
 	o.TemplateSettingURL = related.TemplateName
 	if o.R == nil {
-		o.R = &userDeviceTemplateR{
+		o.R = &deviceTemplateR{
 			TemplateSettingURLTemplate: related,
 		}
 	} else {
@@ -956,61 +988,61 @@ func (o *UserDeviceTemplate) SetTemplateSettingURLTemplate(ctx context.Context, 
 
 	if related.R == nil {
 		related.R = &templateR{
-			TemplateSettingURLUserDeviceTemplates: UserDeviceTemplateSlice{o},
+			TemplateSettingURLDeviceTemplates: DeviceTemplateSlice{o},
 		}
 	} else {
-		related.R.TemplateSettingURLUserDeviceTemplates = append(related.R.TemplateSettingURLUserDeviceTemplates, o)
+		related.R.TemplateSettingURLDeviceTemplates = append(related.R.TemplateSettingURLDeviceTemplates, o)
 	}
 
 	return nil
 }
 
-// UserDeviceTemplates retrieves all the records using an executor.
-func UserDeviceTemplates(mods ...qm.QueryMod) userDeviceTemplateQuery {
-	mods = append(mods, qm.From("\"vehicle_signal_decoding_api\".\"user_device_template\""))
+// DeviceTemplates retrieves all the records using an executor.
+func DeviceTemplates(mods ...qm.QueryMod) deviceTemplateQuery {
+	mods = append(mods, qm.From("\"vehicle_signal_decoding_api\".\"device_template\""))
 	q := NewQuery(mods...)
 	if len(queries.GetSelect(q)) == 0 {
-		queries.SetSelect(q, []string{"\"vehicle_signal_decoding_api\".\"user_device_template\".*"})
+		queries.SetSelect(q, []string{"\"vehicle_signal_decoding_api\".\"device_template\".*"})
 	}
 
-	return userDeviceTemplateQuery{q}
+	return deviceTemplateQuery{q}
 }
 
-// FindUserDeviceTemplate retrieves a single record by ID with an executor.
+// FindDeviceTemplate retrieves a single record by ID with an executor.
 // If selectCols is empty Find will return all columns.
-func FindUserDeviceTemplate(ctx context.Context, exec boil.ContextExecutor, vin string, selectCols ...string) (*UserDeviceTemplate, error) {
-	userDeviceTemplateObj := &UserDeviceTemplate{}
+func FindDeviceTemplate(ctx context.Context, exec boil.ContextExecutor, vin string, selectCols ...string) (*DeviceTemplate, error) {
+	deviceTemplateObj := &DeviceTemplate{}
 
 	sel := "*"
 	if len(selectCols) > 0 {
 		sel = strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, selectCols), ",")
 	}
 	query := fmt.Sprintf(
-		"select %s from \"vehicle_signal_decoding_api\".\"user_device_template\" where \"vin\"=$1", sel,
+		"select %s from \"vehicle_signal_decoding_api\".\"device_template\" where \"vin\"=$1", sel,
 	)
 
 	q := queries.Raw(query, vin)
 
-	err := q.Bind(ctx, exec, userDeviceTemplateObj)
+	err := q.Bind(ctx, exec, deviceTemplateObj)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, sql.ErrNoRows
 		}
-		return nil, errors.Wrap(err, "models: unable to select from user_device_template")
+		return nil, errors.Wrap(err, "models: unable to select from device_template")
 	}
 
-	if err = userDeviceTemplateObj.doAfterSelectHooks(ctx, exec); err != nil {
-		return userDeviceTemplateObj, err
+	if err = deviceTemplateObj.doAfterSelectHooks(ctx, exec); err != nil {
+		return deviceTemplateObj, err
 	}
 
-	return userDeviceTemplateObj, nil
+	return deviceTemplateObj, nil
 }
 
 // Insert a single record using an executor.
 // See boil.Columns.InsertColumnSet documentation to understand column list inference for inserts.
-func (o *UserDeviceTemplate) Insert(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) error {
+func (o *DeviceTemplate) Insert(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) error {
 	if o == nil {
-		return errors.New("models: no user_device_template provided for insertion")
+		return errors.New("models: no device_template provided for insertion")
 	}
 
 	var err error
@@ -1029,33 +1061,33 @@ func (o *UserDeviceTemplate) Insert(ctx context.Context, exec boil.ContextExecut
 		return err
 	}
 
-	nzDefaults := queries.NonZeroDefaultSet(userDeviceTemplateColumnsWithDefault, o)
+	nzDefaults := queries.NonZeroDefaultSet(deviceTemplateColumnsWithDefault, o)
 
 	key := makeCacheKey(columns, nzDefaults)
-	userDeviceTemplateInsertCacheMut.RLock()
-	cache, cached := userDeviceTemplateInsertCache[key]
-	userDeviceTemplateInsertCacheMut.RUnlock()
+	deviceTemplateInsertCacheMut.RLock()
+	cache, cached := deviceTemplateInsertCache[key]
+	deviceTemplateInsertCacheMut.RUnlock()
 
 	if !cached {
 		wl, returnColumns := columns.InsertColumnSet(
-			userDeviceTemplateAllColumns,
-			userDeviceTemplateColumnsWithDefault,
-			userDeviceTemplateColumnsWithoutDefault,
+			deviceTemplateAllColumns,
+			deviceTemplateColumnsWithDefault,
+			deviceTemplateColumnsWithoutDefault,
 			nzDefaults,
 		)
 
-		cache.valueMapping, err = queries.BindMapping(userDeviceTemplateType, userDeviceTemplateMapping, wl)
+		cache.valueMapping, err = queries.BindMapping(deviceTemplateType, deviceTemplateMapping, wl)
 		if err != nil {
 			return err
 		}
-		cache.retMapping, err = queries.BindMapping(userDeviceTemplateType, userDeviceTemplateMapping, returnColumns)
+		cache.retMapping, err = queries.BindMapping(deviceTemplateType, deviceTemplateMapping, returnColumns)
 		if err != nil {
 			return err
 		}
 		if len(wl) != 0 {
-			cache.query = fmt.Sprintf("INSERT INTO \"vehicle_signal_decoding_api\".\"user_device_template\" (\"%s\") %%sVALUES (%s)%%s", strings.Join(wl, "\",\""), strmangle.Placeholders(dialect.UseIndexPlaceholders, len(wl), 1, 1))
+			cache.query = fmt.Sprintf("INSERT INTO \"vehicle_signal_decoding_api\".\"device_template\" (\"%s\") %%sVALUES (%s)%%s", strings.Join(wl, "\",\""), strmangle.Placeholders(dialect.UseIndexPlaceholders, len(wl), 1, 1))
 		} else {
-			cache.query = "INSERT INTO \"vehicle_signal_decoding_api\".\"user_device_template\" %sDEFAULT VALUES%s"
+			cache.query = "INSERT INTO \"vehicle_signal_decoding_api\".\"device_template\" %sDEFAULT VALUES%s"
 		}
 
 		var queryOutput, queryReturning string
@@ -1083,22 +1115,22 @@ func (o *UserDeviceTemplate) Insert(ctx context.Context, exec boil.ContextExecut
 	}
 
 	if err != nil {
-		return errors.Wrap(err, "models: unable to insert into user_device_template")
+		return errors.Wrap(err, "models: unable to insert into device_template")
 	}
 
 	if !cached {
-		userDeviceTemplateInsertCacheMut.Lock()
-		userDeviceTemplateInsertCache[key] = cache
-		userDeviceTemplateInsertCacheMut.Unlock()
+		deviceTemplateInsertCacheMut.Lock()
+		deviceTemplateInsertCache[key] = cache
+		deviceTemplateInsertCacheMut.Unlock()
 	}
 
 	return o.doAfterInsertHooks(ctx, exec)
 }
 
-// Update uses an executor to update the UserDeviceTemplate.
+// Update uses an executor to update the DeviceTemplate.
 // See boil.Columns.UpdateColumnSet documentation to understand column list inference for updates.
 // Update does not automatically update the record in case of default values. Use .Reload() to refresh the records.
-func (o *UserDeviceTemplate) Update(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) (int64, error) {
+func (o *DeviceTemplate) Update(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) (int64, error) {
 	if !boil.TimestampsAreSkipped(ctx) {
 		currTime := time.Now().In(boil.GetLocation())
 
@@ -1110,28 +1142,28 @@ func (o *UserDeviceTemplate) Update(ctx context.Context, exec boil.ContextExecut
 		return 0, err
 	}
 	key := makeCacheKey(columns, nil)
-	userDeviceTemplateUpdateCacheMut.RLock()
-	cache, cached := userDeviceTemplateUpdateCache[key]
-	userDeviceTemplateUpdateCacheMut.RUnlock()
+	deviceTemplateUpdateCacheMut.RLock()
+	cache, cached := deviceTemplateUpdateCache[key]
+	deviceTemplateUpdateCacheMut.RUnlock()
 
 	if !cached {
 		wl := columns.UpdateColumnSet(
-			userDeviceTemplateAllColumns,
-			userDeviceTemplatePrimaryKeyColumns,
+			deviceTemplateAllColumns,
+			deviceTemplatePrimaryKeyColumns,
 		)
 
 		if !columns.IsWhitelist() {
 			wl = strmangle.SetComplement(wl, []string{"created_at"})
 		}
 		if len(wl) == 0 {
-			return 0, errors.New("models: unable to update user_device_template, could not build whitelist")
+			return 0, errors.New("models: unable to update device_template, could not build whitelist")
 		}
 
-		cache.query = fmt.Sprintf("UPDATE \"vehicle_signal_decoding_api\".\"user_device_template\" SET %s WHERE %s",
+		cache.query = fmt.Sprintf("UPDATE \"vehicle_signal_decoding_api\".\"device_template\" SET %s WHERE %s",
 			strmangle.SetParamNames("\"", "\"", 1, wl),
-			strmangle.WhereClause("\"", "\"", len(wl)+1, userDeviceTemplatePrimaryKeyColumns),
+			strmangle.WhereClause("\"", "\"", len(wl)+1, deviceTemplatePrimaryKeyColumns),
 		)
-		cache.valueMapping, err = queries.BindMapping(userDeviceTemplateType, userDeviceTemplateMapping, append(wl, userDeviceTemplatePrimaryKeyColumns...))
+		cache.valueMapping, err = queries.BindMapping(deviceTemplateType, deviceTemplateMapping, append(wl, deviceTemplatePrimaryKeyColumns...))
 		if err != nil {
 			return 0, err
 		}
@@ -1147,42 +1179,42 @@ func (o *UserDeviceTemplate) Update(ctx context.Context, exec boil.ContextExecut
 	var result sql.Result
 	result, err = exec.ExecContext(ctx, cache.query, values...)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to update user_device_template row")
+		return 0, errors.Wrap(err, "models: unable to update device_template row")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to get rows affected by update for user_device_template")
+		return 0, errors.Wrap(err, "models: failed to get rows affected by update for device_template")
 	}
 
 	if !cached {
-		userDeviceTemplateUpdateCacheMut.Lock()
-		userDeviceTemplateUpdateCache[key] = cache
-		userDeviceTemplateUpdateCacheMut.Unlock()
+		deviceTemplateUpdateCacheMut.Lock()
+		deviceTemplateUpdateCache[key] = cache
+		deviceTemplateUpdateCacheMut.Unlock()
 	}
 
 	return rowsAff, o.doAfterUpdateHooks(ctx, exec)
 }
 
 // UpdateAll updates all rows with the specified column values.
-func (q userDeviceTemplateQuery) UpdateAll(ctx context.Context, exec boil.ContextExecutor, cols M) (int64, error) {
+func (q deviceTemplateQuery) UpdateAll(ctx context.Context, exec boil.ContextExecutor, cols M) (int64, error) {
 	queries.SetUpdate(q.Query, cols)
 
 	result, err := q.Query.ExecContext(ctx, exec)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to update all for user_device_template")
+		return 0, errors.Wrap(err, "models: unable to update all for device_template")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to retrieve rows affected for user_device_template")
+		return 0, errors.Wrap(err, "models: unable to retrieve rows affected for device_template")
 	}
 
 	return rowsAff, nil
 }
 
 // UpdateAll updates all rows with the specified column values, using an executor.
-func (o UserDeviceTemplateSlice) UpdateAll(ctx context.Context, exec boil.ContextExecutor, cols M) (int64, error) {
+func (o DeviceTemplateSlice) UpdateAll(ctx context.Context, exec boil.ContextExecutor, cols M) (int64, error) {
 	ln := int64(len(o))
 	if ln == 0 {
 		return 0, nil
@@ -1204,13 +1236,13 @@ func (o UserDeviceTemplateSlice) UpdateAll(ctx context.Context, exec boil.Contex
 
 	// Append all of the primary key values for each column
 	for _, obj := range o {
-		pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), userDeviceTemplatePrimaryKeyMapping)
+		pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), deviceTemplatePrimaryKeyMapping)
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := fmt.Sprintf("UPDATE \"vehicle_signal_decoding_api\".\"user_device_template\" SET %s WHERE %s",
+	sql := fmt.Sprintf("UPDATE \"vehicle_signal_decoding_api\".\"device_template\" SET %s WHERE %s",
 		strmangle.SetParamNames("\"", "\"", 1, colNames),
-		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), len(colNames)+1, userDeviceTemplatePrimaryKeyColumns, len(o)))
+		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), len(colNames)+1, deviceTemplatePrimaryKeyColumns, len(o)))
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -1219,21 +1251,21 @@ func (o UserDeviceTemplateSlice) UpdateAll(ctx context.Context, exec boil.Contex
 	}
 	result, err := exec.ExecContext(ctx, sql, args...)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to update all in userDeviceTemplate slice")
+		return 0, errors.Wrap(err, "models: unable to update all in deviceTemplate slice")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to retrieve rows affected all in update all userDeviceTemplate")
+		return 0, errors.Wrap(err, "models: unable to retrieve rows affected all in update all deviceTemplate")
 	}
 	return rowsAff, nil
 }
 
 // Upsert attempts an insert using an executor, and does an update or ignore on conflict.
 // See boil.Columns documentation for how to properly use updateColumns and insertColumns.
-func (o *UserDeviceTemplate) Upsert(ctx context.Context, exec boil.ContextExecutor, updateOnConflict bool, conflictColumns []string, updateColumns, insertColumns boil.Columns) error {
+func (o *DeviceTemplate) Upsert(ctx context.Context, exec boil.ContextExecutor, updateOnConflict bool, conflictColumns []string, updateColumns, insertColumns boil.Columns) error {
 	if o == nil {
-		return errors.New("models: no user_device_template provided for upsert")
+		return errors.New("models: no device_template provided for upsert")
 	}
 	if !boil.TimestampsAreSkipped(ctx) {
 		currTime := time.Now().In(boil.GetLocation())
@@ -1248,7 +1280,7 @@ func (o *UserDeviceTemplate) Upsert(ctx context.Context, exec boil.ContextExecut
 		return err
 	}
 
-	nzDefaults := queries.NonZeroDefaultSet(userDeviceTemplateColumnsWithDefault, o)
+	nzDefaults := queries.NonZeroDefaultSet(deviceTemplateColumnsWithDefault, o)
 
 	// Build cache key in-line uglily - mysql vs psql problems
 	buf := strmangle.GetBuffer()
@@ -1278,42 +1310,42 @@ func (o *UserDeviceTemplate) Upsert(ctx context.Context, exec boil.ContextExecut
 	key := buf.String()
 	strmangle.PutBuffer(buf)
 
-	userDeviceTemplateUpsertCacheMut.RLock()
-	cache, cached := userDeviceTemplateUpsertCache[key]
-	userDeviceTemplateUpsertCacheMut.RUnlock()
+	deviceTemplateUpsertCacheMut.RLock()
+	cache, cached := deviceTemplateUpsertCache[key]
+	deviceTemplateUpsertCacheMut.RUnlock()
 
 	var err error
 
 	if !cached {
 		insert, ret := insertColumns.InsertColumnSet(
-			userDeviceTemplateAllColumns,
-			userDeviceTemplateColumnsWithDefault,
-			userDeviceTemplateColumnsWithoutDefault,
+			deviceTemplateAllColumns,
+			deviceTemplateColumnsWithDefault,
+			deviceTemplateColumnsWithoutDefault,
 			nzDefaults,
 		)
 
 		update := updateColumns.UpdateColumnSet(
-			userDeviceTemplateAllColumns,
-			userDeviceTemplatePrimaryKeyColumns,
+			deviceTemplateAllColumns,
+			deviceTemplatePrimaryKeyColumns,
 		)
 
 		if updateOnConflict && len(update) == 0 {
-			return errors.New("models: unable to upsert user_device_template, could not build update column list")
+			return errors.New("models: unable to upsert device_template, could not build update column list")
 		}
 
 		conflict := conflictColumns
 		if len(conflict) == 0 {
-			conflict = make([]string, len(userDeviceTemplatePrimaryKeyColumns))
-			copy(conflict, userDeviceTemplatePrimaryKeyColumns)
+			conflict = make([]string, len(deviceTemplatePrimaryKeyColumns))
+			copy(conflict, deviceTemplatePrimaryKeyColumns)
 		}
-		cache.query = buildUpsertQueryPostgres(dialect, "\"vehicle_signal_decoding_api\".\"user_device_template\"", updateOnConflict, ret, update, conflict, insert)
+		cache.query = buildUpsertQueryPostgres(dialect, "\"vehicle_signal_decoding_api\".\"device_template\"", updateOnConflict, ret, update, conflict, insert)
 
-		cache.valueMapping, err = queries.BindMapping(userDeviceTemplateType, userDeviceTemplateMapping, insert)
+		cache.valueMapping, err = queries.BindMapping(deviceTemplateType, deviceTemplateMapping, insert)
 		if err != nil {
 			return err
 		}
 		if len(ret) != 0 {
-			cache.retMapping, err = queries.BindMapping(userDeviceTemplateType, userDeviceTemplateMapping, ret)
+			cache.retMapping, err = queries.BindMapping(deviceTemplateType, deviceTemplateMapping, ret)
 			if err != nil {
 				return err
 			}
@@ -1341,31 +1373,31 @@ func (o *UserDeviceTemplate) Upsert(ctx context.Context, exec boil.ContextExecut
 		_, err = exec.ExecContext(ctx, cache.query, vals...)
 	}
 	if err != nil {
-		return errors.Wrap(err, "models: unable to upsert user_device_template")
+		return errors.Wrap(err, "models: unable to upsert device_template")
 	}
 
 	if !cached {
-		userDeviceTemplateUpsertCacheMut.Lock()
-		userDeviceTemplateUpsertCache[key] = cache
-		userDeviceTemplateUpsertCacheMut.Unlock()
+		deviceTemplateUpsertCacheMut.Lock()
+		deviceTemplateUpsertCache[key] = cache
+		deviceTemplateUpsertCacheMut.Unlock()
 	}
 
 	return o.doAfterUpsertHooks(ctx, exec)
 }
 
-// Delete deletes a single UserDeviceTemplate record with an executor.
+// Delete deletes a single DeviceTemplate record with an executor.
 // Delete will match against the primary key column to find the record to delete.
-func (o *UserDeviceTemplate) Delete(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
+func (o *DeviceTemplate) Delete(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
 	if o == nil {
-		return 0, errors.New("models: no UserDeviceTemplate provided for delete")
+		return 0, errors.New("models: no DeviceTemplate provided for delete")
 	}
 
 	if err := o.doBeforeDeleteHooks(ctx, exec); err != nil {
 		return 0, err
 	}
 
-	args := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), userDeviceTemplatePrimaryKeyMapping)
-	sql := "DELETE FROM \"vehicle_signal_decoding_api\".\"user_device_template\" WHERE \"vin\"=$1"
+	args := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), deviceTemplatePrimaryKeyMapping)
+	sql := "DELETE FROM \"vehicle_signal_decoding_api\".\"device_template\" WHERE \"vin\"=$1"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -1374,12 +1406,12 @@ func (o *UserDeviceTemplate) Delete(ctx context.Context, exec boil.ContextExecut
 	}
 	result, err := exec.ExecContext(ctx, sql, args...)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to delete from user_device_template")
+		return 0, errors.Wrap(err, "models: unable to delete from device_template")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to get rows affected by delete for user_device_template")
+		return 0, errors.Wrap(err, "models: failed to get rows affected by delete for device_template")
 	}
 
 	if err := o.doAfterDeleteHooks(ctx, exec); err != nil {
@@ -1390,33 +1422,33 @@ func (o *UserDeviceTemplate) Delete(ctx context.Context, exec boil.ContextExecut
 }
 
 // DeleteAll deletes all matching rows.
-func (q userDeviceTemplateQuery) DeleteAll(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
+func (q deviceTemplateQuery) DeleteAll(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
 	if q.Query == nil {
-		return 0, errors.New("models: no userDeviceTemplateQuery provided for delete all")
+		return 0, errors.New("models: no deviceTemplateQuery provided for delete all")
 	}
 
 	queries.SetDelete(q.Query)
 
 	result, err := q.Query.ExecContext(ctx, exec)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to delete all from user_device_template")
+		return 0, errors.Wrap(err, "models: unable to delete all from device_template")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to get rows affected by deleteall for user_device_template")
+		return 0, errors.Wrap(err, "models: failed to get rows affected by deleteall for device_template")
 	}
 
 	return rowsAff, nil
 }
 
 // DeleteAll deletes all rows in the slice, using an executor.
-func (o UserDeviceTemplateSlice) DeleteAll(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
+func (o DeviceTemplateSlice) DeleteAll(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
 	if len(o) == 0 {
 		return 0, nil
 	}
 
-	if len(userDeviceTemplateBeforeDeleteHooks) != 0 {
+	if len(deviceTemplateBeforeDeleteHooks) != 0 {
 		for _, obj := range o {
 			if err := obj.doBeforeDeleteHooks(ctx, exec); err != nil {
 				return 0, err
@@ -1426,12 +1458,12 @@ func (o UserDeviceTemplateSlice) DeleteAll(ctx context.Context, exec boil.Contex
 
 	var args []interface{}
 	for _, obj := range o {
-		pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), userDeviceTemplatePrimaryKeyMapping)
+		pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), deviceTemplatePrimaryKeyMapping)
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := "DELETE FROM \"vehicle_signal_decoding_api\".\"user_device_template\" WHERE " +
-		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 1, userDeviceTemplatePrimaryKeyColumns, len(o))
+	sql := "DELETE FROM \"vehicle_signal_decoding_api\".\"device_template\" WHERE " +
+		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 1, deviceTemplatePrimaryKeyColumns, len(o))
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -1440,15 +1472,15 @@ func (o UserDeviceTemplateSlice) DeleteAll(ctx context.Context, exec boil.Contex
 	}
 	result, err := exec.ExecContext(ctx, sql, args...)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to delete all from userDeviceTemplate slice")
+		return 0, errors.Wrap(err, "models: unable to delete all from deviceTemplate slice")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to get rows affected by deleteall for user_device_template")
+		return 0, errors.Wrap(err, "models: failed to get rows affected by deleteall for device_template")
 	}
 
-	if len(userDeviceTemplateAfterDeleteHooks) != 0 {
+	if len(deviceTemplateAfterDeleteHooks) != 0 {
 		for _, obj := range o {
 			if err := obj.doAfterDeleteHooks(ctx, exec); err != nil {
 				return 0, err
@@ -1461,8 +1493,8 @@ func (o UserDeviceTemplateSlice) DeleteAll(ctx context.Context, exec boil.Contex
 
 // Reload refetches the object from the database
 // using the primary keys with an executor.
-func (o *UserDeviceTemplate) Reload(ctx context.Context, exec boil.ContextExecutor) error {
-	ret, err := FindUserDeviceTemplate(ctx, exec, o.Vin)
+func (o *DeviceTemplate) Reload(ctx context.Context, exec boil.ContextExecutor) error {
+	ret, err := FindDeviceTemplate(ctx, exec, o.Vin)
 	if err != nil {
 		return err
 	}
@@ -1473,26 +1505,26 @@ func (o *UserDeviceTemplate) Reload(ctx context.Context, exec boil.ContextExecut
 
 // ReloadAll refetches every row with matching primary key column values
 // and overwrites the original object slice with the newly updated slice.
-func (o *UserDeviceTemplateSlice) ReloadAll(ctx context.Context, exec boil.ContextExecutor) error {
+func (o *DeviceTemplateSlice) ReloadAll(ctx context.Context, exec boil.ContextExecutor) error {
 	if o == nil || len(*o) == 0 {
 		return nil
 	}
 
-	slice := UserDeviceTemplateSlice{}
+	slice := DeviceTemplateSlice{}
 	var args []interface{}
 	for _, obj := range *o {
-		pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), userDeviceTemplatePrimaryKeyMapping)
+		pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), deviceTemplatePrimaryKeyMapping)
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := "SELECT \"vehicle_signal_decoding_api\".\"user_device_template\".* FROM \"vehicle_signal_decoding_api\".\"user_device_template\" WHERE " +
-		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 1, userDeviceTemplatePrimaryKeyColumns, len(*o))
+	sql := "SELECT \"vehicle_signal_decoding_api\".\"device_template\".* FROM \"vehicle_signal_decoding_api\".\"device_template\" WHERE " +
+		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 1, deviceTemplatePrimaryKeyColumns, len(*o))
 
 	q := queries.Raw(sql, args...)
 
 	err := q.Bind(ctx, exec, &slice)
 	if err != nil {
-		return errors.Wrap(err, "models: unable to reload all in UserDeviceTemplateSlice")
+		return errors.Wrap(err, "models: unable to reload all in DeviceTemplateSlice")
 	}
 
 	*o = slice
@@ -1500,10 +1532,10 @@ func (o *UserDeviceTemplateSlice) ReloadAll(ctx context.Context, exec boil.Conte
 	return nil
 }
 
-// UserDeviceTemplateExists checks if the UserDeviceTemplate row exists.
-func UserDeviceTemplateExists(ctx context.Context, exec boil.ContextExecutor, vin string) (bool, error) {
+// DeviceTemplateExists checks if the DeviceTemplate row exists.
+func DeviceTemplateExists(ctx context.Context, exec boil.ContextExecutor, vin string) (bool, error) {
 	var exists bool
-	sql := "select exists(select 1 from \"vehicle_signal_decoding_api\".\"user_device_template\" where \"vin\"=$1 limit 1)"
+	sql := "select exists(select 1 from \"vehicle_signal_decoding_api\".\"device_template\" where \"vin\"=$1 limit 1)"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -1514,7 +1546,7 @@ func UserDeviceTemplateExists(ctx context.Context, exec boil.ContextExecutor, vi
 
 	err := row.Scan(&exists)
 	if err != nil {
-		return false, errors.Wrap(err, "models: unable to check if user_device_template exists")
+		return false, errors.Wrap(err, "models: unable to check if device_template exists")
 	}
 
 	return exists, nil

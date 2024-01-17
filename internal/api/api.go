@@ -118,7 +118,7 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 	//Create gRPC connection
 	userDeviceSvc := services.NewUserDeviceService(settings)
 	deviceDefsvc := services.NewDeviceDefinitionsService(settings)
-	userDeviceTemplatesvc := services.NewUserDeviceTemplateService(database.DBS().Writer.DB)
+	deviceTemplatesvc := services.NewUserDeviceTemplateService(database.DBS().Writer.DB)
 
 	app := fiber.New(fiber.Config{
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
@@ -141,7 +141,7 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 		return c.Status(fiber.StatusOK).SendString("healthy")
 	})
 
-	deviceConfigController := controllers.NewDeviceConfigController(settings, &logger, database.DBS().Reader.DB, userDeviceSvc, deviceDefsvc, userDeviceTemplatesvc)
+	deviceConfigController := controllers.NewDeviceConfigController(settings, &logger, database.DBS().Reader.DB, userDeviceSvc, deviceDefsvc, deviceTemplatesvc)
 	jobsController := controllers.NewJobsController(settings, &logger, database.DBS().Reader.DB, userDeviceSvc, deviceDefsvc)
 
 	v1 := app.Group("/v1")
@@ -209,9 +209,9 @@ func getS3ServiceClient(ctx context.Context, settings *config.Settings, logger z
 		awsconfig.WithEndpointResolverWithOptions(aws.EndpointResolverWithOptionsFunc(
 			func(service, region string, options ...interface{}) (aws.Endpoint, error) {
 
-				//if settings.Environment == "local" {
-				//	return aws.Endpoint{PartitionID: "aws", URL: settings.CandumpsAWSEndpoint, SigningRegion: settings.AWSRegion}, nil // The SigningRegion key was what's was missing! D'oh.
-				//}
+				if settings.Environment == "local" {
+					return aws.Endpoint{PartitionID: "aws", URL: settings.CandumpsAWSEndpoint, SigningRegion: settings.AWSRegion}, nil // The SigningRegion key was what's was missing! D'oh.
+				}
 
 				// returning EndpointNotFoundError will allow the service to fallback to its default resolution
 				return aws.Endpoint{}, &aws.EndpointNotFoundError{}
