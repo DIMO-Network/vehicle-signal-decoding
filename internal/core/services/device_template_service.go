@@ -13,7 +13,7 @@ import (
 
 //go:generate mockgen -source device_template_service.go -destination mocks/device_template_service_mock.go
 type DeviceTemplateService interface {
-	AssociateTemplate(ctx context.Context, vin, templateDbcURL, templatePidURL, templateSettingURL, version string) error
+	AssociateTemplate(ctx context.Context, vin, templateDbcURL, templatePidURL, templateSettingURL, version string) (*models.DeviceTemplate, error)
 }
 
 type userDeviceTemplateService struct {
@@ -26,33 +26,33 @@ func NewUserDeviceTemplateService(database *sql.DB) DeviceTemplateService {
 	}
 }
 
-func (u userDeviceTemplateService) AssociateTemplate(ctx context.Context, vin, templateDbcURL, templatePidURL, templateSettingURL, version string) error {
+func (u userDeviceTemplateService) AssociateTemplate(ctx context.Context, vin, templateDbcURL, templatePidURL, templateSettingURL, version string) (*models.DeviceTemplate, error) {
 
-	userDeviceTemplate, err := models.DeviceTemplates(models.DeviceTemplateWhere.Vin.EQ(vin)).
+	deviceTemplate, err := models.DeviceTemplates(models.DeviceTemplateWhere.Vin.EQ(vin)).
 		One(ctx, u.db)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return err
+		return nil, err
 	}
 
-	if userDeviceTemplate != nil {
-		userDeviceTemplate.Version = version
-		if userDeviceTemplate.TemplateDBCURL != templateDbcURL {
-			userDeviceTemplate.IsTemplateUpdated = false
+	if deviceTemplate != nil {
+		deviceTemplate.Version = version
+		if deviceTemplate.TemplateDBCURL != templateDbcURL {
+			deviceTemplate.IsTemplateUpdated = false
 		}
-		if userDeviceTemplate.TemplatePidURL != templatePidURL {
-			userDeviceTemplate.IsTemplateUpdated = false
+		if deviceTemplate.TemplatePidURL != templatePidURL {
+			deviceTemplate.IsTemplateUpdated = false
 		}
-		if userDeviceTemplate.TemplateSettingURL != templateSettingURL {
-			userDeviceTemplate.IsTemplateUpdated = false
+		if deviceTemplate.TemplateSettingURL != templateSettingURL {
+			deviceTemplate.IsTemplateUpdated = false
 		}
 
-		if _, err = userDeviceTemplate.Update(ctx, u.db, boil.Infer()); err != nil {
-			return err
+		if _, err = deviceTemplate.Update(ctx, u.db, boil.Infer()); err != nil {
+			return nil, err
 		}
 	}
 
-	if userDeviceTemplate == nil {
-		userDeviceTemplate = &models.DeviceTemplate{
+	if deviceTemplate == nil {
+		deviceTemplate = &models.DeviceTemplate{
 			Vin:                vin,
 			TemplateDBCURL:     templateDbcURL,
 			TemplatePidURL:     templatePidURL,
@@ -60,10 +60,10 @@ func (u userDeviceTemplateService) AssociateTemplate(ctx context.Context, vin, t
 			IsTemplateUpdated:  true,
 		}
 
-		if err = userDeviceTemplate.Insert(ctx, u.db, boil.Infer()); err != nil {
-			return err
+		if err = deviceTemplate.Insert(ctx, u.db, boil.Infer()); err != nil {
+			return nil, err
 		}
 	}
 
-	return nil
+	return deviceTemplate, nil
 }

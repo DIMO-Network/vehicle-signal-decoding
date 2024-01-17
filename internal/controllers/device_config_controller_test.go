@@ -42,16 +42,16 @@ const migrationsDirRelPath = "../infrastructure/db/migrations"
 
 type DeviceConfigControllerTestSuite struct {
 	suite.Suite
-	ctx                       context.Context
-	pdb                       db.Store
-	container                 testcontainers.Container
-	mockCtrl                  *gomock.Controller
-	logger                    *zerolog.Logger
-	mockUserDeviceSvc         *mock_services.MockUserDeviceService
-	mockDeviceDefSvc          *mock_services.MockDeviceDefinitionsService
-	mockUserDeviceTemplateSvc *mock_services.MockUserDeviceTemplateService
-	controller                *DeviceConfigController
-	app                       *fiber.App
+	ctx                   context.Context
+	pdb                   db.Store
+	container             testcontainers.Container
+	mockCtrl              *gomock.Controller
+	logger                *zerolog.Logger
+	mockUserDeviceSvc     *mock_services.MockUserDeviceService
+	mockDeviceDefSvc      *mock_services.MockDeviceDefinitionsService
+	mockDeviceTemplateSvc *mock_services.MockDeviceTemplateService
+	controller            *DeviceConfigController
+	app                   *fiber.App
 }
 
 const dbSchemaName = "vehicle_signal_decoding"
@@ -64,8 +64,8 @@ func (s *DeviceConfigControllerTestSuite) SetupSuite() {
 	s.mockCtrl = gomock.NewController(s.T())
 	s.mockUserDeviceSvc = mock_services.NewMockUserDeviceService(s.mockCtrl)
 	s.mockDeviceDefSvc = mock_services.NewMockDeviceDefinitionsService(s.mockCtrl)
-	s.mockUserDeviceTemplateSvc = mock_services.NewMockUserDeviceTemplateService(s.mockCtrl)
-	ctrl := NewDeviceConfigController(&config.Settings{Port: "3000", DeploymentURL: "http://localhost:3000"}, s.logger, s.pdb.DBS().Reader.DB, s.mockUserDeviceSvc, s.mockDeviceDefSvc, s.mockUserDeviceTemplateSvc)
+	s.mockDeviceTemplateSvc = mock_services.NewMockDeviceTemplateService(s.mockCtrl)
+	ctrl := NewDeviceConfigController(&config.Settings{Port: "3000", DeploymentURL: "http://localhost:3000"}, s.logger, s.pdb.DBS().Reader.DB, s.mockUserDeviceSvc, s.mockDeviceDefSvc, s.mockDeviceTemplateSvc)
 	s.controller = &ctrl
 	s.app = fiber.New()
 }
@@ -336,7 +336,12 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_DecodeVIN() {
 		DeviceDefinitionId: mockedDeviceDefinition.DeviceDefinitionId,
 	}, nil)
 	s.mockDeviceDefSvc.EXPECT().GetDeviceDefinitionByID(gomock.Any(), mockedDeviceDefinition.DeviceDefinitionId).Return(mockedDeviceDefinition, nil)
-	s.mockUserDeviceTemplateSvc.EXPECT().AssociateTemplate(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+
+	dt := models.DeviceTemplate{
+		IsTemplateUpdated: false,
+	}
+
+	s.mockDeviceTemplateSvc.EXPECT().AssociateTemplate(gomock.Any(), vin, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(&dt, nil)
 	s.app.Get("/config-urls/:vin", s.controller.GetConfigURLsFromVIN)
 
 	request := dbtest.BuildRequest("GET", "/config-urls/"+vin, "")

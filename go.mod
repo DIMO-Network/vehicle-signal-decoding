@@ -6,7 +6,6 @@ require (
 	github.com/DIMO-Network/device-definitions-api v1.0.30
 	github.com/DIMO-Network/devices-api v1.23.1
 	github.com/DIMO-Network/shared v0.10.4
-	github.com/DIMO-Network/users-api v0.6.4
 	github.com/Shopify/sarama v1.38.1
 	github.com/ThreeDotsLabs/watermill v1.2.0
 	github.com/ThreeDotsLabs/watermill-kafka/v2 v2.2.2
@@ -18,7 +17,7 @@ require (
 	github.com/gofiber/adaptor/v2 v2.2.1
 	github.com/gofiber/fiber/v2 v2.48.0
 	github.com/gofiber/swagger v0.1.12
-	github.com/golang-jwt/jwt/v5 v5.0.0
+	github.com/golang/mock v1.6.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.0.0
 	github.com/lib/pq v1.10.9

@@ -50,10 +50,11 @@ func NewDeviceConfigController(settings *config.Settings, logger *zerolog.Logger
 }
 
 type DeviceConfigResponse struct {
-	PidURL           string `json:"pidUrl"`
-	DeviceSettingURL string `json:"deviceSettingUrl"`
-	DbcURL           string `json:"dbcURL,omitempty"`
-	Version          string `json:"version"`
+	PidURL            string `json:"pidUrl"`
+	DeviceSettingURL  string `json:"deviceSettingUrl"`
+	DbcURL            string `json:"dbcURL,omitempty"`
+	Version           string `json:"version"`
+	IsTemplateUpdated bool   `json:"is_template_updated"`
 }
 
 type DeviceTemplateResponse struct {
@@ -291,6 +292,7 @@ func (d *DeviceConfigController) GetConfigURLsFromVIN(c *fiber.Ctx) error {
 			DeviceDefinitionId: definitionResp.DeviceDefinitionId,
 			PowerTrainType:     definitionResp.Powertrain,
 			CANProtocol:        protocol,
+			Vin:                &vin,
 		}
 		if len(definitionResp.DeviceStyleId) > 0 {
 			ud.DeviceStyleId = &definitionResp.DeviceStyleId
@@ -343,25 +345,16 @@ func (d *DeviceConfigController) GetConfigStatusFromEthAddr(c *fiber.Ctx) error 
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": fmt.Sprintf("no connected user device found for EthAddr: %s", ethAddr)})
 	}
 
-	userDeviceTemplate, err := models.DeviceTemplates(models.DeviceTemplateWhere.Vin.EQ(*ud.Vin)).
-		One(c.Context(), d.db)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+	deviceConfiguration, err := d.resolveDeviceConfiguration(c, ud)
+	if err != nil {
 		return err
 	}
 
 	var response DeviceTemplateResponse
 
-	if userDeviceTemplate == nil {
-		response = DeviceTemplateResponse{
-			IsTemplateUpdated: false,
-		}
-	}
-
-	if userDeviceTemplate != nil {
-		response = DeviceTemplateResponse{
-			IsTemplateUpdated: userDeviceTemplate.IsTemplateUpdated,
-			Version:           userDeviceTemplate.Version,
-		}
+	response = DeviceTemplateResponse{
+		IsTemplateUpdated: deviceConfiguration.IsTemplateUpdated,
+		Version:           deviceConfiguration.Version,
 	}
 
 	return c.JSON(response)
@@ -546,19 +539,27 @@ func modelMatch(modelList types.StringArray, modelName string) bool {
 }
 
 func (d *DeviceConfigController) getConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) error {
+	response, err := d.resolveDeviceConfiguration(c, ud)
+	if err != nil {
+		return err
+	}
+	return c.JSON(response)
+}
+
+func (d *DeviceConfigController) resolveDeviceConfiguration(c *fiber.Ctx, ud *pb.UserDevice) (*DeviceConfigResponse, error) {
 	d.setCANProtocol(ud)
 
 	vehicleMake, vehicleModel, vehicleYear, err := d.retrieveAndSetVehicleInfo(c.Context(), ud)
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("Failed to retrieve device definition: %s", ud.DeviceDefinitionId))
+		return nil, errors.Wrap(err, fmt.Sprintf("Failed to retrieve device definition: %s", ud.DeviceDefinitionId))
 	}
 
 	matchedTemplate, err := d.selectAndFetchTemplate(c.Context(), ud, vehicleMake, vehicleModel, vehicleYear)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if matchedTemplate == nil {
-		return errors.New("matched template is nil")
+		return nil, errors.New("matched template is nil")
 	}
 	baseURL := d.settings.DeploymentURL
 
@@ -582,7 +583,7 @@ func (d *DeviceConfigController) getConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) 
 			deviceSetting, dbErr = models.DeviceSettings(models.DeviceSettingWhere.TemplateName.EQ(matchedTemplate.ParentTemplateName),
 				qm.OrderBy(models.DeviceSettingColumns.Name)).One(c.Context(), d.db)
 			if dbErr != nil && !errors.Is(dbErr, sql.ErrNoRows) {
-				return errors.Wrap(dbErr, "Failed to retrieve device setting for parent template")
+				return nil, errors.Wrap(dbErr, "Failed to retrieve device setting for parent template")
 			}
 		}
 
@@ -601,7 +602,7 @@ func (d *DeviceConfigController) getConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) 
 				deviceSetting, dbErr = models.DeviceSettings(qm.OrderBy(models.DeviceSettingColumns.Name)).One(c.Context(), d.db)
 			}
 			if dbErr != nil {
-				return errors.Wrap(err, fmt.Sprintf("Failed to retrieve device setting. Powertrain: %s", powertrain))
+				return nil, errors.Wrap(err, fmt.Sprintf("Failed to retrieve device setting. Powertrain: %s", powertrain))
 			}
 		}
 		// device settings have a name key separate from templateName since simpler setup
@@ -609,10 +610,18 @@ func (d *DeviceConfigController) getConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) 
 	}
 
 	// Associate current template
-	err = d.deviceTemplateService.AssociateTemplate(c.Context(), *ud.Vin, response.DbcURL, response.PidURL, response.DeviceSettingURL, response.Version)
+	fmt.Println("Demo DbcURL => ", response.DbcURL)
+	fmt.Println("Demo Vin => ", *ud.Vin)
+	fmt.Println("Demo PidURL => ", response.PidURL)
+	fmt.Println("Demo DeviceSettingURL => ", response.DeviceSettingURL)
+	fmt.Println("Demo Version => ", response.Version)
+
+	deviceTemplate, err := d.deviceTemplateService.AssociateTemplate(c.Context(), *ud.Vin, response.DbcURL, response.PidURL, response.DeviceSettingURL, response.Version)
 	if err != nil {
-		return errors.Wrap(err, "Failed to associate template version")
+		return nil, errors.Wrap(err, "Failed to associate template version")
 	}
 
-	return c.JSON(response)
+	response.IsTemplateUpdated = deviceTemplate.IsTemplateUpdated
+
+	return &response, nil
 }

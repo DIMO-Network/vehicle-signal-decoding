@@ -8,6 +8,7 @@ import (
 	context "context"
 	reflect "reflect"
 
+	models "github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -35,11 +36,12 @@ func (m *MockDeviceTemplateService) EXPECT() *MockDeviceTemplateServiceMockRecor
 }
 
 // AssociateTemplate mocks base method.
-func (m *MockDeviceTemplateService) AssociateTemplate(ctx context.Context, vin, templateDbcURL, templatePidURL, templateSettingURL, version string) error {
+func (m *MockDeviceTemplateService) AssociateTemplate(ctx context.Context, vin, templateDbcURL, templatePidURL, templateSettingURL, version string) (*models.DeviceTemplate, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AssociateTemplate", ctx, vin, templateDbcURL, templatePidURL, templateSettingURL, version)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(*models.DeviceTemplate)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // AssociateTemplate indicates an expected call of AssociateTemplate.
