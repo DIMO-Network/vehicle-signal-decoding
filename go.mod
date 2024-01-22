@@ -16,7 +16,7 @@ require (
 	github.com/friendsofgo/errors v0.9.2
 	github.com/gofiber/adaptor/v2 v2.2.1
 	github.com/gofiber/fiber/v2 v2.52.0
-	github.com/gofiber/swagger v0.1.12
+	github.com/gofiber/swagger v0.1.14
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.0.0
 	github.com/lib/pq v1.10.9
@@ -25,7 +25,7 @@ require (
 	github.com/prometheus/client_golang v1.15.1
 	github.com/segmentio/ksuid v1.0.4
 	github.com/stretchr/testify v1.8.4
-	github.com/swaggo/swag v1.16.1
+	github.com/swaggo/swag v1.16.2
 	github.com/testcontainers/testcontainers-go v0.23.0
 	github.com/tidwall/sjson v1.2.5
 	github.com/volatiletech/null/v8 v8.1.2

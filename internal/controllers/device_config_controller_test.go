@@ -9,6 +9,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/services"
+
 	"github.com/DIMO-Network/shared/db"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
@@ -291,7 +293,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_EmptyDBC() {
 	body, _ := io.ReadAll(response.Body)
 	require.Equal(s.T(), fiber.StatusOK, response.StatusCode)
 
-	var receivedResp DeviceConfigResponse
+	var receivedResp services.DeviceConfigResponse
 	err = json.Unmarshal(body, &receivedResp)
 	require.NoError(s.T(), err)
 
@@ -356,7 +358,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_DecodeVIN() {
 	body, _ := io.ReadAll(response.Body)
 	require.Equal(s.T(), fiber.StatusOK, response.StatusCode)
 
-	var receivedResp DeviceConfigResponse
+	var receivedResp services.DeviceConfigResponse
 	err = json.Unmarshal(body, &receivedResp)
 	require.NoError(s.T(), err)
 
@@ -427,7 +429,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_ProtocolOverrideQS()
 
 	assert.Equal(s.T(), fiber.StatusOK, response.StatusCode, "response body: "+string(body))
 
-	var receivedResp DeviceConfigResponse
+	var receivedResp services.DeviceConfigResponse
 	err = json.Unmarshal(body, &receivedResp)
 	assert.NoError(s.T(), err)
 
@@ -505,7 +507,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_FallbackLogic() {
 
 	body, _ := io.ReadAll(response.Body)
 
-	var receivedResp DeviceConfigResponse
+	var receivedResp services.DeviceConfigResponse
 	err = json.Unmarshal(body, &receivedResp)
 	assert.NoError(s.T(), err)
 	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/settings/%s", parentDS.Name), receivedResp.DeviceSettingURL)
