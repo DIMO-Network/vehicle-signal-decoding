@@ -58,10 +58,10 @@ func (mr *MockDeviceTemplateServiceMockRecorder) ResolveDeviceConfiguration(c, u
 }
 
 // StoreLastTemplateRequested mocks base method.
-func (m *MockDeviceTemplateService) StoreLastTemplateRequested(ctx context.Context, vin, templateDbcURL, templatePidURL, templateSettingURL, version string) (*models0.DeviceTemplate, error) {
+func (m *MockDeviceTemplateService) StoreLastTemplateRequested(ctx context.Context, vin, templateDbcURL, templatePidURL, templateSettingURL, version string) (*models0.DeviceTemplateStatus, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "StoreLastTemplateRequested", ctx, vin, templateDbcURL, templatePidURL, templateSettingURL, version)
-	ret0, _ := ret[0].(*models0.DeviceTemplate)
+	ret0, _ := ret[0].(*models0.DeviceTemplateStatus)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

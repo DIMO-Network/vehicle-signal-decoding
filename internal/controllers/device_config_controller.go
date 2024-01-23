@@ -1,10 +1,14 @@
 package controllers
 
 import (
+	"bytes"
 	"database/sql"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	common2 "github.com/ethereum/go-ethereum/common"
+	"github.com/volatiletech/null/v8"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 	"strings"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/common"
@@ -348,7 +352,8 @@ func (d *DeviceConfigController) GetConfigURLsFromEthAddr(c *fiber.Ctx) error {
 // @Router       /device-config/eth-addr/{ethAddr}/status [get]
 func (d *DeviceConfigController) GetConfigStatusFromEthAddr(c *fiber.Ctx) error {
 	ethAddr := c.Params("ethAddr")
-
+	// we need to get the user-device so we can find the VIN that was paired to the eth addr.
+	// an improvement here would be for the mobile app to confirm templates were installed to a specific eth addr
 	ud, err := d.userDeviceSvc.GetUserDeviceByEthAddr(c.Context(), ethAddr)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": fmt.Sprintf("no connected user device found for EthAddr: %s", ethAddr)})
@@ -359,21 +364,26 @@ func (d *DeviceConfigController) GetConfigStatusFromEthAddr(c *fiber.Ctx) error 
 		return err
 	}
 
-	dt, err := models.DeviceTemplates(models.DeviceTemplateWhere.Vin.EQ(*ud.Vin)).One(c.Context(), d.db)
+	dts, err := models.DeviceTemplateStatuses(models.DeviceTemplateStatusWhere.Vin.EQ(*ud.Vin)).One(c.Context(), d.db)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return fiber.NewError(fiber.StatusNotFound, "haven't seen device with eth addr yet: "+ethAddr)
 		}
 		return err
 	}
-	// todo: we need to update the eth Addr in our device_template_version table if different, or set it if not set, add an info log if we updated it.
-	// todo cont: but then this also implies we should change how we ideally query for this. Should what settings a device (or vehicle) have be on-chain?
+	// set the eth addr for record keeping, may come in handy later
+	if !bytes.Equal(dts.DeviceEthAddr.Bytes, common2.HexToAddress(ethAddr).Bytes()) {
+		dts.DeviceEthAddr = null.BytesFrom(common2.HexToAddress(ethAddr).Bytes())
+		_, _ = dts.Update(c.Context(), d.db, boil.Infer())
+	}
+
 	isTemplateUpdated := false
 	// if all this is true then we know we're up to date
-	if dt.Version == deviceConfiguration.Version &&
-		dt.TemplateDBCURL == deviceConfiguration.DbcURL &&
-		dt.TemplatePidURL == deviceConfiguration.PidURL &&
-		dt.TemplateSettingURL == deviceConfiguration.DeviceSettingURL {
+	if dts.TemplateVersion == deviceConfiguration.Version &&
+		dts.TemplateDBCURL == deviceConfiguration.DbcURL &&
+		dts.TemplatePidURL == deviceConfiguration.PidURL &&
+		dts.TemplateSettingURL == deviceConfiguration.DeviceSettingURL {
+
 		isTemplateUpdated = true
 	}
 

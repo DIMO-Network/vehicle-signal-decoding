@@ -4,7 +4,7 @@ SELECT 'up SQL query';
 
 SET search_path = vehicle_signal_decoding_api, public;
 -- keeps track of device to last template requested mapping
-CREATE TABLE IF NOT EXISTS device_template
+CREATE TABLE IF NOT EXISTS device_template_status
 (
     vin char(17) NOT NULL,
     device_eth_addr bytea NULL,

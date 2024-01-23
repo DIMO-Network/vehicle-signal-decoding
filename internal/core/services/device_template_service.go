@@ -25,7 +25,7 @@ import (
 
 //go:generate mockgen -source device_template_service.go -destination mocks/device_template_service_mock.go
 type DeviceTemplateService interface {
-	StoreLastTemplateRequested(ctx context.Context, vin, templateDbcURL, templatePidURL, templateSettingURL, version string) (*models.DeviceTemplate, error)
+	StoreLastTemplateRequested(ctx context.Context, vin, templateDbcURL, templatePidURL, templateSettingURL, version string) (*models.DeviceTemplateStatus, error)
 	ResolveDeviceConfiguration(c *fiber.Ctx, ud *pb.UserDevice) (*localmodels.DeviceConfigResponse, error)
 }
 
@@ -45,47 +45,40 @@ func NewDeviceTemplateService(database *sql.DB, deviceDefSvc DeviceDefinitionsSe
 	}
 }
 
-// StoreLastTemplateRequested stores the last template version requested for a given vin
-func (dts *deviceTemplateService) StoreLastTemplateRequested(ctx context.Context, vin, templateDbcURL, templatePidURL, templateSettingURL, version string) (*models.DeviceTemplate, error) {
+// StoreLastTemplateRequested stores the last template urls & version requested for a given vin
+func (dts *deviceTemplateService) StoreLastTemplateRequested(ctx context.Context, vin, templateDbcURL, templatePidURL, templateSettingURL, version string) (*models.DeviceTemplateStatus, error) {
 
-	deviceTemplate, err := models.DeviceTemplates(models.DeviceTemplateWhere.Vin.EQ(vin)).
+	dt, err := models.DeviceTemplateStatuses(models.DeviceTemplateStatusWhere.Vin.EQ(vin)).
 		One(ctx, dts.db)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, err
 	}
 
-	if deviceTemplate != nil {
-		deviceTemplate.Version = version
-		if deviceTemplate.TemplateDBCURL != templateDbcURL {
-			deviceTemplate.IsTemplateUpdated = false
-		}
-		if deviceTemplate.TemplatePidURL != templatePidURL {
-			deviceTemplate.IsTemplateUpdated = false
-		}
-		if deviceTemplate.TemplateSettingURL != templateSettingURL {
-			deviceTemplate.IsTemplateUpdated = false
-		}
+	if dt != nil && dt.TemplateVersion != version && dt.TemplateSettingURL != templateSettingURL {
+		dt.TemplateVersion = version
+		dt.TemplateSettingURL = templateSettingURL
+		dt.TemplateDBCURL = templateDbcURL
+		dt.TemplatePidURL = templatePidURL
 
-		if _, err = deviceTemplate.Update(ctx, dts.db, boil.Infer()); err != nil {
+		if _, err = dt.Update(ctx, dts.db, boil.Infer()); err != nil {
 			return nil, err
 		}
 	}
 
-	if deviceTemplate == nil {
-		deviceTemplate = &models.DeviceTemplate{
+	if dt == nil {
+		dt = &models.DeviceTemplateStatus{
 			Vin:                vin,
 			TemplateDBCURL:     templateDbcURL,
 			TemplatePidURL:     templatePidURL,
 			TemplateSettingURL: templateSettingURL,
-			IsTemplateUpdated:  true,
 		}
 
-		if err = deviceTemplate.Insert(ctx, dts.db, boil.Infer()); err != nil {
+		if err = dt.Insert(ctx, dts.db, boil.Infer()); err != nil {
 			return nil, err
 		}
 	}
 
-	return deviceTemplate, nil
+	return dt, nil
 }
 
 func (dts *deviceTemplateService) ResolveDeviceConfiguration(c *fiber.Ctx, ud *pb.UserDevice) (*localmodels.DeviceConfigResponse, error) {
