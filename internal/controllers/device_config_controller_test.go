@@ -412,14 +412,20 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_ProtocolOverrideQS()
 			Value: "HEV",
 		}},
 	}
-	s.mockDeviceDefSvc.EXPECT().GetDeviceDefinitionByID(gomock.Any(), gomock.Any()).Return(mockedDeviceDefinition, nil)
 	s.mockUserDeviceSvc.EXPECT().GetUserDeviceByVIN(gomock.Any(), vin).Return(nil, errors.New("user device not found"))
 	s.mockDeviceDefSvc.EXPECT().DecodeVIN(gomock.Any(), vin).Return(&p_grpc.DecodeVinResponse{DeviceDefinitionId: mockedDeviceDefinition.DeviceDefinitionId}, nil)
 
-	dt := models.DeviceTemplate{
-		IsTemplateUpdated: false,
-	}
-	s.mockDeviceTemplateSvc.EXPECT().StoreLastTemplateRequested(gomock.Any(), vin, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(&dt, nil)
+	s.mockDeviceTemplateSvc.EXPECT().StoreLastTemplateRequested(gomock.Any(), vin, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(&models.DeviceTemplate{}, nil)
+	s.mockDeviceTemplateSvc.EXPECT().ResolveDeviceConfiguration(gomock.Any(), &pb.UserDevice{
+		Vin:                &vin,
+		DeviceDefinitionId: mockedDeviceDefinition.DeviceDefinitionId,
+		CANProtocol:        "7",
+	}).Return(&localmodels.DeviceConfigResponse{
+		PidURL:           "http://localhost:3000/v1/device-config/some-template-protocol-override/pids",
+		DeviceSettingURL: "http://localhost:3000/v1/device-config/settings/default-hev-protocol-override",
+		Version:          "1.0",
+	}, nil)
 
 	s.app.Get("/config-urls/:vin", s.controller.GetConfigURLsFromVIN)
 
@@ -442,7 +448,6 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_ProtocolOverrideQS()
 }
 
 func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_FallbackLogic() {
-
 	vin := "TMBEK6NW1N3088739"
 
 	parentTemplate := &models.Template{
@@ -492,14 +497,22 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_FallbackLogic() {
 			Value: "BEV",
 		}},
 	}
-	s.mockDeviceDefSvc.EXPECT().GetDeviceDefinitionByID(gomock.Any(), gomock.Any()).Return(mockedDeviceDefinition, nil)
 	s.mockUserDeviceSvc.EXPECT().GetUserDeviceByVIN(gomock.Any(), vin).Return(nil, errors.New("user device not found"))
 	s.mockDeviceDefSvc.EXPECT().DecodeVIN(gomock.Any(), vin).Return(&p_grpc.DecodeVinResponse{DeviceDefinitionId: mockedDeviceDefinition.DeviceDefinitionId}, nil)
 
 	dt := models.DeviceTemplate{
 		IsTemplateUpdated: false,
 	}
-	s.mockDeviceTemplateSvc.EXPECT().StoreLastTemplateRequested(gomock.Any(), vin, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(&dt, nil)
+	s.mockDeviceTemplateSvc.EXPECT().StoreLastTemplateRequested(gomock.Any(), vin, gomock.Any(), gomock.Any(), gomock.Any(), "1.0").Return(&dt, nil)
+	s.mockDeviceTemplateSvc.EXPECT().ResolveDeviceConfiguration(gomock.Any(), &pb.UserDevice{
+		Vin:                &vin,
+		DeviceDefinitionId: mockedDeviceDefinition.DeviceDefinitionId,
+		CANProtocol:        "7",
+	}).Return(&localmodels.DeviceConfigResponse{
+		PidURL:           "http://localhost:3000/v1/device-config/parent-template/pids",
+		DeviceSettingURL: "http://localhost:3000/v1/device-config/settings/parent-settings-fallback",
+		Version:          "1.0",
+	}, nil)
 
 	s.app.Get("/config-urls/:vin", s.controller.GetConfigURLsFromVIN)
 
