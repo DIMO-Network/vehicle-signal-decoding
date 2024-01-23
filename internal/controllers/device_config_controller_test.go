@@ -228,7 +228,6 @@ func (s *DeviceConfigControllerTestSuite) TestGetDBCFileByTemplateName() {
 }
 
 func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_EmptyDBC() {
-
 	vin := "TMBEK6NW1N3088739"
 
 	mockedUserDevice := &pb.UserDevice{
@@ -245,14 +244,6 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_EmptyDBC() {
 		GeoDecodedStateProv: "MI",
 	}
 	s.mockUserDeviceSvc.EXPECT().GetUserDeviceByVIN(gomock.Any(), vin).Return(mockedUserDevice, nil)
-
-	mockedDeviceDefinition := &p_grpc.GetDeviceDefinitionItemResponse{
-		DeviceDefinitionId: ksuid.New().String(),
-		Type: &p_grpc.DeviceType{
-			Year: 2020,
-		},
-	}
-	s.mockDeviceDefSvc.EXPECT().GetDeviceDefinitionByID(gomock.Any(), gomock.Any()).Return(mockedDeviceDefinition, nil)
 
 	template := &models.Template{
 		TemplateName: "some-template-emptydbc",
@@ -283,6 +274,11 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_EmptyDBC() {
 		IsTemplateUpdated: false,
 	}
 	s.mockDeviceTemplateSvc.EXPECT().StoreLastTemplateRequested(gomock.Any(), vin, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(&dt, nil)
+	s.mockDeviceTemplateSvc.EXPECT().ResolveDeviceConfiguration(gomock.Any(), mockedUserDevice).Return(&localmodels.DeviceConfigResponse{
+		PidURL:           "http://localhost:3000/v1/device-config/some-template-emptydbc/pids",
+		DeviceSettingURL: "http://localhost:3000/v1/device-config/settings/default-hev-emptydbc",
+		Version:          "1.0",
+	}, nil)
 
 	s.app.Get("/config-urls/:vin", s.controller.GetConfigURLsFromVIN)
 
@@ -304,7 +300,6 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_EmptyDBC() {
 }
 
 func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_DecodeVIN() {
-
 	vin := "TMBEK6NW1N3088739"
 
 	template := &models.Template{
