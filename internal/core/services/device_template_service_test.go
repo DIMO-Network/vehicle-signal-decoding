@@ -25,7 +25,7 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-const migrationsDirRelPath = "../infrastructure/db/migrations"
+const migrationsDirRelPath = "../../infrastructure/db/migrations"
 
 type DeviceTemplateServiceTestSuite struct {
 	suite.Suite

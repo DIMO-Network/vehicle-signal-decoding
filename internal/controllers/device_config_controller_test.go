@@ -342,12 +342,19 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_DecodeVIN() {
 	s.mockDeviceDefSvc.EXPECT().DecodeVIN(gomock.Any(), vin).Return(&p_grpc.DecodeVinResponse{
 		DeviceDefinitionId: mockedDeviceDefinition.DeviceDefinitionId,
 	}, nil)
-	s.mockDeviceDefSvc.EXPECT().GetDeviceDefinitionByID(gomock.Any(), mockedDeviceDefinition.DeviceDefinitionId).Return(mockedDeviceDefinition, nil)
 
 	dt := models.DeviceTemplate{
 		IsTemplateUpdated: false,
 	}
-
+	s.mockDeviceTemplateSvc.EXPECT().ResolveDeviceConfiguration(gomock.Any(), &pb.UserDevice{
+		Vin:                &vin,
+		DeviceDefinitionId: mockedDeviceDefinition.DeviceDefinitionId,
+		//PowerTrainType:     "HEV",
+	}).Return(&localmodels.DeviceConfigResponse{
+		PidURL:           "http://localhost:3000/v1/device-config/some-template/pids",
+		DeviceSettingURL: "http://localhost:3000/v1/device-config/settings/default-hev",
+		Version:          "1.0",
+	}, nil)
 	s.mockDeviceTemplateSvc.EXPECT().StoreLastTemplateRequested(gomock.Any(), vin, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(&dt, nil)
 	s.app.Get("/config-urls/:vin", s.controller.GetConfigURLsFromVIN)
 
