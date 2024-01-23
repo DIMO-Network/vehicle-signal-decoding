@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	localmodels "github.com/DIMO-Network/vehicle-signal-decoding/internal/core/models"
+
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	pb "github.com/DIMO-Network/devices-api/pkg/grpc"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
@@ -18,13 +20,13 @@ import (
 
 	"database/sql"
 
-	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
+	models "github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 )
 
 //go:generate mockgen -source device_template_service.go -destination mocks/device_template_service_mock.go
 type DeviceTemplateService interface {
 	StoreLastTemplateRequested(ctx context.Context, vin, templateDbcURL, templatePidURL, templateSettingURL, version string) (*models.DeviceTemplate, error)
-	ResolveDeviceConfiguration(c *fiber.Ctx, ud *pb.UserDevice) (*DeviceConfigResponse, error)
+	ResolveDeviceConfiguration(c *fiber.Ctx, ud *pb.UserDevice) (*localmodels.DeviceConfigResponse, error)
 }
 
 type deviceTemplateService struct {
@@ -34,7 +36,7 @@ type deviceTemplateService struct {
 	deviceDefSvc DeviceDefinitionsService
 }
 
-func NewUserDeviceTemplateService(database *sql.DB, deviceDefSvc DeviceDefinitionsService, log zerolog.Logger, settings *config.Settings) DeviceTemplateService {
+func NewDeviceTemplateService(database *sql.DB, deviceDefSvc DeviceDefinitionsService, log zerolog.Logger, settings *config.Settings) DeviceTemplateService {
 	return &deviceTemplateService{
 		db:           database,
 		log:          log,
@@ -86,7 +88,7 @@ func (dts *deviceTemplateService) StoreLastTemplateRequested(ctx context.Context
 	return deviceTemplate, nil
 }
 
-func (dts *deviceTemplateService) ResolveDeviceConfiguration(c *fiber.Ctx, ud *pb.UserDevice) (*DeviceConfigResponse, error) {
+func (dts *deviceTemplateService) ResolveDeviceConfiguration(c *fiber.Ctx, ud *pb.UserDevice) (*localmodels.DeviceConfigResponse, error) {
 	dts.setCANProtocol(ud)
 
 	vehicleMake, vehicleModel, vehicleYear, err := dts.retrieveAndSetVehicleInfo(c.Context(), ud)
@@ -103,7 +105,7 @@ func (dts *deviceTemplateService) ResolveDeviceConfiguration(c *fiber.Ctx, ud *p
 	}
 	baseURL := dts.settings.DeploymentURL
 
-	response := DeviceConfigResponse{
+	response := localmodels.DeviceConfigResponse{
 		PidURL:  fmt.Sprintf("%s/v1/device-config/%s/pids", baseURL, matchedTemplate.TemplateName),
 		Version: matchedTemplate.Version,
 	}
@@ -322,11 +324,4 @@ func (dts *deviceTemplateService) setCANProtocol(ud *pb.UserDevice) {
 		dts.log.Warn().Str("user_device_id", ud.Id).Msgf("invalid protocol detected: %s", ud.CANProtocol)
 		ud.CANProtocol = models.CanProtocolTypeCAN11_500
 	}
-}
-
-type DeviceConfigResponse struct {
-	PidURL           string `json:"pidUrl"`
-	DeviceSettingURL string `json:"deviceSettingUrl"`
-	DbcURL           string `json:"dbcURL,omitempty"`
-	Version          string `json:"version"`
 }

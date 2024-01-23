@@ -13,8 +13,8 @@ import (
 	reflect "reflect"
 
 	grpc "github.com/DIMO-Network/devices-api/pkg/grpc"
-	services "github.com/DIMO-Network/vehicle-signal-decoding/internal/core/services"
-	models "github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
+	models "github.com/DIMO-Network/vehicle-signal-decoding/internal/core/models"
+	models0 "github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 	fiber "github.com/gofiber/fiber/v2"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -42,26 +42,11 @@ func (m *MockDeviceTemplateService) EXPECT() *MockDeviceTemplateServiceMockRecor
 	return m.recorder
 }
 
-// AssociateTemplate mocks base method.
-func (m *MockDeviceTemplateService) StoreLastTemplateRequested(ctx context.Context, vin, templateDbcURL, templatePidURL, templateSettingURL, version string) (*models.DeviceTemplate, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "StoreLastTemplateRequested", ctx, vin, templateDbcURL, templatePidURL, templateSettingURL, version)
-	ret0, _ := ret[0].(*models.DeviceTemplate)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// AssociateTemplate indicates an expected call of AssociateTemplate.
-func (mr *MockDeviceTemplateServiceMockRecorder) AssociateTemplate(ctx, vin, templateDbcURL, templatePidURL, templateSettingURL, version any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StoreLastTemplateRequested", reflect.TypeOf((*MockDeviceTemplateService)(nil).StoreLastTemplateRequested), ctx, vin, templateDbcURL, templatePidURL, templateSettingURL, version)
-}
-
 // ResolveDeviceConfiguration mocks base method.
-func (m *MockDeviceTemplateService) ResolveDeviceConfiguration(c *fiber.Ctx, ud *grpc.UserDevice) (*services.DeviceConfigResponse, error) {
+func (m *MockDeviceTemplateService) ResolveDeviceConfiguration(c *fiber.Ctx, ud *grpc.UserDevice) (*models.DeviceConfigResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ResolveDeviceConfiguration", c, ud)
-	ret0, _ := ret[0].(*services.DeviceConfigResponse)
+	ret0, _ := ret[0].(*models.DeviceConfigResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -70,4 +55,19 @@ func (m *MockDeviceTemplateService) ResolveDeviceConfiguration(c *fiber.Ctx, ud 
 func (mr *MockDeviceTemplateServiceMockRecorder) ResolveDeviceConfiguration(c, ud any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResolveDeviceConfiguration", reflect.TypeOf((*MockDeviceTemplateService)(nil).ResolveDeviceConfiguration), c, ud)
+}
+
+// StoreLastTemplateRequested mocks base method.
+func (m *MockDeviceTemplateService) StoreLastTemplateRequested(ctx context.Context, vin, templateDbcURL, templatePidURL, templateSettingURL, version string) (*models0.DeviceTemplate, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "StoreLastTemplateRequested", ctx, vin, templateDbcURL, templatePidURL, templateSettingURL, version)
+	ret0, _ := ret[0].(*models0.DeviceTemplate)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// StoreLastTemplateRequested indicates an expected call of StoreLastTemplateRequested.
+func (mr *MockDeviceTemplateServiceMockRecorder) StoreLastTemplateRequested(ctx, vin, templateDbcURL, templatePidURL, templateSettingURL, version any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StoreLastTemplateRequested", reflect.TypeOf((*MockDeviceTemplateService)(nil).StoreLastTemplateRequested), ctx, vin, templateDbcURL, templatePidURL, templateSettingURL, version)
 }

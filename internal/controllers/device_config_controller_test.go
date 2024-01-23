@@ -9,7 +9,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/services"
+	localmodels "github.com/DIMO-Network/vehicle-signal-decoding/internal/core/models"
 
 	"github.com/DIMO-Network/shared/db"
 	"github.com/stretchr/testify/suite"
@@ -282,7 +282,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_EmptyDBC() {
 	dt := models.DeviceTemplate{
 		IsTemplateUpdated: false,
 	}
-	s.mockDeviceTemplateSvc.EXPECT().AssociateTemplate(gomock.Any(), vin, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(&dt, nil)
+	s.mockDeviceTemplateSvc.EXPECT().StoreLastTemplateRequested(gomock.Any(), vin, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(&dt, nil)
 
 	s.app.Get("/config-urls/:vin", s.controller.GetConfigURLsFromVIN)
 
@@ -293,7 +293,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_EmptyDBC() {
 	body, _ := io.ReadAll(response.Body)
 	require.Equal(s.T(), fiber.StatusOK, response.StatusCode)
 
-	var receivedResp services.DeviceConfigResponse
+	var receivedResp localmodels.DeviceConfigResponse
 	err = json.Unmarshal(body, &receivedResp)
 	require.NoError(s.T(), err)
 
@@ -348,7 +348,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_DecodeVIN() {
 		IsTemplateUpdated: false,
 	}
 
-	s.mockDeviceTemplateSvc.EXPECT().AssociateTemplate(gomock.Any(), vin, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(&dt, nil)
+	s.mockDeviceTemplateSvc.EXPECT().StoreLastTemplateRequested(gomock.Any(), vin, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(&dt, nil)
 	s.app.Get("/config-urls/:vin", s.controller.GetConfigURLsFromVIN)
 
 	request := dbtest.BuildRequest("GET", "/config-urls/"+vin, "")
@@ -358,7 +358,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_DecodeVIN() {
 	body, _ := io.ReadAll(response.Body)
 	require.Equal(s.T(), fiber.StatusOK, response.StatusCode)
 
-	var receivedResp services.DeviceConfigResponse
+	var receivedResp localmodels.DeviceConfigResponse
 	err = json.Unmarshal(body, &receivedResp)
 	require.NoError(s.T(), err)
 
@@ -417,7 +417,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_ProtocolOverrideQS()
 	dt := models.DeviceTemplate{
 		IsTemplateUpdated: false,
 	}
-	s.mockDeviceTemplateSvc.EXPECT().AssociateTemplate(gomock.Any(), vin, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(&dt, nil)
+	s.mockDeviceTemplateSvc.EXPECT().StoreLastTemplateRequested(gomock.Any(), vin, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(&dt, nil)
 
 	s.app.Get("/config-urls/:vin", s.controller.GetConfigURLsFromVIN)
 
@@ -429,7 +429,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_ProtocolOverrideQS()
 
 	assert.Equal(s.T(), fiber.StatusOK, response.StatusCode, "response body: "+string(body))
 
-	var receivedResp services.DeviceConfigResponse
+	var receivedResp localmodels.DeviceConfigResponse
 	err = json.Unmarshal(body, &receivedResp)
 	assert.NoError(s.T(), err)
 
@@ -497,7 +497,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_FallbackLogic() {
 	dt := models.DeviceTemplate{
 		IsTemplateUpdated: false,
 	}
-	s.mockDeviceTemplateSvc.EXPECT().AssociateTemplate(gomock.Any(), vin, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(&dt, nil)
+	s.mockDeviceTemplateSvc.EXPECT().StoreLastTemplateRequested(gomock.Any(), vin, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(&dt, nil)
 
 	s.app.Get("/config-urls/:vin", s.controller.GetConfigURLsFromVIN)
 
@@ -507,373 +507,11 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_FallbackLogic() {
 
 	body, _ := io.ReadAll(response.Body)
 
-	var receivedResp services.DeviceConfigResponse
+	var receivedResp localmodels.DeviceConfigResponse
 	err = json.Unmarshal(body, &receivedResp)
 	assert.NoError(s.T(), err)
 	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/settings/%s", parentDS.Name), receivedResp.DeviceSettingURL)
 	assert.Equal(s.T(), matchedTemplate.Version, receivedResp.Version)
-}
-
-func (s *DeviceConfigControllerTestSuite) TestRetrieveAndSetVehicleInfo() {
-
-	ud := &pb.UserDevice{
-		DeviceDefinitionId: "some-definition-id",
-	}
-	expectedDDResponse := &p_grpc.GetDeviceDefinitionItemResponse{
-		Type: &p_grpc.DeviceType{
-			Year:      2021,
-			MakeSlug:  "Ford",
-			ModelSlug: "Mustang",
-		},
-	}
-
-	s.mockDeviceDefSvc.EXPECT().
-		GetDeviceDefinitionByID(gomock.Any(), ud.DeviceDefinitionId).
-		Return(expectedDDResponse, nil)
-
-	vehicleMake, vehicleModel, vehicleYear, err := s.controller.retrieveAndSetVehicleInfo(s.ctx, ud)
-
-	require.NoError(s.T(), err)
-	assert.Equal(s.T(), "Ford", vehicleMake)
-	assert.Equal(s.T(), "Mustang", vehicleModel)
-	assert.Equal(s.T(), 2021, vehicleYear)
-}
-
-func (s *DeviceConfigControllerTestSuite) TestSetPowerTrainType() {
-
-	testCases := []struct {
-		name          string
-		deviceAttrs   []*p_grpc.DeviceTypeAttribute
-		expectedPower string
-	}{
-		{
-			name: "With Specified Powertrain",
-			deviceAttrs: []*p_grpc.DeviceTypeAttribute{
-				{Name: "powertrain_type", Value: "Electric"},
-			},
-			expectedPower: "Electric",
-		},
-		{
-			name:          "Without Specified Powertrain",
-			deviceAttrs:   []*p_grpc.DeviceTypeAttribute{},
-			expectedPower: "ICE", // Default value
-		},
-	}
-
-	for _, tc := range testCases {
-		s.Run(tc.name, func() {
-			ddResponse := &p_grpc.GetDeviceDefinitionItemResponse{
-				DeviceAttributes: tc.deviceAttrs,
-			}
-			ud := &pb.UserDevice{}
-			s.controller.setPowerTrainType(ddResponse, ud)
-			assert.Equal(s.T(), tc.expectedPower, ud.PowerTrainType)
-		})
-	}
-}
-
-func (s *DeviceConfigControllerTestSuite) TestSetCANProtocol() {
-
-	testCases := []struct {
-		name        string
-		initialCAN  string
-		expectedCAN string
-	}{
-		{
-			name:        "CAN Protocol 6",
-			initialCAN:  "6",
-			expectedCAN: models.CanProtocolTypeCAN11_500,
-		},
-		{
-			name:        "CAN Protocol 7",
-			initialCAN:  "7",
-			expectedCAN: models.CanProtocolTypeCAN29_500,
-		},
-		{
-			name:        "Empty CAN Protocol",
-			initialCAN:  "",
-			expectedCAN: models.CanProtocolTypeCAN11_500,
-		},
-	}
-
-	for _, tc := range testCases {
-		s.Run(tc.name, func() {
-			ud := &pb.UserDevice{CANProtocol: tc.initialCAN}
-			s.controller.setCANProtocol(ud)
-			assert.Equal(s.T(), tc.expectedCAN, ud.CANProtocol)
-		})
-	}
-}
-
-func (s *DeviceConfigControllerTestSuite) TestSelectAndFetchTemplate_DeviceDefinitions() {
-
-	template := &models.Template{
-		TemplateName: "some-template",
-		Version:      "1.0",
-		Protocol:     models.CanProtocolTypeCAN29_500,
-		Powertrain:   "HEV",
-	}
-	err := template.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
-	require.NoError(s.T(), err)
-
-	deviceDef := &models.TemplateDeviceDefinition{
-		DeviceDefinitionID: "device-def-id",
-		TemplateName:       template.TemplateName,
-	}
-	err = deviceDef.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
-	require.NoError(s.T(), err)
-
-	mockedUserDevice := &pb.UserDevice{
-		Id:                 ksuid.New().String(),
-		UserId:             ksuid.New().String(),
-		DeviceDefinitionId: ksuid.New().String(),
-		CANProtocol:        models.CanProtocolTypeCAN29_500,
-		PowerTrainType:     "HEV",
-	}
-
-	vehicleMake := "Ford"
-	vehicleModel := "Mustang"
-	vehicleYear := 2021
-
-	fetchedTemplate, err := s.controller.selectAndFetchTemplate(s.ctx, mockedUserDevice, vehicleMake, vehicleModel, vehicleYear)
-
-	require.NoError(s.T(), err)
-	assert.NotNil(s.T(), fetchedTemplate)
-	assert.Equal(s.T(), template.TemplateName, fetchedTemplate.TemplateName)
-}
-
-func (s *DeviceConfigControllerTestSuite) TestSelectAndFetchTemplate_MMY() {
-
-	decoy := &models.Template{
-		TemplateName: "mmy-template-decoy",
-		Version:      "1.0",
-		Protocol:     models.CanProtocolTypeCAN29_500,
-		Powertrain:   "HEV",
-	}
-	err := decoy.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
-	require.NoError(s.T(), err)
-
-	template := &models.Template{
-		TemplateName: "mmy-template",
-		Version:      "1.0",
-		Protocol:     models.CanProtocolTypeCAN29_500,
-		Powertrain:   "HEV",
-	}
-	err = template.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
-	require.NoError(s.T(), err)
-
-	templateVehicle := &models.TemplateVehicle{
-		TemplateName:   template.TemplateName,
-		MakeSlug:       null.StringFrom("Ford"),
-		ModelWhitelist: types.StringArray{"Mustang"},
-		YearStart:      2010,
-		YearEnd:        2025,
-	}
-	err = templateVehicle.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
-	require.NoError(s.T(), err)
-
-	mockedUserDevice := &pb.UserDevice{
-		Id:                 ksuid.New().String(),
-		UserId:             ksuid.New().String(),
-		DeviceDefinitionId: "non-existing-def-id",
-		CANProtocol:        models.CanProtocolTypeCAN29_500,
-		PowerTrainType:     "HEV",
-	}
-
-	vehicleMake := "Ford"
-	vehicleModel := "Mustang"
-	vehicleYear := 2021
-
-	fetchedTemplate, err := s.controller.selectAndFetchTemplate(s.ctx, mockedUserDevice, vehicleMake, vehicleModel, vehicleYear)
-
-	require.NoError(s.T(), err)
-	assert.NotNil(s.T(), fetchedTemplate)
-	assert.Equal(s.T(), template.TemplateName, fetchedTemplate.TemplateName)
-}
-
-func (s *DeviceConfigControllerTestSuite) TestSelectAndFetchTemplate_ModelWhitelistMatch() {
-
-	decoyTemplate := &models.Template{
-		TemplateName: "decoy-template",
-		Version:      "1.0",
-		Protocol:     models.CanProtocolTypeCAN11_500,
-		Powertrain:   "ICE",
-	}
-	err := decoyTemplate.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
-	require.NoError(s.T(), err)
-
-	template := &models.Template{
-		TemplateName: "template",
-		Version:      "1.0",
-		Protocol:     models.CanProtocolTypeCAN11_500,
-		Powertrain:   "ICE",
-	}
-	err = template.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
-	require.NoError(s.T(), err)
-
-	// template vehicles with different model whitelists
-	decoyTemplateVehicle := &models.TemplateVehicle{
-		TemplateName:   decoyTemplate.TemplateName,
-		MakeSlug:       null.StringFrom("Ford"),
-		ModelWhitelist: types.StringArray{"Fiesta"},
-		YearStart:      2010,
-		YearEnd:        2025,
-	}
-	err = decoyTemplateVehicle.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
-	require.NoError(s.T(), err)
-
-	templateVehicle := &models.TemplateVehicle{
-		TemplateName:   template.TemplateName,
-		MakeSlug:       null.StringFrom("Ford"),
-		ModelWhitelist: types.StringArray{"Mustang"},
-		YearStart:      2010,
-		YearEnd:        2025,
-	}
-	err = templateVehicle.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
-	require.NoError(s.T(), err)
-
-	mockedUserDevice := &pb.UserDevice{
-		Id:                 ksuid.New().String(),
-		UserId:             ksuid.New().String(),
-		DeviceDefinitionId: "non-existing-def-id",
-		CANProtocol:        models.CanProtocolTypeCAN11_500,
-		PowerTrainType:     "ICE",
-	}
-
-	vehicleMake := "Ford"
-	vehicleModel := "Mustang"
-	vehicleYear := 2021
-
-	fetchedTemplate, err := s.controller.selectAndFetchTemplate(s.ctx, mockedUserDevice, vehicleMake, vehicleModel, vehicleYear)
-
-	require.NoError(s.T(), err)
-	assert.NotNil(s.T(), fetchedTemplate)
-	assert.Equal(s.T(), template.TemplateName, fetchedTemplate.TemplateName)
-}
-
-func (s *DeviceConfigControllerTestSuite) TestSelectAndFetchTemplate_YearRange() {
-
-	template2 := &models.Template{
-		TemplateName: "default-template",
-		Version:      "1.0",
-		Protocol:     models.CanProtocolTypeCAN11_500,
-		Powertrain:   "ICE",
-	}
-	err := template2.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
-	require.NoError(s.T(), err)
-
-	template := &models.Template{
-		TemplateName: "2019plus-template",
-		Version:      "1.0",
-		Protocol:     models.CanProtocolTypeCAN11_500,
-		Powertrain:   "ICE",
-	}
-	err = template.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
-	require.NoError(s.T(), err)
-
-	templateVehicle := &models.TemplateVehicle{
-		TemplateName: template.TemplateName,
-		YearStart:    2019,
-		YearEnd:      2025,
-	}
-	err = templateVehicle.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
-	require.NoError(s.T(), err)
-
-	mockedUserDevice := &pb.UserDevice{
-		Id:                 ksuid.New().String(),
-		UserId:             ksuid.New().String(),
-		DeviceDefinitionId: "some-2019-vehicle",
-		PowerTrainType:     template.Powertrain,
-		CANProtocol:        template.Protocol,
-	}
-
-	vehicleMake := "Ford"
-	vehicleModel := "Mustang"
-	vehicleYear := 2019
-
-	fetchedTemplate, err := s.controller.selectAndFetchTemplate(s.ctx, mockedUserDevice, vehicleMake, vehicleModel, vehicleYear)
-
-	require.NoError(s.T(), err)
-	assert.NotNil(s.T(), fetchedTemplate)
-	assert.Equal(s.T(), template.TemplateName, fetchedTemplate.TemplateName)
-}
-
-func (s *DeviceConfigControllerTestSuite) TestSelectAndFetchTemplate_PowertrainProtocol() {
-
-	decoy := &models.Template{
-		TemplateName: "protocol-powertrain-template-decoy",
-		Version:      "1.0",
-		Protocol:     models.CanProtocolTypeCAN29_500,
-		Powertrain:   "PHEV",
-	}
-	err := decoy.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
-	require.NoError(s.T(), err)
-
-	template := &models.Template{
-		TemplateName: "protocol-powertrain-template",
-		Version:      "1.0",
-		Protocol:     models.CanProtocolTypeCAN29_500,
-		Powertrain:   "HEV",
-	}
-	err = template.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
-	require.NoError(s.T(), err)
-
-	mockedUserDevice := &pb.UserDevice{
-		Id:                 ksuid.New().String(),
-		UserId:             ksuid.New().String(),
-		DeviceDefinitionId: "non-existing-def-id",
-		CANProtocol:        models.CanProtocolTypeCAN29_500,
-		PowerTrainType:     "HEV",
-	}
-
-	vehicleMake := "Ford"
-	vehicleModel := "Mustang"
-	vehicleYear := 2021
-
-	fetchedTemplate, err := s.controller.selectAndFetchTemplate(s.ctx, mockedUserDevice, vehicleMake, vehicleModel, vehicleYear)
-
-	require.NoError(s.T(), err)
-	assert.NotNil(s.T(), fetchedTemplate)
-	assert.Equal(s.T(), template.TemplateName, fetchedTemplate.TemplateName)
-}
-
-func (s *DeviceConfigControllerTestSuite) TestSelectAndFetchTemplate_Default() {
-
-	nonDefaultTmpl := &models.Template{
-		TemplateName: "some-template-special",
-		Version:      "1.0",
-		Protocol:     "CAN11_500",
-		Powertrain:   "ICE",
-	}
-	err := nonDefaultTmpl.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
-	require.NoError(s.T(), err)
-
-	defaultTemplate := &models.Template{
-		TemplateName: "default-some-template",
-		Version:      "1.0",
-		Protocol:     "CAN11_500",
-		Powertrain:   "ICE",
-	}
-	err = defaultTemplate.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
-	require.NoError(s.T(), err)
-
-	mockedUserDevice := &pb.UserDevice{
-		Id:                 ksuid.New().String(),
-		UserId:             ksuid.New().String(),
-		DeviceDefinitionId: "non-existing-def-id",
-		CANProtocol:        models.CanProtocolTypeCAN29_500,
-		PowerTrainType:     "HEV",
-	}
-
-	vehicleMake := "NonExistingMake"
-	vehicleModel := "NonExistingModel"
-	vehicleYear := 2010
-
-	fetchedTemplate, err := s.controller.selectAndFetchTemplate(s.ctx, mockedUserDevice, vehicleMake, vehicleModel, vehicleYear)
-
-	require.NoError(s.T(), err)
-	assert.NotNil(s.T(), fetchedTemplate)
-	assert.Equal(s.T(), defaultTemplate.TemplateName, fetchedTemplate.TemplateName)
 }
 
 func Test_modelMatch(t *testing.T) {

@@ -118,7 +118,7 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 	//Create gRPC connection
 	userDeviceSvc := services.NewUserDeviceService(settings)
 	deviceDefsvc := services.NewDeviceDefinitionsService(settings)
-	deviceTemplatesvc := services.NewUserDeviceTemplateService(database.DBS().Writer.DB, deviceDefsvc, logger, settings)
+	deviceTemplatesvc := services.NewDeviceTemplateService(database.DBS().Writer.DB, deviceDefsvc, logger, settings)
 
 	app := fiber.New(fiber.Config{
 		ErrorHandler: func(c *fiber.Ctx, err error) error {

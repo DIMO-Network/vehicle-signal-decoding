@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"context"
 	"database/sql"
 	"encoding/binary"
 	"encoding/json"
@@ -12,9 +11,6 @@ import (
 
 	"github.com/volatiletech/sqlboiler/v4/types"
 
-	"github.com/volatiletech/sqlboiler/v4/queries/qm"
-
-	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	pb "github.com/DIMO-Network/devices-api/pkg/grpc"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/services"
@@ -394,165 +390,6 @@ func padByteArray(input []byte, targetLength int) []byte {
 
 	padded := make([]byte, targetLength-len(input))
 	return append(padded, input...)
-}
-
-// setCANProtocol converts autopi/macaron style Protocol (6 or 7) to our VSD style protocol, but always returning a default if nothing found
-func (d *DeviceConfigController) setCANProtocol(ud *pb.UserDevice) {
-	switch ud.CANProtocol {
-	case "6":
-		ud.CANProtocol = models.CanProtocolTypeCAN11_500
-	case "7":
-		ud.CANProtocol = models.CanProtocolTypeCAN29_500
-	case "":
-		ud.CANProtocol = models.CanProtocolTypeCAN11_500
-	default:
-		d.log.Warn().Str("user_device_id", ud.Id).Msgf("invalid protocol detected: %s", ud.CANProtocol)
-		ud.CANProtocol = models.CanProtocolTypeCAN11_500
-	}
-}
-
-// retrieveAndSetVehicleInfo figures out what if any device definition information corresponds to the UserDevice.
-// also calls setPowerTrainType to find and set a default Powertrain
-func (d *DeviceConfigController) retrieveAndSetVehicleInfo(ctx context.Context, ud *pb.UserDevice) (string, string, int, error) {
-
-	var ddResponse *p_grpc.GetDeviceDefinitionItemResponse
-	deviceDefinitionID := ud.DeviceDefinitionId
-	ddResponse, err := d.deviceDefSvc.GetDeviceDefinitionByID(ctx, deviceDefinitionID)
-	if err != nil {
-		return "", "", 0, fmt.Errorf("failed to retrieve device definition for deviceDefinitionId %s: %w", deviceDefinitionID, err)
-	}
-
-	vehicleYear := int(ddResponse.Type.Year)
-	vehicleMake := ddResponse.Type.MakeSlug
-	vehicleModel := ddResponse.Type.ModelSlug
-
-	d.setPowerTrainType(ddResponse, ud)
-
-	return vehicleMake, vehicleModel, vehicleYear, nil
-}
-
-func (d *DeviceConfigController) setPowerTrainType(ddResponse *p_grpc.GetDeviceDefinitionItemResponse, ud *pb.UserDevice) {
-	var powerTrainType string
-	for _, attribute := range ddResponse.DeviceAttributes {
-		if attribute.Name == "powertrain_type" {
-			powerTrainType = attribute.Value
-			break
-		}
-	}
-	if ud.PowerTrainType == "" {
-		ud.PowerTrainType = powerTrainType
-		if ud.PowerTrainType == "" {
-			ud.PowerTrainType = "ICE"
-		}
-	}
-}
-
-// selectAndFetchTemplate figures out the right template to use based on the protocol, powertrain, year range, make, and /or model.
-// Returns default template if nothing found. Requirees ud.CANProtocol and Powertrain to be set to something
-func (d *DeviceConfigController) selectAndFetchTemplate(ctx context.Context, ud *pb.UserDevice, vehicleMake, vehicleModel string, vehicleYear int) (*models.Template, error) {
-	// guard
-	if ud.CANProtocol == "" {
-		return nil, fmt.Errorf("CANProtocol is required in the user device")
-	}
-	if ud.PowerTrainType == "" {
-		return nil, fmt.Errorf("PowerTrainType is required in the user device")
-	}
-
-	var matchedTemplateName string
-
-	// First, try to find a template based on device definitions
-	deviceDefinitions, err := models.TemplateDeviceDefinitions(
-		models.TemplateDeviceDefinitionWhere.DeviceDefinitionID.EQ(ud.DeviceDefinitionId),
-	).All(ctx, d.db)
-
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return nil, fmt.Errorf("failed to query template device definitions: %w", err)
-	}
-
-	if len(deviceDefinitions) > 0 {
-		matchedTemplateName = deviceDefinitions[0].TemplateName
-	}
-
-	// Second, try to find a template based on Year, then Make & Model
-	if matchedTemplateName == "" {
-		// compare by year first, then in memory below we'll look for make and/or model
-		templateVehicles, err := models.TemplateVehicles(
-			models.TemplateVehicleWhere.YearStart.LTE(vehicleYear),
-			models.TemplateVehicleWhere.YearEnd.GTE(vehicleYear),
-			qm.Load(models.TemplateVehicleRels.TemplateNameTemplate),
-		).All(ctx, d.db)
-
-		if err != nil && !errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf("failed to query templates for make: %s, model: %s, year: %d: %w", vehicleMake, vehicleModel, vehicleYear, err)
-		}
-		// if anything is returned, try finding a match by make and/or model
-		for _, tv := range templateVehicles {
-			// any matches for year & same protocol
-			if tv.R.TemplateNameTemplate.Protocol == ud.CANProtocol {
-				matchedTemplateName = tv.TemplateName
-				// now any matches for make
-				if tv.MakeSlug.String == vehicleMake {
-					matchedTemplateName = tv.TemplateName
-					// now see if there is also a model match
-					if modelMatch(tv.ModelWhitelist, vehicleModel) {
-						break
-					}
-				}
-			}
-		}
-
-	}
-
-	// Third, fallback to query by protocol and powertrain. Match by protocol first
-	if matchedTemplateName == "" {
-		templates, err := models.Templates(
-			models.TemplateWhere.Protocol.EQ(ud.CANProtocol),
-		).All(ctx, d.db)
-
-		if err != nil && !errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf("failed to query templates for protocol: %s and powertrain: %s: %w", ud.CANProtocol, ud.PowerTrainType, err)
-		}
-		if len(templates) > 0 {
-			// match the first one just in case
-			matchedTemplateName = templates[0].TemplateName
-			// now see if also have a powertrain match
-			for _, t := range templates {
-				if t.Powertrain == ud.PowerTrainType {
-					matchedTemplateName = t.TemplateName
-					break
-				}
-			}
-		}
-	}
-
-	// Fallback to default template if still no match is found
-	if matchedTemplateName == "" {
-		defaultTemplates, err := models.Templates(
-			qm.Where("template_name like 'default%'"),
-		).All(ctx, d.db)
-
-		if err != nil {
-			return nil, fmt.Errorf("failed to query for default templates: %w", err)
-		}
-
-		if len(defaultTemplates) > 0 {
-			matchedTemplateName = defaultTemplates[0].TemplateName
-		} else {
-			return nil, errors.New("no default templates found")
-		}
-	}
-
-	// Fetch the template object if a name was found
-	matchedTemplate, err := models.Templates(
-		models.TemplateWhere.TemplateName.EQ(matchedTemplateName),
-		qm.Load(models.TemplateRels.TemplateNameDBCFile),
-		qm.Load(models.TemplateRels.TemplateNameDeviceSettings),
-	).One(ctx, d.db)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch template by name %s: %w", matchedTemplateName, err)
-	}
-
-	return matchedTemplate, nil
 }
 
 // modelMatch simply returns if the modelName is in the model List

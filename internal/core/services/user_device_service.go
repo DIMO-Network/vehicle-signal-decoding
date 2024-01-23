@@ -5,6 +5,8 @@ import (
 	"encoding/hex"
 	"fmt"
 
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/models"
+
 	pb "github.com/DIMO-Network/devices-api/pkg/grpc"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
@@ -14,7 +16,7 @@ import (
 
 //go:generate mockgen -source user_device_service.go -destination mocks/user_device_service_mock.go
 type UserDeviceService interface {
-	GetUserDeviceServiceByAutoPIUnitID(ctx context.Context, id string) (*UserDeviceAutoPIUnit, error)
+	GetUserDeviceServiceByAutoPIUnitID(ctx context.Context, id string) (*models.UserDeviceAutoPIUnit, error)
 	GetUserDeviceByVIN(ctx context.Context, vin string) (*pb.UserDevice, error)
 	GetUserDeviceByEthAddr(ctx context.Context, ethAddr string) (*pb.UserDevice, error)
 }
@@ -29,7 +31,7 @@ func NewUserDeviceService(settings *config.Settings) UserDeviceService {
 	}
 }
 
-func (a *userDeviceService) GetUserDeviceServiceByAutoPIUnitID(ctx context.Context, id string) (*UserDeviceAutoPIUnit, error) {
+func (a *userDeviceService) GetUserDeviceServiceByAutoPIUnitID(ctx context.Context, id string) (*models.UserDeviceAutoPIUnit, error) {
 
 	deviceClient, conn, err := a.getDeviceGrpcClient()
 	if err != nil {
@@ -43,7 +45,7 @@ func (a *userDeviceService) GetUserDeviceServiceByAutoPIUnitID(ctx context.Conte
 		return nil, err
 	}
 
-	return &UserDeviceAutoPIUnit{
+	return &models.UserDeviceAutoPIUnit{
 		UserDeviceID:       userDevice.UserDeviceId,
 		DeviceDefinitionID: userDevice.DeviceDefinitionId,
 		DeviceStyleID:      userDevice.DeviceStyleId,
@@ -97,10 +99,4 @@ func (a *userDeviceService) getDeviceGrpcClient() (pb.UserDeviceServiceClient, *
 	}
 	definitionsClient := pb.NewUserDeviceServiceClient(conn)
 	return definitionsClient, conn, nil
-}
-
-type UserDeviceAutoPIUnit struct {
-	UserDeviceID       string
-	DeviceDefinitionID string
-	DeviceStyleID      string
 }
