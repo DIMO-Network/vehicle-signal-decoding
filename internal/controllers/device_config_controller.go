@@ -1,20 +1,20 @@
 package controllers
 
 import (
-	"context"
+	"bytes"
 	"database/sql"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	common2 "github.com/ethereum/go-ethereum/common"
+	"github.com/volatiletech/null/v8"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 	"strings"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/common"
 
 	"github.com/volatiletech/sqlboiler/v4/types"
 
-	"github.com/volatiletech/sqlboiler/v4/queries/qm"
-
-	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	pb "github.com/DIMO-Network/devices-api/pkg/grpc"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/services"
@@ -28,30 +28,31 @@ import (
 )
 
 type DeviceConfigController struct {
-	settings      *config.Settings
-	log           *zerolog.Logger
-	db            *sql.DB
-	userDeviceSvc services.UserDeviceService
-	deviceDefSvc  services.DeviceDefinitionsService
+	settings              *config.Settings
+	log                   *zerolog.Logger
+	db                    *sql.DB
+	userDeviceSvc         services.UserDeviceService
+	deviceDefSvc          services.DeviceDefinitionsService
+	deviceTemplateService services.DeviceTemplateService
 }
 
 // NewDeviceConfigController constructor
-func NewDeviceConfigController(settings *config.Settings, logger *zerolog.Logger, database *sql.DB, userDeviceSvc services.UserDeviceService, deviceDefSvc services.DeviceDefinitionsService) DeviceConfigController {
+func NewDeviceConfigController(settings *config.Settings, logger *zerolog.Logger, database *sql.DB, userDeviceSvc services.UserDeviceService, deviceDefSvc services.DeviceDefinitionsService, deviceTemplateService services.DeviceTemplateService) DeviceConfigController {
 	return DeviceConfigController{
-		settings:      settings,
-		log:           logger,
-		db:            database,
-		userDeviceSvc: userDeviceSvc,
-		deviceDefSvc:  deviceDefSvc,
+		settings:              settings,
+		log:                   logger,
+		db:                    database,
+		userDeviceSvc:         userDeviceSvc,
+		deviceDefSvc:          deviceDefSvc,
+		deviceTemplateService: deviceTemplateService,
 	}
 
 }
 
-type DeviceConfigResponse struct {
-	PidURL           string `json:"pidUrl"`
-	DeviceSettingURL string `json:"deviceSettingUrl"`
-	DbcURL           string `json:"dbcURL,omitempty"`
-	Version          string `json:"version"`
+type DeviceTemplateStatusResponse struct {
+	// IsTemplateUpdated based on information we have, is the device's template up to date?
+	IsTemplateUpdated bool   `json:"is_template_updated"`
+	TemplateVersion   string `json:"template_version"`
 }
 
 type SettingsData struct {
@@ -264,7 +265,7 @@ func (d *DeviceConfigController) GetDBCFileByTemplateName(c *fiber.Ctx) error {
 // @Description  Retrieve the URLs for PID, DeviceSettings, and DBC configuration based on a given VIN. These could be empty if not configs available
 // @Tags         vehicle-signal-decoding
 // @Produce      json
-// @Success      200 {object} DeviceConfigResponse "Successfully retrieved configuration URLs"
+// @Success      200 {object} services.DeviceConfigResponse "Successfully retrieved configuration URLs"
 // @Failure 404  "Not Found - No templates available for the given parameters"
 // @Param        vin  path   string  true   "vehicle identification number (VIN)"
 // @Param        protocol  query   string  false  "CAN Protocol, '6' or '7'"
@@ -284,20 +285,31 @@ func (d *DeviceConfigController) GetConfigURLsFromVIN(c *fiber.Ctx) error {
 			DeviceDefinitionId: definitionResp.DeviceDefinitionId,
 			PowerTrainType:     definitionResp.Powertrain,
 			CANProtocol:        protocol,
+			Vin:                &vin,
 		}
 		if len(definitionResp.DeviceStyleId) > 0 {
 			ud.DeviceStyleId = &definitionResp.DeviceStyleId
 		}
 	}
 
-	return d.getConfigURLs(c, ud)
+	response, err := d.deviceTemplateService.ResolveDeviceConfiguration(c, ud)
+	if err != nil {
+		return err
+	}
+	// store the template used
+	_, err = d.deviceTemplateService.StoreLastTemplateRequested(c.Context(), *ud.Vin, response.DbcURL, response.PidURL, response.DeviceSettingURL, response.Version)
+	if err != nil {
+		d.log.Err(err).Str("vin", *ud.Vin).Msg("failed to store template urls used for eth addr")
+	}
+
+	return c.JSON(response)
 }
 
 // GetConfigURLsFromEthAddr godoc
 // @Description  Retrieve the URLs for PID, DeviceSettings, and DBC configuration based on device's Ethereum Address. These could be empty if not configs available
 // @Tags         vehicle-signal-decoding
 // @Produce      json
-// @Success      200 {object} DeviceConfigResponse "Successfully retrieved configuration URLs"
+// @Success      200 {object} services.DeviceConfigResponse "Successfully retrieved configuration URLs"
 // @Failure 404  "Not Found - No templates available for the given parameters"
 // @Failure 400  "incorrect eth addr format"
 // @Param        ethAddr  path   string  true  "Ethereum Address"
@@ -316,7 +328,69 @@ func (d *DeviceConfigController) GetConfigURLsFromEthAddr(c *fiber.Ctx) error {
 		ud.CANProtocol = protocol
 	}
 
-	return d.getConfigURLs(c, ud)
+	response, err := d.deviceTemplateService.ResolveDeviceConfiguration(c, ud)
+	if err != nil {
+		return err
+	}
+	// store the template used
+	_, err = d.deviceTemplateService.StoreLastTemplateRequested(c.Context(), *ud.Vin, response.DbcURL, response.PidURL, response.DeviceSettingURL, response.Version)
+	if err != nil {
+		d.log.Err(err).Str("vin", *ud.Vin).Msg("failed to store template urls used for eth addr")
+	}
+
+	return c.JSON(response)
+}
+
+// GetConfigStatusFromEthAddr godoc
+// @Description  Helps client determine if template (pids, dbc, settings) are up to date or not for the device with the given eth addr.
+// @Tags         vehicle-signal-decoding
+// @Produce      json
+// @Success      200 {object} DeviceTemplateStatusResponse "Successfully retrieved configuration URLs"
+// @Failure 404  "Not Found - we haven't seen this device yet, assume template not up to date"
+// @Failure 400  "incorrect eth addr format"
+// @Param        ethAddr  path   string  true  "Ethereum Address"
+// @Router       /device-config/eth-addr/{ethAddr}/status [get]
+func (d *DeviceConfigController) GetConfigStatusFromEthAddr(c *fiber.Ctx) error {
+	ethAddr := c.Params("ethAddr")
+	// we need to get the user-device so we can find the VIN that was paired to the eth addr.
+	// an improvement here would be for the mobile app to confirm templates were installed to a specific eth addr
+	ud, err := d.userDeviceSvc.GetUserDeviceByEthAddr(c.Context(), ethAddr)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": fmt.Sprintf("no connected user device found for EthAddr: %s", ethAddr)})
+	}
+
+	deviceConfiguration, err := d.deviceTemplateService.ResolveDeviceConfiguration(c, ud)
+	if err != nil {
+		return err
+	}
+
+	dts, err := models.DeviceTemplateStatuses(models.DeviceTemplateStatusWhere.Vin.EQ(*ud.Vin)).One(c.Context(), d.db)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return fiber.NewError(fiber.StatusNotFound, "haven't seen device with eth addr yet: "+ethAddr)
+		}
+		return err
+	}
+	// set the eth addr for record keeping, may come in handy later
+	if !bytes.Equal(dts.DeviceEthAddr.Bytes, common2.HexToAddress(ethAddr).Bytes()) {
+		dts.DeviceEthAddr = null.BytesFrom(common2.HexToAddress(ethAddr).Bytes())
+		_, _ = dts.Update(c.Context(), d.db, boil.Infer())
+	}
+
+	isTemplateUpdated := false
+	// if all this is true then we know we're up to date
+	if dts.TemplateVersion == deviceConfiguration.Version &&
+		dts.TemplateDBCURL == deviceConfiguration.DbcURL &&
+		dts.TemplatePidURL == deviceConfiguration.PidURL &&
+		dts.TemplateSettingURL == deviceConfiguration.DeviceSettingURL {
+
+		isTemplateUpdated = true
+	}
+
+	return c.JSON(DeviceTemplateStatusResponse{
+		IsTemplateUpdated: isTemplateUpdated,
+		TemplateVersion:   deviceConfiguration.Version,
+	})
 }
 
 func padByteArray(input []byte, targetLength int) []byte {
@@ -328,165 +402,6 @@ func padByteArray(input []byte, targetLength int) []byte {
 	return append(padded, input...)
 }
 
-// setCANProtocol converts autopi/macaron style Protocol (6 or 7) to our VSD style protocol, but always returning a default if nothing found
-func (d *DeviceConfigController) setCANProtocol(ud *pb.UserDevice) {
-	switch ud.CANProtocol {
-	case "6":
-		ud.CANProtocol = models.CanProtocolTypeCAN11_500
-	case "7":
-		ud.CANProtocol = models.CanProtocolTypeCAN29_500
-	case "":
-		ud.CANProtocol = models.CanProtocolTypeCAN11_500
-	default:
-		d.log.Warn().Str("user_device_id", ud.Id).Msgf("invalid protocol detected: %s", ud.CANProtocol)
-		ud.CANProtocol = models.CanProtocolTypeCAN11_500
-	}
-}
-
-// retrieveAndSetVehicleInfo figures out what if any device definition information corresponds to the UserDevice.
-// also calls setPowerTrainType to find and set a default Powertrain
-func (d *DeviceConfigController) retrieveAndSetVehicleInfo(ctx context.Context, ud *pb.UserDevice) (string, string, int, error) {
-
-	var ddResponse *p_grpc.GetDeviceDefinitionItemResponse
-	deviceDefinitionID := ud.DeviceDefinitionId
-	ddResponse, err := d.deviceDefSvc.GetDeviceDefinitionByID(ctx, deviceDefinitionID)
-	if err != nil {
-		return "", "", 0, fmt.Errorf("failed to retrieve device definition for deviceDefinitionId %s: %w", deviceDefinitionID, err)
-	}
-
-	vehicleYear := int(ddResponse.Type.Year)
-	vehicleMake := ddResponse.Type.MakeSlug
-	vehicleModel := ddResponse.Type.ModelSlug
-
-	d.setPowerTrainType(ddResponse, ud)
-
-	return vehicleMake, vehicleModel, vehicleYear, nil
-}
-
-func (d *DeviceConfigController) setPowerTrainType(ddResponse *p_grpc.GetDeviceDefinitionItemResponse, ud *pb.UserDevice) {
-	var powerTrainType string
-	for _, attribute := range ddResponse.DeviceAttributes {
-		if attribute.Name == "powertrain_type" {
-			powerTrainType = attribute.Value
-			break
-		}
-	}
-	if ud.PowerTrainType == "" {
-		ud.PowerTrainType = powerTrainType
-		if ud.PowerTrainType == "" {
-			ud.PowerTrainType = "ICE"
-		}
-	}
-}
-
-// selectAndFetchTemplate figures out the right template to use based on the protocol, powertrain, year range, make, and /or model.
-// Returns default template if nothing found. Requirees ud.CANProtocol and Powertrain to be set to something
-func (d *DeviceConfigController) selectAndFetchTemplate(ctx context.Context, ud *pb.UserDevice, vehicleMake, vehicleModel string, vehicleYear int) (*models.Template, error) {
-	// guard
-	if ud.CANProtocol == "" {
-		return nil, fmt.Errorf("CANProtocol is required in the user device")
-	}
-	if ud.PowerTrainType == "" {
-		return nil, fmt.Errorf("PowerTrainType is required in the user device")
-	}
-
-	var matchedTemplateName string
-
-	// First, try to find a template based on device definitions
-	deviceDefinitions, err := models.TemplateDeviceDefinitions(
-		models.TemplateDeviceDefinitionWhere.DeviceDefinitionID.EQ(ud.DeviceDefinitionId),
-	).All(ctx, d.db)
-
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return nil, fmt.Errorf("failed to query template device definitions: %w", err)
-	}
-
-	if len(deviceDefinitions) > 0 {
-		matchedTemplateName = deviceDefinitions[0].TemplateName
-	}
-
-	// Second, try to find a template based on Year, then Make & Model
-	if matchedTemplateName == "" {
-		// compare by year first, then in memory below we'll look for make and/or model
-		templateVehicles, err := models.TemplateVehicles(
-			models.TemplateVehicleWhere.YearStart.LTE(vehicleYear),
-			models.TemplateVehicleWhere.YearEnd.GTE(vehicleYear),
-			qm.Load(models.TemplateVehicleRels.TemplateNameTemplate),
-		).All(ctx, d.db)
-
-		if err != nil && !errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf("failed to query templates for make: %s, model: %s, year: %d: %w", vehicleMake, vehicleModel, vehicleYear, err)
-		}
-		// if anything is returned, try finding a match by make and/or model
-		for _, tv := range templateVehicles {
-			// any matches for year & same protocol
-			if tv.R.TemplateNameTemplate.Protocol == ud.CANProtocol {
-				matchedTemplateName = tv.TemplateName
-				// now any matches for make
-				if tv.MakeSlug.String == vehicleMake {
-					matchedTemplateName = tv.TemplateName
-					// now see if there is also a model match
-					if modelMatch(tv.ModelWhitelist, vehicleModel) {
-						break
-					}
-				}
-			}
-		}
-
-	}
-
-	// Third, fallback to query by protocol and powertrain. Match by protocol first
-	if matchedTemplateName == "" {
-		templates, err := models.Templates(
-			models.TemplateWhere.Protocol.EQ(ud.CANProtocol),
-		).All(ctx, d.db)
-
-		if err != nil && !errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf("failed to query templates for protocol: %s and powertrain: %s: %w", ud.CANProtocol, ud.PowerTrainType, err)
-		}
-		if len(templates) > 0 {
-			// match the first one just in case
-			matchedTemplateName = templates[0].TemplateName
-			// now see if also have a powertrain match
-			for _, t := range templates {
-				if t.Powertrain == ud.PowerTrainType {
-					matchedTemplateName = t.TemplateName
-					break
-				}
-			}
-		}
-	}
-
-	// Fallback to default template if still no match is found
-	if matchedTemplateName == "" {
-		defaultTemplates, err := models.Templates(
-			qm.Where("template_name like 'default%'"),
-		).All(ctx, d.db)
-
-		if err != nil {
-			return nil, fmt.Errorf("failed to query for default templates: %w", err)
-		}
-
-		if len(defaultTemplates) > 0 {
-			matchedTemplateName = defaultTemplates[0].TemplateName
-		} else {
-			return nil, errors.New("no default templates found")
-		}
-	}
-
-	// Fetch the template object if a name was found
-	matchedTemplate, err := models.Templates(
-		models.TemplateWhere.TemplateName.EQ(matchedTemplateName),
-		qm.Load(models.TemplateRels.TemplateNameDBCFile),
-		qm.Load(models.TemplateRels.TemplateNameDeviceSettings),
-	).One(ctx, d.db)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch template by name %s: %w", matchedTemplateName, err)
-	}
-
-	return matchedTemplate, nil
-}
-
 // modelMatch simply returns if the modelName is in the model List
 func modelMatch(modelList types.StringArray, modelName string) bool {
 	for _, m := range modelList {
@@ -495,70 +410,4 @@ func modelMatch(modelList types.StringArray, modelName string) bool {
 		}
 	}
 	return false
-}
-
-func (d *DeviceConfigController) getConfigURLs(c *fiber.Ctx, ud *pb.UserDevice) error {
-	d.setCANProtocol(ud)
-
-	vehicleMake, vehicleModel, vehicleYear, err := d.retrieveAndSetVehicleInfo(c.Context(), ud)
-	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("Failed to retrieve device definition: %s", ud.DeviceDefinitionId))
-	}
-
-	matchedTemplate, err := d.selectAndFetchTemplate(c.Context(), ud, vehicleMake, vehicleModel, vehicleYear)
-	if err != nil {
-		return err
-	}
-	if matchedTemplate == nil {
-		return errors.New("matched template is nil")
-	}
-	baseURL := d.settings.DeploymentURL
-
-	response := DeviceConfigResponse{
-		PidURL:  fmt.Sprintf("%s/v1/device-config/%s/pids", baseURL, matchedTemplate.TemplateName),
-		Version: matchedTemplate.Version,
-	}
-
-	// only set dbc url if we have dbc
-	if matchedTemplate.R.TemplateNameDBCFile != nil && len(matchedTemplate.R.TemplateNameDBCFile.DBCFile) > 0 {
-		response.DbcURL = fmt.Sprintf("%s/v1/device-config/%s/dbc", baseURL, matchedTemplate.TemplateName)
-	}
-
-	// set device settings from template, or based on powertrain default
-	if len(matchedTemplate.R.TemplateNameDeviceSettings) > 0 {
-		response.DeviceSettingURL = fmt.Sprintf("%s/v1/device-config/settings/%s", baseURL, matchedTemplate.R.TemplateNameDeviceSettings[0].Name)
-	} else {
-		var deviceSetting *models.DeviceSetting
-		var dbErr error
-		if matchedTemplate.ParentTemplateName.Valid {
-			deviceSetting, dbErr = models.DeviceSettings(models.DeviceSettingWhere.TemplateName.EQ(matchedTemplate.ParentTemplateName),
-				qm.OrderBy(models.DeviceSettingColumns.Name)).One(c.Context(), d.db)
-			if dbErr != nil && !errors.Is(dbErr, sql.ErrNoRows) {
-				return errors.Wrap(dbErr, "Failed to retrieve device setting for parent template")
-			}
-		}
-
-		if deviceSetting == nil {
-			var powertrain string
-			if ud.PowerTrainType != "" {
-				powertrain = ud.PowerTrainType
-			} else {
-				powertrain = matchedTemplate.Powertrain
-			}
-			// default will be whatever gets ordered first
-			deviceSetting, dbErr = models.DeviceSettings(models.DeviceSettingWhere.Powertrain.EQ(powertrain),
-				qm.OrderBy(models.DeviceSettingColumns.Name)).One(c.Context(), d.db)
-			if errors.Is(dbErr, sql.ErrNoRows) {
-				// grab the first record in db
-				deviceSetting, dbErr = models.DeviceSettings(qm.OrderBy(models.DeviceSettingColumns.Name)).One(c.Context(), d.db)
-			}
-			if dbErr != nil {
-				return errors.Wrap(err, fmt.Sprintf("Failed to retrieve device setting. Powertrain: %s", powertrain))
-			}
-		}
-		// device settings have a name key separate from templateName since simpler setup
-		response.DeviceSettingURL = fmt.Sprintf("%s/v1/device-config/settings/%s", baseURL, deviceSetting.Name)
-	}
-
-	return c.JSON(response)
 }

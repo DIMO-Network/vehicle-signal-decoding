@@ -116,11 +116,12 @@ func (d *JobsController) GetJobsPendingFromEthAddr(c *fiber.Ctx) error {
 // @Description  Path job status based on device's Ethereum Address.
 // @Tags         vehicle-signal-decoding
 // @Produce      json
-// @Success      200 {object} DeviceConfigResponse "Successfully retrieved configuration URLs"
-// @Failure 404  "Not Found - No templates available for the given parameters"
+// @Success      200
+// @Failure 404  "Not Found - No job found with id"
 // @Failure 400  "incorrect eth addr format"
 // @Param        ethAddr  path   string  false  "Ethereum Address"
 // @Param        jobId    path   string  false  "Job ID"
+// @Param        status    path   string  false  "Status to set"
 // @Router       /device-config/eth-addr/{ethAddr}/jobs/{jobId}/{status} [patch]
 func (d *JobsController) PatchJobsFromEthAddr(c *fiber.Ctx) error {
 	id := c.Params("jobId")
