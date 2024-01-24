@@ -30,6 +30,7 @@ type DeviceSetting struct {
 	Settings     null.JSON   `boil:"settings" json:"settings,omitempty" toml:"settings" yaml:"settings,omitempty"`
 	Name         string      `boil:"name" json:"name" toml:"name" yaml:"name"`
 	Powertrain   string      `boil:"powertrain" json:"powertrain" toml:"powertrain" yaml:"powertrain"`
+	Version      string      `boil:"version" json:"version" toml:"version" yaml:"version"`
 
 	R *deviceSettingR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L deviceSettingL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -42,6 +43,7 @@ var DeviceSettingColumns = struct {
 	Settings     string
 	Name         string
 	Powertrain   string
+	Version      string
 }{
 	TemplateName: "template_name",
 	CreatedAt:    "created_at",
@@ -49,6 +51,7 @@ var DeviceSettingColumns = struct {
 	Settings:     "settings",
 	Name:         "name",
 	Powertrain:   "powertrain",
+	Version:      "version",
 }
 
 var DeviceSettingTableColumns = struct {
@@ -58,6 +61,7 @@ var DeviceSettingTableColumns = struct {
 	Settings     string
 	Name         string
 	Powertrain   string
+	Version      string
 }{
 	TemplateName: "device_settings.template_name",
 	CreatedAt:    "device_settings.created_at",
@@ -65,6 +69,7 @@ var DeviceSettingTableColumns = struct {
 	Settings:     "device_settings.settings",
 	Name:         "device_settings.name",
 	Powertrain:   "device_settings.powertrain",
+	Version:      "device_settings.version",
 }
 
 // Generated where
@@ -100,6 +105,7 @@ var DeviceSettingWhere = struct {
 	Settings     whereHelpernull_JSON
 	Name         whereHelperstring
 	Powertrain   whereHelperstring
+	Version      whereHelperstring
 }{
 	TemplateName: whereHelpernull_String{field: "\"vehicle_signal_decoding_api\".\"device_settings\".\"template_name\""},
 	CreatedAt:    whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"device_settings\".\"created_at\""},
@@ -107,6 +113,7 @@ var DeviceSettingWhere = struct {
 	Settings:     whereHelpernull_JSON{field: "\"vehicle_signal_decoding_api\".\"device_settings\".\"settings\""},
 	Name:         whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"device_settings\".\"name\""},
 	Powertrain:   whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"device_settings\".\"powertrain\""},
+	Version:      whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"device_settings\".\"version\""},
 }
 
 // DeviceSettingRels is where relationship names are stored.
@@ -137,9 +144,9 @@ func (r *deviceSettingR) GetTemplateNameTemplate() *Template {
 type deviceSettingL struct{}
 
 var (
-	deviceSettingAllColumns            = []string{"template_name", "created_at", "updated_at", "settings", "name", "powertrain"}
+	deviceSettingAllColumns            = []string{"template_name", "created_at", "updated_at", "settings", "name", "powertrain", "version"}
 	deviceSettingColumnsWithoutDefault = []string{"name"}
-	deviceSettingColumnsWithDefault    = []string{"template_name", "created_at", "updated_at", "settings", "powertrain"}
+	deviceSettingColumnsWithDefault    = []string{"template_name", "created_at", "updated_at", "settings", "powertrain", "version"}
 	deviceSettingPrimaryKeyColumns     = []string{"name"}
 	deviceSettingGeneratedColumns      = []string{}
 )

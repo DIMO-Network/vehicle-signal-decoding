@@ -94,35 +94,35 @@ var TemplateWhere = struct {
 
 // TemplateRels is where relationship names are stored.
 var TemplateRels = struct {
-	TemplateNameDBCFile                      string
-	TemplateNameDeviceSettings               string
-	TemplateDBCURLDeviceTemplateStatuses     string
-	TemplatePidURLDeviceTemplateStatuses     string
-	TemplateSettingURLDeviceTemplateStatuses string
-	TemplateNamePidConfigs                   string
-	TemplateNameTemplateDeviceDefinitions    string
-	TemplateNameTemplateVehicles             string
+	TemplateNameDBCFile                       string
+	TemplateNameDeviceSettings                string
+	TemplateDBCURLDeviceTemplateStatuses      string
+	TemplatePidURLDeviceTemplateStatuses      string
+	TemplateSettingsURLDeviceTemplateStatuses string
+	TemplateNamePidConfigs                    string
+	TemplateNameTemplateDeviceDefinitions     string
+	TemplateNameTemplateVehicles              string
 }{
-	TemplateNameDBCFile:                      "TemplateNameDBCFile",
-	TemplateNameDeviceSettings:               "TemplateNameDeviceSettings",
-	TemplateDBCURLDeviceTemplateStatuses:     "TemplateDBCURLDeviceTemplateStatuses",
-	TemplatePidURLDeviceTemplateStatuses:     "TemplatePidURLDeviceTemplateStatuses",
-	TemplateSettingURLDeviceTemplateStatuses: "TemplateSettingURLDeviceTemplateStatuses",
-	TemplateNamePidConfigs:                   "TemplateNamePidConfigs",
-	TemplateNameTemplateDeviceDefinitions:    "TemplateNameTemplateDeviceDefinitions",
-	TemplateNameTemplateVehicles:             "TemplateNameTemplateVehicles",
+	TemplateNameDBCFile:                       "TemplateNameDBCFile",
+	TemplateNameDeviceSettings:                "TemplateNameDeviceSettings",
+	TemplateDBCURLDeviceTemplateStatuses:      "TemplateDBCURLDeviceTemplateStatuses",
+	TemplatePidURLDeviceTemplateStatuses:      "TemplatePidURLDeviceTemplateStatuses",
+	TemplateSettingsURLDeviceTemplateStatuses: "TemplateSettingsURLDeviceTemplateStatuses",
+	TemplateNamePidConfigs:                    "TemplateNamePidConfigs",
+	TemplateNameTemplateDeviceDefinitions:     "TemplateNameTemplateDeviceDefinitions",
+	TemplateNameTemplateVehicles:              "TemplateNameTemplateVehicles",
 }
 
 // templateR is where relationships are stored.
 type templateR struct {
-	TemplateNameDBCFile                      *DBCFile                      `boil:"TemplateNameDBCFile" json:"TemplateNameDBCFile" toml:"TemplateNameDBCFile" yaml:"TemplateNameDBCFile"`
-	TemplateNameDeviceSettings               DeviceSettingSlice            `boil:"TemplateNameDeviceSettings" json:"TemplateNameDeviceSettings" toml:"TemplateNameDeviceSettings" yaml:"TemplateNameDeviceSettings"`
-	TemplateDBCURLDeviceTemplateStatuses     DeviceTemplateStatusSlice     `boil:"TemplateDBCURLDeviceTemplateStatuses" json:"TemplateDBCURLDeviceTemplateStatuses" toml:"TemplateDBCURLDeviceTemplateStatuses" yaml:"TemplateDBCURLDeviceTemplateStatuses"`
-	TemplatePidURLDeviceTemplateStatuses     DeviceTemplateStatusSlice     `boil:"TemplatePidURLDeviceTemplateStatuses" json:"TemplatePidURLDeviceTemplateStatuses" toml:"TemplatePidURLDeviceTemplateStatuses" yaml:"TemplatePidURLDeviceTemplateStatuses"`
-	TemplateSettingURLDeviceTemplateStatuses DeviceTemplateStatusSlice     `boil:"TemplateSettingURLDeviceTemplateStatuses" json:"TemplateSettingURLDeviceTemplateStatuses" toml:"TemplateSettingURLDeviceTemplateStatuses" yaml:"TemplateSettingURLDeviceTemplateStatuses"`
-	TemplateNamePidConfigs                   PidConfigSlice                `boil:"TemplateNamePidConfigs" json:"TemplateNamePidConfigs" toml:"TemplateNamePidConfigs" yaml:"TemplateNamePidConfigs"`
-	TemplateNameTemplateDeviceDefinitions    TemplateDeviceDefinitionSlice `boil:"TemplateNameTemplateDeviceDefinitions" json:"TemplateNameTemplateDeviceDefinitions" toml:"TemplateNameTemplateDeviceDefinitions" yaml:"TemplateNameTemplateDeviceDefinitions"`
-	TemplateNameTemplateVehicles             TemplateVehicleSlice          `boil:"TemplateNameTemplateVehicles" json:"TemplateNameTemplateVehicles" toml:"TemplateNameTemplateVehicles" yaml:"TemplateNameTemplateVehicles"`
+	TemplateNameDBCFile                       *DBCFile                      `boil:"TemplateNameDBCFile" json:"TemplateNameDBCFile" toml:"TemplateNameDBCFile" yaml:"TemplateNameDBCFile"`
+	TemplateNameDeviceSettings                DeviceSettingSlice            `boil:"TemplateNameDeviceSettings" json:"TemplateNameDeviceSettings" toml:"TemplateNameDeviceSettings" yaml:"TemplateNameDeviceSettings"`
+	TemplateDBCURLDeviceTemplateStatuses      DeviceTemplateStatusSlice     `boil:"TemplateDBCURLDeviceTemplateStatuses" json:"TemplateDBCURLDeviceTemplateStatuses" toml:"TemplateDBCURLDeviceTemplateStatuses" yaml:"TemplateDBCURLDeviceTemplateStatuses"`
+	TemplatePidURLDeviceTemplateStatuses      DeviceTemplateStatusSlice     `boil:"TemplatePidURLDeviceTemplateStatuses" json:"TemplatePidURLDeviceTemplateStatuses" toml:"TemplatePidURLDeviceTemplateStatuses" yaml:"TemplatePidURLDeviceTemplateStatuses"`
+	TemplateSettingsURLDeviceTemplateStatuses DeviceTemplateStatusSlice     `boil:"TemplateSettingsURLDeviceTemplateStatuses" json:"TemplateSettingsURLDeviceTemplateStatuses" toml:"TemplateSettingsURLDeviceTemplateStatuses" yaml:"TemplateSettingsURLDeviceTemplateStatuses"`
+	TemplateNamePidConfigs                    PidConfigSlice                `boil:"TemplateNamePidConfigs" json:"TemplateNamePidConfigs" toml:"TemplateNamePidConfigs" yaml:"TemplateNamePidConfigs"`
+	TemplateNameTemplateDeviceDefinitions     TemplateDeviceDefinitionSlice `boil:"TemplateNameTemplateDeviceDefinitions" json:"TemplateNameTemplateDeviceDefinitions" toml:"TemplateNameTemplateDeviceDefinitions" yaml:"TemplateNameTemplateDeviceDefinitions"`
+	TemplateNameTemplateVehicles              TemplateVehicleSlice          `boil:"TemplateNameTemplateVehicles" json:"TemplateNameTemplateVehicles" toml:"TemplateNameTemplateVehicles" yaml:"TemplateNameTemplateVehicles"`
 }
 
 // NewStruct creates a new relationship struct
@@ -158,11 +158,11 @@ func (r *templateR) GetTemplatePidURLDeviceTemplateStatuses() DeviceTemplateStat
 	return r.TemplatePidURLDeviceTemplateStatuses
 }
 
-func (r *templateR) GetTemplateSettingURLDeviceTemplateStatuses() DeviceTemplateStatusSlice {
+func (r *templateR) GetTemplateSettingsURLDeviceTemplateStatuses() DeviceTemplateStatusSlice {
 	if r == nil {
 		return nil
 	}
-	return r.TemplateSettingURLDeviceTemplateStatuses
+	return r.TemplateSettingsURLDeviceTemplateStatuses
 }
 
 func (r *templateR) GetTemplateNamePidConfigs() PidConfigSlice {
@@ -528,15 +528,15 @@ func (o *Template) TemplatePidURLDeviceTemplateStatuses(mods ...qm.QueryMod) dev
 	return DeviceTemplateStatuses(queryMods...)
 }
 
-// TemplateSettingURLDeviceTemplateStatuses retrieves all the device_template_status's DeviceTemplateStatuses with an executor via template_setting_url column.
-func (o *Template) TemplateSettingURLDeviceTemplateStatuses(mods ...qm.QueryMod) deviceTemplateStatusQuery {
+// TemplateSettingsURLDeviceTemplateStatuses retrieves all the device_template_status's DeviceTemplateStatuses with an executor via template_settings_url column.
+func (o *Template) TemplateSettingsURLDeviceTemplateStatuses(mods ...qm.QueryMod) deviceTemplateStatusQuery {
 	var queryMods []qm.QueryMod
 	if len(mods) != 0 {
 		queryMods = append(queryMods, mods...)
 	}
 
 	queryMods = append(queryMods,
-		qm.Where("\"vehicle_signal_decoding_api\".\"device_template_status\".\"template_setting_url\"=?", o.TemplateName),
+		qm.Where("\"vehicle_signal_decoding_api\".\"device_template_status\".\"template_settings_url\"=?", o.TemplateName),
 	)
 
 	return DeviceTemplateStatuses(queryMods...)
@@ -1043,9 +1043,9 @@ func (templateL) LoadTemplatePidURLDeviceTemplateStatuses(ctx context.Context, e
 	return nil
 }
 
-// LoadTemplateSettingURLDeviceTemplateStatuses allows an eager lookup of values, cached into the
+// LoadTemplateSettingsURLDeviceTemplateStatuses allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for a 1-M or N-M relationship.
-func (templateL) LoadTemplateSettingURLDeviceTemplateStatuses(ctx context.Context, e boil.ContextExecutor, singular bool, maybeTemplate interface{}, mods queries.Applicator) error {
+func (templateL) LoadTemplateSettingsURLDeviceTemplateStatuses(ctx context.Context, e boil.ContextExecutor, singular bool, maybeTemplate interface{}, mods queries.Applicator) error {
 	var slice []*Template
 	var object *Template
 
@@ -1100,7 +1100,7 @@ func (templateL) LoadTemplateSettingURLDeviceTemplateStatuses(ctx context.Contex
 
 	query := NewQuery(
 		qm.From(`vehicle_signal_decoding_api.device_template_status`),
-		qm.WhereIn(`vehicle_signal_decoding_api.device_template_status.template_setting_url in ?`, args...),
+		qm.WhereIn(`vehicle_signal_decoding_api.device_template_status.template_settings_url in ?`, args...),
 	)
 	if mods != nil {
 		mods.Apply(query)
@@ -1131,24 +1131,24 @@ func (templateL) LoadTemplateSettingURLDeviceTemplateStatuses(ctx context.Contex
 		}
 	}
 	if singular {
-		object.R.TemplateSettingURLDeviceTemplateStatuses = resultSlice
+		object.R.TemplateSettingsURLDeviceTemplateStatuses = resultSlice
 		for _, foreign := range resultSlice {
 			if foreign.R == nil {
 				foreign.R = &deviceTemplateStatusR{}
 			}
-			foreign.R.TemplateSettingURLTemplate = object
+			foreign.R.TemplateSettingsURLTemplate = object
 		}
 		return nil
 	}
 
 	for _, foreign := range resultSlice {
 		for _, local := range slice {
-			if local.TemplateName == foreign.TemplateSettingURL {
-				local.R.TemplateSettingURLDeviceTemplateStatuses = append(local.R.TemplateSettingURLDeviceTemplateStatuses, foreign)
+			if local.TemplateName == foreign.TemplateSettingsURL {
+				local.R.TemplateSettingsURLDeviceTemplateStatuses = append(local.R.TemplateSettingsURLDeviceTemplateStatuses, foreign)
 				if foreign.R == nil {
 					foreign.R = &deviceTemplateStatusR{}
 				}
-				foreign.R.TemplateSettingURLTemplate = local
+				foreign.R.TemplateSettingsURLTemplate = local
 				break
 			}
 		}
@@ -1694,7 +1694,7 @@ func (o *Template) AddTemplateDBCURLDeviceTemplateStatuses(ctx context.Context, 
 				strmangle.SetParamNames("\"", "\"", 1, []string{"template_dbc_url"}),
 				strmangle.WhereClause("\"", "\"", 2, deviceTemplateStatusPrimaryKeyColumns),
 			)
-			values := []interface{}{o.TemplateName, rel.Vin}
+			values := []interface{}{o.TemplateName, rel.DeviceEthAddr}
 
 			if boil.IsDebug(ctx) {
 				writer := boil.DebugWriterFrom(ctx)
@@ -1747,7 +1747,7 @@ func (o *Template) AddTemplatePidURLDeviceTemplateStatuses(ctx context.Context, 
 				strmangle.SetParamNames("\"", "\"", 1, []string{"template_pid_url"}),
 				strmangle.WhereClause("\"", "\"", 2, deviceTemplateStatusPrimaryKeyColumns),
 			)
-			values := []interface{}{o.TemplateName, rel.Vin}
+			values := []interface{}{o.TemplateName, rel.DeviceEthAddr}
 
 			if boil.IsDebug(ctx) {
 				writer := boil.DebugWriterFrom(ctx)
@@ -1782,25 +1782,25 @@ func (o *Template) AddTemplatePidURLDeviceTemplateStatuses(ctx context.Context, 
 	return nil
 }
 
-// AddTemplateSettingURLDeviceTemplateStatuses adds the given related objects to the existing relationships
+// AddTemplateSettingsURLDeviceTemplateStatuses adds the given related objects to the existing relationships
 // of the template, optionally inserting them as new records.
-// Appends related to o.R.TemplateSettingURLDeviceTemplateStatuses.
-// Sets related.R.TemplateSettingURLTemplate appropriately.
-func (o *Template) AddTemplateSettingURLDeviceTemplateStatuses(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*DeviceTemplateStatus) error {
+// Appends related to o.R.TemplateSettingsURLDeviceTemplateStatuses.
+// Sets related.R.TemplateSettingsURLTemplate appropriately.
+func (o *Template) AddTemplateSettingsURLDeviceTemplateStatuses(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*DeviceTemplateStatus) error {
 	var err error
 	for _, rel := range related {
 		if insert {
-			rel.TemplateSettingURL = o.TemplateName
+			rel.TemplateSettingsURL = o.TemplateName
 			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
 				return errors.Wrap(err, "failed to insert into foreign table")
 			}
 		} else {
 			updateQuery := fmt.Sprintf(
 				"UPDATE \"vehicle_signal_decoding_api\".\"device_template_status\" SET %s WHERE %s",
-				strmangle.SetParamNames("\"", "\"", 1, []string{"template_setting_url"}),
+				strmangle.SetParamNames("\"", "\"", 1, []string{"template_settings_url"}),
 				strmangle.WhereClause("\"", "\"", 2, deviceTemplateStatusPrimaryKeyColumns),
 			)
-			values := []interface{}{o.TemplateName, rel.Vin}
+			values := []interface{}{o.TemplateName, rel.DeviceEthAddr}
 
 			if boil.IsDebug(ctx) {
 				writer := boil.DebugWriterFrom(ctx)
@@ -1811,25 +1811,25 @@ func (o *Template) AddTemplateSettingURLDeviceTemplateStatuses(ctx context.Conte
 				return errors.Wrap(err, "failed to update foreign table")
 			}
 
-			rel.TemplateSettingURL = o.TemplateName
+			rel.TemplateSettingsURL = o.TemplateName
 		}
 	}
 
 	if o.R == nil {
 		o.R = &templateR{
-			TemplateSettingURLDeviceTemplateStatuses: related,
+			TemplateSettingsURLDeviceTemplateStatuses: related,
 		}
 	} else {
-		o.R.TemplateSettingURLDeviceTemplateStatuses = append(o.R.TemplateSettingURLDeviceTemplateStatuses, related...)
+		o.R.TemplateSettingsURLDeviceTemplateStatuses = append(o.R.TemplateSettingsURLDeviceTemplateStatuses, related...)
 	}
 
 	for _, rel := range related {
 		if rel.R == nil {
 			rel.R = &deviceTemplateStatusR{
-				TemplateSettingURLTemplate: o,
+				TemplateSettingsURLTemplate: o,
 			}
 		} else {
-			rel.R.TemplateSettingURLTemplate = o
+			rel.R.TemplateSettingsURLTemplate = o
 		}
 	}
 	return nil

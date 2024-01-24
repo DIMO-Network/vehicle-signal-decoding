@@ -450,3 +450,50 @@ func (s *DeviceTemplateServiceTestSuite) TestSelectAndFetchTemplate_Default() {
 	assert.NotNil(s.T(), fetchedTemplate)
 	assert.Equal(s.T(), defaultTemplate.TemplateName, fetchedTemplate.TemplateName)
 }
+
+func Test_deviceTemplateService_buildConfigRoute(t *testing.T) {
+	type fields struct {
+		settings *config.Settings
+	}
+	type args struct {
+		ct      configType
+		name    string
+		version string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   string
+	}{
+		{
+			name:   "pids url",
+			fields: fields{settings: &config.Settings{DeploymentURL: "https://vehicle-signal-decoding.dimo.zone"}},
+			args:   args{name: "default-ice-can11", ct: PIDs, version: "v1.0.0"},
+			want:   "https://vehicle-signal-decoding.dimo.zone/v1/device-config/pids/default-ice-can11@v1.0.0",
+		},
+		{
+			name:   "dbc url",
+			fields: fields{settings: &config.Settings{DeploymentURL: "https://vehicle-signal-decoding.dimo.zone"}},
+			args:   args{name: "default-ice-can11", ct: DBC, version: "v2.0.0"},
+			want:   "https://vehicle-signal-decoding.dimo.zone/v1/device-config/dbc/default-ice-can11@v2.0.0",
+		},
+		{
+			name:   "settings url",
+			fields: fields{settings: &config.Settings{DeploymentURL: "https://vehicle-signal-decoding.dimo.zone"}},
+			args:   args{name: "default-ice", ct: Settings, version: "v1.0.0"},
+			want:   "https://vehicle-signal-decoding.dimo.zone/v1/device-config/settings/default-ice@v1.0.0",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dts := &deviceTemplateService{
+				db:           nil,
+				log:          zerolog.Logger{},
+				settings:     tt.fields.settings,
+				deviceDefSvc: nil,
+			}
+			assert.Equalf(t, tt.want, dts.buildConfigRoute(tt.args.ct, tt.args.name, tt.args.version), "buildConfigRoute(%v, %v, %v)", tt.args.ct, tt.args.name, tt.args.version)
+		})
+	}
+}

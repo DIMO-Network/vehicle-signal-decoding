@@ -1,10 +1,12 @@
 package models
 
 type DeviceConfigResponse struct {
-	PidURL           string `json:"pidUrl"`
+	// PidURL including the version for the template
+	PidURL string `json:"pidUrl"`
+	// DeviceSettingURL including the version for the settings
 	DeviceSettingURL string `json:"deviceSettingUrl"`
-	DbcURL           string `json:"dbcURL,omitempty"`
-	Version          string `json:"version"`
+	// DbcURL including the version for the dbc file, usually same as pidurl template version
+	DbcURL string `json:"dbcURL,omitempty"`
 }
 
 type UserDeviceAutoPIUnit struct {

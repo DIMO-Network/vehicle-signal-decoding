@@ -49,10 +49,13 @@ func NewDeviceConfigController(settings *config.Settings, logger *zerolog.Logger
 
 }
 
+// DeviceTemplateStatusResponse status on template and firmware versions
 type DeviceTemplateStatusResponse struct {
-	// IsTemplateUpdated based on information we have, is the device's template up to date?
-	IsTemplateUpdated bool   `json:"is_template_updated"`
-	TemplateVersion   string `json:"template_version"`
+	// IsTemplateUpToDate based on information we have, based on what was set last by mobile app
+	IsTemplateUpToDate         bool   `json:"is_template_up_to_date"`
+	FirmwareVersionFromDevice  string `json:"firmware_version_from_device,omitempty"`
+	FirmwareVersionLastApplied string `json:"firmware_version_last_applied,omitempty"`
+	IsFirmwareUpToDate         bool   `json:"is_firmware_up_to_date"`
 }
 
 type SettingsData struct {
@@ -369,8 +372,7 @@ func (d *DeviceConfigController) GetConfigStatusFromEthAddr(c *fiber.Ctx) error 
 
 	isTemplateUpdated := false
 	// if all this is true then we know we're up to date
-	if dts.TemplateVersion == deviceConfiguration.Version &&
-		dts.TemplateDBCURL == deviceConfiguration.DbcURL &&
+	if dts.TemplateDBCURL == deviceConfiguration.DbcURL &&
 		dts.TemplatePidURL == deviceConfiguration.PidURL &&
 		dts.TemplateSettingURL == deviceConfiguration.DeviceSettingURL {
 
@@ -378,8 +380,10 @@ func (d *DeviceConfigController) GetConfigStatusFromEthAddr(c *fiber.Ctx) error 
 	}
 
 	return c.JSON(DeviceTemplateStatusResponse{
-		IsTemplateUpdated: isTemplateUpdated,
-		TemplateVersion:   deviceConfiguration.Version,
+		IsTemplateUpToDate:         isTemplateUpdated,
+		IsFirmwareUpToDate:         true, // todo
+		FirmwareVersionFromDevice:  "",   // todo
+		FirmwareVersionLastApplied: "",   // todo
 	})
 }
 
