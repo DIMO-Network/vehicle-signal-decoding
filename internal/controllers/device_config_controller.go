@@ -296,11 +296,6 @@ func (d *DeviceConfigController) GetConfigURLsFromVIN(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	// store the template used
-	_, err = d.deviceTemplateService.StoreLastTemplateRequested(c.Context(), *ud.Vin, response.DbcURL, response.PidURL, response.DeviceSettingURL, response.Version)
-	if err != nil {
-		d.log.Err(err).Str("vin", *ud.Vin).Msg("failed to store template urls used for eth addr")
-	}
 
 	return c.JSON(response)
 }
@@ -331,11 +326,6 @@ func (d *DeviceConfigController) GetConfigURLsFromEthAddr(c *fiber.Ctx) error {
 	response, err := d.deviceTemplateService.ResolveDeviceConfiguration(c, ud)
 	if err != nil {
 		return err
-	}
-	// store the template used
-	_, err = d.deviceTemplateService.StoreLastTemplateRequested(c.Context(), *ud.Vin, response.DbcURL, response.PidURL, response.DeviceSettingURL, response.Version)
-	if err != nil {
-		d.log.Err(err).Str("vin", *ud.Vin).Msg("failed to store template urls used for eth addr")
 	}
 
 	return c.JSON(response)
