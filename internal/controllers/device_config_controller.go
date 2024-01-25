@@ -82,7 +82,7 @@ func bytesToUint32(b []byte) (uint32, error) {
 
 // GetPIDsByTemplate godoc
 // @Description  Retrieves a list of PID configurations from the database given a template name
-// @Tags         vehicle-signal-decoding
+// @Tags         device-config
 // @Produce      json
 // @Produce      application/x-protobuf
 // @Success      200 {object} grpc.PIDRequests "Successfully retrieved PID Configurations"
@@ -183,7 +183,7 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 // @Description  Fetches the device settings configurations from device_settings table given a name. Note that device settings mostly only vary by powertrain and
 // @Description  may or may not be attached to a specific template. To return protobuf: "application/x-protobuf"
 // @Description  Note that the templateName returned here is actually the device setting name
-// @Tags         vehicle-signal-decoding
+// @Tags         device-config
 // @Produce      json
 // @Produce      application/x-protobuf
 // @Success      200 {object} grpc.DeviceSetting "Successfully retrieved Device Settings"
@@ -245,7 +245,7 @@ func (d *DeviceConfigController) GetDeviceSettingsByName(c *fiber.Ctx) error {
 
 // GetDBCFileByTemplateName godoc
 // @Description  Fetches the DBC file from the dbc_files table given a template name
-// @Tags         vehicle-signal-decoding
+// @Tags         device-config
 // @Produce      plain
 // @Success      200 {string} string "Successfully retrieved DBC file"
 // @Failure 404 "No DBC file found for the given template name."
@@ -277,7 +277,7 @@ func (d *DeviceConfigController) GetDBCFileByTemplateName(c *fiber.Ctx) error {
 
 // GetConfigURLsFromVIN godoc
 // @Description  Retrieve the URLs for PID, DeviceSettings, and DBC configuration based on a given VIN. These could be empty if not configs available
-// @Tags         vehicle-signal-decoding
+// @Tags         device-config
 // @Produce      json
 // @Success      200 {object} appmodels.DeviceConfigResponse "Successfully retrieved configuration URLs"
 // @Failure 404  "Not Found - No templates available for the given parameters"
@@ -316,7 +316,7 @@ func (d *DeviceConfigController) GetConfigURLsFromVIN(c *fiber.Ctx) error {
 
 // GetConfigURLsFromEthAddr godoc
 // @Description  Retrieve the URLs for PID, DeviceSettings, and DBC configuration based on device's Ethereum Address. These could be empty if not configs available
-// @Tags         vehicle-signal-decoding
+// @Tags         device-config
 // @Produce      json
 // @Success      200 {object} appmodels.DeviceConfigResponse "Successfully retrieved configuration URLs"
 // @Failure 404  "Not Found - No templates available for the given parameters"

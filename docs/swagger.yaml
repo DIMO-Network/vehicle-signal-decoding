@@ -82,8 +82,6 @@ definitions:
     properties:
       firmware_version_from_device:
         type: string
-      firmware_version_last_applied:
-        type: string
       is_firmware_up_to_date:
         type: boolean
       is_template_up_to_date:
@@ -125,7 +123,7 @@ paths:
         "404":
           description: No DBC file found for the given template name.
       tags:
-      - vehicle-signal-decoding
+      - device-config
   /device-config/eth-addr/{ethAddr}/jobs:
     get:
       description: Retrieve the jobs based on device's Ethereum Address.
@@ -265,7 +263,7 @@ paths:
         "404":
           description: Not Found - No templates available for the given parameters
       tags:
-      - vehicle-signal-decoding
+      - device-config
   /device-config/pids/{templateName}:
     get:
       description: Retrieves a list of PID configurations from the database given
@@ -287,7 +285,7 @@ paths:
         "404":
           description: No PID Config data found for the given template name.
       tags:
-      - vehicle-signal-decoding
+      - device-config
   /device-config/settings/{name}:
     get:
       description: |-
@@ -311,7 +309,7 @@ paths:
         "404":
           description: No Device Settings data found for the given name.
       tags:
-      - vehicle-signal-decoding
+      - device-config
   /device-config/vin/{vin}/urls:
     get:
       description: Retrieve the URLs for PID, DeviceSettings, and DBC configuration
@@ -336,5 +334,5 @@ paths:
         "404":
           description: Not Found - No templates available for the given parameters
       tags:
-      - vehicle-signal-decoding
+      - device-config
 swagger: "2.0"

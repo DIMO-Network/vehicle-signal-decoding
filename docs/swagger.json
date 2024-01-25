@@ -14,7 +14,7 @@
                     "text/plain"
                 ],
                 "tags": [
-                    "vehicle-signal-decoding"
+                    "device-config"
                 ],
                 "parameters": [
                     {
@@ -216,7 +216,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "vehicle-signal-decoding"
+                    "device-config"
                 ],
                 "parameters": [
                     {
@@ -257,7 +257,7 @@
                     "application/x-protobuf"
                 ],
                 "tags": [
-                    "vehicle-signal-decoding"
+                    "device-config"
                 ],
                 "parameters": [
                     {
@@ -289,7 +289,7 @@
                     "application/x-protobuf"
                 ],
                 "tags": [
-                    "vehicle-signal-decoding"
+                    "device-config"
                 ],
                 "parameters": [
                     {
@@ -320,7 +320,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "vehicle-signal-decoding"
+                    "device-config"
                 ],
                 "parameters": [
                     {
@@ -466,9 +466,6 @@
             "type": "object",
             "properties": {
                 "firmware_version_from_device": {
-                    "type": "string"
-                },
-                "firmware_version_last_applied": {
                     "type": "string"
                 },
                 "is_firmware_up_to_date": {
