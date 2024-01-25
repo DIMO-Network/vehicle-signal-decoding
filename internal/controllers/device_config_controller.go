@@ -90,7 +90,10 @@ func bytesToUint32(b []byte) (uint32, error) {
 // @Param        templateName  path   string  true   "template name"
 // @Router       /device-config/pids/{templateName} [get]
 func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
-	templateName := c.Params("templateName")
+	templateNameWithVersion := c.Params("templateName")
+	// split out version
+	templateName, _ := parseOutTemplateAndVersion(templateNameWithVersion)
+	// ignore version for now since we're not really using it
 
 	template, err := models.FindTemplate(c.Context(), d.db, templateName)
 	if err != nil {
@@ -177,6 +180,14 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 
 	return c.JSON(protoPIDs)
 
+}
+
+func parseOutTemplateAndVersion(templateNameWithVersion string) (string, string) {
+	parts := strings.Split(templateNameWithVersion, "@")
+	if len(parts) == 2 {
+		return parts[0], parts[1]
+	}
+	return parts[0], ""
 }
 
 // GetDeviceSettingsByName godoc
