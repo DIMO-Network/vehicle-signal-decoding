@@ -68,7 +68,13 @@ func (dts *deviceTemplateService) StoreLastTemplateRequested(ctx context.Context
 			dt.TemplatePidURL = null.StringFromPtr(pidURL)
 		}
 		if firmwareVersion != nil {
-			dt.FirmwareVersion = null.StringFromPtr(firmwareVersion)
+			fwv := *firmwareVersion
+			if len(fwv) > 1 {
+				if fwv[0:1] != "v" {
+					fwv = "v" + fwv
+				}
+				dt.FirmwareVersion = null.StringFrom(fwv)
+			}
 		}
 
 		if _, err = dt.Update(ctx, dts.db, boil.Infer()); err != nil {

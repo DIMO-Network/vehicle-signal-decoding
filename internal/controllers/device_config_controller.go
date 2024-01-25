@@ -182,14 +182,6 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 
 }
 
-func parseOutTemplateAndVersion(templateNameWithVersion string) (string, string) {
-	parts := strings.Split(templateNameWithVersion, "@")
-	if len(parts) == 2 {
-		return parts[0], parts[1]
-	}
-	return parts[0], ""
-}
-
 // GetDeviceSettingsByName godoc
 // @Description  Fetches the device settings configurations from device_settings table given a name. Note that device settings mostly only vary by powertrain and
 // @Description  may or may not be attached to a specific template. To return protobuf: "application/x-protobuf"
@@ -202,10 +194,12 @@ func parseOutTemplateAndVersion(templateNameWithVersion string) (string, string)
 // @Param        name  path   string  true   "name"
 // @Router       /device-config/settings/{name} [get]
 func (d *DeviceConfigController) GetDeviceSettingsByName(c *fiber.Ctx) error {
-	name := c.Params("name")
-	if len(name) == 0 {
+	nameWithVersion := c.Params("name")
+	if len(nameWithVersion) == 0 {
 		return fiber.NewError(fiber.StatusBadRequest, "name for settings empty")
 	}
+	name, _ := parseOutTemplateAndVersion(nameWithVersion)
+	// ignore version for now since we're not really using it
 
 	dbDeviceSettings, err := models.FindDeviceSetting(c.Context(), d.db, name)
 	if err != nil {
@@ -263,10 +257,10 @@ func (d *DeviceConfigController) GetDeviceSettingsByName(c *fiber.Ctx) error {
 // @Param        templateName  path   string  true   "template name"
 // @Router       /device-config/dbc/{templateName} [get]
 func (d *DeviceConfigController) GetDBCFileByTemplateName(c *fiber.Ctx) error {
-	templateName := c.Params("templateName")
+	templateNameWithVersion := c.Params("templateName")
+	templateName, _ := parseOutTemplateAndVersion(templateNameWithVersion)
+	// ignore version since not really using right now
 
-	// Query the database using SQLBoiler
-	//use same logic as above
 	dbResult, err := models.DBCFiles(
 		models.DBCFileWhere.TemplateName.EQ(templateName)).One(c.Context(), d.db)
 
@@ -422,19 +416,6 @@ func (d *DeviceConfigController) GetConfigStatusByEthAddr(c *fiber.Ctx) error {
 	})
 }
 
-func parseOutFWVersion(data *gdata.RawDeviceDataResponse) string {
-	for _, item := range data.Items {
-		v := gjson.GetBytes(item.SignalsJsonData, "fwVersion.value").Str
-		if v != "" {
-			if v[0:1] != "v" {
-				return "v" + v
-			}
-			return v
-		}
-	}
-	return ""
-}
-
 // PatchConfigStatusByEthAddr godoc
 // @Description  Set what template and/or firmware was applied. None of the properties are required. Will not be set if not passed in.
 // @Tags         device-config
@@ -460,6 +441,27 @@ func (d *DeviceConfigController) PatchConfigStatusByEthAddr(c *fiber.Ctx) error 
 	}
 
 	return c.SendStatus(fiber.StatusOK)
+}
+
+func parseOutFWVersion(data *gdata.RawDeviceDataResponse) string {
+	for _, item := range data.Items {
+		v := gjson.GetBytes(item.SignalsJsonData, "fwVersion.value").Str
+		if v != "" {
+			if v[0:1] != "v" {
+				return "v" + v
+			}
+			return v
+		}
+	}
+	return ""
+}
+
+func parseOutTemplateAndVersion(templateNameWithVersion string) (string, string) {
+	parts := strings.Split(templateNameWithVersion, "@")
+	if len(parts) == 2 {
+		return parts[0], parts[1]
+	}
+	return parts[0], ""
 }
 
 type DeviceTemplateStatusPatch struct {
