@@ -9,7 +9,7 @@ import (
 	"os"
 	"testing"
 
-	localmodels "github.com/DIMO-Network/vehicle-signal-decoding/internal/core/models"
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/services"
 
 	"github.com/DIMO-Network/shared/db"
 	"github.com/stretchr/testify/suite"
@@ -272,10 +272,9 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_EmptyDBC() {
 
 	s.mockDeviceTemplateSvc.EXPECT().StoreLastTemplateRequested(gomock.Any(), vin, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(&models.DeviceTemplateStatus{}, nil)
-	s.mockDeviceTemplateSvc.EXPECT().ResolveDeviceConfiguration(gomock.Any(), mockedUserDevice).Return(&localmodels.DeviceConfigResponse{
+	s.mockDeviceTemplateSvc.EXPECT().ResolveDeviceConfiguration(gomock.Any(), mockedUserDevice).Return(&services.DeviceConfigResponse{
 		PidURL:           "http://localhost:3000/v1/device-config/some-template-emptydbc/pids",
 		DeviceSettingURL: "http://localhost:3000/v1/device-config/settings/default-hev-emptydbc",
-		Version:          "1.0",
 	}, nil)
 
 	s.app.Get("/config-urls/:vin", s.controller.GetConfigURLsFromVIN)
@@ -287,14 +286,13 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_EmptyDBC() {
 	body, _ := io.ReadAll(response.Body)
 	require.Equal(s.T(), fiber.StatusOK, response.StatusCode)
 
-	var receivedResp localmodels.DeviceConfigResponse
+	var receivedResp services.DeviceConfigResponse
 	err = json.Unmarshal(body, &receivedResp)
 	require.NoError(s.T(), err)
 
 	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/%s/pids", template.TemplateName), receivedResp.PidURL)
 	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/settings/%s", ds.Name), receivedResp.DeviceSettingURL)
 	assert.Empty(s.T(), receivedResp.DbcURL)
-	assert.Equal(s.T(), template.Version, receivedResp.Version)
 }
 
 func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_DecodeVIN() {
@@ -340,10 +338,9 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_DecodeVIN() {
 		Vin:                &vin,
 		DeviceDefinitionId: mockedDeviceDefinition.DeviceDefinitionId,
 		//PowerTrainType:     "HEV",
-	}).Return(&localmodels.DeviceConfigResponse{
+	}).Return(&services.DeviceConfigResponse{
 		PidURL:           "http://localhost:3000/v1/device-config/some-template/pids",
 		DeviceSettingURL: "http://localhost:3000/v1/device-config/settings/default-hev",
-		Version:          "1.0",
 	}, nil)
 	s.mockDeviceTemplateSvc.EXPECT().StoreLastTemplateRequested(gomock.Any(), vin, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(&models.DeviceTemplateStatus{}, nil)
 	s.app.Get("/config-urls/:vin", s.controller.GetConfigURLsFromVIN)
@@ -355,14 +352,13 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_DecodeVIN() {
 	body, _ := io.ReadAll(response.Body)
 	require.Equal(s.T(), fiber.StatusOK, response.StatusCode)
 
-	var receivedResp localmodels.DeviceConfigResponse
+	var receivedResp services.DeviceConfigResponse
 	err = json.Unmarshal(body, &receivedResp)
 	require.NoError(s.T(), err)
 
 	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/%s/pids", template.TemplateName), receivedResp.PidURL)
 	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/settings/%s", ds.Name), receivedResp.DeviceSettingURL)
 	assert.Empty(s.T(), receivedResp.DbcURL)
-	assert.Equal(s.T(), template.Version, receivedResp.Version)
 }
 
 func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_ProtocolOverrideQS() {
@@ -416,10 +412,9 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_ProtocolOverrideQS()
 		Vin:                &vin,
 		DeviceDefinitionId: mockedDeviceDefinition.DeviceDefinitionId,
 		CANProtocol:        "7",
-	}).Return(&localmodels.DeviceConfigResponse{
+	}).Return(&services.DeviceConfigResponse{
 		PidURL:           "http://localhost:3000/v1/device-config/some-template-protocol-override/pids",
 		DeviceSettingURL: "http://localhost:3000/v1/device-config/settings/default-hev-protocol-override",
-		Version:          "1.0",
 	}, nil)
 
 	s.app.Get("/config-urls/:vin", s.controller.GetConfigURLsFromVIN)
@@ -432,13 +427,12 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_ProtocolOverrideQS()
 
 	assert.Equal(s.T(), fiber.StatusOK, response.StatusCode, "response body: "+string(body))
 
-	var receivedResp localmodels.DeviceConfigResponse
+	var receivedResp services.DeviceConfigResponse
 	err = json.Unmarshal(body, &receivedResp)
 	assert.NoError(s.T(), err)
 
 	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/%s/pids", template.TemplateName), receivedResp.PidURL)
 	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/settings/%s", ds.Name), receivedResp.DeviceSettingURL)
-	assert.Equal(s.T(), template.Version, receivedResp.Version)
 
 }
 
@@ -501,10 +495,9 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_FallbackLogic() {
 		Vin:                &vin,
 		DeviceDefinitionId: mockedDeviceDefinition.DeviceDefinitionId,
 		CANProtocol:        "7",
-	}).Return(&localmodels.DeviceConfigResponse{
+	}).Return(&services.DeviceConfigResponse{
 		PidURL:           "http://localhost:3000/v1/device-config/parent-template/pids",
-		DeviceSettingURL: "http://localhost:3000/v1/device-config/settings/parent-settings-fallback",
-		Version:          "1.0",
+		DeviceSettingURL: "http://localhost:3000/v1/device-config/settings/parent-settings-fallback@v1.0.0",
 	}, nil)
 
 	s.app.Get("/config-urls/:vin", s.controller.GetConfigURLsFromVIN)
@@ -515,11 +508,10 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_FallbackLogic() {
 
 	body, _ := io.ReadAll(response.Body)
 
-	var receivedResp localmodels.DeviceConfigResponse
+	var receivedResp services.DeviceConfigResponse
 	err = json.Unmarshal(body, &receivedResp)
 	assert.NoError(s.T(), err)
 	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/settings/%s", parentDS.Name), receivedResp.DeviceSettingURL)
-	assert.Equal(s.T(), matchedTemplate.Version, receivedResp.Version)
 }
 
 func Test_modelMatch(t *testing.T) {

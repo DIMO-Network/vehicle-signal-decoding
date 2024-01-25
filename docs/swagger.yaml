@@ -3,12 +3,14 @@ definitions:
   github_com_DIMO-Network_vehicle-signal-decoding_internal_core_services.DeviceConfigResponse:
     properties:
       dbcURL:
+        description: DbcURL including the version for the dbc file, usually same as
+          pidurl template version
         type: string
       deviceSettingUrl:
+        description: DeviceSettingURL including the version for the settings
         type: string
       pidUrl:
-        type: string
-      version:
+        description: PidURL including the version for the template
         type: string
     type: object
   github_com_DIMO-Network_vehicle-signal-decoding_pkg_grpc.DeviceSetting:
@@ -58,14 +60,36 @@ definitions:
       version:
         type: string
     type: object
+  internal_controllers.DeviceTemplateStatusPatch:
+    properties:
+      DBCFileURL:
+        description: DBCFileURL template dbc file url with version as returned from
+          api
+        type: string
+      firmwareVersionApplied:
+        description: FirmwareVersionApplied version of firmware that was confirmed
+          installed on device
+        type: string
+      pidsURL:
+        description: PidsURL template pids url with version as returned from api
+        type: string
+      templateSettingsURL:
+        description: SettingsURL template settings url with version as returned from
+          api
+        type: string
+    type: object
   internal_controllers.DeviceTemplateStatusResponse:
     properties:
-      is_template_updated:
-        description: IsTemplateUpdated based on information we have, is the device's
-          template up to date?
-        type: boolean
-      template_version:
+      firmware_version_from_device:
         type: string
+      firmware_version_last_applied:
+        type: string
+      is_firmware_up_to_date:
+        type: boolean
+      is_template_up_to_date:
+        description: IsTemplateUpToDate based on information we have, based on what
+          was set last by mobile app
+        type: boolean
     type: object
   internal_controllers.JobResponse:
     properties:
@@ -212,7 +236,31 @@ paths:
           description: Not Found - we haven't seen this device yet, assume template
             not up to date
       tags:
-      - vehicle-signal-decoding
+      - device-config
+    patch:
+      description: Set what template and/or firmware was applied. None of the properties
+        are required. Will not be set if not passed in.
+      parameters:
+      - description: Ethereum Address
+        in: path
+        name: ethAddr
+        required: true
+        type: string
+      - description: set any properties that were updated on the device
+        in: body
+        name: config
+        required: true
+        schema:
+          $ref: '#/definitions/internal_controllers.DeviceTemplateStatusPatch'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully updated
+        "500":
+          description: unable to parse request or storage failure
+      tags:
+      - device-config
   /device-config/eth-addr/{ethAddr}/urls:
     get:
       description: Retrieve the URLs for PID, DeviceSettings, and DBC configuration

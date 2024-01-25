@@ -7,8 +7,6 @@ import (
 	"github.com/volatiletech/null/v8"
 	"strings"
 
-	localmodels "github.com/DIMO-Network/vehicle-signal-decoding/internal/core/models"
-
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	pb "github.com/DIMO-Network/devices-api/pkg/grpc"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
@@ -28,7 +26,7 @@ import (
 //go:generate mockgen -source device_template_service.go -destination mocks/device_template_service_mock.go
 type DeviceTemplateService interface {
 	StoreLastTemplateRequested(ctx context.Context, address common2.Address, dbcURL, pidURL, settingURL, firmwareVersion *string) (*models.DeviceTemplateStatus, error)
-	ResolveDeviceConfiguration(c *fiber.Ctx, ud *pb.UserDevice) (*localmodels.DeviceConfigResponse, error)
+	ResolveDeviceConfiguration(c *fiber.Ctx, ud *pb.UserDevice) (*DeviceConfigResponse, error)
 }
 
 type deviceTemplateService struct {
@@ -57,11 +55,19 @@ func (dts *deviceTemplateService) StoreLastTemplateRequested(ctx context.Context
 	}
 
 	if dt != nil {
-		// update
-		dt.TemplateSettingsURL = null.StringFromPtr(settingURL)
-		dt.TemplateDBCURL = null.StringFromPtr(dbcURL)
-		dt.TemplatePidURL = null.StringFromPtr(pidURL)
-		dt.FirmwareVersion = null.StringFromPtr(firmwareVersion)
+		// update - only set if not nil
+		if settingURL != nil {
+			dt.TemplateSettingsURL = null.StringFromPtr(settingURL)
+		}
+		if dbcURL != nil {
+			dt.TemplateDBCURL = null.StringFromPtr(dbcURL)
+		}
+		if pidURL != nil {
+			dt.TemplatePidURL = null.StringFromPtr(pidURL)
+		}
+		if firmwareVersion != nil {
+			dt.FirmwareVersion = null.StringFromPtr(firmwareVersion)
+		}
 
 		if _, err = dt.Update(ctx, dts.db, boil.Infer()); err != nil {
 			return nil, err
@@ -83,7 +89,7 @@ func (dts *deviceTemplateService) StoreLastTemplateRequested(ctx context.Context
 	return dt, nil
 }
 
-func (dts *deviceTemplateService) ResolveDeviceConfiguration(c *fiber.Ctx, ud *pb.UserDevice) (*localmodels.DeviceConfigResponse, error) {
+func (dts *deviceTemplateService) ResolveDeviceConfiguration(c *fiber.Ctx, ud *pb.UserDevice) (*DeviceConfigResponse, error) {
 	dts.setCANProtocol(ud)
 
 	vehicleMake, vehicleModel, vehicleYear, err := dts.retrieveAndSetVehicleInfo(c.Context(), ud)
@@ -99,7 +105,7 @@ func (dts *deviceTemplateService) ResolveDeviceConfiguration(c *fiber.Ctx, ud *p
 		return nil, errors.New("matched template is nil")
 	}
 
-	response := localmodels.DeviceConfigResponse{
+	response := DeviceConfigResponse{
 		PidURL: dts.buildConfigRoute(PIDs, matchedTemplate.TemplateName, matchedTemplate.Version),
 	}
 
@@ -330,4 +336,14 @@ func (dts *deviceTemplateService) setCANProtocol(ud *pb.UserDevice) {
 		dts.log.Warn().Str("user_device_id", ud.Id).Msgf("invalid protocol detected: %s", ud.CANProtocol)
 		ud.CANProtocol = models.CanProtocolTypeCAN11_500
 	}
+}
+
+// todo move back out, but not in pkg called models
+type DeviceConfigResponse struct {
+	// PidURL including the version for the template
+	PidURL string `json:"pidUrl"`
+	// DeviceSettingURL including the version for the settings
+	DeviceSettingURL string `json:"deviceSettingUrl"`
+	// DbcURL including the version for the dbc file, usually same as pidurl template version
+	DbcURL string `json:"dbcURL,omitempty"`
 }

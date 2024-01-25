@@ -5,13 +5,14 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	"github.com/DIMO-Network/shared"
-	common2 "github.com/ethereum/go-ethereum/common"
-	"github.com/rogpeppe/go-internal/semver"
-	"github.com/tidwall/gjson"
 	"io"
 	"strings"
 	"time"
+
+	"github.com/DIMO-Network/shared"
+	common2 "github.com/ethereum/go-ethereum/common"
+	"github.com/tidwall/gjson"
+	"golang.org/x/mod/semver"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/common"
 
@@ -36,14 +37,14 @@ type DeviceConfigController struct {
 	userDeviceSvc         services.UserDeviceService
 	deviceDefSvc          services.DeviceDefinitionsService
 	deviceTemplateService services.DeviceTemplateService
-	fwVersionApi          shared.HTTPClientWrapper
+	fwVersionAPI          shared.HTTPClientWrapper
 }
 
 const latestFirmwareURL = "https://binaries.dimo.zone/DIMO-Network/Macaron/releases/latest"
 
 // NewDeviceConfigController constructor
 func NewDeviceConfigController(settings *config.Settings, logger *zerolog.Logger, database *sql.DB, userDeviceSvc services.UserDeviceService, deviceDefSvc services.DeviceDefinitionsService, deviceTemplateService services.DeviceTemplateService) DeviceConfigController {
-	fwVersionApi, _ := shared.NewHTTPClientWrapper(latestFirmwareURL, "", 10*time.Second, nil, true)
+	fwVersionAPI, _ := shared.NewHTTPClientWrapper(latestFirmwareURL, "", 10*time.Second, nil, true)
 
 	return DeviceConfigController{
 		settings:              settings,
@@ -52,7 +53,7 @@ func NewDeviceConfigController(settings *config.Settings, logger *zerolog.Logger
 		userDeviceSvc:         userDeviceSvc,
 		deviceDefSvc:          deviceDefSvc,
 		deviceTemplateService: deviceTemplateService,
-		fwVersionApi:          fwVersionApi,
+		fwVersionAPI:          fwVersionAPI,
 	}
 
 }
@@ -382,7 +383,7 @@ func (d *DeviceConfigController) GetConfigStatusByEthAddr(c *fiber.Ctx) error {
 		isTemplateUpdated = true
 	}
 	// get latest fw version. at some point will need to know device hw type to know this better
-	res, err := d.fwVersionApi.ExecuteRequest("", "GET", nil)
+	res, err := d.fwVersionAPI.ExecuteRequest("", "GET", nil)
 	if err != nil {
 		return errors.Wrap(err, "unable to get latest macaron firmware")
 	}
@@ -405,6 +406,7 @@ func (d *DeviceConfigController) GetConfigStatusByEthAddr(c *fiber.Ctx) error {
 // @Success      200 "Successfully updated"
 // @Failure 500  "unable to parse request or storage failure"
 // @Param        ethAddr  path   string  true  "Ethereum Address"
+// @Param       config body DeviceTemplateStatusPatch true "set any properties that were updated on the device"
 // @Router       /device-config/eth-addr/{ethAddr}/status [patch]
 func (d *DeviceConfigController) PatchConfigStatusByEthAddr(c *fiber.Ctx) error {
 	ethAddr := c.Params("ethAddr")

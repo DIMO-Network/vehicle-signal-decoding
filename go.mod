@@ -28,11 +28,13 @@ require (
 	github.com/stretchr/testify v1.8.4
 	github.com/swaggo/swag v1.16.2
 	github.com/testcontainers/testcontainers-go v0.23.0
+	github.com/tidwall/gjson v1.17.0
 	github.com/tidwall/sjson v1.2.5
 	github.com/volatiletech/null/v8 v8.1.2
 	github.com/volatiletech/sqlboiler/v4 v4.15.0
 	github.com/volatiletech/strmangle v0.0.5
 	go.uber.org/mock v0.3.0
+	golang.org/x/mod v0.14.0
 	google.golang.org/grpc v1.57.1
 	google.golang.org/protobuf v1.31.0
 )
@@ -95,7 +97,6 @@ require (
 	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/spf13/cast v1.5.1 // indirect
 	github.com/swaggo/files/v2 v2.0.0 // indirect
-	github.com/tidwall/gjson v1.17.0 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/volatiletech/inflect v0.0.1 // indirect
@@ -105,7 +106,6 @@ require (
 	go.opentelemetry.io/otel/trace v1.15.1 // indirect
 	golang.org/x/crypto v0.17.0 // indirect
 	golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa // indirect
-	golang.org/x/mod v0.14.0 // indirect
 	golang.org/x/tools v0.15.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230530153820-e85fd2cbaebc // indirect
