@@ -64,9 +64,9 @@ func NewDeviceConfigController(settings *config.Settings, logger *zerolog.Logger
 // DeviceTemplateStatusResponse status on template and firmware versions
 type DeviceTemplateStatusResponse struct {
 	// IsTemplateUpToDate based on information we have, based on what was set last by mobile app
-	IsTemplateUpToDate bool   `json:"is_template_up_to_date"`
-	FirmwareVersion    string `json:"firmware_version_from_device,omitempty"`
-	IsFirmwareUpToDate bool   `json:"is_firmware_up_to_date"`
+	IsTemplateUpToDate bool   `json:"isTemplateUpToDate"`
+	FirmwareVersion    string `json:"firmwareVersion,omitempty"`
+	IsFirmwareUpToDate bool   `json:"isFirmwareUpToDate"`
 }
 
 type SettingsData struct {
@@ -90,7 +90,10 @@ func bytesToUint32(b []byte) (uint32, error) {
 // @Param        templateName  path   string  true   "template name"
 // @Router       /device-config/pids/{templateName} [get]
 func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
-	templateName := c.Params("templateName")
+	templateNameWithVersion := c.Params("templateName")
+	// split out version
+	templateName, _ := parseOutTemplateAndVersion(templateNameWithVersion)
+	// ignore version for now since we're not really using it
 
 	template, err := models.FindTemplate(c.Context(), d.db, templateName)
 	if err != nil {
@@ -177,6 +180,14 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 
 	return c.JSON(protoPIDs)
 
+}
+
+func parseOutTemplateAndVersion(templateNameWithVersion string) (string, string) {
+	parts := strings.Split(templateNameWithVersion, "@")
+	if len(parts) == 2 {
+		return parts[0], parts[1]
+	}
+	return parts[0], ""
 }
 
 // GetDeviceSettingsByName godoc
@@ -453,7 +464,7 @@ func (d *DeviceConfigController) PatchConfigStatusByEthAddr(c *fiber.Ctx) error 
 
 type DeviceTemplateStatusPatch struct {
 	// SettingsURL template settings url with version as returned from api
-	SettingsURL *string `json:"templateSettingsURL"`
+	SettingsURL *string `json:"settingsURL"`
 	// PidsURL template pids url with version as returned from api
 	PidsURL *string `json:"pidsURL"`
 	// DBCFileURL template dbc file url with version as returned from api

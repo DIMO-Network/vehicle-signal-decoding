@@ -5,13 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	_ "github.com/lib/pq"
 	"io"
 	"os"
 	"testing"
 
 	gdata "github.com/DIMO-Network/device-data-api/pkg/grpc"
-	_ "github.com/lib/pq"
-
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/appmodels"
 
 	"github.com/DIMO-Network/shared/db"
@@ -569,6 +568,38 @@ func Test_parseOutFWVersion(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			assert.Equalf(t, tt.want, parseOutFWVersion(tt.args.data), "parseOutFWVersion(%v)", tt.args.data)
+		})
+	}
+}
+
+func Test_parseOutTemplateAndVersion(t *testing.T) {
+	type args struct {
+		templateNameWithVersion string
+	}
+	tests := []struct {
+		name  string
+		args  args
+		want  string
+		want1 string
+	}{
+		{
+			name:  "name with version",
+			args:  args{templateNameWithVersion: "default-ice@v1.0.0"},
+			want:  "default-ice",
+			want1: "v1.0.0",
+		},
+		{
+			name:  "name without version",
+			args:  args{templateNameWithVersion: "default-ice"},
+			want:  "default-ice",
+			want1: "",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, got1 := parseOutTemplateAndVersion(tt.args.templateNameWithVersion)
+			assert.Equalf(t, tt.want, got, "parseOutTemplateAndVersion(%v)", tt.args.templateNameWithVersion)
+			assert.Equalf(t, tt.want1, got1, "parseOutTemplateAndVersion(%v)", tt.args.templateNameWithVersion)
 		})
 	}
 }
