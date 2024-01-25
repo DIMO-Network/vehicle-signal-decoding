@@ -456,7 +456,7 @@
                     "description": "PidsURL template pids url with version as returned from api",
                     "type": "string"
                 },
-                "templateSettingsURL": {
+                "settingsURL": {
                     "description": "SettingsURL template settings url with version as returned from api",
                     "type": "string"
                 }
@@ -465,13 +465,13 @@
         "internal_controllers.DeviceTemplateStatusResponse": {
             "type": "object",
             "properties": {
-                "firmware_version_from_device": {
+                "firmwareVersion": {
                     "type": "string"
                 },
-                "is_firmware_up_to_date": {
+                "isFirmwareUpToDate": {
                     "type": "boolean"
                 },
-                "is_template_up_to_date": {
+                "isTemplateUpToDate": {
                     "description": "IsTemplateUpToDate based on information we have, based on what was set last by mobile app",
                     "type": "boolean"
                 }
