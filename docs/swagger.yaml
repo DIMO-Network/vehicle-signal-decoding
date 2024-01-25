@@ -1,6 +1,6 @@
 basePath: /v1
 definitions:
-  github_com_DIMO-Network_vehicle-signal-decoding_internal_core_services.DeviceConfigResponse:
+  github_com_DIMO-Network_vehicle-signal-decoding_internal_core_appmodels.DeviceConfigResponse:
     properties:
       dbcURL:
         description: DbcURL including the version for the dbc file, usually same as
@@ -105,7 +105,7 @@ info:
   title: DIMO Vehicle-Signal-Decoding
   version: "1.0"
 paths:
-  /device-config/{templateName}/dbc:
+  /device-config/dbc/{templateName}:
     get:
       description: Fetches the DBC file from the dbc_files table given a template
         name
@@ -124,28 +124,6 @@ paths:
             type: string
         "404":
           description: No DBC file found for the given template name.
-      tags:
-      - vehicle-signal-decoding
-  /device-config/{templateName}/pids:
-    get:
-      description: Retrieves a list of PID configurations from the database given
-        a template name
-      parameters:
-      - description: template name
-        in: path
-        name: templateName
-        required: true
-        type: string
-      produces:
-      - application/json
-      - application/x-protobuf
-      responses:
-        "200":
-          description: Successfully retrieved PID Configurations
-          schema:
-            $ref: '#/definitions/github_com_DIMO-Network_vehicle-signal-decoding_pkg_grpc.PIDRequests'
-        "404":
-          description: No PID Config data found for the given template name.
       tags:
       - vehicle-signal-decoding
   /device-config/eth-addr/{ethAddr}/jobs:
@@ -281,11 +259,33 @@ paths:
         "200":
           description: Successfully retrieved configuration URLs
           schema:
-            $ref: '#/definitions/github_com_DIMO-Network_vehicle-signal-decoding_internal_core_services.DeviceConfigResponse'
+            $ref: '#/definitions/github_com_DIMO-Network_vehicle-signal-decoding_internal_core_appmodels.DeviceConfigResponse'
         "400":
           description: incorrect eth addr format
         "404":
           description: Not Found - No templates available for the given parameters
+      tags:
+      - vehicle-signal-decoding
+  /device-config/pids/{templateName}:
+    get:
+      description: Retrieves a list of PID configurations from the database given
+        a template name
+      parameters:
+      - description: template name
+        in: path
+        name: templateName
+        required: true
+        type: string
+      produces:
+      - application/json
+      - application/x-protobuf
+      responses:
+        "200":
+          description: Successfully retrieved PID Configurations
+          schema:
+            $ref: '#/definitions/github_com_DIMO-Network_vehicle-signal-decoding_pkg_grpc.PIDRequests'
+        "404":
+          description: No PID Config data found for the given template name.
       tags:
       - vehicle-signal-decoding
   /device-config/settings/{name}:
@@ -332,7 +332,7 @@ paths:
         "200":
           description: Successfully retrieved configuration URLs
           schema:
-            $ref: '#/definitions/github_com_DIMO-Network_vehicle-signal-decoding_internal_core_services.DeviceConfigResponse'
+            $ref: '#/definitions/github_com_DIMO-Network_vehicle-signal-decoding_internal_core_appmodels.DeviceConfigResponse'
         "404":
           description: Not Found - No templates available for the given parameters
       tags:

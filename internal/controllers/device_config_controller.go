@@ -20,6 +20,7 @@ import (
 
 	pb "github.com/DIMO-Network/devices-api/pkg/grpc"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
+	_ "github.com/DIMO-Network/vehicle-signal-decoding/internal/core/appmodels" // for swagger
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/services"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
@@ -86,7 +87,7 @@ func bytesToUint32(b []byte) (uint32, error) {
 // @Success      200 {object} grpc.PIDRequests "Successfully retrieved PID Configurations"
 // @Failure 404 "No PID Config data found for the given template name."
 // @Param        templateName  path   string  true   "template name"
-// @Router       /device-config/{templateName}/pids [get]
+// @Router       /device-config/pids/{templateName} [get]
 func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 	templateName := c.Params("templateName")
 
@@ -248,7 +249,7 @@ func (d *DeviceConfigController) GetDeviceSettingsByName(c *fiber.Ctx) error {
 // @Success      200 {string} string "Successfully retrieved DBC file"
 // @Failure 404 "No DBC file found for the given template name."
 // @Param        templateName  path   string  true   "template name"
-// @Router       /device-config/{templateName}/dbc [get]
+// @Router       /device-config/dbc/{templateName} [get]
 func (d *DeviceConfigController) GetDBCFileByTemplateName(c *fiber.Ctx) error {
 	templateName := c.Params("templateName")
 
@@ -277,7 +278,7 @@ func (d *DeviceConfigController) GetDBCFileByTemplateName(c *fiber.Ctx) error {
 // @Description  Retrieve the URLs for PID, DeviceSettings, and DBC configuration based on a given VIN. These could be empty if not configs available
 // @Tags         vehicle-signal-decoding
 // @Produce      json
-// @Success      200 {object} services.DeviceConfigResponse "Successfully retrieved configuration URLs"
+// @Success      200 {object} appmodels.DeviceConfigResponse "Successfully retrieved configuration URLs"
 // @Failure 404  "Not Found - No templates available for the given parameters"
 // @Param        vin  path   string  true   "vehicle identification number (VIN)"
 // @Param        protocol  query   string  false  "CAN Protocol, '6' or '7'"
@@ -316,7 +317,7 @@ func (d *DeviceConfigController) GetConfigURLsFromVIN(c *fiber.Ctx) error {
 // @Description  Retrieve the URLs for PID, DeviceSettings, and DBC configuration based on device's Ethereum Address. These could be empty if not configs available
 // @Tags         vehicle-signal-decoding
 // @Produce      json
-// @Success      200 {object} services.DeviceConfigResponse "Successfully retrieved configuration URLs"
+// @Success      200 {object} appmodels.DeviceConfigResponse "Successfully retrieved configuration URLs"
 // @Failure 404  "Not Found - No templates available for the given parameters"
 // @Failure 400  "incorrect eth addr format"
 // @Param        ethAddr  path   string  true  "Ethereum Address"
