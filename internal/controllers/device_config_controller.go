@@ -64,9 +64,9 @@ func NewDeviceConfigController(settings *config.Settings, logger *zerolog.Logger
 // DeviceTemplateStatusResponse status on template and firmware versions
 type DeviceTemplateStatusResponse struct {
 	// IsTemplateUpToDate based on information we have, based on what was set last by mobile app
-	IsTemplateUpToDate bool   `json:"is_template_up_to_date"`
-	FirmwareVersion    string `json:"firmware_version_from_device,omitempty"`
-	IsFirmwareUpToDate bool   `json:"is_firmware_up_to_date"`
+	IsTemplateUpToDate bool   `json:"isTemplateUpToDate"`
+	FirmwareVersion    string `json:"firmwareVersion,omitempty"`
+	IsFirmwareUpToDate bool   `json:"isFirmwareUpToDate"`
 }
 
 type SettingsData struct {
@@ -453,7 +453,7 @@ func (d *DeviceConfigController) PatchConfigStatusByEthAddr(c *fiber.Ctx) error 
 
 type DeviceTemplateStatusPatch struct {
 	// SettingsURL template settings url with version as returned from api
-	SettingsURL *string `json:"templateSettingsURL"`
+	SettingsURL *string `json:"settingsURL"`
 	// PidsURL template pids url with version as returned from api
 	PidsURL *string `json:"pidsURL"`
 	// DBCFileURL template dbc file url with version as returned from api
