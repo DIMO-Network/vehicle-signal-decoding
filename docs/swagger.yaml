@@ -2,7 +2,7 @@ basePath: /v1
 definitions:
   github_com_DIMO-Network_vehicle-signal-decoding_internal_core_appmodels.DeviceConfigResponse:
     properties:
-      dbcURL:
+      dbcUrl:
         description: DbcURL including the version for the dbc file, usually same as
           pidurl template version
         type: string
@@ -62,7 +62,7 @@ definitions:
     type: object
   internal_controllers.DeviceTemplateStatusPatch:
     properties:
-      DBCFileURL:
+      dbcUrl:
         description: DBCFileURL template dbc file url with version as returned from
           api
         type: string
@@ -70,10 +70,10 @@ definitions:
         description: FirmwareVersionApplied version of firmware that was confirmed
           installed on device
         type: string
-      pidsURL:
+      pidsUrl:
         description: PidsURL template pids url with version as returned from api
         type: string
-      settingsURL:
+      settingsUrl:
         description: SettingsURL template settings url with version as returned from
           api
         type: string
