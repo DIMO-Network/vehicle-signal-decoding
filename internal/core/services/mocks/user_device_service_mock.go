@@ -13,7 +13,7 @@ import (
 	reflect "reflect"
 
 	grpc "github.com/DIMO-Network/devices-api/pkg/grpc"
-	models "github.com/DIMO-Network/vehicle-signal-decoding/internal/core/models"
+	appmodels "github.com/DIMO-Network/vehicle-signal-decoding/internal/core/appmodels"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -71,10 +71,10 @@ func (mr *MockUserDeviceServiceMockRecorder) GetUserDeviceByVIN(ctx, vin any) *g
 }
 
 // GetUserDeviceServiceByAutoPIUnitID mocks base method.
-func (m *MockUserDeviceService) GetUserDeviceServiceByAutoPIUnitID(ctx context.Context, id string) (*models.UserDeviceAutoPIUnit, error) {
+func (m *MockUserDeviceService) GetUserDeviceServiceByAutoPIUnitID(ctx context.Context, id string) (*appmodels.UserDeviceAutoPIUnit, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetUserDeviceServiceByAutoPIUnitID", ctx, id)
-	ret0, _ := ret[0].(*models.UserDeviceAutoPIUnit)
+	ret0, _ := ret[0].(*appmodels.UserDeviceAutoPIUnit)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

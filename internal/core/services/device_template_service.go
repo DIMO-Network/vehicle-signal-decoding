@@ -3,9 +3,11 @@ package services
 import (
 	"context"
 	"fmt"
+	"strings"
+
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/appmodels"
 	common2 "github.com/ethereum/go-ethereum/common"
 	"github.com/volatiletech/null/v8"
-	"strings"
 
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	pb "github.com/DIMO-Network/devices-api/pkg/grpc"
@@ -26,7 +28,7 @@ import (
 //go:generate mockgen -source device_template_service.go -destination mocks/device_template_service_mock.go
 type DeviceTemplateService interface {
 	StoreLastTemplateRequested(ctx context.Context, address common2.Address, dbcURL, pidURL, settingURL, firmwareVersion *string) (*models.DeviceTemplateStatus, error)
-	ResolveDeviceConfiguration(c *fiber.Ctx, ud *pb.UserDevice) (*DeviceConfigResponse, error)
+	ResolveDeviceConfiguration(c *fiber.Ctx, ud *pb.UserDevice) (*appmodels.DeviceConfigResponse, error)
 }
 
 type deviceTemplateService struct {
@@ -89,7 +91,7 @@ func (dts *deviceTemplateService) StoreLastTemplateRequested(ctx context.Context
 	return dt, nil
 }
 
-func (dts *deviceTemplateService) ResolveDeviceConfiguration(c *fiber.Ctx, ud *pb.UserDevice) (*DeviceConfigResponse, error) {
+func (dts *deviceTemplateService) ResolveDeviceConfiguration(c *fiber.Ctx, ud *pb.UserDevice) (*appmodels.DeviceConfigResponse, error) {
 	dts.setCANProtocol(ud)
 
 	vehicleMake, vehicleModel, vehicleYear, err := dts.retrieveAndSetVehicleInfo(c.Context(), ud)
@@ -105,7 +107,7 @@ func (dts *deviceTemplateService) ResolveDeviceConfiguration(c *fiber.Ctx, ud *p
 		return nil, errors.New("matched template is nil")
 	}
 
-	response := DeviceConfigResponse{
+	response := appmodels.DeviceConfigResponse{
 		PidURL: dts.buildConfigRoute(PIDs, matchedTemplate.TemplateName, matchedTemplate.Version),
 	}
 
@@ -336,14 +338,4 @@ func (dts *deviceTemplateService) setCANProtocol(ud *pb.UserDevice) {
 		dts.log.Warn().Str("user_device_id", ud.Id).Msgf("invalid protocol detected: %s", ud.CANProtocol)
 		ud.CANProtocol = models.CanProtocolTypeCAN11_500
 	}
-}
-
-// todo move back out, but not in pkg called models
-type DeviceConfigResponse struct {
-	// PidURL including the version for the template
-	PidURL string `json:"pidUrl"`
-	// DeviceSettingURL including the version for the settings
-	DeviceSettingURL string `json:"deviceSettingUrl"`
-	// DbcURL including the version for the dbc file, usually same as pidurl template version
-	DbcURL string `json:"dbcURL,omitempty"`
 }

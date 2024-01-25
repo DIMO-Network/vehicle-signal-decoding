@@ -481,7 +481,7 @@ func Test_deviceTemplateService_buildConfigRoute(t *testing.T) {
 		{
 			name:   "settings url",
 			fields: fields{settings: &config.Settings{DeploymentURL: "https://vehicle-signal-decoding.dimo.zone"}},
-			args:   args{name: "default-ice", ct: Settings, version: "v1.0.0"},
+			args:   args{name: "default-ice", ct: Setting, version: "v1.0.0"},
 			want:   "https://vehicle-signal-decoding.dimo.zone/v1/device-config/settings/default-ice@v1.0.0",
 		},
 	}

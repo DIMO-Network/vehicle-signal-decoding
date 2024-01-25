@@ -13,7 +13,7 @@ import (
 	reflect "reflect"
 
 	grpc "github.com/DIMO-Network/devices-api/pkg/grpc"
-	services "github.com/DIMO-Network/vehicle-signal-decoding/internal/core/services"
+	appmodels "github.com/DIMO-Network/vehicle-signal-decoding/internal/core/appmodels"
 	models "github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 	common "github.com/ethereum/go-ethereum/common"
 	fiber "github.com/gofiber/fiber/v2"
@@ -44,10 +44,10 @@ func (m *MockDeviceTemplateService) EXPECT() *MockDeviceTemplateServiceMockRecor
 }
 
 // ResolveDeviceConfiguration mocks base method.
-func (m *MockDeviceTemplateService) ResolveDeviceConfiguration(c *fiber.Ctx, ud *grpc.UserDevice) (*services.DeviceConfigResponse, error) {
+func (m *MockDeviceTemplateService) ResolveDeviceConfiguration(c *fiber.Ctx, ud *grpc.UserDevice) (*appmodels.DeviceConfigResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ResolveDeviceConfiguration", c, ud)
-	ret0, _ := ret[0].(*services.DeviceConfigResponse)
+	ret0, _ := ret[0].(*appmodels.DeviceConfigResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
