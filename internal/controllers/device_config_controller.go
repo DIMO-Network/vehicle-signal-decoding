@@ -407,7 +407,7 @@ func (d *DeviceConfigController) GetConfigStatusByEthAddr(c *fiber.Ctx) error {
 
 	return c.JSON(DeviceTemplateStatusResponse{
 		IsTemplateUpToDate: isTemplateUpdated,
-		IsFirmwareUpToDate: semver.Compare(latestFirmwareStr, deviceFWVers) > 0,
+		IsFirmwareUpToDate: isFwUpToDate(latestFirmwareStr, deviceFWVers),
 		FirmwareVersion:    deviceFWVers,
 	})
 }
@@ -486,6 +486,19 @@ func modelMatch(modelList types.StringArray, modelName string) bool {
 		if strings.EqualFold(m, modelName) {
 			return true
 		}
+	}
+	return false
+}
+
+func isFwUpToDate(latest, current string) bool {
+	if latest[0:1] != "v" {
+		latest = "v" + latest
+	}
+	if current[0:1] != "v" {
+		current = "v" + current
+	}
+	if semver.Compare(latest, current) == 0 {
+		return true
 	}
 	return false
 }

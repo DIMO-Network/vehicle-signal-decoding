@@ -5,11 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	_ "github.com/lib/pq"
 	"io"
 	"os"
 	"testing"
-
-	_ "github.com/lib/pq"
 
 	gdata "github.com/DIMO-Network/device-data-api/pkg/grpc"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/appmodels"
@@ -601,6 +600,40 @@ func Test_parseOutTemplateAndVersion(t *testing.T) {
 			got, got1 := parseOutTemplateAndVersion(tt.args.templateNameWithVersion)
 			assert.Equalf(t, tt.want, got, "parseOutTemplateAndVersion(%v)", tt.args.templateNameWithVersion)
 			assert.Equalf(t, tt.want1, got1, "parseOutTemplateAndVersion(%v)", tt.args.templateNameWithVersion)
+		})
+	}
+}
+
+func Test_isFwUpToDate(t *testing.T) {
+	type args struct {
+		latest  string
+		current string
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "up to date",
+			args: args{
+				latest:  "v0.8.5",
+				current: "v0.8.5",
+			},
+			want: true,
+		},
+		{
+			name: "not up to date",
+			args: args{
+				latest:  "v0.8.5",
+				current: "v0.8.4",
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equalf(t, tt.want, isFwUpToDate(tt.args.latest, tt.args.current), "isFwUpToDate(%v, %v)", tt.args.latest, tt.args.current)
 		})
 	}
 }
