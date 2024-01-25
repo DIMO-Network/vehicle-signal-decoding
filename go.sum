@@ -68,10 +68,12 @@ github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
 github.com/DATA-DOG/go-sqlmock v1.4.1 h1:ThlnYciV1iM/V0OSF/dtkqWb6xo5qITT1TJBG1MRDJM=
 github.com/DATA-DOG/go-sqlmock v1.4.1/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q5eFN3EC/SaM=
+github.com/DIMO-Network/device-data-api v0.8.92 h1:cmeGs+9W+ynCklT0OIrKOL6Z7N3EJiTBOoLN07GP1mE=
+github.com/DIMO-Network/device-data-api v0.8.92/go.mod h1:/lwzRIcL0NMYUXNmGl6a+8Sv974HzoMBVwcgeN3B5Sk=
 github.com/DIMO-Network/device-definitions-api v1.0.30 h1:1HAmQhEZaZgiK9vztPpSw1FGGVD0WfP15mZ4OU+PCJo=
 github.com/DIMO-Network/device-definitions-api v1.0.30/go.mod h1:2TUvS6NC5xxVxyn9iQ1HwUIjO/TEEBhCEL6YFUVmCZQ=
-github.com/DIMO-Network/devices-api v1.23.1 h1:YMqS+Q8q7MiwB4uyG1QOnSYgbd0b0WyflKX5x/WuPWE=
-github.com/DIMO-Network/devices-api v1.23.1/go.mod h1:t1hwS8aQDcFLefTaRE9vAgpZ2Cgnl21lAavjjSLwDTI=
+github.com/DIMO-Network/devices-api v1.23.2 h1:Y6y31JmO1Qr2SU8n3uFJ4pLciYiYgNP9Gor5mVFimHE=
+github.com/DIMO-Network/devices-api v1.23.2/go.mod h1:t1hwS8aQDcFLefTaRE9vAgpZ2Cgnl21lAavjjSLwDTI=
 github.com/DIMO-Network/shared v0.10.4 h1:jBWTEWHqyXbqjzAabIo5L5/qsMOhXaN9mDCZL2y+QSw=
 github.com/DIMO-Network/shared v0.10.4/go.mod h1:IwAA6IKMoZv+8OackfTzJZwjdtk7KpIqyxHZRUNiSkg=
 github.com/DataDog/datadog-go v3.2.0+incompatible/go.mod h1:LButxg5PwREeZtORoXG3tL4fMGNddJ+vMq1mwgfaqoQ=

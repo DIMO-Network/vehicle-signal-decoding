@@ -48,6 +48,7 @@ env:
   DBC_DECODING_TOPIC: topic.dbc.decoding
   DEVICE_GRPC_ADDR: devices-api-dev:8086
   DEFINITIONS_GRPC_ADDR: device-definitions-api-dev:8086
+  DEVICE_DATA_GRPC_ADDR: device-data-api-dev:8086
   AWS_CANDUMPS_BUCKET_NAME: dimo-network-canbus-dump-dev
 service:
   type: ClusterIP

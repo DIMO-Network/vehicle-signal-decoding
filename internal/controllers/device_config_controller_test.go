@@ -9,6 +9,9 @@ import (
 	"os"
 	"testing"
 
+	gdata "github.com/DIMO-Network/device-data-api/pkg/grpc"
+	_ "github.com/lib/pq"
+
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/appmodels"
 
 	"github.com/DIMO-Network/shared/db"
@@ -16,8 +19,6 @@ import (
 	"github.com/testcontainers/testcontainers-go"
 
 	"github.com/volatiletech/null/v8"
-
-	_ "github.com/lib/pq"
 
 	"github.com/volatiletech/sqlboiler/v4/types"
 
@@ -530,6 +531,44 @@ func Test_modelMatch(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			assert.Equalf(t, tt.want, modelMatch(tt.modelList, tt.modelName), "modelMatch(%v, %v)", tt.modelList, tt.modelName)
+		})
+	}
+}
+
+func Test_parseOutFWVersion(t *testing.T) {
+	type args struct {
+		data *gdata.RawDeviceDataResponse
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "get version",
+			args: args{data: &gdata.RawDeviceDataResponse{Items: []*gdata.RawDeviceDataResponseItem{{
+				SignalsJsonData: []byte(`{
+"fwVersion": {
+    "value": "0.8.5",
+    "source": "dimo/integration/2ULfuC8U9dOqRshZBAi0lMM1Rrx",
+    "timestamp": "2024-01-02T11:17:20Z"
+  }			
+}`),
+			}}}},
+			want: "v0.8.5",
+		},
+		{
+			name: "empty version",
+			args: args{data: &gdata.RawDeviceDataResponse{Items: []*gdata.RawDeviceDataResponseItem{{
+				SignalsJsonData: []byte(`{}`),
+			},
+			}}},
+			want: "",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equalf(t, tt.want, parseOutFWVersion(tt.args.data), "parseOutFWVersion(%v)", tt.args.data)
 		})
 	}
 }

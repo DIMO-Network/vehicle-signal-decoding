@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	gdata "github.com/DIMO-Network/device-data-api/pkg/grpc"
+
 	"github.com/DIMO-Network/shared"
 	common2 "github.com/ethereum/go-ethereum/common"
 	"github.com/tidwall/gjson"
@@ -62,10 +64,9 @@ func NewDeviceConfigController(settings *config.Settings, logger *zerolog.Logger
 // DeviceTemplateStatusResponse status on template and firmware versions
 type DeviceTemplateStatusResponse struct {
 	// IsTemplateUpToDate based on information we have, based on what was set last by mobile app
-	IsTemplateUpToDate         bool   `json:"is_template_up_to_date"`
-	FirmwareVersionFromDevice  string `json:"firmware_version_from_device,omitempty"`
-	FirmwareVersionLastApplied string `json:"firmware_version_last_applied,omitempty"`
-	IsFirmwareUpToDate         bool   `json:"is_firmware_up_to_date"`
+	IsTemplateUpToDate bool   `json:"is_template_up_to_date"`
+	FirmwareVersion    string `json:"firmware_version_from_device,omitempty"`
+	IsFirmwareUpToDate bool   `json:"is_firmware_up_to_date"`
 }
 
 type SettingsData struct {
@@ -356,7 +357,16 @@ func (d *DeviceConfigController) GetConfigURLsFromEthAddr(c *fiber.Ctx) error {
 func (d *DeviceConfigController) GetConfigStatusByEthAddr(c *fiber.Ctx) error {
 	ethAddr := c.Params("ethAddr")
 	addr := common2.HexToAddress(ethAddr)
-	// do we really need this?
+
+	dts, err := models.DeviceTemplateStatuses(models.DeviceTemplateStatusWhere.DeviceEthAddr.EQ(addr.Bytes())).One(c.Context(), d.db)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return fiber.NewError(fiber.StatusNotFound, "haven't seen device with eth addr yet: "+ethAddr)
+		}
+		return err
+	}
+
+	// we use this to know what the config should be
 	ud, err := d.userDeviceSvc.GetUserDeviceByEthAddr(c.Context(), ethAddr)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": fmt.Sprintf("no connected user device found for EthAddr: %s", ethAddr)})
@@ -364,14 +374,6 @@ func (d *DeviceConfigController) GetConfigStatusByEthAddr(c *fiber.Ctx) error {
 	// figure out what the config should be
 	deviceConfiguration, err := d.deviceTemplateService.ResolveDeviceConfiguration(c, ud)
 	if err != nil {
-		return err
-	}
-
-	dts, err := models.DeviceTemplateStatuses(models.DeviceTemplateStatusWhere.DeviceEthAddr.EQ(addr.Bytes())).One(c.Context(), d.db)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return fiber.NewError(fiber.StatusNotFound, "haven't seen device with eth addr yet: "+ethAddr)
-		}
 		return err
 	}
 
@@ -392,12 +394,34 @@ func (d *DeviceConfigController) GetConfigStatusByEthAddr(c *fiber.Ctx) error {
 	body, _ := io.ReadAll(res.Body)
 	latestFirmwareStr := gjson.GetBytes(body, "name").Str
 
+	deviceFWVers := dts.FirmwareVersion.String
+	if deviceFWVers == "" {
+		// get fw version from device if any
+		deviceData, err := d.userDeviceSvc.GetRawDeviceData(c.Context(), ud.Id)
+		if err != nil {
+			d.log.Err(err).Str("device_address", ethAddr).Msg("failed to get device data")
+		}
+		deviceFWVers = parseOutFWVersion(deviceData)
+	}
+
 	return c.JSON(DeviceTemplateStatusResponse{
-		IsTemplateUpToDate:         isTemplateUpdated,
-		IsFirmwareUpToDate:         semver.Compare(latestFirmwareStr, dts.FirmwareVersion.String) > 0,
-		FirmwareVersionFromDevice:  "", // todo future
-		FirmwareVersionLastApplied: dts.FirmwareVersion.String,
+		IsTemplateUpToDate: isTemplateUpdated,
+		IsFirmwareUpToDate: semver.Compare(latestFirmwareStr, deviceFWVers) > 0,
+		FirmwareVersion:    deviceFWVers,
 	})
+}
+
+func parseOutFWVersion(data *gdata.RawDeviceDataResponse) string {
+	for _, item := range data.Items {
+		v := gjson.GetBytes(item.SignalsJsonData, "fwVersion.value").Str
+		if v != "" {
+			if v[0:1] != "v" {
+				return "v" + v
+			}
+			return v
+		}
+	}
+	return ""
 }
 
 // PatchConfigStatusByEthAddr godoc

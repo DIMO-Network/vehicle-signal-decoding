@@ -12,7 +12,8 @@ import (
 	context "context"
 	reflect "reflect"
 
-	grpc "github.com/DIMO-Network/devices-api/pkg/grpc"
+	grpc "github.com/DIMO-Network/device-data-api/pkg/grpc"
+	grpc0 "github.com/DIMO-Network/devices-api/pkg/grpc"
 	appmodels "github.com/DIMO-Network/vehicle-signal-decoding/internal/core/appmodels"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -40,11 +41,26 @@ func (m *MockUserDeviceService) EXPECT() *MockUserDeviceServiceMockRecorder {
 	return m.recorder
 }
 
+// GetRawDeviceData mocks base method.
+func (m *MockUserDeviceService) GetRawDeviceData(ctx context.Context, userDeviceId string) (*grpc.RawDeviceDataResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetRawDeviceData", ctx, userDeviceId)
+	ret0, _ := ret[0].(*grpc.RawDeviceDataResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetRawDeviceData indicates an expected call of GetRawDeviceData.
+func (mr *MockUserDeviceServiceMockRecorder) GetRawDeviceData(ctx, userDeviceId any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRawDeviceData", reflect.TypeOf((*MockUserDeviceService)(nil).GetRawDeviceData), ctx, userDeviceId)
+}
+
 // GetUserDeviceByEthAddr mocks base method.
-func (m *MockUserDeviceService) GetUserDeviceByEthAddr(ctx context.Context, ethAddr string) (*grpc.UserDevice, error) {
+func (m *MockUserDeviceService) GetUserDeviceByEthAddr(ctx context.Context, ethAddr string) (*grpc0.UserDevice, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetUserDeviceByEthAddr", ctx, ethAddr)
-	ret0, _ := ret[0].(*grpc.UserDevice)
+	ret0, _ := ret[0].(*grpc0.UserDevice)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -56,10 +72,10 @@ func (mr *MockUserDeviceServiceMockRecorder) GetUserDeviceByEthAddr(ctx, ethAddr
 }
 
 // GetUserDeviceByVIN mocks base method.
-func (m *MockUserDeviceService) GetUserDeviceByVIN(ctx context.Context, vin string) (*grpc.UserDevice, error) {
+func (m *MockUserDeviceService) GetUserDeviceByVIN(ctx context.Context, vin string) (*grpc0.UserDevice, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetUserDeviceByVIN", ctx, vin)
-	ret0, _ := ret[0].(*grpc.UserDevice)
+	ret0, _ := ret[0].(*grpc0.UserDevice)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

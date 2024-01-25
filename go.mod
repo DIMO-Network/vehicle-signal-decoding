@@ -3,8 +3,9 @@ module github.com/DIMO-Network/vehicle-signal-decoding
 go 1.21
 
 require (
+	github.com/DIMO-Network/device-data-api v0.8.92
 	github.com/DIMO-Network/device-definitions-api v1.0.30
-	github.com/DIMO-Network/devices-api v1.23.1
+	github.com/DIMO-Network/devices-api v1.23.2
 	github.com/DIMO-Network/shared v0.10.4
 	github.com/Shopify/sarama v1.38.1
 	github.com/ThreeDotsLabs/watermill v1.2.0

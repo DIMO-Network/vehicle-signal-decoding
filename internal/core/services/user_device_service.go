@@ -9,6 +9,8 @@ import (
 
 	pb "github.com/DIMO-Network/devices-api/pkg/grpc"
 
+	gdata "github.com/DIMO-Network/device-data-api/pkg/grpc"
+
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -19,15 +21,18 @@ type UserDeviceService interface {
 	GetUserDeviceServiceByAutoPIUnitID(ctx context.Context, id string) (*appmodels.UserDeviceAutoPIUnit, error)
 	GetUserDeviceByVIN(ctx context.Context, vin string) (*pb.UserDevice, error)
 	GetUserDeviceByEthAddr(ctx context.Context, ethAddr string) (*pb.UserDevice, error)
+	GetRawDeviceData(ctx context.Context, userDeviceID string) (*gdata.RawDeviceDataResponse, error)
 }
 
 type userDeviceService struct {
-	deviceGRPCAddr string
+	deviceGRPCAddr     string
+	deviceDataGRPCAddr string
 }
 
 func NewUserDeviceService(settings *config.Settings) UserDeviceService {
 	return &userDeviceService{
-		deviceGRPCAddr: settings.DeviceGRPCAddr,
+		deviceGRPCAddr:     settings.DeviceGRPCAddr,
+		deviceDataGRPCAddr: settings.DeviceDataGRPCAddr,
 	}
 }
 
@@ -90,6 +95,23 @@ func (a *userDeviceService) GetUserDeviceByEthAddr(ctx context.Context, ethAddr 
 	}
 
 	return userDevice, nil
+}
+
+func (a *userDeviceService) GetRawDeviceData(ctx context.Context, userDeviceID string) (*gdata.RawDeviceDataResponse, error) {
+	conn, err := grpc.Dial(a.deviceDataGRPCAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return nil, err
+	}
+	client := gdata.NewUserDeviceDataServiceClient(conn)
+
+	data, err := client.GetRawDeviceData(ctx, &gdata.RawDeviceDataRequest{
+		UserDeviceId:  userDeviceID,
+		IntegrationId: nil, // not needed, this will return all
+	})
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
 }
 
 func (a *userDeviceService) getDeviceGrpcClient() (pb.UserDeviceServiceClient, *grpc.ClientConn, error) {
