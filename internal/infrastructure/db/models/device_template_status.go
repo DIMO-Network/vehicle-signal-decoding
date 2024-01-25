@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/friendsofgo/errors"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -23,12 +24,13 @@ import (
 
 // DeviceTemplateStatus is an object representing the database table.
 type DeviceTemplateStatus struct {
-	DeviceEthAddr       []byte    `boil:"device_eth_addr" json:"device_eth_addr" toml:"device_eth_addr" yaml:"device_eth_addr"`
-	TemplateDBCURL      string    `boil:"template_dbc_url" json:"template_dbc_url" toml:"template_dbc_url" yaml:"template_dbc_url"`
-	TemplatePidURL      string    `boil:"template_pid_url" json:"template_pid_url" toml:"template_pid_url" yaml:"template_pid_url"`
-	TemplateSettingsURL string    `boil:"template_settings_url" json:"template_settings_url" toml:"template_settings_url" yaml:"template_settings_url"`
-	CreatedAt           time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	UpdatedAt           time.Time `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	DeviceEthAddr       []byte      `boil:"device_eth_addr" json:"device_eth_addr" toml:"device_eth_addr" yaml:"device_eth_addr"`
+	TemplateDBCURL      null.String `boil:"template_dbc_url" json:"template_dbc_url,omitempty" toml:"template_dbc_url" yaml:"template_dbc_url,omitempty"`
+	TemplatePidURL      null.String `boil:"template_pid_url" json:"template_pid_url,omitempty" toml:"template_pid_url" yaml:"template_pid_url,omitempty"`
+	TemplateSettingsURL null.String `boil:"template_settings_url" json:"template_settings_url,omitempty" toml:"template_settings_url" yaml:"template_settings_url,omitempty"`
+	FirmwareVersion     null.String `boil:"firmware_version" json:"firmware_version,omitempty" toml:"firmware_version" yaml:"firmware_version,omitempty"`
+	CreatedAt           time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UpdatedAt           time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
 
 	R *deviceTemplateStatusR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L deviceTemplateStatusL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -39,6 +41,7 @@ var DeviceTemplateStatusColumns = struct {
 	TemplateDBCURL      string
 	TemplatePidURL      string
 	TemplateSettingsURL string
+	FirmwareVersion     string
 	CreatedAt           string
 	UpdatedAt           string
 }{
@@ -46,6 +49,7 @@ var DeviceTemplateStatusColumns = struct {
 	TemplateDBCURL:      "template_dbc_url",
 	TemplatePidURL:      "template_pid_url",
 	TemplateSettingsURL: "template_settings_url",
+	FirmwareVersion:     "firmware_version",
 	CreatedAt:           "created_at",
 	UpdatedAt:           "updated_at",
 }
@@ -55,6 +59,7 @@ var DeviceTemplateStatusTableColumns = struct {
 	TemplateDBCURL      string
 	TemplatePidURL      string
 	TemplateSettingsURL string
+	FirmwareVersion     string
 	CreatedAt           string
 	UpdatedAt           string
 }{
@@ -62,6 +67,7 @@ var DeviceTemplateStatusTableColumns = struct {
 	TemplateDBCURL:      "device_template_status.template_dbc_url",
 	TemplatePidURL:      "device_template_status.template_pid_url",
 	TemplateSettingsURL: "device_template_status.template_settings_url",
+	FirmwareVersion:     "device_template_status.firmware_version",
 	CreatedAt:           "device_template_status.created_at",
 	UpdatedAt:           "device_template_status.updated_at",
 }
@@ -79,36 +85,28 @@ func (w whereHelper__byte) GTE(x []byte) qm.QueryMod { return qmhelper.Where(w.f
 
 var DeviceTemplateStatusWhere = struct {
 	DeviceEthAddr       whereHelper__byte
-	TemplateDBCURL      whereHelperstring
-	TemplatePidURL      whereHelperstring
-	TemplateSettingsURL whereHelperstring
+	TemplateDBCURL      whereHelpernull_String
+	TemplatePidURL      whereHelpernull_String
+	TemplateSettingsURL whereHelpernull_String
+	FirmwareVersion     whereHelpernull_String
 	CreatedAt           whereHelpertime_Time
 	UpdatedAt           whereHelpertime_Time
 }{
 	DeviceEthAddr:       whereHelper__byte{field: "\"vehicle_signal_decoding_api\".\"device_template_status\".\"device_eth_addr\""},
-	TemplateDBCURL:      whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"device_template_status\".\"template_dbc_url\""},
-	TemplatePidURL:      whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"device_template_status\".\"template_pid_url\""},
-	TemplateSettingsURL: whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"device_template_status\".\"template_settings_url\""},
+	TemplateDBCURL:      whereHelpernull_String{field: "\"vehicle_signal_decoding_api\".\"device_template_status\".\"template_dbc_url\""},
+	TemplatePidURL:      whereHelpernull_String{field: "\"vehicle_signal_decoding_api\".\"device_template_status\".\"template_pid_url\""},
+	TemplateSettingsURL: whereHelpernull_String{field: "\"vehicle_signal_decoding_api\".\"device_template_status\".\"template_settings_url\""},
+	FirmwareVersion:     whereHelpernull_String{field: "\"vehicle_signal_decoding_api\".\"device_template_status\".\"firmware_version\""},
 	CreatedAt:           whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"device_template_status\".\"created_at\""},
 	UpdatedAt:           whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"device_template_status\".\"updated_at\""},
 }
 
 // DeviceTemplateStatusRels is where relationship names are stored.
 var DeviceTemplateStatusRels = struct {
-	TemplateDBCURLTemplate      string
-	TemplatePidURLTemplate      string
-	TemplateSettingsURLTemplate string
-}{
-	TemplateDBCURLTemplate:      "TemplateDBCURLTemplate",
-	TemplatePidURLTemplate:      "TemplatePidURLTemplate",
-	TemplateSettingsURLTemplate: "TemplateSettingsURLTemplate",
-}
+}{}
 
 // deviceTemplateStatusR is where relationships are stored.
 type deviceTemplateStatusR struct {
-	TemplateDBCURLTemplate      *Template `boil:"TemplateDBCURLTemplate" json:"TemplateDBCURLTemplate" toml:"TemplateDBCURLTemplate" yaml:"TemplateDBCURLTemplate"`
-	TemplatePidURLTemplate      *Template `boil:"TemplatePidURLTemplate" json:"TemplatePidURLTemplate" toml:"TemplatePidURLTemplate" yaml:"TemplatePidURLTemplate"`
-	TemplateSettingsURLTemplate *Template `boil:"TemplateSettingsURLTemplate" json:"TemplateSettingsURLTemplate" toml:"TemplateSettingsURLTemplate" yaml:"TemplateSettingsURLTemplate"`
 }
 
 // NewStruct creates a new relationship struct
@@ -116,34 +114,13 @@ func (*deviceTemplateStatusR) NewStruct() *deviceTemplateStatusR {
 	return &deviceTemplateStatusR{}
 }
 
-func (r *deviceTemplateStatusR) GetTemplateDBCURLTemplate() *Template {
-	if r == nil {
-		return nil
-	}
-	return r.TemplateDBCURLTemplate
-}
-
-func (r *deviceTemplateStatusR) GetTemplatePidURLTemplate() *Template {
-	if r == nil {
-		return nil
-	}
-	return r.TemplatePidURLTemplate
-}
-
-func (r *deviceTemplateStatusR) GetTemplateSettingsURLTemplate() *Template {
-	if r == nil {
-		return nil
-	}
-	return r.TemplateSettingsURLTemplate
-}
-
 // deviceTemplateStatusL is where Load methods for each relationship are stored.
 type deviceTemplateStatusL struct{}
 
 var (
-	deviceTemplateStatusAllColumns            = []string{"device_eth_addr", "template_dbc_url", "template_pid_url", "template_settings_url", "created_at", "updated_at"}
-	deviceTemplateStatusColumnsWithoutDefault = []string{"device_eth_addr", "template_dbc_url", "template_pid_url", "template_settings_url"}
-	deviceTemplateStatusColumnsWithDefault    = []string{"created_at", "updated_at"}
+	deviceTemplateStatusAllColumns            = []string{"device_eth_addr", "template_dbc_url", "template_pid_url", "template_settings_url", "firmware_version", "created_at", "updated_at"}
+	deviceTemplateStatusColumnsWithoutDefault = []string{"device_eth_addr"}
+	deviceTemplateStatusColumnsWithDefault    = []string{"template_dbc_url", "template_pid_url", "template_settings_url", "firmware_version", "created_at", "updated_at"}
 	deviceTemplateStatusPrimaryKeyColumns     = []string{"device_eth_addr"}
 	deviceTemplateStatusGeneratedColumns      = []string{}
 )
@@ -424,540 +401,6 @@ func (q deviceTemplateStatusQuery) Exists(ctx context.Context, exec boil.Context
 	}
 
 	return count > 0, nil
-}
-
-// TemplateDBCURLTemplate pointed to by the foreign key.
-func (o *DeviceTemplateStatus) TemplateDBCURLTemplate(mods ...qm.QueryMod) templateQuery {
-	queryMods := []qm.QueryMod{
-		qm.Where("\"template_name\" = ?", o.TemplateDBCURL),
-	}
-
-	queryMods = append(queryMods, mods...)
-
-	return Templates(queryMods...)
-}
-
-// TemplatePidURLTemplate pointed to by the foreign key.
-func (o *DeviceTemplateStatus) TemplatePidURLTemplate(mods ...qm.QueryMod) templateQuery {
-	queryMods := []qm.QueryMod{
-		qm.Where("\"template_name\" = ?", o.TemplatePidURL),
-	}
-
-	queryMods = append(queryMods, mods...)
-
-	return Templates(queryMods...)
-}
-
-// TemplateSettingsURLTemplate pointed to by the foreign key.
-func (o *DeviceTemplateStatus) TemplateSettingsURLTemplate(mods ...qm.QueryMod) templateQuery {
-	queryMods := []qm.QueryMod{
-		qm.Where("\"template_name\" = ?", o.TemplateSettingsURL),
-	}
-
-	queryMods = append(queryMods, mods...)
-
-	return Templates(queryMods...)
-}
-
-// LoadTemplateDBCURLTemplate allows an eager lookup of values, cached into the
-// loaded structs of the objects. This is for an N-1 relationship.
-func (deviceTemplateStatusL) LoadTemplateDBCURLTemplate(ctx context.Context, e boil.ContextExecutor, singular bool, maybeDeviceTemplateStatus interface{}, mods queries.Applicator) error {
-	var slice []*DeviceTemplateStatus
-	var object *DeviceTemplateStatus
-
-	if singular {
-		var ok bool
-		object, ok = maybeDeviceTemplateStatus.(*DeviceTemplateStatus)
-		if !ok {
-			object = new(DeviceTemplateStatus)
-			ok = queries.SetFromEmbeddedStruct(&object, &maybeDeviceTemplateStatus)
-			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeDeviceTemplateStatus))
-			}
-		}
-	} else {
-		s, ok := maybeDeviceTemplateStatus.(*[]*DeviceTemplateStatus)
-		if ok {
-			slice = *s
-		} else {
-			ok = queries.SetFromEmbeddedStruct(&slice, maybeDeviceTemplateStatus)
-			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeDeviceTemplateStatus))
-			}
-		}
-	}
-
-	args := make([]interface{}, 0, 1)
-	if singular {
-		if object.R == nil {
-			object.R = &deviceTemplateStatusR{}
-		}
-		args = append(args, object.TemplateDBCURL)
-
-	} else {
-	Outer:
-		for _, obj := range slice {
-			if obj.R == nil {
-				obj.R = &deviceTemplateStatusR{}
-			}
-
-			for _, a := range args {
-				if a == obj.TemplateDBCURL {
-					continue Outer
-				}
-			}
-
-			args = append(args, obj.TemplateDBCURL)
-
-		}
-	}
-
-	if len(args) == 0 {
-		return nil
-	}
-
-	query := NewQuery(
-		qm.From(`vehicle_signal_decoding_api.templates`),
-		qm.WhereIn(`vehicle_signal_decoding_api.templates.template_name in ?`, args...),
-	)
-	if mods != nil {
-		mods.Apply(query)
-	}
-
-	results, err := query.QueryContext(ctx, e)
-	if err != nil {
-		return errors.Wrap(err, "failed to eager load Template")
-	}
-
-	var resultSlice []*Template
-	if err = queries.Bind(results, &resultSlice); err != nil {
-		return errors.Wrap(err, "failed to bind eager loaded slice Template")
-	}
-
-	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results of eager load for templates")
-	}
-	if err = results.Err(); err != nil {
-		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for templates")
-	}
-
-	if len(templateAfterSelectHooks) != 0 {
-		for _, obj := range resultSlice {
-			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
-				return err
-			}
-		}
-	}
-
-	if len(resultSlice) == 0 {
-		return nil
-	}
-
-	if singular {
-		foreign := resultSlice[0]
-		object.R.TemplateDBCURLTemplate = foreign
-		if foreign.R == nil {
-			foreign.R = &templateR{}
-		}
-		foreign.R.TemplateDBCURLDeviceTemplateStatuses = append(foreign.R.TemplateDBCURLDeviceTemplateStatuses, object)
-		return nil
-	}
-
-	for _, local := range slice {
-		for _, foreign := range resultSlice {
-			if local.TemplateDBCURL == foreign.TemplateName {
-				local.R.TemplateDBCURLTemplate = foreign
-				if foreign.R == nil {
-					foreign.R = &templateR{}
-				}
-				foreign.R.TemplateDBCURLDeviceTemplateStatuses = append(foreign.R.TemplateDBCURLDeviceTemplateStatuses, local)
-				break
-			}
-		}
-	}
-
-	return nil
-}
-
-// LoadTemplatePidURLTemplate allows an eager lookup of values, cached into the
-// loaded structs of the objects. This is for an N-1 relationship.
-func (deviceTemplateStatusL) LoadTemplatePidURLTemplate(ctx context.Context, e boil.ContextExecutor, singular bool, maybeDeviceTemplateStatus interface{}, mods queries.Applicator) error {
-	var slice []*DeviceTemplateStatus
-	var object *DeviceTemplateStatus
-
-	if singular {
-		var ok bool
-		object, ok = maybeDeviceTemplateStatus.(*DeviceTemplateStatus)
-		if !ok {
-			object = new(DeviceTemplateStatus)
-			ok = queries.SetFromEmbeddedStruct(&object, &maybeDeviceTemplateStatus)
-			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeDeviceTemplateStatus))
-			}
-		}
-	} else {
-		s, ok := maybeDeviceTemplateStatus.(*[]*DeviceTemplateStatus)
-		if ok {
-			slice = *s
-		} else {
-			ok = queries.SetFromEmbeddedStruct(&slice, maybeDeviceTemplateStatus)
-			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeDeviceTemplateStatus))
-			}
-		}
-	}
-
-	args := make([]interface{}, 0, 1)
-	if singular {
-		if object.R == nil {
-			object.R = &deviceTemplateStatusR{}
-		}
-		args = append(args, object.TemplatePidURL)
-
-	} else {
-	Outer:
-		for _, obj := range slice {
-			if obj.R == nil {
-				obj.R = &deviceTemplateStatusR{}
-			}
-
-			for _, a := range args {
-				if a == obj.TemplatePidURL {
-					continue Outer
-				}
-			}
-
-			args = append(args, obj.TemplatePidURL)
-
-		}
-	}
-
-	if len(args) == 0 {
-		return nil
-	}
-
-	query := NewQuery(
-		qm.From(`vehicle_signal_decoding_api.templates`),
-		qm.WhereIn(`vehicle_signal_decoding_api.templates.template_name in ?`, args...),
-	)
-	if mods != nil {
-		mods.Apply(query)
-	}
-
-	results, err := query.QueryContext(ctx, e)
-	if err != nil {
-		return errors.Wrap(err, "failed to eager load Template")
-	}
-
-	var resultSlice []*Template
-	if err = queries.Bind(results, &resultSlice); err != nil {
-		return errors.Wrap(err, "failed to bind eager loaded slice Template")
-	}
-
-	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results of eager load for templates")
-	}
-	if err = results.Err(); err != nil {
-		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for templates")
-	}
-
-	if len(templateAfterSelectHooks) != 0 {
-		for _, obj := range resultSlice {
-			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
-				return err
-			}
-		}
-	}
-
-	if len(resultSlice) == 0 {
-		return nil
-	}
-
-	if singular {
-		foreign := resultSlice[0]
-		object.R.TemplatePidURLTemplate = foreign
-		if foreign.R == nil {
-			foreign.R = &templateR{}
-		}
-		foreign.R.TemplatePidURLDeviceTemplateStatuses = append(foreign.R.TemplatePidURLDeviceTemplateStatuses, object)
-		return nil
-	}
-
-	for _, local := range slice {
-		for _, foreign := range resultSlice {
-			if local.TemplatePidURL == foreign.TemplateName {
-				local.R.TemplatePidURLTemplate = foreign
-				if foreign.R == nil {
-					foreign.R = &templateR{}
-				}
-				foreign.R.TemplatePidURLDeviceTemplateStatuses = append(foreign.R.TemplatePidURLDeviceTemplateStatuses, local)
-				break
-			}
-		}
-	}
-
-	return nil
-}
-
-// LoadTemplateSettingsURLTemplate allows an eager lookup of values, cached into the
-// loaded structs of the objects. This is for an N-1 relationship.
-func (deviceTemplateStatusL) LoadTemplateSettingsURLTemplate(ctx context.Context, e boil.ContextExecutor, singular bool, maybeDeviceTemplateStatus interface{}, mods queries.Applicator) error {
-	var slice []*DeviceTemplateStatus
-	var object *DeviceTemplateStatus
-
-	if singular {
-		var ok bool
-		object, ok = maybeDeviceTemplateStatus.(*DeviceTemplateStatus)
-		if !ok {
-			object = new(DeviceTemplateStatus)
-			ok = queries.SetFromEmbeddedStruct(&object, &maybeDeviceTemplateStatus)
-			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeDeviceTemplateStatus))
-			}
-		}
-	} else {
-		s, ok := maybeDeviceTemplateStatus.(*[]*DeviceTemplateStatus)
-		if ok {
-			slice = *s
-		} else {
-			ok = queries.SetFromEmbeddedStruct(&slice, maybeDeviceTemplateStatus)
-			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeDeviceTemplateStatus))
-			}
-		}
-	}
-
-	args := make([]interface{}, 0, 1)
-	if singular {
-		if object.R == nil {
-			object.R = &deviceTemplateStatusR{}
-		}
-		args = append(args, object.TemplateSettingsURL)
-
-	} else {
-	Outer:
-		for _, obj := range slice {
-			if obj.R == nil {
-				obj.R = &deviceTemplateStatusR{}
-			}
-
-			for _, a := range args {
-				if a == obj.TemplateSettingsURL {
-					continue Outer
-				}
-			}
-
-			args = append(args, obj.TemplateSettingsURL)
-
-		}
-	}
-
-	if len(args) == 0 {
-		return nil
-	}
-
-	query := NewQuery(
-		qm.From(`vehicle_signal_decoding_api.templates`),
-		qm.WhereIn(`vehicle_signal_decoding_api.templates.template_name in ?`, args...),
-	)
-	if mods != nil {
-		mods.Apply(query)
-	}
-
-	results, err := query.QueryContext(ctx, e)
-	if err != nil {
-		return errors.Wrap(err, "failed to eager load Template")
-	}
-
-	var resultSlice []*Template
-	if err = queries.Bind(results, &resultSlice); err != nil {
-		return errors.Wrap(err, "failed to bind eager loaded slice Template")
-	}
-
-	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results of eager load for templates")
-	}
-	if err = results.Err(); err != nil {
-		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for templates")
-	}
-
-	if len(templateAfterSelectHooks) != 0 {
-		for _, obj := range resultSlice {
-			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
-				return err
-			}
-		}
-	}
-
-	if len(resultSlice) == 0 {
-		return nil
-	}
-
-	if singular {
-		foreign := resultSlice[0]
-		object.R.TemplateSettingsURLTemplate = foreign
-		if foreign.R == nil {
-			foreign.R = &templateR{}
-		}
-		foreign.R.TemplateSettingsURLDeviceTemplateStatuses = append(foreign.R.TemplateSettingsURLDeviceTemplateStatuses, object)
-		return nil
-	}
-
-	for _, local := range slice {
-		for _, foreign := range resultSlice {
-			if local.TemplateSettingsURL == foreign.TemplateName {
-				local.R.TemplateSettingsURLTemplate = foreign
-				if foreign.R == nil {
-					foreign.R = &templateR{}
-				}
-				foreign.R.TemplateSettingsURLDeviceTemplateStatuses = append(foreign.R.TemplateSettingsURLDeviceTemplateStatuses, local)
-				break
-			}
-		}
-	}
-
-	return nil
-}
-
-// SetTemplateDBCURLTemplate of the deviceTemplateStatus to the related item.
-// Sets o.R.TemplateDBCURLTemplate to related.
-// Adds o to related.R.TemplateDBCURLDeviceTemplateStatuses.
-func (o *DeviceTemplateStatus) SetTemplateDBCURLTemplate(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Template) error {
-	var err error
-	if insert {
-		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
-			return errors.Wrap(err, "failed to insert into foreign table")
-		}
-	}
-
-	updateQuery := fmt.Sprintf(
-		"UPDATE \"vehicle_signal_decoding_api\".\"device_template_status\" SET %s WHERE %s",
-		strmangle.SetParamNames("\"", "\"", 1, []string{"template_dbc_url"}),
-		strmangle.WhereClause("\"", "\"", 2, deviceTemplateStatusPrimaryKeyColumns),
-	)
-	values := []interface{}{related.TemplateName, o.DeviceEthAddr}
-
-	if boil.IsDebug(ctx) {
-		writer := boil.DebugWriterFrom(ctx)
-		fmt.Fprintln(writer, updateQuery)
-		fmt.Fprintln(writer, values)
-	}
-	if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
-		return errors.Wrap(err, "failed to update local table")
-	}
-
-	o.TemplateDBCURL = related.TemplateName
-	if o.R == nil {
-		o.R = &deviceTemplateStatusR{
-			TemplateDBCURLTemplate: related,
-		}
-	} else {
-		o.R.TemplateDBCURLTemplate = related
-	}
-
-	if related.R == nil {
-		related.R = &templateR{
-			TemplateDBCURLDeviceTemplateStatuses: DeviceTemplateStatusSlice{o},
-		}
-	} else {
-		related.R.TemplateDBCURLDeviceTemplateStatuses = append(related.R.TemplateDBCURLDeviceTemplateStatuses, o)
-	}
-
-	return nil
-}
-
-// SetTemplatePidURLTemplate of the deviceTemplateStatus to the related item.
-// Sets o.R.TemplatePidURLTemplate to related.
-// Adds o to related.R.TemplatePidURLDeviceTemplateStatuses.
-func (o *DeviceTemplateStatus) SetTemplatePidURLTemplate(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Template) error {
-	var err error
-	if insert {
-		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
-			return errors.Wrap(err, "failed to insert into foreign table")
-		}
-	}
-
-	updateQuery := fmt.Sprintf(
-		"UPDATE \"vehicle_signal_decoding_api\".\"device_template_status\" SET %s WHERE %s",
-		strmangle.SetParamNames("\"", "\"", 1, []string{"template_pid_url"}),
-		strmangle.WhereClause("\"", "\"", 2, deviceTemplateStatusPrimaryKeyColumns),
-	)
-	values := []interface{}{related.TemplateName, o.DeviceEthAddr}
-
-	if boil.IsDebug(ctx) {
-		writer := boil.DebugWriterFrom(ctx)
-		fmt.Fprintln(writer, updateQuery)
-		fmt.Fprintln(writer, values)
-	}
-	if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
-		return errors.Wrap(err, "failed to update local table")
-	}
-
-	o.TemplatePidURL = related.TemplateName
-	if o.R == nil {
-		o.R = &deviceTemplateStatusR{
-			TemplatePidURLTemplate: related,
-		}
-	} else {
-		o.R.TemplatePidURLTemplate = related
-	}
-
-	if related.R == nil {
-		related.R = &templateR{
-			TemplatePidURLDeviceTemplateStatuses: DeviceTemplateStatusSlice{o},
-		}
-	} else {
-		related.R.TemplatePidURLDeviceTemplateStatuses = append(related.R.TemplatePidURLDeviceTemplateStatuses, o)
-	}
-
-	return nil
-}
-
-// SetTemplateSettingsURLTemplate of the deviceTemplateStatus to the related item.
-// Sets o.R.TemplateSettingsURLTemplate to related.
-// Adds o to related.R.TemplateSettingsURLDeviceTemplateStatuses.
-func (o *DeviceTemplateStatus) SetTemplateSettingsURLTemplate(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Template) error {
-	var err error
-	if insert {
-		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
-			return errors.Wrap(err, "failed to insert into foreign table")
-		}
-	}
-
-	updateQuery := fmt.Sprintf(
-		"UPDATE \"vehicle_signal_decoding_api\".\"device_template_status\" SET %s WHERE %s",
-		strmangle.SetParamNames("\"", "\"", 1, []string{"template_settings_url"}),
-		strmangle.WhereClause("\"", "\"", 2, deviceTemplateStatusPrimaryKeyColumns),
-	)
-	values := []interface{}{related.TemplateName, o.DeviceEthAddr}
-
-	if boil.IsDebug(ctx) {
-		writer := boil.DebugWriterFrom(ctx)
-		fmt.Fprintln(writer, updateQuery)
-		fmt.Fprintln(writer, values)
-	}
-	if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
-		return errors.Wrap(err, "failed to update local table")
-	}
-
-	o.TemplateSettingsURL = related.TemplateName
-	if o.R == nil {
-		o.R = &deviceTemplateStatusR{
-			TemplateSettingsURLTemplate: related,
-		}
-	} else {
-		o.R.TemplateSettingsURLTemplate = related
-	}
-
-	if related.R == nil {
-		related.R = &templateR{
-			TemplateSettingsURLDeviceTemplateStatuses: DeviceTemplateStatusSlice{o},
-		}
-	} else {
-		related.R.TemplateSettingsURLDeviceTemplateStatuses = append(related.R.TemplateSettingsURLDeviceTemplateStatuses, o)
-	}
-
-	return nil
 }
 
 // DeviceTemplateStatuses retrieves all the records using an executor.

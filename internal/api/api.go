@@ -150,7 +150,8 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 
 	v1.Get("/device-config/vin/:vin/urls", deviceConfigController.GetConfigURLsFromVIN)
 	v1.Get("/device-config/eth-addr/:ethAddr/urls", deviceConfigController.GetConfigURLsFromEthAddr)
-	v1.Get("/device-config/eth-addr/:ethAddr/status", deviceConfigController.GetConfigStatusFromEthAddr)
+	v1.Get("/device-config/eth-addr/:ethAddr/status", deviceConfigController.GetConfigStatusByEthAddr)
+	v1.Patch("/device-config/eth-addr/:ethAddr/status", deviceConfigController.PatchConfigStatusByEthAddr)
 
 	v1.Get("/device-config/:templateName/pids", deviceConfigController.GetPIDsByTemplate)
 	v1.Get("/device-config/settings/:name", deviceConfigController.GetDeviceSettingsByName)

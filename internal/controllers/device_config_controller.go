@@ -1,15 +1,17 @@
 package controllers
 
 import (
-	"bytes"
 	"database/sql"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"github.com/DIMO-Network/shared"
 	common2 "github.com/ethereum/go-ethereum/common"
-	"github.com/volatiletech/null/v8"
-	"github.com/volatiletech/sqlboiler/v4/boil"
+	"github.com/rogpeppe/go-internal/semver"
+	"github.com/tidwall/gjson"
+	"io"
 	"strings"
+	"time"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/common"
 
@@ -34,10 +36,15 @@ type DeviceConfigController struct {
 	userDeviceSvc         services.UserDeviceService
 	deviceDefSvc          services.DeviceDefinitionsService
 	deviceTemplateService services.DeviceTemplateService
+	fwVersionApi          shared.HTTPClientWrapper
 }
+
+const latestFirmwareURL = "https://binaries.dimo.zone/DIMO-Network/Macaron/releases/latest"
 
 // NewDeviceConfigController constructor
 func NewDeviceConfigController(settings *config.Settings, logger *zerolog.Logger, database *sql.DB, userDeviceSvc services.UserDeviceService, deviceDefSvc services.DeviceDefinitionsService, deviceTemplateService services.DeviceTemplateService) DeviceConfigController {
+	fwVersionApi, _ := shared.NewHTTPClientWrapper(latestFirmwareURL, "", 10*time.Second, nil, true)
+
 	return DeviceConfigController{
 		settings:              settings,
 		log:                   logger,
@@ -45,6 +52,7 @@ func NewDeviceConfigController(settings *config.Settings, logger *zerolog.Logger
 		userDeviceSvc:         userDeviceSvc,
 		deviceDefSvc:          deviceDefSvc,
 		deviceTemplateService: deviceTemplateService,
+		fwVersionApi:          fwVersionApi,
 	}
 
 }
@@ -334,57 +342,97 @@ func (d *DeviceConfigController) GetConfigURLsFromEthAddr(c *fiber.Ctx) error {
 	return c.JSON(response)
 }
 
-// GetConfigStatusFromEthAddr godoc
+// GetConfigStatusByEthAddr godoc
 // @Description  Helps client determine if template (pids, dbc, settings) are up to date or not for the device with the given eth addr.
-// @Tags         vehicle-signal-decoding
+// @Tags         device-config
 // @Produce      json
 // @Success      200 {object} DeviceTemplateStatusResponse "Successfully retrieved configuration URLs"
 // @Failure 404  "Not Found - we haven't seen this device yet, assume template not up to date"
 // @Failure 400  "incorrect eth addr format"
 // @Param        ethAddr  path   string  true  "Ethereum Address"
 // @Router       /device-config/eth-addr/{ethAddr}/status [get]
-func (d *DeviceConfigController) GetConfigStatusFromEthAddr(c *fiber.Ctx) error {
+func (d *DeviceConfigController) GetConfigStatusByEthAddr(c *fiber.Ctx) error {
 	ethAddr := c.Params("ethAddr")
-	// we need to get the user-device so we can find the VIN that was paired to the eth addr.
-	// an improvement here would be for the mobile app to confirm templates were installed to a specific eth addr
+	addr := common2.HexToAddress(ethAddr)
+	// do we really need this?
 	ud, err := d.userDeviceSvc.GetUserDeviceByEthAddr(c.Context(), ethAddr)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": fmt.Sprintf("no connected user device found for EthAddr: %s", ethAddr)})
 	}
-
+	// figure out what the config should be
 	deviceConfiguration, err := d.deviceTemplateService.ResolveDeviceConfiguration(c, ud)
 	if err != nil {
 		return err
 	}
 
-	dts, err := models.DeviceTemplateStatuses(models.DeviceTemplateStatusWhere.Vin.EQ(*ud.Vin)).One(c.Context(), d.db)
+	dts, err := models.DeviceTemplateStatuses(models.DeviceTemplateStatusWhere.DeviceEthAddr.EQ(addr.Bytes())).One(c.Context(), d.db)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return fiber.NewError(fiber.StatusNotFound, "haven't seen device with eth addr yet: "+ethAddr)
 		}
 		return err
 	}
-	// set the eth addr for record keeping, may come in handy later
-	if !bytes.Equal(dts.DeviceEthAddr.Bytes, common2.HexToAddress(ethAddr).Bytes()) {
-		dts.DeviceEthAddr = null.BytesFrom(common2.HexToAddress(ethAddr).Bytes())
-		_, _ = dts.Update(c.Context(), d.db, boil.Infer())
-	}
 
 	isTemplateUpdated := false
 	// if all this is true then we know we're up to date
-	if dts.TemplateDBCURL == deviceConfiguration.DbcURL &&
-		dts.TemplatePidURL == deviceConfiguration.PidURL &&
-		dts.TemplateSettingURL == deviceConfiguration.DeviceSettingURL {
+	if dts.TemplateDBCURL.String == deviceConfiguration.DbcURL &&
+		dts.TemplatePidURL.String == deviceConfiguration.PidURL &&
+		dts.TemplateSettingsURL.String == deviceConfiguration.DeviceSettingURL {
 
 		isTemplateUpdated = true
 	}
+	// get latest fw version. at some point will need to know device hw type to know this better
+	res, err := d.fwVersionApi.ExecuteRequest("", "GET", nil)
+	if err != nil {
+		return errors.Wrap(err, "unable to get latest macaron firmware")
+	}
+	defer res.Body.Close()
+	body, _ := io.ReadAll(res.Body)
+	latestFirmwareStr := gjson.GetBytes(body, "name").Str
 
 	return c.JSON(DeviceTemplateStatusResponse{
 		IsTemplateUpToDate:         isTemplateUpdated,
-		IsFirmwareUpToDate:         true, // todo
-		FirmwareVersionFromDevice:  "",   // todo
-		FirmwareVersionLastApplied: "",   // todo
+		IsFirmwareUpToDate:         semver.Compare(latestFirmwareStr, dts.FirmwareVersion.String) > 0,
+		FirmwareVersionFromDevice:  "", // todo future
+		FirmwareVersionLastApplied: dts.FirmwareVersion.String,
 	})
+}
+
+// PatchConfigStatusByEthAddr godoc
+// @Description  Set what template and/or firmware was applied. None of the properties are required. Will not be set if not passed in.
+// @Tags         device-config
+// @Produce      json
+// @Success      200 "Successfully updated"
+// @Failure 500  "unable to parse request or storage failure"
+// @Param        ethAddr  path   string  true  "Ethereum Address"
+// @Router       /device-config/eth-addr/{ethAddr}/status [patch]
+func (d *DeviceConfigController) PatchConfigStatusByEthAddr(c *fiber.Ctx) error {
+	ethAddr := c.Params("ethAddr")
+	addr := common2.HexToAddress(ethAddr)
+
+	payload := DeviceTemplateStatusPatch{}
+	err := c.BodyParser(&payload)
+	if err != nil {
+		return err
+	}
+
+	_, err = d.deviceTemplateService.StoreLastTemplateRequested(c.Context(), addr, payload.DBCFileURL, payload.PidsURL, payload.SettingsURL, payload.FirmwareVersionApplied)
+	if err != nil {
+		return err
+	}
+
+	return c.SendStatus(fiber.StatusOK)
+}
+
+type DeviceTemplateStatusPatch struct {
+	// SettingsURL template settings url with version as returned from api
+	SettingsURL *string `json:"templateSettingsURL"`
+	// PidsURL template pids url with version as returned from api
+	PidsURL *string `json:"pidsURL"`
+	// DBCFileURL template dbc file url with version as returned from api
+	DBCFileURL *string `json:"DBCFileURL"`
+	// FirmwareVersionApplied version of firmware that was confirmed installed on device
+	FirmwareVersionApplied *string `json:"firmwareVersionApplied"`
 }
 
 func padByteArray(input []byte, targetLength int) []byte {

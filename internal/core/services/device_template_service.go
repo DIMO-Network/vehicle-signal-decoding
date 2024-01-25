@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	common2 "github.com/ethereum/go-ethereum/common"
+	"github.com/volatiletech/null/v8"
 	"strings"
 
 	localmodels "github.com/DIMO-Network/vehicle-signal-decoding/internal/core/models"
@@ -26,7 +27,7 @@ import (
 
 //go:generate mockgen -source device_template_service.go -destination mocks/device_template_service_mock.go
 type DeviceTemplateService interface {
-	StoreLastTemplateRequested(ctx context.Context, address common2.Address, templateDbcURL, templatePidURL, templateSettingURL string) (*models.DeviceTemplateStatus, error)
+	StoreLastTemplateRequested(ctx context.Context, address common2.Address, dbcURL, pidURL, settingURL, firmwareVersion *string) (*models.DeviceTemplateStatus, error)
 	ResolveDeviceConfiguration(c *fiber.Ctx, ud *pb.UserDevice) (*localmodels.DeviceConfigResponse, error)
 }
 
@@ -47,7 +48,7 @@ func NewDeviceTemplateService(database *sql.DB, deviceDefSvc DeviceDefinitionsSe
 }
 
 // StoreLastTemplateRequested - will change considerably -  stores the last template urls & version requested for a given vin
-func (dts *deviceTemplateService) StoreLastTemplateRequested(ctx context.Context, address common2.Address, templateDbcURL, templatePidURL, templateSettingURL string) (*models.DeviceTemplateStatus, error) {
+func (dts *deviceTemplateService) StoreLastTemplateRequested(ctx context.Context, address common2.Address, dbcURL, pidURL, settingURL, firmwareVersion *string) (*models.DeviceTemplateStatus, error) {
 
 	dt, err := models.DeviceTemplateStatuses(models.DeviceTemplateStatusWhere.DeviceEthAddr.EQ(address.Bytes())).
 		One(ctx, dts.db)
@@ -55,25 +56,25 @@ func (dts *deviceTemplateService) StoreLastTemplateRequested(ctx context.Context
 		return nil, err
 	}
 
-	if dt != nil && dt.TemplateVersion != version && dt.TemplateSettingURL != templateSettingURL {
-		dt.TemplateVersion = version
-		dt.TemplateSettingURL = templateSettingURL
-		dt.TemplateDBCURL = templateDbcURL
-		dt.TemplatePidURL = templatePidURL
+	if dt != nil {
+		// update
+		dt.TemplateSettingsURL = null.StringFromPtr(settingURL)
+		dt.TemplateDBCURL = null.StringFromPtr(dbcURL)
+		dt.TemplatePidURL = null.StringFromPtr(pidURL)
+		dt.FirmwareVersion = null.StringFromPtr(firmwareVersion)
 
 		if _, err = dt.Update(ctx, dts.db, boil.Infer()); err != nil {
 			return nil, err
 		}
-	}
-
-	if dt == nil {
+	} else {
+		// create
 		dt = &models.DeviceTemplateStatus{
-			Vin:                vin,
-			TemplateDBCURL:     templateDbcURL,
-			TemplatePidURL:     templatePidURL,
-			TemplateSettingURL: templateSettingURL,
+			DeviceEthAddr:       address.Bytes(),
+			TemplateDBCURL:      null.StringFromPtr(dbcURL),
+			TemplatePidURL:      null.StringFromPtr(pidURL),
+			TemplateSettingsURL: null.StringFromPtr(settingURL),
+			FirmwareVersion:     null.StringFromPtr(firmwareVersion),
 		}
-
 		if err = dt.Insert(ctx, dts.db, boil.Infer()); err != nil {
 			return nil, err
 		}
