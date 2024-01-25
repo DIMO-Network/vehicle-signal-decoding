@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/appmodels"
+
 	gdata "github.com/DIMO-Network/device-data-api/pkg/grpc"
 
 	"github.com/DIMO-Network/shared"
@@ -67,12 +69,6 @@ type DeviceTemplateStatusResponse struct {
 	IsTemplateUpToDate bool   `json:"isTemplateUpToDate"`
 	FirmwareVersion    string `json:"firmwareVersion,omitempty"`
 	IsFirmwareUpToDate bool   `json:"isFirmwareUpToDate"`
-}
-
-type SettingsData struct {
-	SafetyCutOutVoltage             float64 `json:"safety_cut_out_voltage"`
-	SleepTimerEventDrivenPeriodSecs float64 `json:"sleep_timer_event_driven_period_secs"`
-	WakeTriggerVoltageLevel         float64 `json:"wake_trigger_voltage_level"`
 }
 
 func bytesToUint32(b []byte) (uint32, error) {
@@ -210,7 +206,7 @@ func (d *DeviceConfigController) GetDeviceSettingsByName(c *fiber.Ctx) error {
 	}
 
 	// Deserialize the settings JSONB into the SettingsData struct
-	var settings SettingsData
+	var settings appmodels.SettingsData
 	if dbDeviceSettings.Settings.Valid {
 		jsonBytes, err := dbDeviceSettings.Settings.MarshalJSON()
 		if err != nil {
@@ -435,7 +431,7 @@ func (d *DeviceConfigController) PatchConfigStatusByEthAddr(c *fiber.Ctx) error 
 		return err
 	}
 
-	_, err = d.deviceTemplateService.StoreLastTemplateRequested(c.Context(), addr, payload.DBCFileURL, payload.PidsURL, payload.SettingsURL, payload.FirmwareVersionApplied)
+	_, err = d.deviceTemplateService.StoreLastTemplateRequested(c.Context(), addr, payload.DbcURL, payload.PidsURL, payload.SettingsURL, payload.FirmwareVersionApplied)
 	if err != nil {
 		return err
 	}
@@ -466,11 +462,11 @@ func parseOutTemplateAndVersion(templateNameWithVersion string) (string, string)
 
 type DeviceTemplateStatusPatch struct {
 	// SettingsURL template settings url with version as returned from api
-	SettingsURL *string `json:"settingsURL"`
+	SettingsURL *string `json:"settingsUrl"`
 	// PidsURL template pids url with version as returned from api
-	PidsURL *string `json:"pidsURL"`
+	PidsURL *string `json:"pidsUrl"`
 	// DBCFileURL template dbc file url with version as returned from api
-	DBCFileURL *string `json:"DBCFileURL"`
+	DbcURL *string `json:"dbcUrl"`
 	// FirmwareVersionApplied version of firmware that was confirmed installed on device
 	FirmwareVersionApplied *string `json:"firmwareVersionApplied"`
 }

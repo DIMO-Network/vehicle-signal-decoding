@@ -228,7 +228,7 @@ func getS3ServiceClient(ctx context.Context, settings *config.Settings, logger z
 
 	s3ServiceClient := s3.NewFromConfig(cfg, func(o *s3.Options) {
 		o.Region = settings.AWSRegion
-		o.Credentials = credentials.NewStaticCredentialsProvider(settings.CandumpsAWSAccessKeyID, settings.CandumpsAWSSecretsAccessKey, "")
+		o.Credentials = credentials.NewStaticCredentialsProvider(settings.CandumpsAWSAccessKeyID, settings.CandumpsAWSSecretAccessKey, "")
 	})
 
 	return s3ServiceClient

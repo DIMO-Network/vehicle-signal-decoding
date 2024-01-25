@@ -7,6 +7,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/appmodels"
+
 	"github.com/volatiletech/null/v8"
 
 	"github.com/DIMO-Network/shared/db"
@@ -25,7 +27,7 @@ func NewUpdateDeviceSettingsCommandHandler(dbs func() *db.ReaderWriter) UpdateDe
 
 type UpdateDeviceSettingsCommandRequest struct {
 	Name     string
-	Settings SettingsData `json:"settings"`
+	Settings appmodels.SettingsData `json:"settings"`
 }
 
 type UpdateDeviceSettingsCommandResponse struct {

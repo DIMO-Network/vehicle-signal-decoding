@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/appmodels"
+
 	"github.com/volatiletech/null/v8"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
@@ -22,15 +24,9 @@ func NewCreateDeviceSettingsCommandHandler(dbs func() *db.ReaderWriter) CreateDe
 	return CreateDeviceSettingsCommandHandler{DBS: dbs}
 }
 
-type SettingsData struct {
-	SafetyCutOutVoltage             float64 `json:"safety_cut_out_voltage"`
-	SleepTimerEventDrivenPeriodSecs float64 `json:"sleep_timer_event_driven_period_secs"`
-	WakeTriggerVoltageLevel         float64 `json:"wake_trigger_voltage_level"`
-}
-
 type CreateDeviceSettingsCommandRequest struct {
 	Name     string
-	Settings SettingsData `json:"settings"`
+	Settings appmodels.SettingsData `json:"settings"`
 }
 
 type CreateDeviceSettingsCommandResponse struct {

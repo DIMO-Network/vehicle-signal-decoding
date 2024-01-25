@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/appmodels"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -30,7 +32,7 @@ func (s *DeviceSettingsConfigService) CreateDeviceSettings(ctx context.Context, 
 	service := commands.NewCreateDeviceSettingsCommandHandler(s.dbs)
 
 	// Deserialize the JSON settings into SettingsData
-	var settingsData commands.SettingsData
+	var settingsData appmodels.SettingsData
 	err := json.Unmarshal([]byte(in.DeviceSettings.Settings), &settingsData)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Failed to parse settings JSON: %v", err)
@@ -52,7 +54,7 @@ func (s *DeviceSettingsConfigService) UpdateDeviceSettings(ctx context.Context, 
 	service := commands.NewUpdateDeviceSettingsCommandHandler(s.dbs)
 
 	// Deserialize the JSON settings into SettingsData
-	var settingsData commands.SettingsData
+	var settingsData appmodels.SettingsData
 	err := json.Unmarshal([]byte(in.DeviceSettings.Settings), &settingsData)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Failed to parse settings JSON: %v", err)
