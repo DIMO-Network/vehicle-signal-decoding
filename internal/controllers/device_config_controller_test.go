@@ -9,15 +9,16 @@ import (
 	"os"
 	"testing"
 
-	localmodels "github.com/DIMO-Network/vehicle-signal-decoding/internal/core/models"
+	gdata "github.com/DIMO-Network/device-data-api/pkg/grpc"
+	_ "github.com/lib/pq"
+
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/appmodels"
 
 	"github.com/DIMO-Network/shared/db"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
 
 	"github.com/volatiletech/null/v8"
-
-	_ "github.com/lib/pq"
 
 	"github.com/volatiletech/sqlboiler/v4/types"
 
@@ -270,12 +271,9 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_EmptyDBC() {
 	err = ds.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
 	require.NoError(s.T(), err)
 
-	s.mockDeviceTemplateSvc.EXPECT().StoreLastTemplateRequested(gomock.Any(), vin, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-		Return(&models.DeviceTemplateStatus{}, nil)
-	s.mockDeviceTemplateSvc.EXPECT().ResolveDeviceConfiguration(gomock.Any(), mockedUserDevice).Return(&localmodels.DeviceConfigResponse{
-		PidURL:           "http://localhost:3000/v1/device-config/some-template-emptydbc/pids",
-		DeviceSettingURL: "http://localhost:3000/v1/device-config/settings/default-hev-emptydbc",
-		Version:          "1.0",
+	s.mockDeviceTemplateSvc.EXPECT().ResolveDeviceConfiguration(gomock.Any(), mockedUserDevice).Return(&appmodels.DeviceConfigResponse{
+		PidURL:           "http://localhost:3000/v1/device-config/pids/some-template-emptydbc@v1.0.0",
+		DeviceSettingURL: "http://localhost:3000/v1/device-config/settings/default-hev-emptydbc@v1.0.0",
 	}, nil)
 
 	s.app.Get("/config-urls/:vin", s.controller.GetConfigURLsFromVIN)
@@ -287,14 +285,13 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_EmptyDBC() {
 	body, _ := io.ReadAll(response.Body)
 	require.Equal(s.T(), fiber.StatusOK, response.StatusCode)
 
-	var receivedResp localmodels.DeviceConfigResponse
+	var receivedResp appmodels.DeviceConfigResponse
 	err = json.Unmarshal(body, &receivedResp)
 	require.NoError(s.T(), err)
 
-	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/%s/pids", template.TemplateName), receivedResp.PidURL)
-	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/settings/%s", ds.Name), receivedResp.DeviceSettingURL)
+	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/pids/%s@v1.0.0", template.TemplateName), receivedResp.PidURL)
+	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/settings/%s@v1.0.0", ds.Name), receivedResp.DeviceSettingURL)
 	assert.Empty(s.T(), receivedResp.DbcURL)
-	assert.Equal(s.T(), template.Version, receivedResp.Version)
 }
 
 func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_DecodeVIN() {
@@ -340,12 +337,10 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_DecodeVIN() {
 		Vin:                &vin,
 		DeviceDefinitionId: mockedDeviceDefinition.DeviceDefinitionId,
 		//PowerTrainType:     "HEV",
-	}).Return(&localmodels.DeviceConfigResponse{
-		PidURL:           "http://localhost:3000/v1/device-config/some-template/pids",
-		DeviceSettingURL: "http://localhost:3000/v1/device-config/settings/default-hev",
-		Version:          "1.0",
+	}).Return(&appmodels.DeviceConfigResponse{
+		PidURL:           "http://localhost:3000/v1/device-config/pids/some-template@v1.0.0",
+		DeviceSettingURL: "http://localhost:3000/v1/device-config/settings/default-hev@v1.0.0",
 	}, nil)
-	s.mockDeviceTemplateSvc.EXPECT().StoreLastTemplateRequested(gomock.Any(), vin, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(&models.DeviceTemplateStatus{}, nil)
 	s.app.Get("/config-urls/:vin", s.controller.GetConfigURLsFromVIN)
 
 	request := dbtest.BuildRequest("GET", "/config-urls/"+vin, "")
@@ -355,14 +350,13 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_DecodeVIN() {
 	body, _ := io.ReadAll(response.Body)
 	require.Equal(s.T(), fiber.StatusOK, response.StatusCode)
 
-	var receivedResp localmodels.DeviceConfigResponse
+	var receivedResp appmodels.DeviceConfigResponse
 	err = json.Unmarshal(body, &receivedResp)
 	require.NoError(s.T(), err)
 
-	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/%s/pids", template.TemplateName), receivedResp.PidURL)
-	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/settings/%s", ds.Name), receivedResp.DeviceSettingURL)
+	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/pids/%s@v1.0.0", template.TemplateName), receivedResp.PidURL)
+	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/settings/%s@v1.0.0", ds.Name), receivedResp.DeviceSettingURL)
 	assert.Empty(s.T(), receivedResp.DbcURL)
-	assert.Equal(s.T(), template.Version, receivedResp.Version)
 }
 
 func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_ProtocolOverrideQS() {
@@ -410,16 +404,13 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_ProtocolOverrideQS()
 	s.mockUserDeviceSvc.EXPECT().GetUserDeviceByVIN(gomock.Any(), vin).Return(nil, errors.New("user device not found"))
 	s.mockDeviceDefSvc.EXPECT().DecodeVIN(gomock.Any(), vin).Return(&p_grpc.DecodeVinResponse{DeviceDefinitionId: mockedDeviceDefinition.DeviceDefinitionId}, nil)
 
-	s.mockDeviceTemplateSvc.EXPECT().StoreLastTemplateRequested(gomock.Any(), vin, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-		Return(&models.DeviceTemplateStatus{}, nil)
 	s.mockDeviceTemplateSvc.EXPECT().ResolveDeviceConfiguration(gomock.Any(), &pb.UserDevice{
 		Vin:                &vin,
 		DeviceDefinitionId: mockedDeviceDefinition.DeviceDefinitionId,
 		CANProtocol:        "7",
-	}).Return(&localmodels.DeviceConfigResponse{
-		PidURL:           "http://localhost:3000/v1/device-config/some-template-protocol-override/pids",
-		DeviceSettingURL: "http://localhost:3000/v1/device-config/settings/default-hev-protocol-override",
-		Version:          "1.0",
+	}).Return(&appmodels.DeviceConfigResponse{
+		PidURL:           "http://localhost:3000/v1/device-config/pids/some-template-protocol-override@v1.0.0",
+		DeviceSettingURL: "http://localhost:3000/v1/device-config/settings/default-hev-protocol-override@v1.0.0",
 	}, nil)
 
 	s.app.Get("/config-urls/:vin", s.controller.GetConfigURLsFromVIN)
@@ -432,13 +423,12 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_ProtocolOverrideQS()
 
 	assert.Equal(s.T(), fiber.StatusOK, response.StatusCode, "response body: "+string(body))
 
-	var receivedResp localmodels.DeviceConfigResponse
+	var receivedResp appmodels.DeviceConfigResponse
 	err = json.Unmarshal(body, &receivedResp)
 	assert.NoError(s.T(), err)
 
-	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/%s/pids", template.TemplateName), receivedResp.PidURL)
-	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/settings/%s", ds.Name), receivedResp.DeviceSettingURL)
-	assert.Equal(s.T(), template.Version, receivedResp.Version)
+	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/pids/%s@v1.0.0", template.TemplateName), receivedResp.PidURL)
+	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/settings/%s@v1.0.0", ds.Name), receivedResp.DeviceSettingURL)
 
 }
 
@@ -495,16 +485,13 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_FallbackLogic() {
 	s.mockUserDeviceSvc.EXPECT().GetUserDeviceByVIN(gomock.Any(), vin).Return(nil, errors.New("user device not found"))
 	s.mockDeviceDefSvc.EXPECT().DecodeVIN(gomock.Any(), vin).Return(&p_grpc.DecodeVinResponse{DeviceDefinitionId: mockedDeviceDefinition.DeviceDefinitionId}, nil)
 
-	s.mockDeviceTemplateSvc.EXPECT().StoreLastTemplateRequested(gomock.Any(), vin, gomock.Any(), gomock.Any(), gomock.Any(), "1.0").
-		Return(&models.DeviceTemplateStatus{}, nil)
 	s.mockDeviceTemplateSvc.EXPECT().ResolveDeviceConfiguration(gomock.Any(), &pb.UserDevice{
 		Vin:                &vin,
 		DeviceDefinitionId: mockedDeviceDefinition.DeviceDefinitionId,
 		CANProtocol:        "7",
-	}).Return(&localmodels.DeviceConfigResponse{
-		PidURL:           "http://localhost:3000/v1/device-config/parent-template/pids",
-		DeviceSettingURL: "http://localhost:3000/v1/device-config/settings/parent-settings-fallback",
-		Version:          "1.0",
+	}).Return(&appmodels.DeviceConfigResponse{
+		PidURL:           "http://localhost:3000/v1/device-config/pids/parent-template@v1.0.0",
+		DeviceSettingURL: "http://localhost:3000/v1/device-config/settings/parent-settings-fallback@v1.0.0",
 	}, nil)
 
 	s.app.Get("/config-urls/:vin", s.controller.GetConfigURLsFromVIN)
@@ -515,11 +502,10 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_FallbackLogic() {
 
 	body, _ := io.ReadAll(response.Body)
 
-	var receivedResp localmodels.DeviceConfigResponse
+	var receivedResp appmodels.DeviceConfigResponse
 	err = json.Unmarshal(body, &receivedResp)
 	assert.NoError(s.T(), err)
-	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/settings/%s", parentDS.Name), receivedResp.DeviceSettingURL)
-	assert.Equal(s.T(), matchedTemplate.Version, receivedResp.Version)
+	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/settings/%s@v1.0.0", parentDS.Name), receivedResp.DeviceSettingURL)
 }
 
 func Test_modelMatch(t *testing.T) {
@@ -545,6 +531,44 @@ func Test_modelMatch(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			assert.Equalf(t, tt.want, modelMatch(tt.modelList, tt.modelName), "modelMatch(%v, %v)", tt.modelList, tt.modelName)
+		})
+	}
+}
+
+func Test_parseOutFWVersion(t *testing.T) {
+	type args struct {
+		data *gdata.RawDeviceDataResponse
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "get version",
+			args: args{data: &gdata.RawDeviceDataResponse{Items: []*gdata.RawDeviceDataResponseItem{{
+				SignalsJsonData: []byte(`{
+"fwVersion": {
+    "value": "0.8.5",
+    "source": "dimo/integration/2ULfuC8U9dOqRshZBAi0lMM1Rrx",
+    "timestamp": "2024-01-02T11:17:20Z"
+  }			
+}`),
+			}}}},
+			want: "v0.8.5",
+		},
+		{
+			name: "empty version",
+			args: args{data: &gdata.RawDeviceDataResponse{Items: []*gdata.RawDeviceDataResponseItem{{
+				SignalsJsonData: []byte(`{}`),
+			},
+			}}},
+			want: "",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equalf(t, tt.want, parseOutFWVersion(tt.args.data), "parseOutFWVersion(%v)", tt.args.data)
 		})
 	}
 }

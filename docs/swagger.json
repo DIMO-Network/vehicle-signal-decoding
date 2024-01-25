@@ -7,6 +7,37 @@
     },
     "basePath": "/v1",
     "paths": {
+        "/device-config/dbc/{templateName}": {
+            "get": {
+                "description": "Fetches the DBC file from the dbc_files table given a template name",
+                "produces": [
+                    "text/plain"
+                ],
+                "tags": [
+                    "device-config"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "template name",
+                        "name": "templateName",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved DBC file",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "No DBC file found for the given template name."
+                    }
+                }
+            }
+        },
         "/device-config/eth-addr/{ethAddr}/jobs": {
             "get": {
                 "description": "Retrieve the jobs based on device's Ethereum Address.",
@@ -116,7 +147,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "vehicle-signal-decoding"
+                    "device-config"
                 ],
                 "parameters": [
                     {
@@ -141,6 +172,41 @@
                         "description": "Not Found - we haven't seen this device yet, assume template not up to date"
                     }
                 }
+            },
+            "patch": {
+                "description": "Set what template and/or firmware was applied. None of the properties are required. Will not be set if not passed in.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "device-config"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Ethereum Address",
+                        "name": "ethAddr",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "set any properties that were updated on the device",
+                        "name": "config",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_controllers.DeviceTemplateStatusPatch"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully updated"
+                    },
+                    "500": {
+                        "description": "unable to parse request or storage failure"
+                    }
+                }
             }
         },
         "/device-config/eth-addr/{ethAddr}/urls": {
@@ -150,7 +216,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "vehicle-signal-decoding"
+                    "device-config"
                 ],
                 "parameters": [
                     {
@@ -171,7 +237,7 @@
                     "200": {
                         "description": "Successfully retrieved configuration URLs",
                         "schema": {
-                            "$ref": "#/definitions/github_com_DIMO-Network_vehicle-signal-decoding_internal_core_services.DeviceConfigResponse"
+                            "$ref": "#/definitions/github_com_DIMO-Network_vehicle-signal-decoding_internal_core_appmodels.DeviceConfigResponse"
                         }
                     },
                     "400": {
@@ -179,6 +245,38 @@
                     },
                     "404": {
                         "description": "Not Found - No templates available for the given parameters"
+                    }
+                }
+            }
+        },
+        "/device-config/pids/{templateName}": {
+            "get": {
+                "description": "Retrieves a list of PID configurations from the database given a template name",
+                "produces": [
+                    "application/json",
+                    "application/x-protobuf"
+                ],
+                "tags": [
+                    "device-config"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "template name",
+                        "name": "templateName",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved PID Configurations",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_DIMO-Network_vehicle-signal-decoding_pkg_grpc.PIDRequests"
+                        }
+                    },
+                    "404": {
+                        "description": "No PID Config data found for the given template name."
                     }
                 }
             }
@@ -191,7 +289,7 @@
                     "application/x-protobuf"
                 ],
                 "tags": [
-                    "vehicle-signal-decoding"
+                    "device-config"
                 ],
                 "parameters": [
                     {
@@ -222,7 +320,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "vehicle-signal-decoding"
+                    "device-config"
                 ],
                 "parameters": [
                     {
@@ -243,7 +341,7 @@
                     "200": {
                         "description": "Successfully retrieved configuration URLs",
                         "schema": {
-                            "$ref": "#/definitions/github_com_DIMO-Network_vehicle-signal-decoding_internal_core_services.DeviceConfigResponse"
+                            "$ref": "#/definitions/github_com_DIMO-Network_vehicle-signal-decoding_internal_core_appmodels.DeviceConfigResponse"
                         }
                     },
                     "404": {
@@ -251,85 +349,22 @@
                     }
                 }
             }
-        },
-        "/device-config/{templateName}/dbc": {
-            "get": {
-                "description": "Fetches the DBC file from the dbc_files table given a template name",
-                "produces": [
-                    "text/plain"
-                ],
-                "tags": [
-                    "vehicle-signal-decoding"
-                ],
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "template name",
-                        "name": "templateName",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successfully retrieved DBC file",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "404": {
-                        "description": "No DBC file found for the given template name."
-                    }
-                }
-            }
-        },
-        "/device-config/{templateName}/pids": {
-            "get": {
-                "description": "Retrieves a list of PID configurations from the database given a template name",
-                "produces": [
-                    "application/json",
-                    "application/x-protobuf"
-                ],
-                "tags": [
-                    "vehicle-signal-decoding"
-                ],
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "template name",
-                        "name": "templateName",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successfully retrieved PID Configurations",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_DIMO-Network_vehicle-signal-decoding_pkg_grpc.PIDRequests"
-                        }
-                    },
-                    "404": {
-                        "description": "No PID Config data found for the given template name."
-                    }
-                }
-            }
         }
     },
     "definitions": {
-        "github_com_DIMO-Network_vehicle-signal-decoding_internal_core_services.DeviceConfigResponse": {
+        "github_com_DIMO-Network_vehicle-signal-decoding_internal_core_appmodels.DeviceConfigResponse": {
             "type": "object",
             "properties": {
                 "dbcURL": {
+                    "description": "DbcURL including the version for the dbc file, usually same as pidurl template version",
                     "type": "string"
                 },
                 "deviceSettingUrl": {
+                    "description": "DeviceSettingURL including the version for the settings",
                     "type": "string"
                 },
                 "pidUrl": {
-                    "type": "string"
-                },
-                "version": {
+                    "description": "PidURL including the version for the template",
                     "type": "string"
                 }
             }
@@ -406,15 +441,39 @@
                 }
             }
         },
+        "internal_controllers.DeviceTemplateStatusPatch": {
+            "type": "object",
+            "properties": {
+                "DBCFileURL": {
+                    "description": "DBCFileURL template dbc file url with version as returned from api",
+                    "type": "string"
+                },
+                "firmwareVersionApplied": {
+                    "description": "FirmwareVersionApplied version of firmware that was confirmed installed on device",
+                    "type": "string"
+                },
+                "pidsURL": {
+                    "description": "PidsURL template pids url with version as returned from api",
+                    "type": "string"
+                },
+                "templateSettingsURL": {
+                    "description": "SettingsURL template settings url with version as returned from api",
+                    "type": "string"
+                }
+            }
+        },
         "internal_controllers.DeviceTemplateStatusResponse": {
             "type": "object",
             "properties": {
-                "is_template_updated": {
-                    "description": "IsTemplateUpdated based on information we have, is the device's template up to date?",
+                "firmware_version_from_device": {
+                    "type": "string"
+                },
+                "is_firmware_up_to_date": {
                     "type": "boolean"
                 },
-                "template_version": {
-                    "type": "string"
+                "is_template_up_to_date": {
+                    "description": "IsTemplateUpToDate based on information we have, based on what was set last by mobile app",
+                    "type": "boolean"
                 }
             }
         },

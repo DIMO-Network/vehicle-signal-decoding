@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	localmodels "github.com/DIMO-Network/vehicle-signal-decoding/internal/core/models"
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/appmodels"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 	"github.com/segmentio/ksuid"
@@ -70,7 +70,7 @@ func (s *RunTestSignalTestSuite) Test_RunTestSignal() {
 	deviceDefinitionID := ksuid.New().String()
 	userDeviceID := ksuid.New().String()
 
-	userDeviceMock := &localmodels.UserDeviceAutoPIUnit{
+	userDeviceMock := &appmodels.UserDeviceAutoPIUnit{
 		UserDeviceID:       userDeviceID,
 		DeviceDefinitionID: deviceDefinitionID,
 	}

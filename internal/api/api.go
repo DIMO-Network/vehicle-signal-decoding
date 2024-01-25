@@ -148,15 +148,20 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 
 	v1.Get("/swagger/*", swagger.HandlerDefault)
 
-	v1.Get("/device-config/vin/:vin/urls", deviceConfigController.GetConfigURLsFromVIN)
+	// resolve what templates to use for my car/device
 	v1.Get("/device-config/eth-addr/:ethAddr/urls", deviceConfigController.GetConfigURLsFromEthAddr)
-	v1.Get("/device-config/eth-addr/:ethAddr/status", deviceConfigController.GetConfigStatusFromEthAddr)
+	v1.Get("/device-config/vin/:vin/urls", deviceConfigController.GetConfigURLsFromVIN)
 
-	v1.Get("/device-config/:templateName/pids", deviceConfigController.GetPIDsByTemplate)
+	// endpoints that serve up the template contents
+	v1.Get("/device-config/pids/:templateName", deviceConfigController.GetPIDsByTemplate)
 	v1.Get("/device-config/settings/:name", deviceConfigController.GetDeviceSettingsByName)
+	v1.Get("/device-config/dbc/:templateName", deviceConfigController.GetDBCFileByTemplateName)
 	// for backwards compatibility - remove after a month or 2
 	v1.Get("/device-config/:name/device-settings", deviceConfigController.GetDeviceSettingsByName)
-	v1.Get("/device-config/:templateName/dbc", deviceConfigController.GetDBCFileByTemplateName)
+
+	// device to template and fw status
+	v1.Get("/device-config/eth-addr/:ethAddr/status", deviceConfigController.GetConfigStatusByEthAddr)
+	v1.Patch("/device-config/eth-addr/:ethAddr/status", deviceConfigController.PatchConfigStatusByEthAddr)
 
 	// Jobs endpoint
 	v1.Get("/device-config/eth-addr/:ethAddr/jobs", jobsController.GetJobsFromEthAddr)

@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	localmodels "github.com/DIMO-Network/vehicle-signal-decoding/internal/core/models"
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/appmodels"
+	common2 "github.com/ethereum/go-ethereum/common"
+	"github.com/volatiletech/null/v8"
 
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	pb "github.com/DIMO-Network/devices-api/pkg/grpc"
@@ -25,8 +27,8 @@ import (
 
 //go:generate mockgen -source device_template_service.go -destination mocks/device_template_service_mock.go
 type DeviceTemplateService interface {
-	StoreLastTemplateRequested(ctx context.Context, vin, templateDbcURL, templatePidURL, templateSettingURL, version string) (*models.DeviceTemplateStatus, error)
-	ResolveDeviceConfiguration(c *fiber.Ctx, ud *pb.UserDevice) (*localmodels.DeviceConfigResponse, error)
+	StoreLastTemplateRequested(ctx context.Context, address common2.Address, dbcURL, pidURL, settingURL, firmwareVersion *string) (*models.DeviceTemplateStatus, error)
+	ResolveDeviceConfiguration(c *fiber.Ctx, ud *pb.UserDevice) (*appmodels.DeviceConfigResponse, error)
 }
 
 type deviceTemplateService struct {
@@ -45,34 +47,42 @@ func NewDeviceTemplateService(database *sql.DB, deviceDefSvc DeviceDefinitionsSe
 	}
 }
 
-// StoreLastTemplateRequested stores the last template urls & version requested for a given vin
-func (dts *deviceTemplateService) StoreLastTemplateRequested(ctx context.Context, vin, templateDbcURL, templatePidURL, templateSettingURL, version string) (*models.DeviceTemplateStatus, error) {
+// StoreLastTemplateRequested - will change considerably -  stores the last template urls & version requested for a given vin
+func (dts *deviceTemplateService) StoreLastTemplateRequested(ctx context.Context, address common2.Address, dbcURL, pidURL, settingURL, firmwareVersion *string) (*models.DeviceTemplateStatus, error) {
 
-	dt, err := models.DeviceTemplateStatuses(models.DeviceTemplateStatusWhere.Vin.EQ(vin)).
+	dt, err := models.DeviceTemplateStatuses(models.DeviceTemplateStatusWhere.DeviceEthAddr.EQ(address.Bytes())).
 		One(ctx, dts.db)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, err
 	}
 
-	if dt != nil && dt.TemplateVersion != version && dt.TemplateSettingURL != templateSettingURL {
-		dt.TemplateVersion = version
-		dt.TemplateSettingURL = templateSettingURL
-		dt.TemplateDBCURL = templateDbcURL
-		dt.TemplatePidURL = templatePidURL
+	if dt != nil {
+		// update - only set if not nil
+		if settingURL != nil {
+			dt.TemplateSettingsURL = null.StringFromPtr(settingURL)
+		}
+		if dbcURL != nil {
+			dt.TemplateDBCURL = null.StringFromPtr(dbcURL)
+		}
+		if pidURL != nil {
+			dt.TemplatePidURL = null.StringFromPtr(pidURL)
+		}
+		if firmwareVersion != nil {
+			dt.FirmwareVersion = null.StringFromPtr(firmwareVersion)
+		}
 
 		if _, err = dt.Update(ctx, dts.db, boil.Infer()); err != nil {
 			return nil, err
 		}
-	}
-
-	if dt == nil {
+	} else {
+		// create
 		dt = &models.DeviceTemplateStatus{
-			Vin:                vin,
-			TemplateDBCURL:     templateDbcURL,
-			TemplatePidURL:     templatePidURL,
-			TemplateSettingURL: templateSettingURL,
+			DeviceEthAddr:       address.Bytes(),
+			TemplateDBCURL:      null.StringFromPtr(dbcURL),
+			TemplatePidURL:      null.StringFromPtr(pidURL),
+			TemplateSettingsURL: null.StringFromPtr(settingURL),
+			FirmwareVersion:     null.StringFromPtr(firmwareVersion),
 		}
-
 		if err = dt.Insert(ctx, dts.db, boil.Infer()); err != nil {
 			return nil, err
 		}
@@ -81,7 +91,7 @@ func (dts *deviceTemplateService) StoreLastTemplateRequested(ctx context.Context
 	return dt, nil
 }
 
-func (dts *deviceTemplateService) ResolveDeviceConfiguration(c *fiber.Ctx, ud *pb.UserDevice) (*localmodels.DeviceConfigResponse, error) {
+func (dts *deviceTemplateService) ResolveDeviceConfiguration(c *fiber.Ctx, ud *pb.UserDevice) (*appmodels.DeviceConfigResponse, error) {
 	dts.setCANProtocol(ud)
 
 	vehicleMake, vehicleModel, vehicleYear, err := dts.retrieveAndSetVehicleInfo(c.Context(), ud)
@@ -96,21 +106,20 @@ func (dts *deviceTemplateService) ResolveDeviceConfiguration(c *fiber.Ctx, ud *p
 	if matchedTemplate == nil {
 		return nil, errors.New("matched template is nil")
 	}
-	baseURL := dts.settings.DeploymentURL
 
-	response := localmodels.DeviceConfigResponse{
-		PidURL:  fmt.Sprintf("%s/v1/device-config/%s/pids", baseURL, matchedTemplate.TemplateName),
-		Version: matchedTemplate.Version,
+	response := appmodels.DeviceConfigResponse{
+		PidURL: dts.buildConfigRoute(PIDs, matchedTemplate.TemplateName, matchedTemplate.Version),
 	}
 
 	// only set dbc url if we have dbc
 	if matchedTemplate.R.TemplateNameDBCFile != nil && len(matchedTemplate.R.TemplateNameDBCFile.DBCFile) > 0 {
-		response.DbcURL = fmt.Sprintf("%s/v1/device-config/%s/dbc", baseURL, matchedTemplate.TemplateName)
+		response.DbcURL = dts.buildConfigRoute(DBC, matchedTemplate.TemplateName, matchedTemplate.Version)
 	}
 
 	// set device settings from template, or based on powertrain default
 	if len(matchedTemplate.R.TemplateNameDeviceSettings) > 0 {
-		response.DeviceSettingURL = fmt.Sprintf("%s/v1/device-config/settings/%s", baseURL, matchedTemplate.R.TemplateNameDeviceSettings[0].Name)
+		ds := matchedTemplate.R.TemplateNameDeviceSettings[0]
+		response.DeviceSettingURL = dts.buildConfigRoute(Setting, ds.Name, ds.Version)
 	} else {
 		var deviceSetting *models.DeviceSetting
 		var dbErr error
@@ -141,13 +150,25 @@ func (dts *deviceTemplateService) ResolveDeviceConfiguration(c *fiber.Ctx, ud *p
 			}
 		}
 		// device settings have a name key separate from templateName since simpler setup
-		response.DeviceSettingURL = fmt.Sprintf("%s/v1/device-config/settings/%s", baseURL, deviceSetting.Name)
+		response.DeviceSettingURL = dts.buildConfigRoute(Setting, deviceSetting.Name, deviceSetting.Version)
 	}
 
-	dts.log.Info().Str("vin", *ud.Vin).Msgf(fmt.Sprintf("template configuration urls for VIN %s, dbc: %s, pids: %s, settings: %s, version: %s",
-		*ud.Vin, response.DbcURL, response.PidURL, response.DeviceSettingURL, response.Version))
+	dts.log.Info().Str("vin", *ud.Vin).Msgf(fmt.Sprintf("template configuration urls for VIN %s, dbc: %s, pids: %s, settings: %s",
+		*ud.Vin, response.DbcURL, response.PidURL, response.DeviceSettingURL))
 
 	return &response, nil
+}
+
+type configType string
+
+const (
+	PIDs    = "pids"
+	Setting = "settings"
+	DBC     = "dbc"
+)
+
+func (dts *deviceTemplateService) buildConfigRoute(ct configType, name, version string) string {
+	return fmt.Sprintf("%s/v1/device-config/%s/%s@%s", dts.settings.DeploymentURL, ct, name, version)
 }
 
 // retrieveAndSetVehicleInfo figures out what if any device definition information corresponds to the UserDevice.
