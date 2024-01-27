@@ -27,7 +27,7 @@ import (
 
 //go:generate mockgen -source device_template_service.go -destination mocks/device_template_service_mock.go
 type DeviceTemplateService interface {
-	StoreLastTemplateRequested(ctx context.Context, address common2.Address, dbcURL, pidURL, settingURL, firmwareVersion *string) (*models.DeviceTemplateStatus, error)
+	StoreDeviceConfigUsed(ctx context.Context, address common2.Address, dbcURL, pidURL, settingURL, firmwareVersion *string) (*models.DeviceTemplateStatus, error)
 	ResolveDeviceConfiguration(c *fiber.Ctx, ud *pb.UserDevice) (*appmodels.DeviceConfigResponse, error)
 }
 
@@ -47,8 +47,8 @@ func NewDeviceTemplateService(database *sql.DB, deviceDefSvc DeviceDefinitionsSe
 	}
 }
 
-// StoreLastTemplateRequested - will change considerably -  stores the last template urls & version requested for a given vin
-func (dts *deviceTemplateService) StoreLastTemplateRequested(ctx context.Context, address common2.Address, dbcURL, pidURL, settingURL, firmwareVersion *string) (*models.DeviceTemplateStatus, error) {
+// StoreDeviceConfigUsed stores the configurations that were used by the mobile app to apply onto the device
+func (dts *deviceTemplateService) StoreDeviceConfigUsed(ctx context.Context, address common2.Address, dbcURL, pidURL, settingURL, firmwareVersion *string) (*models.DeviceTemplateStatus, error) {
 
 	dt, err := models.DeviceTemplateStatuses(models.DeviceTemplateStatusWhere.DeviceEthAddr.EQ(address.Bytes())).
 		One(ctx, dts.db)

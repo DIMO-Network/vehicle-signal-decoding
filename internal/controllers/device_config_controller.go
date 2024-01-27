@@ -431,7 +431,7 @@ func (d *DeviceConfigController) PatchConfigStatusByEthAddr(c *fiber.Ctx) error 
 		return err
 	}
 
-	_, err = d.deviceTemplateService.StoreLastTemplateRequested(c.Context(), addr, payload.DbcURL, payload.PidsURL, payload.SettingsURL, payload.FirmwareVersionApplied)
+	_, err = d.deviceTemplateService.StoreDeviceConfigUsed(c.Context(), addr, payload.DbcURL, payload.PidsURL, payload.SettingsURL, payload.FirmwareVersionApplied)
 	if err != nil {
 		return err
 	}
