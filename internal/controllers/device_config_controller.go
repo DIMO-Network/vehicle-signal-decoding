@@ -443,7 +443,7 @@ func (d *DeviceConfigController) PatchConfigStatusByEthAddr(c *fiber.Ctx) error 
 func parseOutFWVersion(data *gdata.RawDeviceDataResponse) string {
 	for _, item := range data.Items {
 		v := gjson.GetBytes(item.SignalsJsonData, "fwVersion.value").Str
-		if v != "" {
+		if len(v) > 1 {
 			if v[0:1] != "v" {
 				return "v" + v
 			}
@@ -492,14 +492,16 @@ func modelMatch(modelList types.StringArray, modelName string) bool {
 }
 
 func isFwUpToDate(latest, current string) bool {
-	if latest[0:1] != "v" {
-		latest = "v" + latest
-	}
-	if current[0:1] != "v" {
-		current = "v" + current
-	}
-	if semver.Compare(latest, current) == 0 {
-		return true
+	if len(latest) > 1 && len(current) > 1 {
+		if latest[0:1] != "v" {
+			latest = "v" + latest
+		}
+		if current[0:1] != "v" {
+			current = "v" + current
+		}
+		if semver.Compare(latest, current) == 0 {
+			return true
+		}
 	}
 	return false
 }

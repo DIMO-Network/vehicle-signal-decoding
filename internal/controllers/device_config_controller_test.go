@@ -616,6 +616,14 @@ func Test_isFwUpToDate(t *testing.T) {
 		want bool
 	}{
 		{
+			name: "blank",
+			args: args{
+				latest:  "v0.8.5",
+				current: "v",
+			},
+			want: false,
+		},
+		{
 			name: "up to date",
 			args: args{
 				latest:  "v0.8.5",
