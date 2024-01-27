@@ -57,13 +57,6 @@ func TestOwnerMiddleware(t *testing.T) {
 		DeviceEthAddr       string
 	}{
 		{
-			Name:             "Device by eth addr",
-			UserExists:       true,
-			UserDeviceUserID: userID,
-			ExpectedCode:     200,
-			DeviceEthAddr:    deviceEthAddr,
-		},
-		{
 			Name:         "NoDevice",
 			ExpectedCode: 404,
 		},
@@ -109,6 +102,14 @@ func TestOwnerMiddleware(t *testing.T) {
 			UserEthereumAddress: userAddr,
 			ExpectedCode:        404,
 		},
+		{
+			Name:             "Device by eth addr",
+			UserExists:       true,
+			UserDeviceUserID: userID,
+			ExpectedCode:     200,
+			DeviceEthAddr:    deviceEthAddr,
+			DeviceUserID:     userID,
+		},
 	}
 
 	for _, c := range cases {
@@ -131,7 +132,7 @@ func TestOwnerMiddleware(t *testing.T) {
 					d.OwnerAddress = common.Hex2Bytes(c.DeviceOwnerAddress)
 				}
 				if c.DeviceEthAddr != "" {
-					devicesClient.EXPECT().GetUserDeviceByEthAddr(gomock.Any(), c.DeviceEthAddr)
+					devicesClient.EXPECT().GetUserDeviceByEthAddr(gomock.Any(), c.DeviceEthAddr).Return(d, nil)
 				} else {
 					devicesClient.EXPECT().GetUserDevice(gomock.Any(), userDeviceID).Return(d, nil)
 				}
