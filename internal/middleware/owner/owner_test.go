@@ -1,6 +1,7 @@
 package owner
 
 import (
+	"net/http"
 	"testing"
 
 	pbdvc "github.com/DIMO-Network/devices-api/pkg/grpc"
@@ -23,6 +24,7 @@ func TestOwnerMiddleware(t *testing.T) {
 	otherUserID := "stanleyUser"
 	otherAddr := "0x3AC4f4Ae05b75b97bfC71Ea518913007FdCaab70"
 	userDeviceID := "2OeRoU9VmbFVpgpPy3BjY2WsMMm"
+	deviceEthAddr := "0xDC1eE274BCA98b421293f3737D1b9E4563c60cb3"
 
 	logger := test.Logger()
 	cont := gomock.NewController(t)
@@ -36,8 +38,13 @@ func TestOwnerMiddleware(t *testing.T) {
 		logger.Info().Msg("Omega croggers.")
 		return nil
 	})
+	app.Get("/ethAddr/:ethAddr", test.AuthInjectorTestHandler(userID), middleware, func(c *fiber.Ctx) error {
+		_ = c.Locals("logger").(*zerolog.Logger)
+		return nil
+	})
 
 	request := test.BuildRequest("GET", "/"+userDeviceID, "")
+	requestEth := test.BuildRequest("GET", "/ethAddr/"+deviceEthAddr, "")
 
 	cases := []struct {
 		Name                string
@@ -47,7 +54,15 @@ func TestOwnerMiddleware(t *testing.T) {
 		UserEthereumAddress string
 		DeviceOwnerAddress  string
 		ExpectedCode        int
+		DeviceEthAddr       string
 	}{
+		{
+			Name:             "Device by eth addr",
+			UserExists:       true,
+			UserDeviceUserID: userID,
+			ExpectedCode:     200,
+			DeviceEthAddr:    deviceEthAddr,
+		},
 		{
 			Name:         "NoDevice",
 			ExpectedCode: 404,
@@ -115,10 +130,19 @@ func TestOwnerMiddleware(t *testing.T) {
 				if c.DeviceOwnerAddress != "" {
 					d.OwnerAddress = common.Hex2Bytes(c.DeviceOwnerAddress)
 				}
-				devicesClient.EXPECT().GetUserDevice(gomock.Any(), userDeviceID).Return(d, nil)
+				if c.DeviceEthAddr != "" {
+					devicesClient.EXPECT().GetUserDeviceByEthAddr(gomock.Any(), c.DeviceEthAddr)
+				} else {
+					devicesClient.EXPECT().GetUserDevice(gomock.Any(), userDeviceID).Return(d, nil)
+				}
 			}
-
-			res, err := app.Test(request)
+			var res *http.Response
+			var err error
+			if c.DeviceEthAddr != "" {
+				res, err = app.Test(requestEth)
+			} else {
+				res, err = app.Test(request)
+			}
 			require.Nil(t, err)
 			assert.Equal(t, c.ExpectedCode, res.StatusCode)
 		})

@@ -160,7 +160,7 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 
 	v1 := app.Group("/v1")
 
-	udMw := owner.New(usersClient, userDeviceSvc, &logger)
+	deviceMw := owner.New(usersClient, userDeviceSvc, &logger)
 
 	v1.Get("/swagger/*", swagger.HandlerDefault)
 
@@ -177,7 +177,7 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 
 	// device to template and fw status
 	v1.Get("/device-config/eth-addr/:ethAddr/status", deviceConfigController.GetConfigStatusByEthAddr)
-	v1.Patch("/device-config/eth-addr/:ethAddr/status", jwtAuth, udMw, deviceConfigController.PatchConfigStatusByEthAddr)
+	v1.Patch("/device-config/eth-addr/:ethAddr/status", jwtAuth, deviceMw, deviceConfigController.PatchConfigStatusByEthAddr)
 
 	// Jobs endpoint
 	v1.Get("/device-config/eth-addr/:ethAddr/jobs", jobsController.GetJobsFromEthAddr)
