@@ -419,7 +419,8 @@ func (d *DeviceConfigController) GetConfigStatusByEthAddr(c *fiber.Ctx) error {
 // @Success      200 "Successfully updated"
 // @Failure 500  "unable to parse request or storage failure"
 // @Param        ethAddr  path   string  true  "Ethereum Address"
-// @Param       config body DeviceTemplateStatusPatch true "set any properties that were updated on the device"
+// @Param        config body DeviceTemplateStatusPatch true "set any properties that were updated on the device"
+// @Security     BearerAuth
 // @Router       /device-config/eth-addr/{ethAddr}/status [patch]
 func (d *DeviceConfigController) PatchConfigStatusByEthAddr(c *fiber.Ctx) error {
 	ethAddr := c.Params("ethAddr")
