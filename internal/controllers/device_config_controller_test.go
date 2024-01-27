@@ -5,10 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	_ "github.com/lib/pq"
 	"io"
 	"os"
 	"testing"
+
+	_ "github.com/lib/pq"
 
 	gdata "github.com/DIMO-Network/device-data-api/pkg/grpc"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/appmodels"

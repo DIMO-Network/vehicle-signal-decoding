@@ -22,6 +22,7 @@ type UserDeviceService interface {
 	GetUserDeviceByVIN(ctx context.Context, vin string) (*pb.UserDevice, error)
 	GetUserDeviceByEthAddr(ctx context.Context, ethAddr string) (*pb.UserDevice, error)
 	GetRawDeviceData(ctx context.Context, userDeviceID string) (*gdata.RawDeviceDataResponse, error)
+	GetUserDevice(ctx context.Context, userDeviceID string) (*pb.UserDevice, error)
 }
 
 type userDeviceService struct {
@@ -34,6 +35,22 @@ func NewUserDeviceService(settings *config.Settings) UserDeviceService {
 		deviceGRPCAddr:     settings.DeviceGRPCAddr,
 		deviceDataGRPCAddr: settings.DeviceDataGRPCAddr,
 	}
+}
+
+// GetUserDevice gets the userDevice from devices-api, helpful to get the eth addr of the owner
+func (a *userDeviceService) GetUserDevice(ctx context.Context, userDeviceID string) (*pb.UserDevice, error) {
+	if len(userDeviceID) == 0 {
+		return nil, fmt.Errorf("user device id was empty - invalid")
+	}
+	deviceClient, conn, err := a.getDeviceGrpcClient()
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+
+	return deviceClient.GetUserDevice(ctx, &pb.GetUserDeviceRequest{
+		Id: userDeviceID,
+	})
 }
 
 func (a *userDeviceService) GetUserDeviceServiceByAutoPIUnitID(ctx context.Context, id string) (*appmodels.UserDeviceAutoPIUnit, error) {

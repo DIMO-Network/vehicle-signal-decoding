@@ -27,4 +27,6 @@ type Settings struct {
 	AWSCandumpsBucketName string `yaml:"AWS_CANDUMPS_BUCKET_NAME"`
 	AWSRegion             string `yaml:"AWS_REGION"`
 	DeviceDataGRPCAddr    string `yaml:"DEVICE_DATA_GRPC_ADDR"`
+	JwtKeySetURL          string `yaml:"JWT_KEY_SET_URL"`
+	UsersGRPCAddr         string `yaml:"USERS_GRPC_ADDR"`
 }
