@@ -6,7 +6,7 @@ type UserDeviceAutoPIUnit struct {
 	DeviceStyleID      string
 }
 
-// DeviceConfigResponse response for what templates to use
+// DeviceConfigResponse response for what templates to use, mobile app dependency: userGetVehicleDecoding.ts
 type DeviceConfigResponse struct {
 	// PidURL including the version for the template
 	PidURL string `json:"pidUrl"`

@@ -58,17 +58,17 @@ func (mr *MockDeviceTemplateServiceMockRecorder) ResolveDeviceConfiguration(c, u
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResolveDeviceConfiguration", reflect.TypeOf((*MockDeviceTemplateService)(nil).ResolveDeviceConfiguration), c, ud)
 }
 
-// StoreLastTemplateRequested mocks base method.
-func (m *MockDeviceTemplateService) StoreLastTemplateRequested(ctx context.Context, address common.Address, dbcURL, pidURL, settingURL, firmwareVersion *string) (*models.DeviceTemplateStatus, error) {
+// StoreDeviceConfigUsed mocks base method.
+func (m *MockDeviceTemplateService) StoreDeviceConfigUsed(ctx context.Context, address common.Address, dbcURL, pidURL, settingURL, firmwareVersion *string) (*models.DeviceTemplateStatus, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "StoreLastTemplateRequested", ctx, address, dbcURL, pidURL, settingURL, firmwareVersion)
+	ret := m.ctrl.Call(m, "StoreDeviceConfigUsed", ctx, address, dbcURL, pidURL, settingURL, firmwareVersion)
 	ret0, _ := ret[0].(*models.DeviceTemplateStatus)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// StoreLastTemplateRequested indicates an expected call of StoreLastTemplateRequested.
-func (mr *MockDeviceTemplateServiceMockRecorder) StoreLastTemplateRequested(ctx, address, dbcURL, pidURL, settingURL, firmwareVersion any) *gomock.Call {
+// StoreDeviceConfigUsed indicates an expected call of StoreDeviceConfigUsed.
+func (mr *MockDeviceTemplateServiceMockRecorder) StoreDeviceConfigUsed(ctx, address, dbcURL, pidURL, settingURL, firmwareVersion any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StoreLastTemplateRequested", reflect.TypeOf((*MockDeviceTemplateService)(nil).StoreLastTemplateRequested), ctx, address, dbcURL, pidURL, settingURL, firmwareVersion)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StoreDeviceConfigUsed", reflect.TypeOf((*MockDeviceTemplateService)(nil).StoreDeviceConfigUsed), ctx, address, dbcURL, pidURL, settingURL, firmwareVersion)
 }

@@ -9,6 +9,12 @@ import (
 	"strings"
 	"syscall"
 
+	pb "github.com/DIMO-Network/users-api/pkg/grpc"
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/middleware/owner"
+	jwtware "github.com/gofiber/contrib/jwt"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -114,11 +120,11 @@ func startMonitoringServer(logger zerolog.Logger, settings *config.Settings) {
 }
 
 func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.Store) *fiber.App {
-
 	//Create gRPC connection
 	userDeviceSvc := services.NewUserDeviceService(settings)
 	deviceDefsvc := services.NewDeviceDefinitionsService(settings)
 	deviceTemplatesvc := services.NewDeviceTemplateService(database.DBS().Writer.DB, deviceDefsvc, logger, settings)
+	usersClient := getUsersClient(logger, settings.UsersGRPCAddr)
 
 	app := fiber.New(fiber.Config{
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
@@ -126,6 +132,14 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 		},
 		DisableStartupMessage: true,
 		ReadBufferSize:        16000,
+	})
+
+	// secured paths
+	jwtAuth := jwtware.New(jwtware.Config{
+		JWKSetURLs: []string{settings.JwtKeySetURL},
+		ErrorHandler: func(c *fiber.Ctx, err error) error {
+			return fiber.NewError(fiber.StatusUnauthorized, "Invalid JWT.")
+		},
 	})
 
 	app.Use(metrics.HTTPMetricsMiddleware)
@@ -146,6 +160,9 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 
 	v1 := app.Group("/v1")
 
+	udMw := owner.New(usersClient, userDeviceSvc, &logger)
+	v1Auth := app.Group("/v1", jwtAuth)
+
 	v1.Get("/swagger/*", swagger.HandlerDefault)
 
 	// resolve what templates to use for my car/device
@@ -161,7 +178,7 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 
 	// device to template and fw status
 	v1.Get("/device-config/eth-addr/:ethAddr/status", deviceConfigController.GetConfigStatusByEthAddr)
-	v1.Patch("/device-config/eth-addr/:ethAddr/status", deviceConfigController.PatchConfigStatusByEthAddr)
+	v1Auth.Patch("/device-config/eth-addr/:ethAddr/status", udMw, deviceConfigController.PatchConfigStatusByEthAddr)
 
 	// Jobs endpoint
 	v1.Get("/device-config/eth-addr/:ethAddr/jobs", jobsController.GetJobsFromEthAddr)
@@ -232,4 +249,13 @@ func getS3ServiceClient(ctx context.Context, settings *config.Settings, logger z
 	})
 
 	return s3ServiceClient
+}
+
+func getUsersClient(logger zerolog.Logger, usersAPIGRPCAddr string) pb.UserServiceClient {
+	usersConn, err := grpc.Dial(usersAPIGRPCAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		logger.Fatal().Err(err).Msgf("Failed to dial users-api at %s", usersAPIGRPCAddr)
+	}
+	defer usersConn.Close()
+	return pb.NewUserServiceClient(usersConn)
 }
