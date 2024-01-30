@@ -6,12 +6,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"google.golang.org/protobuf/types/known/timestamppb"
 	"io"
 	"net/http"
 	"os"
 	"testing"
 	"time"
+
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	_ "github.com/lib/pq"
 
@@ -516,7 +517,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigStatusByEthAddr_DeviceDat
 	ethAddr := "0x29e8Ec52A3d2c9b72aA9F0e3e2576F3A28480299"
 	s.app.Get("/device-config/eth-addr/:ethAddr/status", s.controller.GetConfigStatusByEthAddr)
 	vin := "TMBEK6NW1N3088739"
-	s.controller.fwVersionAPI = mockHttpClientFwVersion{}
+	s.controller.fwVersionAPI = mockHTTPClientFwVersion{}
 
 	testUD := &pb.UserDevice{
 		Id:                 ksuid.New().String(),
@@ -694,10 +695,10 @@ func Test_isFwUpToDate(t *testing.T) {
 }
 
 // used for test
-type mockHttpClientFwVersion struct {
+type mockHTTPClientFwVersion struct {
 }
 
-func (m mockHttpClientFwVersion) ExecuteRequest(path, method string, body []byte) (*http.Response, error) {
+func (m mockHTTPClientFwVersion) ExecuteRequest(_, _ string, _ []byte) (*http.Response, error) {
 	buf := bytes.NewBufferString(`{"name": "v0.8.5"}`)
 	requestBody := io.NopCloser(buf)
 
