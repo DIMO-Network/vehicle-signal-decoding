@@ -1,13 +1,17 @@
 package controllers
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"io"
+	"net/http"
 	"os"
 	"testing"
+	"time"
 
 	_ "github.com/lib/pq"
 
@@ -508,6 +512,48 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_FallbackLogic() {
 	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/settings/%s@v1.0.0", parentDS.Name), receivedResp.DeviceSettingURL)
 }
 
+func (s *DeviceConfigControllerTestSuite) TestGetConfigStatusByEthAddr_DeviceDataOnly() {
+	ethAddr := "0x29e8Ec52A3d2c9b72aA9F0e3e2576F3A28480299"
+	s.app.Get("/device-config/eth-addr/:ethAddr/status", s.controller.GetConfigStatusByEthAddr)
+	vin := "TMBEK6NW1N3088739"
+	s.controller.fwVersionAPI = mockHttpClientFwVersion{}
+
+	testUD := &pb.UserDevice{
+		Id:                 ksuid.New().String(),
+		UserId:             ksuid.New().String(),
+		Vin:                &vin,
+		DeviceDefinitionId: ksuid.New().String(),
+		VinConfirmed:       true,
+		CountryCode:        "USA",
+		PowerTrainType:     "ICE",
+		CANProtocol:        "6",
+	}
+	s.mockUserDeviceSvc.EXPECT().GetUserDeviceByEthAddr(gomock.Any(), ethAddr).Return(testUD, nil)
+
+	s.mockUserDeviceSvc.EXPECT().GetRawDeviceData(gomock.Any(), testUD.Id).Return(&gdata.RawDeviceDataResponse{Items: []*gdata.RawDeviceDataResponseItem{
+		{
+			IntegrationId:   ksuid.New().String(),
+			UserDeviceId:    testUD.Id,
+			SignalsJsonData: []byte(`{"fwVersion": { "value": "v0.8.5"} }`),
+			RecordUpdatedAt: timestamppb.New(time.Now()),
+			RecordCreatedAt: timestamppb.New(time.Now()),
+		},
+	}}, nil)
+
+	request := dbtest.BuildRequest("GET", "/device-config/eth-addr/"+ethAddr+"/status", "")
+	response, err := s.app.Test(request)
+	require.NoError(s.T(), err)
+
+	body, _ := io.ReadAll(response.Body)
+	var receivedResp DeviceTemplateStatusResponse
+	err = json.Unmarshal(body, &receivedResp)
+	assert.NoError(s.T(), err)
+
+	assert.Equal(s.T(), false, receivedResp.IsTemplateUpToDate)
+	assert.Equal(s.T(), true, receivedResp.IsFirmwareUpToDate)
+	assert.Equal(s.T(), "v0.8.5", receivedResp.FirmwareVersion)
+}
+
 func Test_modelMatch(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -645,4 +691,26 @@ func Test_isFwUpToDate(t *testing.T) {
 			assert.Equalf(t, tt.want, isFwUpToDate(tt.args.latest, tt.args.current), "isFwUpToDate(%v, %v)", tt.args.latest, tt.args.current)
 		})
 	}
+}
+
+// used for test
+type mockHttpClientFwVersion struct {
+}
+
+func (m mockHttpClientFwVersion) ExecuteRequest(path, method string, body []byte) (*http.Response, error) {
+	buf := bytes.NewBufferString(`{"name": "v0.8.5"}`)
+	requestBody := io.NopCloser(buf)
+
+	mockResponse := http.Response{
+		Status:           "OK",
+		StatusCode:       200,
+		Body:             requestBody,
+		Header:           make(http.Header),
+		ContentLength:    0,
+		TransferEncoding: nil,
+		Close:            false,
+	}
+	mockResponse.Header.Set("Content-Type", "application/json")
+
+	return &mockResponse, nil
 }
