@@ -359,50 +359,51 @@ func (d *DeviceConfigController) GetConfigStatusByEthAddr(c *fiber.Ctx) error {
 	ethAddr := c.Params("ethAddr")
 	addr := common2.HexToAddress(ethAddr)
 
-	dts, err := models.DeviceTemplateStatuses(models.DeviceTemplateStatusWhere.DeviceEthAddr.EQ(addr.Bytes())).One(c.Context(), d.db)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return fiber.NewError(fiber.StatusNotFound, "haven't seen device with eth addr yet: "+ethAddr)
-		}
-		return err
-	}
-
 	// we use this to know what the config should be
 	ud, err := d.userDeviceSvc.GetUserDeviceByEthAddr(c.Context(), ethAddr)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": fmt.Sprintf("no connected user device found for EthAddr: %s", ethAddr)})
 	}
-	// figure out what the config should be
-	deviceConfiguration, err := d.deviceTemplateService.ResolveDeviceConfiguration(c, ud)
-	if err != nil {
-		return err
-	}
 
+	dts, err := models.DeviceTemplateStatuses(models.DeviceTemplateStatusWhere.DeviceEthAddr.EQ(addr.Bytes())).One(c.Context(), d.db)
+	if err != nil {
+		if !errors.Is(err, sql.ErrNoRows) {
+			return err
+		}
+	}
+	deviceFWVers := ""
 	isTemplateUpdated := false
-	// if all this is true then we know we're up to date
-	if dts.TemplateDBCURL.String == deviceConfiguration.DbcURL &&
-		dts.TemplatePidURL.String == deviceConfiguration.PidURL &&
-		dts.TemplateSettingsURL.String == deviceConfiguration.DeviceSettingURL {
+	if dts != nil {
+		deviceFWVers = dts.FirmwareVersion.String
+		// figure out what the config should be
+		deviceConfiguration, err := d.deviceTemplateService.ResolveDeviceConfiguration(c, ud)
+		if err != nil {
+			return err
+		}
+		// if all this is true then we know we're up to date
+		if dts.TemplateDBCURL.String == deviceConfiguration.DbcURL &&
+			dts.TemplatePidURL.String == deviceConfiguration.PidURL &&
+			dts.TemplateSettingsURL.String == deviceConfiguration.DeviceSettingURL {
 
-		isTemplateUpdated = true
+			isTemplateUpdated = true
+		}
 	}
-	// get latest fw version. at some point will need to know device hw type to know this better
-	res, err := d.fwVersionAPI.ExecuteRequest("", "GET", nil)
-	if err != nil {
-		return errors.Wrap(err, "unable to get latest macaron firmware")
-	}
-	defer res.Body.Close()
-	body, _ := io.ReadAll(res.Body)
-	latestFirmwareStr := gjson.GetBytes(body, "name").Str
 
-	deviceFWVers := dts.FirmwareVersion.String
 	if deviceFWVers == "" {
 		// get fw version from device if any
 		deviceData, err := d.userDeviceSvc.GetRawDeviceData(c.Context(), ud.Id)
 		if err != nil {
 			d.log.Err(err).Str("device_address", ethAddr).Msg("failed to get device data")
+			if dts == nil {
+				// if don't get anything from device-data-api and dts is nil, nothing we can do
+				return fiber.NewError(fiber.StatusNotFound, "haven't seen device with eth addr yet: "+ethAddr)
+			}
 		}
 		deviceFWVers = parseOutFWVersion(deviceData)
+	}
+	latestFirmwareStr, err := d.getLatestFWVersion()
+	if err != nil {
+		return err
 	}
 
 	return c.JSON(DeviceTemplateStatusResponse{
@@ -504,4 +505,18 @@ func isFwUpToDate(latest, current string) bool {
 		}
 	}
 	return false
+}
+
+// calls well known dimo URL to get latest Macaron fw version
+func (d *DeviceConfigController) getLatestFWVersion() (string, error) {
+	// get latest fw version. at some point will need to know device hw type to know this better
+	res, err := d.fwVersionAPI.ExecuteRequest("", "GET", nil)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to get latest macaron firmware")
+	}
+	defer res.Body.Close()
+	body, _ := io.ReadAll(res.Body)
+	latestFirmwareStr := gjson.GetBytes(body, "name").Str
+
+	return latestFirmwareStr, nil
 }
