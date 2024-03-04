@@ -211,7 +211,9 @@ func ErrorHandler(c *fiber.Ctx, err error, logger zerolog.Logger) error {
 		message = e.Message
 	}
 
-	logger.Err(err).Int("code", code).Str("path", strings.TrimPrefix(c.Path(), "/")).
+	logger.Err(err).Int("httpStatusCode", code).
+		Str("path", strings.TrimPrefix(c.Path(), "/")).
+		Str("method", c.Method()).
 		Str("stack", string(debug.Stack())).Msg("Failed request.")
 
 	return c.Status(code).JSON(CodeResp{Code: code, Message: message})
