@@ -34,6 +34,7 @@ func New(usersClient pb.UserServiceClient, devicesClient services.UserDeviceServ
 		udi := c.Params("userDeviceID")
 		ethAddr := c.Params("ethAddr")
 		logger := logger.With().Str("userId", userID).Str("userDeviceId", udi).Str("device_address", ethAddr).Logger()
+
 		// i don't get what these are used for?
 		c.Locals("userID", userID)
 		c.Locals("userDeviceID", udi)
@@ -44,7 +45,8 @@ func New(usersClient pb.UserServiceClient, devicesClient services.UserDeviceServ
 		if udi != "" {
 			device, err = devicesClient.GetUserDevice(context.Background(), udi)
 		} else if ethAddr != "" {
-			device, err = devicesClient.GetUserDeviceByEthAddr(context.Background(), ethAddr) // if identity api had a way to filterBy address, could use it instead
+			address := common.HexToAddress(ethAddr)
+			device, err = devicesClient.GetUserDeviceByEthAddr(context.Background(), address) // if identity api had a way to filterBy address, could use it instead
 		} else {
 			return fmt.Errorf("no userDeviceID or ethAddr params found for owner validation")
 		}

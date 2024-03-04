@@ -15,6 +15,7 @@ import (
 	grpc "github.com/DIMO-Network/device-data-api/pkg/grpc"
 	grpc0 "github.com/DIMO-Network/devices-api/pkg/grpc"
 	appmodels "github.com/DIMO-Network/vehicle-signal-decoding/internal/core/appmodels"
+	common "github.com/ethereum/go-ethereum/common"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -72,18 +73,18 @@ func (mr *MockUserDeviceServiceMockRecorder) GetUserDevice(ctx, userDeviceID any
 }
 
 // GetUserDeviceByEthAddr mocks base method.
-func (m *MockUserDeviceService) GetUserDeviceByEthAddr(ctx context.Context, ethAddr string) (*grpc0.UserDevice, error) {
+func (m *MockUserDeviceService) GetUserDeviceByEthAddr(ctx context.Context, address common.Address) (*grpc0.UserDevice, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUserDeviceByEthAddr", ctx, ethAddr)
+	ret := m.ctrl.Call(m, "GetUserDeviceByEthAddr", ctx, address)
 	ret0, _ := ret[0].(*grpc0.UserDevice)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetUserDeviceByEthAddr indicates an expected call of GetUserDeviceByEthAddr.
-func (mr *MockUserDeviceServiceMockRecorder) GetUserDeviceByEthAddr(ctx, ethAddr any) *gomock.Call {
+func (mr *MockUserDeviceServiceMockRecorder) GetUserDeviceByEthAddr(ctx, address any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserDeviceByEthAddr", reflect.TypeOf((*MockUserDeviceService)(nil).GetUserDeviceByEthAddr), ctx, ethAddr)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserDeviceByEthAddr", reflect.TypeOf((*MockUserDeviceService)(nil).GetUserDeviceByEthAddr), ctx, address)
 }
 
 // GetUserDeviceByVIN mocks base method.
