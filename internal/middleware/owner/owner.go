@@ -1,7 +1,6 @@
 package owner
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/DIMO-Network/devices-api/pkg/grpc"
@@ -43,10 +42,10 @@ func New(usersClient pb.UserServiceClient, devicesClient services.UserDeviceServ
 		var err error
 
 		if udi != "" {
-			device, err = devicesClient.GetUserDevice(context.Background(), udi)
+			device, err = devicesClient.GetUserDevice(c.Context(), udi)
 		} else if ethAddr != "" {
 			address := common.HexToAddress(ethAddr)
-			device, err = devicesClient.GetUserDeviceByEthAddr(context.Background(), address) // if identity api had a way to filterBy address, could use it instead
+			device, err = devicesClient.GetUserDeviceByEthAddr(c.Context(), address) // if identity api had a way to filterBy address, could use it instead
 		} else {
 			return fmt.Errorf("no userDeviceID or ethAddr params found for owner validation")
 		}
