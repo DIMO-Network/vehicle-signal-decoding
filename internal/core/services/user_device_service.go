@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+
 	common2 "github.com/ethereum/go-ethereum/common"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/appmodels"

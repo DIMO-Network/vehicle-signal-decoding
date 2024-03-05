@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	common2 "github.com/ethereum/go-ethereum/common"
 	"io"
 	"net/http"
 	"os"
@@ -529,7 +530,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigStatusByEthAddr_DeviceDat
 		PowerTrainType:     "ICE",
 		CANProtocol:        "6",
 	}
-	s.mockUserDeviceSvc.EXPECT().GetUserDeviceByEthAddr(gomock.Any(), ethAddr).Return(testUD, nil)
+	s.mockUserDeviceSvc.EXPECT().GetUserDeviceByEthAddr(gomock.Any(), common2.HexToAddress(ethAddr)).Return(testUD, nil)
 
 	s.mockUserDeviceSvc.EXPECT().GetRawDeviceData(gomock.Any(), testUD.Id).Return(&gdata.RawDeviceDataResponse{Items: []*gdata.RawDeviceDataResponseItem{
 		{

@@ -132,7 +132,7 @@ func TestOwnerMiddleware(t *testing.T) {
 					d.OwnerAddress = common.Hex2Bytes(c.DeviceOwnerAddress)
 				}
 				if c.DeviceEthAddr != "" {
-					devicesClient.EXPECT().GetUserDeviceByEthAddr(gomock.Any(), c.DeviceEthAddr).Return(d, nil)
+					devicesClient.EXPECT().GetUserDeviceByEthAddr(gomock.Any(), common.HexToAddress(c.DeviceEthAddr)).Return(d, nil)
 				} else {
 					devicesClient.EXPECT().GetUserDevice(gomock.Any(), userDeviceID).Return(d, nil)
 				}

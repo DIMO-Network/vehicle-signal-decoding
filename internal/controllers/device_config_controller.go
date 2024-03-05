@@ -329,7 +329,7 @@ func (d *DeviceConfigController) GetConfigURLsFromEthAddr(c *fiber.Ctx) error {
 	ethAddr := c.Params("ethAddr")
 	protocol := c.Query("protocol", "")
 
-	ud, err := d.userDeviceSvc.GetUserDeviceByEthAddr(c.Context(), ethAddr)
+	ud, err := d.userDeviceSvc.GetUserDeviceByEthAddr(c.Context(), common2.HexToAddress(ethAddr))
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": fmt.Sprintf("no connected user device found for EthAddr: %s", ethAddr)})
 	}
@@ -360,7 +360,7 @@ func (d *DeviceConfigController) GetConfigStatusByEthAddr(c *fiber.Ctx) error {
 	addr := common2.HexToAddress(ethAddr)
 
 	// we use this to know what the config should be
-	ud, err := d.userDeviceSvc.GetUserDeviceByEthAddr(c.Context(), ethAddr)
+	ud, err := d.userDeviceSvc.GetUserDeviceByEthAddr(c.Context(), addr)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": fmt.Sprintf("no connected user device found for EthAddr: %s", ethAddr)})
 	}
