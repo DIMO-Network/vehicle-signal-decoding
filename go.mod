@@ -40,7 +40,7 @@ require (
 	go.uber.org/mock v0.3.0
 	golang.org/x/mod v0.14.0
 	google.golang.org/grpc v1.57.1
-	google.golang.org/protobuf v1.31.0
+	google.golang.org/protobuf v1.33.0
 )
 
 require (
