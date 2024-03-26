@@ -3,6 +3,8 @@ package commands
 import (
 	"context"
 
+	"github.com/volatiletech/null/v8"
+
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/common"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
@@ -22,16 +24,17 @@ func NewCreatePidCommandHandler(dbs func() *db.ReaderWriter) CreatePidCommandHan
 }
 
 type CreatePidCommandRequest struct {
-	ID              int64
-	TemplateName    string
-	Header          []byte
-	Mode            []byte
-	Pid             []byte
-	Formula         string
-	IntervalSeconds int32
-	Protocol        string
-	SignalName      string
-	BytesReturned   int32
+	ID                   int64
+	TemplateName         string
+	Header               []byte
+	Mode                 []byte
+	Pid                  []byte
+	Formula              string
+	IntervalSeconds      int32
+	Protocol             string
+	SignalName           string
+	CanFlowControlClear  *bool
+	CanFlowControlIDPair *string
 }
 
 type CreatePidCommandResponse struct {
@@ -56,14 +59,16 @@ func (h CreatePidCommandHandler) Execute(ctx context.Context, req *CreatePidComm
 	}
 
 	pid := &models.PidConfig{
-		TemplateName:    req.TemplateName,
-		Header:          req.Header,
-		Mode:            req.Mode,
-		Pid:             req.Pid,
-		Formula:         common.PrependFormulaTypeDefault(req.Formula),
-		IntervalSeconds: int(req.IntervalSeconds),
-		Protocol:        req.Protocol,
-		SignalName:      req.SignalName,
+		TemplateName:         req.TemplateName,
+		Header:               req.Header,
+		Mode:                 req.Mode,
+		Pid:                  req.Pid,
+		Formula:              common.PrependFormulaTypeDefault(req.Formula),
+		IntervalSeconds:      int(req.IntervalSeconds),
+		Protocol:             req.Protocol,
+		SignalName:           req.SignalName,
+		CanFlowControlClear:  null.BoolFromPtr(req.CanFlowControlClear),
+		CanFlowControlIDPair: null.StringFromPtr(req.CanFlowControlIDPair),
 	}
 
 	err = pid.Insert(ctx, h.DBS().Writer, boil.Infer())

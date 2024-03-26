@@ -25,15 +25,17 @@ func NewPidConfigService(logger *zerolog.Logger, dbs func() *db.ReaderWriter) gr
 func (s *PidConfigService) CreatePid(ctx context.Context, in *grpc.UpdatePidRequest) (*emptypb.Empty, error) {
 	service := commands.NewCreatePidCommandHandler(s.dbs)
 	_, err := service.Execute(ctx, &commands.CreatePidCommandRequest{
-		ID:              in.Pid.Id,
-		TemplateName:    in.Pid.TemplateName,
-		Header:          in.Pid.Header,
-		Mode:            in.Pid.Mode,
-		Pid:             in.Pid.Pid,
-		Formula:         in.Pid.Formula,
-		IntervalSeconds: in.Pid.IntervalSeconds,
-		Protocol:        in.Pid.Protocol,
-		SignalName:      in.Pid.SignalName,
+		ID:                   in.Pid.Id,
+		TemplateName:         in.Pid.TemplateName,
+		Header:               in.Pid.Header,
+		Mode:                 in.Pid.Mode,
+		Pid:                  in.Pid.Pid,
+		Formula:              in.Pid.Formula,
+		IntervalSeconds:      in.Pid.IntervalSeconds,
+		Protocol:             in.Pid.Protocol,
+		SignalName:           in.Pid.SignalName,
+		CanFlowControlClear:  in.Pid.CanFlowControlClear,
+		CanFlowControlIDPair: in.Pid.CanFlowControlIdPair,
 	})
 
 	if err != nil {
@@ -45,15 +47,17 @@ func (s *PidConfigService) CreatePid(ctx context.Context, in *grpc.UpdatePidRequ
 func (s *PidConfigService) UpdatePid(ctx context.Context, in *grpc.UpdatePidRequest) (*emptypb.Empty, error) {
 	service := commands.NewUpdatePidCommandHandler(s.dbs)
 	_, err := service.Execute(ctx, &commands.UpdatePidCommandRequest{
-		ID:              in.Pid.Id,
-		TemplateName:    in.Pid.TemplateName,
-		Header:          in.Pid.Header,
-		Mode:            in.Pid.Mode,
-		Pid:             in.Pid.Pid,
-		Formula:         in.Pid.Formula,
-		IntervalSeconds: in.Pid.IntervalSeconds,
-		Protocol:        in.Pid.Protocol,
-		SignalName:      in.Pid.SignalName,
+		ID:                   in.Pid.Id,
+		TemplateName:         in.Pid.TemplateName,
+		Header:               in.Pid.Header,
+		Mode:                 in.Pid.Mode,
+		Pid:                  in.Pid.Pid,
+		Formula:              in.Pid.Formula,
+		IntervalSeconds:      in.Pid.IntervalSeconds,
+		Protocol:             in.Pid.Protocol,
+		SignalName:           in.Pid.SignalName,
+		CanFlowControlClear:  in.Pid.CanFlowControlClear,
+		CanFlowControlIDPair: in.Pid.CanFlowControlIdPair,
 	})
 
 	if err != nil {
