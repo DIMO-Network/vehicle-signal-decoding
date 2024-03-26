@@ -159,6 +159,12 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 			IntervalSeconds: uint32(pidConfig.IntervalSeconds),
 			Protocol:        pidConfig.Protocol,
 		}
+		if pidConfig.CanFlowControlClear.Valid {
+			pid.CanFlowControlClear = pidConfig.CanFlowControlClear.Bool
+		}
+		if pidConfig.CanFlowControlIDPair.Valid {
+			pid.CanFlowControlIdPair = pidConfig.CanFlowControlIDPair.String
+		}
 		protoPIDs.Requests = append(protoPIDs.Requests, pid)
 	}
 
