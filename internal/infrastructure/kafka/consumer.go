@@ -5,29 +5,29 @@ import (
 
 	"github.com/Shopify/sarama"
 	"github.com/ThreeDotsLabs/watermill"
-	wm_kafka "github.com/ThreeDotsLabs/watermill-kafka/v2/pkg/kafka"
+	wmkafka "github.com/ThreeDotsLabs/watermill-kafka/v2/pkg/kafka"
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/rs/zerolog"
 )
 
 type Consumer struct {
-	subscriber *wm_kafka.Subscriber
+	subscriber *wmkafka.Subscriber
 	topic      string
 	logger     *zerolog.Logger
 }
 
 // NewConsumer sets up watermill subscriber and returns our consumer
 func NewConsumer(config *Config, logger *zerolog.Logger) (*Consumer, error) {
-	saramaSubscriberConfig := wm_kafka.DefaultSaramaSubscriberConfig()
+	saramaSubscriberConfig := wmkafka.DefaultSaramaSubscriberConfig()
 	// equivalent of auto.offset.reset: earliest
 	saramaSubscriberConfig.Consumer.Offsets.Initial = sarama.OffsetOldest
 	// note that autocommit is enabled
 	saramaSubscriberConfig.Version = sarama.V2_6_0_0
 
-	subscriber, err := wm_kafka.NewSubscriber(
-		wm_kafka.SubscriberConfig{
+	subscriber, err := wmkafka.NewSubscriber(
+		wmkafka.SubscriberConfig{
 			Brokers:               config.BrokerAddresses,
-			Unmarshaler:           wm_kafka.DefaultMarshaler{},
+			Unmarshaler:           wmkafka.DefaultMarshaler{},
 			OverwriteSaramaConfig: saramaSubscriberConfig,
 			ConsumerGroup:         config.GroupID,
 		},

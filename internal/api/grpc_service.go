@@ -10,24 +10,24 @@ import (
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/commands"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/queries"
 
-	p_grpc "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
+	pgrpc "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
 	"github.com/rs/zerolog"
-	emptypb "google.golang.org/protobuf/types/known/emptypb"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type GrpcService struct {
-	p_grpc.VehicleSignalDecodingServiceServer
+	pgrpc.VehicleSignalDecodingServiceServer
 	logger   *zerolog.Logger
 	DBS      func() *db.ReaderWriter
 	s3Client *s3.Client
 	settings *config.Settings
 }
 
-func NewGrpcService(logger *zerolog.Logger, dbs func() *db.ReaderWriter, s3Client *s3.Client, settings *config.Settings) p_grpc.VehicleSignalDecodingServiceServer {
+func NewGrpcService(logger *zerolog.Logger, dbs func() *db.ReaderWriter, s3Client *s3.Client, settings *config.Settings) pgrpc.VehicleSignalDecodingServiceServer {
 	return &GrpcService{logger: logger, DBS: dbs, settings: settings, s3Client: s3Client}
 }
 
-func (s *GrpcService) CreateDBCCode(ctx context.Context, in *p_grpc.CreateDBCCodeRequest) (*p_grpc.VehicleSignalBaseResponse, error) {
+func (s *GrpcService) CreateDBCCode(ctx context.Context, in *pgrpc.CreateDBCCodeRequest) (*pgrpc.VehicleSignalBaseResponse, error) {
 	service := commands.NewCreateDBCCodeCommandHandler(s.DBS)
 	response, err := service.Execute(ctx, &commands.CreateDBCCodeCommandRequest{
 		Name:             in.Name,
@@ -42,10 +42,10 @@ func (s *GrpcService) CreateDBCCode(ctx context.Context, in *p_grpc.CreateDBCCod
 		return nil, err
 	}
 
-	return &p_grpc.VehicleSignalBaseResponse{Id: response.ID}, nil
+	return &pgrpc.VehicleSignalBaseResponse{Id: response.ID}, nil
 }
 
-func (s *GrpcService) UpdateDBCCode(ctx context.Context, in *p_grpc.UpdateDBCCodeRequest) (*p_grpc.VehicleSignalBaseResponse, error) {
+func (s *GrpcService) UpdateDBCCode(ctx context.Context, in *pgrpc.UpdateDBCCodeRequest) (*pgrpc.VehicleSignalBaseResponse, error) {
 	service := commands.NewUpdateDBCCodeCommandHandler(s.DBS)
 	response, err := service.Execute(ctx, &commands.UpdateDBCCodeCommandRequest{
 		ID:               in.Id,
@@ -61,10 +61,10 @@ func (s *GrpcService) UpdateDBCCode(ctx context.Context, in *p_grpc.UpdateDBCCod
 		return nil, err
 	}
 
-	return &p_grpc.VehicleSignalBaseResponse{Id: response.ID}, nil
+	return &pgrpc.VehicleSignalBaseResponse{Id: response.ID}, nil
 }
 
-func (s *GrpcService) GetDBCCodes(ctx context.Context, _ *emptypb.Empty) (*p_grpc.GetDBCCodeListResponse, error) {
+func (s *GrpcService) GetDBCCodes(ctx context.Context, _ *emptypb.Empty) (*pgrpc.GetDBCCodeListResponse, error) {
 	service := queries.NewGetDBCCodeAllQueryHandler(s.DBS, s.logger)
 	response, err := service.Handle(ctx, &queries.GetDBCCodeAllQueryRequest{})
 
@@ -75,7 +75,7 @@ func (s *GrpcService) GetDBCCodes(ctx context.Context, _ *emptypb.Empty) (*p_grp
 	return response, nil
 }
 
-func (s *GrpcService) GetDBCCodesByID(ctx context.Context, in *p_grpc.GetByIdRequest) (*p_grpc.GetDBCCodeResponse, error) {
+func (s *GrpcService) GetDBCCodesByID(ctx context.Context, in *pgrpc.GetByIdRequest) (*pgrpc.GetDBCCodeResponse, error) {
 	service := queries.NewGetDBCCodeByIDQueryHandler(s.DBS, s.logger)
 	response, err := service.Handle(ctx, &queries.GetDBCCodeByIDQueryRequest{
 		ID: in.Id,
@@ -88,7 +88,7 @@ func (s *GrpcService) GetDBCCodesByID(ctx context.Context, in *p_grpc.GetByIdReq
 	return response, nil
 }
 
-func (s *GrpcService) CreateTestSignal(ctx context.Context, in *p_grpc.CreateTestSignalRequest) (*p_grpc.VehicleSignalBaseResponse, error) {
+func (s *GrpcService) CreateTestSignal(ctx context.Context, in *pgrpc.CreateTestSignalRequest) (*pgrpc.VehicleSignalBaseResponse, error) {
 	service := commands.NewCreateTestSignalCommandHandler(s.DBS)
 	response, err := service.Execute(ctx, &commands.CreateTestSignalCommandRequest{
 		DBCCodesID:         in.DbcCodesId,
@@ -103,10 +103,10 @@ func (s *GrpcService) CreateTestSignal(ctx context.Context, in *p_grpc.CreateTes
 		return nil, err
 	}
 
-	return &p_grpc.VehicleSignalBaseResponse{Id: response.ID}, nil
+	return &pgrpc.VehicleSignalBaseResponse{Id: response.ID}, nil
 }
 
-func (s *GrpcService) UpdateTestSignal(ctx context.Context, in *p_grpc.UpdateTestSignalRequest) (*p_grpc.VehicleSignalBaseResponse, error) {
+func (s *GrpcService) UpdateTestSignal(ctx context.Context, in *pgrpc.UpdateTestSignalRequest) (*pgrpc.VehicleSignalBaseResponse, error) {
 	service := commands.NewUpdateTestSignalCommandHandler(s.DBS)
 	response, err := service.Execute(ctx, &commands.UpdateTestSignalCommandRequest{
 		ID:                 in.Id,
@@ -122,10 +122,10 @@ func (s *GrpcService) UpdateTestSignal(ctx context.Context, in *p_grpc.UpdateTes
 		return nil, err
 	}
 
-	return &p_grpc.VehicleSignalBaseResponse{Id: response.ID}, nil
+	return &pgrpc.VehicleSignalBaseResponse{Id: response.ID}, nil
 }
 
-func (s *GrpcService) GetTestSignals(ctx context.Context, _ *emptypb.Empty) (*p_grpc.GetTestSignalListResponse, error) {
+func (s *GrpcService) GetTestSignals(ctx context.Context, _ *emptypb.Empty) (*pgrpc.GetTestSignalListResponse, error) {
 	service := queries.NewGetTestSignalAllQueryHandler(s.DBS, s.logger)
 	response, err := service.Handle(ctx, &queries.GetTestSignalAllQueryRequest{})
 
@@ -136,7 +136,7 @@ func (s *GrpcService) GetTestSignals(ctx context.Context, _ *emptypb.Empty) (*p_
 	return response, nil
 }
 
-func (s *GrpcService) GetTestSignalByID(ctx context.Context, in *p_grpc.GetByIdRequest) (*p_grpc.GetTestSignalResponse, error) {
+func (s *GrpcService) GetTestSignalByID(ctx context.Context, in *pgrpc.GetByIdRequest) (*pgrpc.GetTestSignalResponse, error) {
 	service := queries.NewGetTestSignalByIDQueryHandler(s.DBS, s.logger)
 	response, err := service.Handle(ctx, &queries.GetTestSignalByIDQueryRequest{
 		ID: in.Id,
@@ -149,7 +149,7 @@ func (s *GrpcService) GetTestSignalByID(ctx context.Context, in *p_grpc.GetByIdR
 	return response, nil
 }
 
-func (s *GrpcService) GetTestSignalsByDeviceDefinitionID(ctx context.Context, in *p_grpc.GetByIdRequest) (*p_grpc.GetTestSignalListResponse, error) {
+func (s *GrpcService) GetTestSignalsByDeviceDefinitionID(ctx context.Context, in *pgrpc.GetByIdRequest) (*pgrpc.GetTestSignalListResponse, error) {
 	service := queries.NewGetTestSignalFilterQueryHandler(s.DBS, s.logger)
 	response, err := service.Handle(ctx, &queries.GetTestSignalFilterQueryRequest{
 		DeviceDefinitionID: in.Id,
@@ -162,7 +162,7 @@ func (s *GrpcService) GetTestSignalsByDeviceDefinitionID(ctx context.Context, in
 	return response, nil
 }
 
-func (s *GrpcService) GetTestSignalsByUserDeviceID(ctx context.Context, in *p_grpc.GetByIdRequest) (*p_grpc.GetTestSignalListResponse, error) {
+func (s *GrpcService) GetTestSignalsByUserDeviceID(ctx context.Context, in *pgrpc.GetByIdRequest) (*pgrpc.GetTestSignalListResponse, error) {
 	service := queries.NewGetTestSignalFilterQueryHandler(s.DBS, s.logger)
 	response, err := service.Handle(ctx, &queries.GetTestSignalFilterQueryRequest{
 		UserDeviceID: in.Id,
@@ -175,7 +175,7 @@ func (s *GrpcService) GetTestSignalsByUserDeviceID(ctx context.Context, in *p_gr
 	return response, nil
 }
 
-func (s *GrpcService) GetTestSignalsByDBCCodeID(ctx context.Context, in *p_grpc.GetByIdRequest) (*p_grpc.GetTestSignalListResponse, error) {
+func (s *GrpcService) GetTestSignalsByDBCCodeID(ctx context.Context, in *pgrpc.GetByIdRequest) (*pgrpc.GetTestSignalListResponse, error) {
 	service := queries.NewGetTestSignalFilterQueryHandler(s.DBS, s.logger)
 	response, err := service.Handle(ctx, &queries.GetTestSignalFilterQueryRequest{
 		DBCCodeID: in.Id,
@@ -188,7 +188,7 @@ func (s *GrpcService) GetTestSignalsByDBCCodeID(ctx context.Context, in *p_grpc.
 	return response, nil
 }
 
-func (s *GrpcService) GetCanBusDumpFiles(ctx context.Context, in *p_grpc.GetCanBusDumpFileRequest) (*p_grpc.GetCanBusDumpFileResponse, error) {
+func (s *GrpcService) GetCanBusDumpFiles(ctx context.Context, in *pgrpc.GetCanBusDumpFileRequest) (*pgrpc.GetCanBusDumpFileResponse, error) {
 	service := queries.NewGetCanBusDumpFileByEthAddressQueryHandler(s.logger, s.s3Client, s.settings)
 	response, err := service.Handle(ctx, &queries.GetCanBusDumpFileByEthAddressQueryRequest{
 		EthAddress: in.EthAddr,
@@ -201,7 +201,7 @@ func (s *GrpcService) GetCanBusDumpFiles(ctx context.Context, in *p_grpc.GetCanB
 	return response, nil
 }
 
-func (s *GrpcService) DownloadCanBusDumpFile(ctx context.Context, in *p_grpc.DownloadCanBusDumpFileContentRequest) (*p_grpc.DownloadCanBusDumpFileContentResponse, error) {
+func (s *GrpcService) DownloadCanBusDumpFile(ctx context.Context, in *pgrpc.DownloadCanBusDumpFileContentRequest) (*pgrpc.DownloadCanBusDumpFileContentResponse, error) {
 	service := queries.NewDownloadCanBusDumpFileByFileNameQueryHandler(s.logger, s.s3Client, s.settings)
 	response, err := service.Handle(ctx, &queries.DownloadCanBusDumpFileByFileNameQueryRequest{
 		FileName: in.Id,
@@ -214,7 +214,7 @@ func (s *GrpcService) DownloadCanBusDumpFile(ctx context.Context, in *p_grpc.Dow
 	return response, nil
 }
 
-func (s *GrpcService) GetJobsByEtherumAddress(ctx context.Context, in *p_grpc.GetJobsByEtherumAddressRequest) (*p_grpc.GetJobsByEtherumAddressResponse, error) {
+func (s *GrpcService) GetJobsByEtherumAddress(ctx context.Context, in *pgrpc.GetJobsByEtherumAddressRequest) (*pgrpc.GetJobsByEtherumAddressResponse, error) {
 	service := queries.NewGetJobByEthereumAddressQueryHandler(s.DBS, s.logger)
 	response, err := service.Handle(ctx, &queries.GetJobByyEthereumAddressQueryRequest{
 		EtherumAddress: in.EtherumAddress,
@@ -227,7 +227,7 @@ func (s *GrpcService) GetJobsByEtherumAddress(ctx context.Context, in *p_grpc.Ge
 	return response, nil
 }
 
-func (s *GrpcService) CreateJobsByEtherumAddress(ctx context.Context, in *p_grpc.CreateJobByEtherumAddressRequest) (*p_grpc.GetJobsByEtherumAddressItemResponse, error) {
+func (s *GrpcService) CreateJobsByEtherumAddress(ctx context.Context, in *pgrpc.CreateJobByEtherumAddressRequest) (*pgrpc.GetJobsByEtherumAddressItemResponse, error) {
 	service := commands.NewCreateJobByEtherumAddressCommandHandler(s.DBS)
 	response, err := service.Execute(ctx, &commands.CreateJobCommandRequest{
 		EtherumAddress: in.EtherumAddress,
@@ -241,7 +241,7 @@ func (s *GrpcService) CreateJobsByEtherumAddress(ctx context.Context, in *p_grpc
 	return response, nil
 }
 
-func (s *GrpcService) DeleteJobsByEtherumAddress(ctx context.Context, in *p_grpc.DeleteJobByEtherumAddressRequest) (*emptypb.Empty, error) {
+func (s *GrpcService) DeleteJobsByEtherumAddress(ctx context.Context, in *pgrpc.DeleteJobByEtherumAddressRequest) (*emptypb.Empty, error) {
 	service := commands.NewDeleteJobByEtherumAddressCommandHandler(s.DBS)
 	_, err := service.Execute(ctx, &commands.DeleteJobCommandRequest{
 		ID: in.Id,

@@ -6,12 +6,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	common2 "github.com/ethereum/go-ethereum/common"
 	"io"
 	"net/http"
 	"os"
 	"testing"
 	"time"
+
+	common2 "github.com/ethereum/go-ethereum/common"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 

@@ -9,7 +9,7 @@ import (
 	common2 "github.com/ethereum/go-ethereum/common"
 	"github.com/volatiletech/null/v8"
 
-	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
+	pgrpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	pb "github.com/DIMO-Network/devices-api/pkg/grpc"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
 	"github.com/gofiber/fiber/v2"
@@ -22,7 +22,7 @@ import (
 
 	"database/sql"
 
-	models "github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 )
 
 //go:generate mockgen -source device_template_service.go -destination mocks/device_template_service_mock.go
@@ -181,7 +181,7 @@ func (dts *deviceTemplateService) buildConfigRoute(ct configType, name, version 
 // also calls setPowerTrainType to find and set a default Powertrain, returns Make, Model, Year.
 func (dts *deviceTemplateService) retrieveAndSetVehicleInfo(ctx context.Context, ud *pb.UserDevice) (string, string, int, error) {
 
-	var ddResponse *p_grpc.GetDeviceDefinitionItemResponse
+	var ddResponse *pgrpc.GetDeviceDefinitionItemResponse
 	deviceDefinitionID := ud.DeviceDefinitionId
 	ddResponse, err := dts.deviceDefSvc.GetDeviceDefinitionByID(ctx, deviceDefinitionID)
 	if err != nil {
@@ -197,7 +197,7 @@ func (dts *deviceTemplateService) retrieveAndSetVehicleInfo(ctx context.Context,
 	return vehicleMake, vehicleModel, vehicleYear, nil
 }
 
-func setPowerTrainType(ddResponse *p_grpc.GetDeviceDefinitionItemResponse, ud *pb.UserDevice) {
+func setPowerTrainType(ddResponse *pgrpc.GetDeviceDefinitionItemResponse, ud *pb.UserDevice) {
 	var powerTrainType string
 	for _, attribute := range ddResponse.DeviceAttributes {
 		if attribute.Name == "powertrain_type" {

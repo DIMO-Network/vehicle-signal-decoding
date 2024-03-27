@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/volatiletech/null/v8"
+
 	"github.com/DIMO-Network/shared/db"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/exceptions"
@@ -21,16 +23,17 @@ func NewUpdatePidCommandHandler(dbs func() *db.ReaderWriter) UpdatePidCommandHan
 }
 
 type UpdatePidCommandRequest struct {
-	ID              int64
-	TemplateName    string
-	Header          []byte
-	Mode            []byte
-	Pid             []byte
-	Formula         string
-	IntervalSeconds int32
-	Protocol        string
-	SignalName      string
-	BytesReturned   int32
+	ID                   int64
+	TemplateName         string
+	Header               []byte
+	Mode                 []byte
+	Pid                  []byte
+	Formula              string
+	IntervalSeconds      int32
+	Protocol             string
+	SignalName           string
+	CanFlowControlClear  *bool
+	CanFlowControlIDPair *string
 }
 
 type UpdatePidCommandResponse struct {
@@ -59,6 +62,8 @@ func (h UpdatePidCommandHandler) Execute(ctx context.Context, req *UpdatePidComm
 	pid.IntervalSeconds = int(req.IntervalSeconds)
 	pid.Protocol = req.Protocol
 	pid.SignalName = req.SignalName
+	pid.CanFlowControlClear = null.BoolFromPtr(req.CanFlowControlClear)
+	pid.CanFlowControlIDPair = null.StringFromPtr(req.CanFlowControlIDPair)
 
 	if _, err := pid.Update(ctx, h.DBS().Writer.DB, boil.Infer()); err != nil {
 		return nil, &exceptions.InternalError{

@@ -10,7 +10,7 @@ import (
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/common"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/exceptions"
-	p_grpc "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
+	pgrpc "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
 	"github.com/rs/zerolog"
 )
 
@@ -30,7 +30,7 @@ type GetJobByyEthereumAddressQueryRequest struct {
 	EtherumAddress string
 }
 
-func (h GetJobByEthereumAddressQueryHandler) Handle(ctx context.Context, query *GetJobByyEthereumAddressQueryRequest) (*p_grpc.GetJobsByEtherumAddressResponse, error) {
+func (h GetJobByEthereumAddressQueryHandler) Handle(ctx context.Context, query *GetJobByyEthereumAddressQueryRequest) (*pgrpc.GetJobsByEtherumAddressResponse, error) {
 
 	ethAddrBytes, err := common.ResolveEtherumAddressFromString(query.EtherumAddress)
 	if err != nil {
@@ -46,10 +46,10 @@ func (h GetJobByEthereumAddressQueryHandler) Handle(ctx context.Context, query *
 		}
 	}
 
-	result := &p_grpc.GetJobsByEtherumAddressResponse{}
+	result := &pgrpc.GetJobsByEtherumAddressResponse{}
 
 	for _, item := range jobs {
-		jobItem := &p_grpc.GetJobsByEtherumAddressItemResponse{
+		jobItem := &pgrpc.GetJobsByEtherumAddressItemResponse{
 			Id:        item.ID,
 			Command:   item.Command,
 			Status:    item.Status,

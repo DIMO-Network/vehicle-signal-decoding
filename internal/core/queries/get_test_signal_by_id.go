@@ -12,7 +12,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/DIMO-Network/shared/db"
-	p_grpc "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
+	pgrpc "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
 	"github.com/rs/zerolog"
 )
 
@@ -32,7 +32,7 @@ type GetTestSignalByIDQueryRequest struct {
 	ID string
 }
 
-func (h GetTestSignalByIDQueryHandler) Handle(ctx context.Context, query *GetTestSignalByIDQueryRequest) (*p_grpc.GetTestSignalResponse, error) {
+func (h GetTestSignalByIDQueryHandler) Handle(ctx context.Context, query *GetTestSignalByIDQueryRequest) (*pgrpc.GetTestSignalResponse, error) {
 
 	item, err := models.TestSignals(models.TestSignalWhere.ID.EQ(query.ID)).One(ctx, h.DBS().Reader)
 	if err != nil {
@@ -47,7 +47,7 @@ func (h GetTestSignalByIDQueryHandler) Handle(ctx context.Context, query *GetTes
 		}
 	}
 
-	result := &p_grpc.GetTestSignalResponse{
+	result := &pgrpc.GetTestSignalResponse{
 		Id:                 item.ID,
 		UserDeviceId:       item.UserDeviceID,
 		DeviceDefinitionId: item.DeviceDefinitionID,

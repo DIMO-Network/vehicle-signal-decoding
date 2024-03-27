@@ -1,7 +1,6 @@
 run:
   timeout: 5m
-  skip-dirs:
-    - pkg/grpc
+
 linters:
   enable:
     - prealloc
@@ -25,7 +24,7 @@ linters-settings:
     - dir: pkg/grpc
   gci:
     # DEPRECATED: use `sections` and `prefix(github.com/org/project)` instead.
-    local-prefixes: github.com/org/project
+    local-prefixes: github.com/dimo-network/vehicle-signal-decoding
     # Section configuration to compare against.
     # Section names are case-insensitive and may contain parameters in ().
     # The default order of sections is `standard > default > custom > blank > dot`,

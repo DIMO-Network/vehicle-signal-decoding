@@ -14,7 +14,7 @@ import (
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/exceptions"
 
 	"github.com/DIMO-Network/shared/db"
-	p_grpc "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
+	pgrpc "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
 	"github.com/rs/zerolog"
 )
 
@@ -36,20 +36,20 @@ type GetTestSignalFilterQueryRequest struct {
 	UserDeviceID       string
 }
 
-func (h GetTestSignalFilterQueryHandler) Handle(ctx context.Context, query *GetTestSignalFilterQueryRequest) (*p_grpc.GetTestSignalListResponse, error) {
+func (h GetTestSignalFilterQueryHandler) Handle(ctx context.Context, query *GetTestSignalFilterQueryRequest) (*pgrpc.GetTestSignalListResponse, error) {
 
 	var queryMods []qm.QueryMod
 
 	if len(query.DeviceDefinitionID) > 1 {
-		queryMods = append(queryMods, models.TestSignalWhere.DeviceDefinitionID.EQ(string(query.DeviceDefinitionID)))
+		queryMods = append(queryMods, models.TestSignalWhere.DeviceDefinitionID.EQ(query.DeviceDefinitionID))
 	}
 
 	if len(query.UserDeviceID) > 1 {
-		queryMods = append(queryMods, models.TestSignalWhere.UserDeviceID.EQ(string(query.UserDeviceID)))
+		queryMods = append(queryMods, models.TestSignalWhere.UserDeviceID.EQ(query.UserDeviceID))
 	}
 
 	if len(query.DBCCodeID) > 1 {
-		queryMods = append(queryMods, models.TestSignalWhere.DBCCodesID.EQ(string(query.DBCCodeID)))
+		queryMods = append(queryMods, models.TestSignalWhere.DBCCodesID.EQ(query.DBCCodeID))
 	}
 
 	queryMods = append(queryMods,
@@ -64,10 +64,10 @@ func (h GetTestSignalFilterQueryHandler) Handle(ctx context.Context, query *GetT
 		}
 	}
 
-	result := &p_grpc.GetTestSignalListResponse{}
+	result := &pgrpc.GetTestSignalListResponse{}
 
 	for _, item := range all {
-		result.Items = append(result.Items, &p_grpc.GetTestSignalResponse{
+		result.Items = append(result.Items, &pgrpc.GetTestSignalResponse{
 			Id:                 item.ID,
 			UserDeviceId:       item.UserDeviceID,
 			DeviceDefinitionId: item.DeviceDefinitionID,

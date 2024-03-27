@@ -10,7 +10,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/DIMO-Network/shared/db"
-	p_grpc "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
+	pgrpc "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
 	"github.com/rs/zerolog"
 )
 
@@ -30,7 +30,7 @@ type GetDBCCodeByIDQueryRequest struct {
 	ID string
 }
 
-func (h GetDBCCodeByIDQueryHandler) Handle(ctx context.Context, query *GetDBCCodeByIDQueryRequest) (*p_grpc.GetDBCCodeResponse, error) {
+func (h GetDBCCodeByIDQueryHandler) Handle(ctx context.Context, query *GetDBCCodeByIDQueryRequest) (*pgrpc.GetDBCCodeResponse, error) {
 
 	item, err := models.DBCCodes(models.DBCCodeWhere.ID.EQ(query.ID)).One(ctx, h.DBS().Reader)
 	if err != nil {
@@ -45,7 +45,7 @@ func (h GetDBCCodeByIDQueryHandler) Handle(ctx context.Context, query *GetDBCCod
 		}
 	}
 
-	result := &p_grpc.GetDBCCodeResponse{
+	result := &pgrpc.GetDBCCodeResponse{
 		Id:               item.ID,
 		Name:             item.Name,
 		DbcContents:      item.DBCContents.String,
