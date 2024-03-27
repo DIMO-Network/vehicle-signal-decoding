@@ -6,7 +6,7 @@ import (
 
 	"github.com/DIMO-Network/shared/db"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
-	grpc "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
+	"github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
 	"github.com/rs/zerolog"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
@@ -27,7 +27,7 @@ type GetPidAllQueryRequest struct {
 	TemplateName string
 }
 
-func (h GetPidAllQueryHandler) Handle(ctx context.Context, request *GetPidAllQueryRequest) (*grpc.GetPidListResponse, error) {
+func (h *GetPidAllQueryHandler) Handle(ctx context.Context, request *GetPidAllQueryRequest) (*grpc.GetPidListResponse, error) {
 
 	template, err := models.Templates(models.TemplateWhere.TemplateName.EQ(request.TemplateName)).One(ctx, h.DBS().Reader)
 

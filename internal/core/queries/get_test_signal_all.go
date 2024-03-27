@@ -10,7 +10,7 @@ import (
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/exceptions"
 
 	"github.com/DIMO-Network/shared/db"
-	p_grpc "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
+	pgrpc "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
 	"github.com/rs/zerolog"
 )
 
@@ -30,7 +30,7 @@ type GetTestSignalAllQueryRequest struct {
 	Input string
 }
 
-func (h GetTestSignalAllQueryHandler) Handle(ctx context.Context, _ *GetTestSignalAllQueryRequest) (*p_grpc.GetTestSignalListResponse, error) {
+func (h GetTestSignalAllQueryHandler) Handle(ctx context.Context, _ *GetTestSignalAllQueryRequest) (*pgrpc.GetTestSignalListResponse, error) {
 
 	all, err := models.TestSignals().All(ctx, h.DBS().Reader)
 	if err != nil {
@@ -39,10 +39,10 @@ func (h GetTestSignalAllQueryHandler) Handle(ctx context.Context, _ *GetTestSign
 		}
 	}
 
-	result := &p_grpc.GetTestSignalListResponse{}
+	result := &pgrpc.GetTestSignalListResponse{}
 
 	for _, item := range all {
-		result.Items = append(result.Items, &p_grpc.GetTestSignalResponse{
+		result.Items = append(result.Items, &pgrpc.GetTestSignalResponse{
 			Id:                 item.ID,
 			UserDeviceId:       item.UserDeviceID,
 			DeviceDefinitionId: item.DeviceDefinitionID,

@@ -8,7 +8,7 @@ import (
 
 	"github.com/DIMO-Network/shared/db"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
-	grpc "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
+	"github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
 	"github.com/rs/zerolog"
 )
 

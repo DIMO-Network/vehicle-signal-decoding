@@ -27,7 +27,7 @@ func StartContainerDatabase(ctx context.Context, dbName string, t *testing.T, mi
 	logger := zerolog.New(os.Stdout).With().Timestamp().Logger()
 	settings := getTestDbSettings(dbName)
 	pgPort := "5432/tcp"
-	dbURL := func(host string, port nat.Port) string {
+	dbURL := func(_ string, port nat.Port) string {
 		return fmt.Sprintf("postgres://%s:%s@localhost:%s/%s?sslmode=disable", settings.DB.User, settings.DB.Password, port.Port(), settings.DB.Name)
 	}
 	cr := testcontainers.ContainerRequest{
@@ -127,7 +127,7 @@ func handleContainerStartErr(ctx context.Context, err error, container testconta
 	if err != nil {
 		fmt.Println("start container error: " + err.Error())
 		if container != nil {
-			container.Terminate(ctx) //nolint
+			_ = container.Terminate(ctx)
 		}
 		t.Fatal(err)
 	}

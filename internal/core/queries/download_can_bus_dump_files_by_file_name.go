@@ -7,7 +7,7 @@ import (
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/exceptions"
-	p_grpc "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
+	pgrpc "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
@@ -33,7 +33,7 @@ type DownloadCanBusDumpFileByFileNameQueryRequest struct {
 	FileName string
 }
 
-func (h DownloadCanBusDumpFileByFileNameQueryHandler) Handle(ctx context.Context, query *DownloadCanBusDumpFileByFileNameQueryRequest) (*p_grpc.DownloadCanBusDumpFileContentResponse, error) {
+func (h DownloadCanBusDumpFileByFileNameQueryHandler) Handle(ctx context.Context, query *DownloadCanBusDumpFileByFileNameQueryRequest) (*pgrpc.DownloadCanBusDumpFileContentResponse, error) {
 
 	response, err := h.s3Client.GetObject(ctx, &s3.GetObjectInput{
 		Bucket: aws.String(h.settings.AWSCandumpsBucketName),
@@ -56,5 +56,5 @@ func (h DownloadCanBusDumpFileByFileNameQueryHandler) Handle(ctx context.Context
 		return nil, err
 	}
 
-	return &p_grpc.DownloadCanBusDumpFileContentResponse{Content: bs}, nil
+	return &pgrpc.DownloadCanBusDumpFileContentResponse{Content: bs}, nil
 }

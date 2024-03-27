@@ -137,8 +137,8 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 	// secured paths
 	jwtAuth := jwtware.New(jwtware.Config{
 		JWKSetURLs: []string{settings.JwtKeySetURL},
-		ErrorHandler: func(c *fiber.Ctx, err error) error {
-			return fiber.NewError(fiber.StatusUnauthorized, "Invalid JWT.")
+		ErrorHandler: func(_ *fiber.Ctx, err error) error {
+			return fiber.NewError(fiber.StatusUnauthorized, "Invalid JWT. "+err.Error())
 		},
 	})
 
@@ -230,7 +230,7 @@ func getS3ServiceClient(ctx context.Context, settings *config.Settings, logger z
 		awsconfig.WithRegion(settings.AWSRegion),
 		// Comment the below out if not using localhost
 		awsconfig.WithEndpointResolverWithOptions(aws.EndpointResolverWithOptionsFunc(
-			func(service, region string, options ...interface{}) (aws.Endpoint, error) {
+			func(_, _ string, _ ...interface{}) (aws.Endpoint, error) {
 
 				if settings.Environment == "local" {
 					return aws.Endpoint{PartitionID: "aws", URL: settings.CandumpsAWSEndpoint, SigningRegion: settings.AWSRegion}, nil // The SigningRegion key was what's was missing! D'oh.

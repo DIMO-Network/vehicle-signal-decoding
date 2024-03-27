@@ -11,7 +11,7 @@ import (
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/exceptions"
 
 	"github.com/DIMO-Network/shared/db"
-	p_grpc "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
+	pgrpc "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
 	"github.com/rs/zerolog"
 )
 
@@ -30,7 +30,7 @@ func NewGetDBCCodeAllQueryHandler(dbs func() *db.ReaderWriter, logger *zerolog.L
 type GetDBCCodeAllQueryRequest struct {
 }
 
-func (h GetDBCCodeAllQueryHandler) Handle(ctx context.Context, _ *GetDBCCodeAllQueryRequest) (*p_grpc.GetDBCCodeListResponse, error) {
+func (h GetDBCCodeAllQueryHandler) Handle(ctx context.Context, _ *GetDBCCodeAllQueryRequest) (*pgrpc.GetDBCCodeListResponse, error) {
 
 	all, err := models.DBCCodes(qm.OrderBy("created_at desc"), qm.Limit(100)).All(ctx, h.DBS().Reader)
 	if err != nil {
@@ -39,10 +39,10 @@ func (h GetDBCCodeAllQueryHandler) Handle(ctx context.Context, _ *GetDBCCodeAllQ
 		}
 	}
 
-	result := &p_grpc.GetDBCCodeListResponse{}
+	result := &pgrpc.GetDBCCodeListResponse{}
 
 	for _, item := range all {
-		result.Items = append(result.Items, &p_grpc.GetDBCCodeResponse{
+		result.Items = append(result.Items, &pgrpc.GetDBCCodeResponse{
 			Id:               item.ID,
 			Name:             item.Name,
 			DbcContents:      item.DBCContents.String,

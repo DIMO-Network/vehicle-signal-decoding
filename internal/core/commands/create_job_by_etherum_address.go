@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/common"
-	p_grpc "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
+	pgrpc "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
 	"github.com/segmentio/ksuid"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -30,7 +30,7 @@ type CreateJobCommandRequest struct {
 	EtherumAddress string
 }
 
-func (h CreateJobByEtherumAddressCommandHandler) Execute(ctx context.Context, command *CreateJobCommandRequest) (*p_grpc.GetJobsByEtherumAddressItemResponse, error) {
+func (h CreateJobByEtherumAddressCommandHandler) Execute(ctx context.Context, command *CreateJobCommandRequest) (*pgrpc.GetJobsByEtherumAddressItemResponse, error) {
 
 	ethAddrBytes, err := common.ResolveEtherumAddressFromString(command.EtherumAddress)
 	if err != nil {
@@ -56,7 +56,7 @@ func (h CreateJobByEtherumAddressCommandHandler) Execute(ctx context.Context, co
 		}
 	}
 
-	result := &p_grpc.GetJobsByEtherumAddressItemResponse{
+	result := &pgrpc.GetJobsByEtherumAddressItemResponse{
 		Id:        jobItem.ID,
 		Command:   jobItem.Command,
 		Status:    jobItem.Status,

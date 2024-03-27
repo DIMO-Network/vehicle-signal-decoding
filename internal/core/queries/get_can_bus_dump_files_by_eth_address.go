@@ -8,7 +8,7 @@ import (
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/common"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/exceptions"
-	p_grpc "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
+	pgrpc "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/rs/zerolog"
@@ -33,7 +33,7 @@ type GetCanBusDumpFileByEthAddressQueryRequest struct {
 	EthAddress string
 }
 
-func (h GetCanBusDumpFileByEthAddressQueryHandler) Handle(ctx context.Context, query *GetCanBusDumpFileByEthAddressQueryRequest) (*p_grpc.GetCanBusDumpFileResponse, error) {
+func (h GetCanBusDumpFileByEthAddressQueryHandler) Handle(ctx context.Context, query *GetCanBusDumpFileByEthAddressQueryRequest) (*pgrpc.GetCanBusDumpFileResponse, error) {
 
 	response, err := h.s3Client.ListObjectsV2(ctx, &s3.ListObjectsV2Input{
 		Bucket: aws.String(h.settings.AWSCandumpsBucketName),
@@ -46,11 +46,11 @@ func (h GetCanBusDumpFileByEthAddressQueryHandler) Handle(ctx context.Context, q
 		}
 	}
 
-	files := []*p_grpc.GetCanBusDumpFileItemResponse{}
+	files := []*pgrpc.GetCanBusDumpFileItemResponse{}
 
 	for _, item := range response.Contents {
 		if item.Size > 0 {
-			files = append(files, &p_grpc.GetCanBusDumpFileItemResponse{
+			files = append(files, &pgrpc.GetCanBusDumpFileItemResponse{
 				Id:        common.RemoveSpecialCharacter(*item.ETag),
 				Name:      filepath.Base(*item.Key),
 				FullName:  *item.Key,
@@ -60,5 +60,5 @@ func (h GetCanBusDumpFileByEthAddressQueryHandler) Handle(ctx context.Context, q
 		}
 	}
 
-	return &p_grpc.GetCanBusDumpFileResponse{Items: files}, nil
+	return &pgrpc.GetCanBusDumpFileResponse{Items: files}, nil
 }
