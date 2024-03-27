@@ -406,6 +406,12 @@
         "github_com_DIMO-Network_vehicle-signal-decoding_pkg_grpc.PIDConfig": {
             "type": "object",
             "properties": {
+                "can_flow_control_clear": {
+                    "type": "boolean"
+                },
+                "can_flow_control_id_pair": {
+                    "type": "string"
+                },
                 "formula": {
                     "type": "string"
                 },
