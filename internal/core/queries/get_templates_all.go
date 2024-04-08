@@ -69,18 +69,22 @@ func (h GetTemplatesAllQueryHandler) Handle(ctx context.Context, query *GetTempl
 
 	for _, item := range all {
 		ts := &grpc.TemplateSummary{
-			Name:       item.TemplateName,
-			Version:    item.Version,
-			Protocol:   item.Protocol,
-			Powertrain: item.Powertrain,
-			UpdatedAt:  timestamppb.New(item.UpdatedAt),
+			Name:               item.TemplateName,
+			Version:            item.Version,
+			Protocol:           item.Protocol,
+			Powertrain:         item.Powertrain,
+			ParentTemplateName: item.ParentTemplateName.String,
+			UpdatedAt:          timestamppb.New(item.UpdatedAt),
 		}
+
 		if item.R.TemplateNamePidConfigs != nil {
 			ts.PidsCount = int32(len(item.R.GetTemplateNamePidConfigs()))
 		}
+
 		if item.R.TemplateNameDBCFile != nil {
 			ts.HasDbc = true
 		}
+
 		result.Templates = append(result.Templates, ts)
 	}
 	return result, nil

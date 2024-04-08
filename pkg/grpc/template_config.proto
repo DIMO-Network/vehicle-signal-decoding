@@ -29,7 +29,8 @@ message TemplateSummary {
   string powertrain = 4;
   bool has_dbc = 5;
   int32 pids_count = 6;
-  google.protobuf.Timestamp updated_at = 7;
+  string parent_template_name = 7;
+  google.protobuf.Timestamp updated_at = 8;
 }
 
 message PID {
