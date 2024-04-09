@@ -14,11 +14,13 @@ message VehicleTemplate {
     repeated string Models = 5;
     int64 id = 6;
 }
+
 // used for listing items in admin
 message GetVehicleTemplatesRequest {
     int32 YearStart = 1;
     int32 YearEnd = 2;
     string Make = 3;
+    string Template = 4;
 }
 
 message GetVehicleTemplatesResponse {
