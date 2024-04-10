@@ -36,6 +36,8 @@ message PidSummary {
   string protocol = 8;
   string signal_name = 9;
   bool is_parent_pid = 10;
+  bool can_flow_control_clear = 11;
+  string can_flow_control_id_pair = 12;
 }
 
 message GetPidListRequest {
