@@ -77,15 +77,17 @@ func (h *GetPidAllQueryHandler) getPidsByTemplate(ctx context.Context, templateN
 
 	for _, item := range allPidConfigs {
 		pidSummaries = append(pidSummaries, &grpc.PidSummary{
-			Id:              item.ID,
-			TemplateName:    item.TemplateName,
-			Header:          item.Header,
-			Mode:            item.Mode,
-			Pid:             item.Pid,
-			Formula:         item.Formula,
-			IntervalSeconds: int32(item.IntervalSeconds),
-			Protocol:        item.Protocol,
-			SignalName:      item.SignalName,
+			Id:                   item.ID,
+			TemplateName:         item.TemplateName,
+			Header:               item.Header,
+			Mode:                 item.Mode,
+			Pid:                  item.Pid,
+			Formula:              item.Formula,
+			IntervalSeconds:      int32(item.IntervalSeconds),
+			Protocol:             item.Protocol,
+			SignalName:           item.SignalName,
+			CanFlowControlClear:  item.CanFlowControlClear.Bool,
+			CanFlowControlIdPair: item.CanFlowControlIDPair.String,
 		})
 	}
 
