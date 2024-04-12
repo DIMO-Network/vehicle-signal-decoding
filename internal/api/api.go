@@ -124,6 +124,7 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 	userDeviceSvc := services.NewUserDeviceService(settings)
 	deviceDefsvc := services.NewDeviceDefinitionsService(settings)
 	deviceTemplatesvc := services.NewDeviceTemplateService(database.DBS().Writer.DB, deviceDefsvc, logger, settings)
+	// todo: this is messy - we open the connection but are never closing it, or wrapping this in a class that handles the connection for us
 	usersClient := getUsersClient(logger, settings.UsersGRPCAddr)
 
 	app := fiber.New(fiber.Config{
@@ -257,6 +258,6 @@ func getUsersClient(logger zerolog.Logger, usersAPIGRPCAddr string) pb.UserServi
 	if err != nil {
 		logger.Fatal().Err(err).Msgf("Failed to dial users-api at %s", usersAPIGRPCAddr)
 	}
-	defer usersConn.Close()
+
 	return pb.NewUserServiceClient(usersConn)
 }
