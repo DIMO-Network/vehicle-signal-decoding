@@ -45,7 +45,7 @@ func New(usersClient pb.UserServiceClient, devicesClient services.UserDeviceServ
 			device, err = devicesClient.GetUserDevice(c.Context(), udi)
 		} else if ethAddr != "" {
 			address := common.HexToAddress(ethAddr)
-			device, err = devicesClient.GetUserDeviceByEthAddr(c.Context(), address) // if identity api had a way to filterBy address, could use it instead
+			device, err = devicesClient.GetUserDeviceByEthAddr(c.Context(), address) // could use identity-api instead, filter by vehicle eth addr, why not tokenId
 		} else {
 			return fmt.Errorf("no userDeviceID or ethAddr params found for owner validation")
 		}
