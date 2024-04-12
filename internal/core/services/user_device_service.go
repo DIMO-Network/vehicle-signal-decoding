@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/pkg/errors"
+
 	common2 "github.com/ethereum/go-ethereum/common"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/appmodels"
@@ -49,9 +51,13 @@ func (a *userDeviceService) GetUserDevice(ctx context.Context, userDeviceID stri
 	}
 	defer conn.Close()
 
-	return deviceClient.GetUserDevice(ctx, &pb.GetUserDeviceRequest{
+	ud, err := deviceClient.GetUserDevice(ctx, &pb.GetUserDeviceRequest{
 		Id: userDeviceID,
 	})
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to GetUserDevice")
+	}
+	return ud, nil
 }
 
 func (a *userDeviceService) GetUserDeviceServiceByAutoPIUnitID(ctx context.Context, id string) (*appmodels.UserDeviceAutoPIUnit, error) {
@@ -91,7 +97,9 @@ func (a *userDeviceService) GetUserDeviceByVIN(ctx context.Context, vin string) 
 
 	return userDevice, nil
 }
+
 func (a *userDeviceService) GetUserDeviceByEthAddr(ctx context.Context, address common2.Address) (*pb.UserDevice, error) {
+	// todo: better connection handling as singleton, with check to refresh, on sighup call close...
 	deviceClient, conn, err := a.getDeviceGrpcClient()
 	if err != nil {
 		return nil, err
@@ -100,7 +108,7 @@ func (a *userDeviceService) GetUserDeviceByEthAddr(ctx context.Context, address 
 
 	userDevice, err := deviceClient.GetUserDeviceByEthAddr(ctx, &pb.GetUserDeviceByEthAddrRequest{EthAddr: address.Bytes()})
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to GetUserDeviceByEthAddr")
 	}
 
 	return userDevice, nil
@@ -128,6 +136,6 @@ func (a *userDeviceService) getDeviceGrpcClient() (pb.UserDeviceServiceClient, *
 	if err != nil {
 		return nil, conn, err
 	}
-	definitionsClient := pb.NewUserDeviceServiceClient(conn)
-	return definitionsClient, conn, nil
+	userDeviceClient := pb.NewUserDeviceServiceClient(conn)
+	return userDeviceClient, conn, nil
 }
