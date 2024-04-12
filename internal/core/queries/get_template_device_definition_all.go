@@ -2,6 +2,7 @@ package queries
 
 import (
 	"context"
+
 	"github.com/DIMO-Network/shared/db"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
@@ -20,7 +21,7 @@ func NewGetTemplateDeviceDefinitionAllQueryHandler(dbs func() *db.ReaderWriter) 
 	return &GetTemplateDeviceDefinitionAllQueryHandler{DBS: dbs}
 }
 
-func (h *GetTemplateDeviceDefinitionAllQueryHandler) Handle(ctx context.Context, q GetTemplateDeviceDefinitionAllQuery) (*grpc.GetTemplateDeviceDefinitionResponse, error) {
+func (h *GetTemplateDeviceDefinitionAllQueryHandler) Handle(ctx context.Context, _ GetTemplateDeviceDefinitionAllQuery) (*grpc.GetTemplateDeviceDefinitionResponse, error) {
 	templateDeviceDefinitions, err := models.TemplateDeviceDefinitions(
 		qm.OrderBy("template_name, update_at asc"),
 	).All(ctx, h.DBS().Reader)
@@ -35,7 +36,7 @@ func (h *GetTemplateDeviceDefinitionAllQueryHandler) Handle(ctx context.Context,
 		templateDd[i] = &grpc.TemplateDeviceDefinition{
 			Id:                 templateDeviceDefinition.ID,
 			DeviceDefinitionId: templateDeviceDefinition.DeviceDefinitionID,
-			DeviceStyleId:      templateDeviceDefinition.DeviceStyleID.String,
+			DeviceStyleId:      templateDeviceDefinition.DeviceStyleID.Ptr(),
 			TemplateName:       templateDeviceDefinition.TemplateName,
 			CreatedAt:          timestamppb.New(templateDeviceDefinition.CreatedAt),
 			UpdatedAt:          timestamppb.New(templateDeviceDefinition.UpdatedAt),

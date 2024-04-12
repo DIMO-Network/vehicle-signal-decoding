@@ -2,6 +2,7 @@ package commands
 
 import (
 	"context"
+
 	"github.com/DIMO-Network/shared/db"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 	"github.com/volatiletech/null/v8"
@@ -14,7 +15,6 @@ type CreateTemplateDeviceDefinitionCommandHandler struct {
 }
 
 type CreateTemplateDeviceDefinitionCommand struct {
-	ID                 int64
 	DeviceDefinitionID string
 	DeviceStyleID      *string
 	TemplateName       string
@@ -26,7 +26,6 @@ func NewCreateTemplateDeviceDefinitionCommandHandler(dbs func() *db.ReaderWriter
 
 func (h *CreateTemplateDeviceDefinitionCommandHandler) Execute(ctx context.Context, cmd CreateTemplateDeviceDefinitionCommand) (*emptypb.Empty, error) {
 	templateDeviceDefinition := &models.TemplateDeviceDefinition{
-		ID:                 cmd.ID,
 		DeviceDefinitionID: cmd.DeviceDefinitionID,
 		TemplateName:       cmd.TemplateName,
 		DeviceStyleID:      null.StringFromPtr(cmd.DeviceStyleID),

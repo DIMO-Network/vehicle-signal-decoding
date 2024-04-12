@@ -20,11 +20,11 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	TemplateDeviceDefinitionService_CreateTemplateDeviceDefinition_FullMethodName  = "/grpc.TemplateDeviceDefinitionService/CreateTemplateDeviceDefinition"
-	TemplateDeviceDefinitionService_UpdateTemplateDeviceDefinition_FullMethodName  = "/grpc.TemplateDeviceDefinitionService/UpdateTemplateDeviceDefinition"
-	TemplateDeviceDefinitionService_GetTemplateDeviceDefinitionById_FullMethodName = "/grpc.TemplateDeviceDefinitionService/GetTemplateDeviceDefinitionById"
-	TemplateDeviceDefinitionService_GetTemplateDeviceDefinitions_FullMethodName    = "/grpc.TemplateDeviceDefinitionService/GetTemplateDeviceDefinitions"
-	TemplateDeviceDefinitionService_DeleteTemplateDeviceDefinition_FullMethodName  = "/grpc.TemplateDeviceDefinitionService/DeleteTemplateDeviceDefinition"
+	TemplateDeviceDefinitionService_CreateTemplateDeviceDefinition_FullMethodName = "/grpc.TemplateDeviceDefinitionService/CreateTemplateDeviceDefinition"
+	TemplateDeviceDefinitionService_UpdateTemplateDeviceDefinition_FullMethodName = "/grpc.TemplateDeviceDefinitionService/UpdateTemplateDeviceDefinition"
+	TemplateDeviceDefinitionService_GetTemplateDeviceDefinition_FullMethodName    = "/grpc.TemplateDeviceDefinitionService/GetTemplateDeviceDefinition"
+	TemplateDeviceDefinitionService_GetTemplateDeviceDefinitions_FullMethodName   = "/grpc.TemplateDeviceDefinitionService/GetTemplateDeviceDefinitions"
+	TemplateDeviceDefinitionService_DeleteTemplateDeviceDefinition_FullMethodName = "/grpc.TemplateDeviceDefinitionService/DeleteTemplateDeviceDefinition"
 )
 
 // TemplateDeviceDefinitionServiceClient is the client API for TemplateDeviceDefinitionService service.
@@ -33,7 +33,7 @@ const (
 type TemplateDeviceDefinitionServiceClient interface {
 	CreateTemplateDeviceDefinition(ctx context.Context, in *TemplateDeviceDefinition, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	UpdateTemplateDeviceDefinition(ctx context.Context, in *TemplateDeviceDefinition, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	GetTemplateDeviceDefinitionById(ctx context.Context, in *GetTemplateDeviceDefinitionByIdRequest, opts ...grpc.CallOption) (*TemplateDeviceDefinition, error)
+	GetTemplateDeviceDefinition(ctx context.Context, in *GetTemplateDeviceDefinitionByIdRequest, opts ...grpc.CallOption) (*TemplateDeviceDefinition, error)
 	GetTemplateDeviceDefinitions(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetTemplateDeviceDefinitionResponse, error)
 	DeleteTemplateDeviceDefinition(ctx context.Context, in *DeleteTemplateDeviceDefinitionRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
@@ -64,9 +64,9 @@ func (c *templateDeviceDefinitionServiceClient) UpdateTemplateDeviceDefinition(c
 	return out, nil
 }
 
-func (c *templateDeviceDefinitionServiceClient) GetTemplateDeviceDefinitionById(ctx context.Context, in *GetTemplateDeviceDefinitionByIdRequest, opts ...grpc.CallOption) (*TemplateDeviceDefinition, error) {
+func (c *templateDeviceDefinitionServiceClient) GetTemplateDeviceDefinition(ctx context.Context, in *GetTemplateDeviceDefinitionByIdRequest, opts ...grpc.CallOption) (*TemplateDeviceDefinition, error) {
 	out := new(TemplateDeviceDefinition)
-	err := c.cc.Invoke(ctx, TemplateDeviceDefinitionService_GetTemplateDeviceDefinitionById_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, TemplateDeviceDefinitionService_GetTemplateDeviceDefinition_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +97,7 @@ func (c *templateDeviceDefinitionServiceClient) DeleteTemplateDeviceDefinition(c
 type TemplateDeviceDefinitionServiceServer interface {
 	CreateTemplateDeviceDefinition(context.Context, *TemplateDeviceDefinition) (*emptypb.Empty, error)
 	UpdateTemplateDeviceDefinition(context.Context, *TemplateDeviceDefinition) (*emptypb.Empty, error)
-	GetTemplateDeviceDefinitionById(context.Context, *GetTemplateDeviceDefinitionByIdRequest) (*TemplateDeviceDefinition, error)
+	GetTemplateDeviceDefinition(context.Context, *GetTemplateDeviceDefinitionByIdRequest) (*TemplateDeviceDefinition, error)
 	GetTemplateDeviceDefinitions(context.Context, *emptypb.Empty) (*GetTemplateDeviceDefinitionResponse, error)
 	DeleteTemplateDeviceDefinition(context.Context, *DeleteTemplateDeviceDefinitionRequest) (*emptypb.Empty, error)
 	mustEmbedUnimplementedTemplateDeviceDefinitionServiceServer()
@@ -113,8 +113,8 @@ func (UnimplementedTemplateDeviceDefinitionServiceServer) CreateTemplateDeviceDe
 func (UnimplementedTemplateDeviceDefinitionServiceServer) UpdateTemplateDeviceDefinition(context.Context, *TemplateDeviceDefinition) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateTemplateDeviceDefinition not implemented")
 }
-func (UnimplementedTemplateDeviceDefinitionServiceServer) GetTemplateDeviceDefinitionById(context.Context, *GetTemplateDeviceDefinitionByIdRequest) (*TemplateDeviceDefinition, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetTemplateDeviceDefinitionById not implemented")
+func (UnimplementedTemplateDeviceDefinitionServiceServer) GetTemplateDeviceDefinition(context.Context, *GetTemplateDeviceDefinitionByIdRequest) (*TemplateDeviceDefinition, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetTemplateDeviceDefinition not implemented")
 }
 func (UnimplementedTemplateDeviceDefinitionServiceServer) GetTemplateDeviceDefinitions(context.Context, *emptypb.Empty) (*GetTemplateDeviceDefinitionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetTemplateDeviceDefinitions not implemented")
@@ -172,20 +172,20 @@ func _TemplateDeviceDefinitionService_UpdateTemplateDeviceDefinition_Handler(srv
 	return interceptor(ctx, in, info, handler)
 }
 
-func _TemplateDeviceDefinitionService_GetTemplateDeviceDefinitionById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _TemplateDeviceDefinitionService_GetTemplateDeviceDefinition_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetTemplateDeviceDefinitionByIdRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TemplateDeviceDefinitionServiceServer).GetTemplateDeviceDefinitionById(ctx, in)
+		return srv.(TemplateDeviceDefinitionServiceServer).GetTemplateDeviceDefinition(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: TemplateDeviceDefinitionService_GetTemplateDeviceDefinitionById_FullMethodName,
+		FullMethod: TemplateDeviceDefinitionService_GetTemplateDeviceDefinition_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TemplateDeviceDefinitionServiceServer).GetTemplateDeviceDefinitionById(ctx, req.(*GetTemplateDeviceDefinitionByIdRequest))
+		return srv.(TemplateDeviceDefinitionServiceServer).GetTemplateDeviceDefinition(ctx, req.(*GetTemplateDeviceDefinitionByIdRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -242,8 +242,8 @@ var TemplateDeviceDefinitionService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _TemplateDeviceDefinitionService_UpdateTemplateDeviceDefinition_Handler,
 		},
 		{
-			MethodName: "GetTemplateDeviceDefinitionById",
-			Handler:    _TemplateDeviceDefinitionService_GetTemplateDeviceDefinitionById_Handler,
+			MethodName: "GetTemplateDeviceDefinition",
+			Handler:    _TemplateDeviceDefinitionService_GetTemplateDeviceDefinition_Handler,
 		},
 		{
 			MethodName: "GetTemplateDeviceDefinitions",

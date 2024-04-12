@@ -2,6 +2,10 @@ package api
 
 import (
 	"context"
+
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/commands"
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/queries"
+
 	"github.com/DIMO-Network/shared/db"
 	"github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
 	"github.com/rs/zerolog"
@@ -22,31 +26,89 @@ func NewTemplateDeviceDefinitionService(logger *zerolog.Logger, dbs func() *db.R
 }
 
 func (s *TemplateDeviceDefinitionService) CreateTemplateDeviceDefinition(ctx context.Context, request *grpc.TemplateDeviceDefinition) (*emptypb.Empty, error) {
-	service := NewTemplateDeviceDefinitionService(s.logger, s.dbs)
+	service := commands.NewCreateTemplateDeviceDefinitionCommandHandler(s.dbs)
 
-	return service.CreateTemplateDeviceDefinition(ctx, request)
+	rq := commands.CreateTemplateDeviceDefinitionCommand{
+		DeviceDefinitionID: request.DeviceDefinitionId,
+		TemplateName:       request.TemplateName,
+		DeviceStyleID:      request.DeviceStyleId,
+	}
+
+	response, err := service.Execute(ctx, rq)
+
+	if err != nil {
+		s.logger.Error().Err(err).Msg("Error while creating template device definition")
+		return nil, err
+	}
+
+	return response, nil
 }
 
 func (s *TemplateDeviceDefinitionService) UpdateTemplateDeviceDefinition(ctx context.Context, request *grpc.TemplateDeviceDefinition) (*emptypb.Empty, error) {
-	service := NewTemplateDeviceDefinitionService(s.logger, s.dbs)
+	service := commands.NewUpdateTemplateDeviceDefinitionCommandHandler(s.dbs)
 
-	return service.UpdateTemplateDeviceDefinition(ctx, request)
+	rq := commands.UpdateTemplateDeviceDefinitionCommand{
+		ID:                 request.Id,
+		DeviceDefinitionID: request.DeviceDefinitionId,
+		TemplateName:       request.TemplateName,
+		DeviceStyleID:      request.DeviceStyleId,
+	}
+
+	response, err := service.Execute(ctx, rq)
+
+	if err != nil {
+		s.logger.Error().Err(err).Msg("Error while updating template device definition")
+		return nil, err
+	}
+
+	return response, nil
+
 }
 
-func (s *TemplateDeviceDefinitionService) GetTemplateDeviceDefinitionById(ctx context.Context, request *grpc.GetTemplateDeviceDefinitionByIdRequest) (*grpc.TemplateDeviceDefinition, error) {
-	service := NewTemplateDeviceDefinitionService(s.logger, s.dbs)
+func (s *TemplateDeviceDefinitionService) GetTemplateDeviceDefinition(ctx context.Context, request *grpc.GetTemplateDeviceDefinitionByIdRequest) (*grpc.TemplateDeviceDefinition, error) {
+	service := queries.NewGetTemplateDeviceDefinitionByIDQueryHandler(s.dbs)
 
-	return service.GetTemplateDeviceDefinitionById(ctx, request)
+	rq := queries.GetTemplateDeviceDefinitionByIDQuery{
+		ID: request.Id,
+	}
+
+	response, err := service.Handle(ctx, rq)
+
+	if err != nil {
+		s.logger.Error().Err(err).Msg("Error while getting template device definition")
+	}
+
+	return response, nil
 }
 
-func (s *TemplateDeviceDefinitionService) GetTemplateDeviceDefinitions(ctx context.Context, empty *emptypb.Empty) (*grpc.GetTemplateDeviceDefinitionResponse, error) {
-	service := NewTemplateDeviceDefinitionService(s.logger, s.dbs)
+func (s *TemplateDeviceDefinitionService) GetTemplateDeviceDefinitions(ctx context.Context, _ *emptypb.Empty) (*grpc.GetTemplateDeviceDefinitionResponse, error) {
+	service := queries.NewGetTemplateDeviceDefinitionAllQueryHandler(s.dbs)
 
-	return service.GetTemplateDeviceDefinitions(ctx, empty)
+	rq := queries.GetTemplateDeviceDefinitionAllQuery{}
+
+	response, err := service.Handle(ctx, rq)
+
+	if err != nil {
+		s.logger.Error().Err(err).Msg("Error while getting template device definitions")
+		return nil, err
+	}
+
+	return response, nil
 }
 
 func (s *TemplateDeviceDefinitionService) DeleteTemplateDeviceDefinition(ctx context.Context, request *grpc.DeleteTemplateDeviceDefinitionRequest) (*emptypb.Empty, error) {
-	service := NewTemplateDeviceDefinitionService(s.logger, s.dbs)
+	service := commands.NewDeleteTemplateDeviceDefinitionCommandHandler(s.dbs)
 
-	return service.DeleteTemplateDeviceDefinition(ctx, request)
+	rq := commands.DeleteTemplateDeviceDefinitionCommand{
+		ID: request.Id,
+	}
+
+	response, err := service.Execute(ctx, rq)
+
+	if err != nil {
+		s.logger.Error().Err(err).Msg("Error while deleting template device definition")
+		return nil, err
+	}
+
+	return response, nil
 }
