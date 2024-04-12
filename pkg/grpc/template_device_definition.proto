@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc";
+
+package grpc;
+
+message TemplateDeviceDefinition {
+  int64 id = 1;
+  string deviceDefinitionId = 2;
+  optional string deviceStyleId = 3;
+  string templateName = 4;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp updated_at = 6;
+}
+
+message GetTemplateDeviceDefinitionResponse {
+  repeated TemplateDeviceDefinition items = 1;
+}
+
+message GetTemplateDeviceDefinitionByIdRequest {
+  int64 id = 1;
+}
+
+message DeleteTemplateDeviceDefinitionRequest {
+  int64 id = 1;
+}
+
+
+
+service TemplateDeviceDefinitionService {
+  rpc CreateTemplateDeviceDefinition(TemplateDeviceDefinition) returns (google.protobuf.Empty);
+  rpc UpdateTemplateDeviceDefinition(TemplateDeviceDefinition) returns (google.protobuf.Empty);
+  rpc GetTemplateDeviceDefinition(GetTemplateDeviceDefinitionByIdRequest) returns (TemplateDeviceDefinition);
+  rpc GetTemplateDeviceDefinitions(google.protobuf.Empty) returns (GetTemplateDeviceDefinitionResponse);
+  rpc DeleteTemplateDeviceDefinition(DeleteTemplateDeviceDefinitionRequest) returns (google.protobuf.Empty);
+}

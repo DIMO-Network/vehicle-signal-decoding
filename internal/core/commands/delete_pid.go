@@ -20,12 +20,12 @@ type DeletePidCommandRequest struct {
 	TemplateName string
 }
 
-func (h DeletePidCommandHandler) Execute(_ context.Context, req *DeletePidCommandRequest) error {
-	pid, err := models.FindPidConfig(context.Background(), h.DBS().Reader, req.ID)
+func (h DeletePidCommandHandler) Execute(ctx context.Context, req *DeletePidCommandRequest) error {
+	pid, err := models.FindPidConfig(ctx, h.DBS().Reader, req.ID)
 	if err != nil {
 		return err
 	}
-	_, err = pid.Delete(context.Background(), h.DBS().Writer)
+	_, err = pid.Delete(ctx, h.DBS().Writer)
 	if err != nil {
 		return err
 	}
