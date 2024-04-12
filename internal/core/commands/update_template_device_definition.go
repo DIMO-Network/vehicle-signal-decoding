@@ -29,10 +29,7 @@ func (h *UpdateTemplateDeviceDefinitionCommandHandler) Execute(ctx context.Conte
 		ID:                 cmd.ID,
 		DeviceDefinitionID: cmd.DeviceDefinitionID,
 		TemplateName:       cmd.TemplateName,
-	}
-
-	if cmd.DeviceStyleID != nil && *cmd.DeviceStyleID != "" {
-		templateDeviceDefinition.DeviceStyleID = null.StringFromPtr(cmd.DeviceStyleID)
+		DeviceStyleID:      null.StringFromPtr(cmd.DeviceStyleID),
 	}
 
 	_, err := templateDeviceDefinition.Update(ctx, h.DBS().Writer, boil.Infer())
