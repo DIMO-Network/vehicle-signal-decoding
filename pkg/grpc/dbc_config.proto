@@ -41,8 +41,7 @@ message UpdateDbcRequest {
 }
 
 service DbcConfigService {
-  rpc CreateDbc (UpdateDbcRequest) returns (google.protobuf.Empty);
-  rpc UpdateDbc (UpdateDbcRequest) returns (google.protobuf.Empty);
+  rpc UpsertDbc (UpdateDbcRequest) returns (google.protobuf.Empty);
   rpc GetDbcList (GetDbcListRequest) returns (GetDbcListResponse);
   rpc GetDbcByTemplateName (GetDbcByTemplateNameRequest) returns (GetDbcByTemplateNameResponse);
 

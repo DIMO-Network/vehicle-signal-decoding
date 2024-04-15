@@ -20,8 +20,7 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	DbcConfigService_CreateDbc_FullMethodName            = "/grpc.DbcConfigService/CreateDbc"
-	DbcConfigService_UpdateDbc_FullMethodName            = "/grpc.DbcConfigService/UpdateDbc"
+	DbcConfigService_UpsertDbc_FullMethodName            = "/grpc.DbcConfigService/UpsertDbc"
 	DbcConfigService_GetDbcList_FullMethodName           = "/grpc.DbcConfigService/GetDbcList"
 	DbcConfigService_GetDbcByTemplateName_FullMethodName = "/grpc.DbcConfigService/GetDbcByTemplateName"
 )
@@ -30,8 +29,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type DbcConfigServiceClient interface {
-	CreateDbc(ctx context.Context, in *UpdateDbcRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	UpdateDbc(ctx context.Context, in *UpdateDbcRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	UpsertDbc(ctx context.Context, in *UpdateDbcRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	GetDbcList(ctx context.Context, in *GetDbcListRequest, opts ...grpc.CallOption) (*GetDbcListResponse, error)
 	GetDbcByTemplateName(ctx context.Context, in *GetDbcByTemplateNameRequest, opts ...grpc.CallOption) (*GetDbcByTemplateNameResponse, error)
 }
@@ -44,18 +42,9 @@ func NewDbcConfigServiceClient(cc grpc.ClientConnInterface) DbcConfigServiceClie
 	return &dbcConfigServiceClient{cc}
 }
 
-func (c *dbcConfigServiceClient) CreateDbc(ctx context.Context, in *UpdateDbcRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *dbcConfigServiceClient) UpsertDbc(ctx context.Context, in *UpdateDbcRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, DbcConfigService_CreateDbc_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *dbcConfigServiceClient) UpdateDbc(ctx context.Context, in *UpdateDbcRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
-	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, DbcConfigService_UpdateDbc_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, DbcConfigService_UpsertDbc_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -84,8 +73,7 @@ func (c *dbcConfigServiceClient) GetDbcByTemplateName(ctx context.Context, in *G
 // All implementations must embed UnimplementedDbcConfigServiceServer
 // for forward compatibility
 type DbcConfigServiceServer interface {
-	CreateDbc(context.Context, *UpdateDbcRequest) (*emptypb.Empty, error)
-	UpdateDbc(context.Context, *UpdateDbcRequest) (*emptypb.Empty, error)
+	UpsertDbc(context.Context, *UpdateDbcRequest) (*emptypb.Empty, error)
 	GetDbcList(context.Context, *GetDbcListRequest) (*GetDbcListResponse, error)
 	GetDbcByTemplateName(context.Context, *GetDbcByTemplateNameRequest) (*GetDbcByTemplateNameResponse, error)
 	mustEmbedUnimplementedDbcConfigServiceServer()
@@ -95,11 +83,8 @@ type DbcConfigServiceServer interface {
 type UnimplementedDbcConfigServiceServer struct {
 }
 
-func (UnimplementedDbcConfigServiceServer) CreateDbc(context.Context, *UpdateDbcRequest) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateDbc not implemented")
-}
-func (UnimplementedDbcConfigServiceServer) UpdateDbc(context.Context, *UpdateDbcRequest) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateDbc not implemented")
+func (UnimplementedDbcConfigServiceServer) UpsertDbc(context.Context, *UpdateDbcRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpsertDbc not implemented")
 }
 func (UnimplementedDbcConfigServiceServer) GetDbcList(context.Context, *GetDbcListRequest) (*GetDbcListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetDbcList not implemented")
@@ -120,38 +105,20 @@ func RegisterDbcConfigServiceServer(s grpc.ServiceRegistrar, srv DbcConfigServic
 	s.RegisterService(&DbcConfigService_ServiceDesc, srv)
 }
 
-func _DbcConfigService_CreateDbc_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _DbcConfigService_UpsertDbc_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpdateDbcRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DbcConfigServiceServer).CreateDbc(ctx, in)
+		return srv.(DbcConfigServiceServer).UpsertDbc(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: DbcConfigService_CreateDbc_FullMethodName,
+		FullMethod: DbcConfigService_UpsertDbc_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DbcConfigServiceServer).CreateDbc(ctx, req.(*UpdateDbcRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _DbcConfigService_UpdateDbc_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdateDbcRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(DbcConfigServiceServer).UpdateDbc(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: DbcConfigService_UpdateDbc_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DbcConfigServiceServer).UpdateDbc(ctx, req.(*UpdateDbcRequest))
+		return srv.(DbcConfigServiceServer).UpsertDbc(ctx, req.(*UpdateDbcRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -200,12 +167,8 @@ var DbcConfigService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*DbcConfigServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "CreateDbc",
-			Handler:    _DbcConfigService_CreateDbc_Handler,
-		},
-		{
-			MethodName: "UpdateDbc",
-			Handler:    _DbcConfigService_UpdateDbc_Handler,
+			MethodName: "UpsertDbc",
+			Handler:    _DbcConfigService_UpsertDbc_Handler,
 		},
 		{
 			MethodName: "GetDbcList",

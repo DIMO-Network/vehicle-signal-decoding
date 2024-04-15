@@ -22,22 +22,9 @@ func NewDbcConfigService(logger *zerolog.Logger, dbs func() *db.ReaderWriter) gr
 	return &DbcConfigService{logger: logger, dbs: dbs}
 }
 
-func (s *DbcConfigService) CreateDbc(ctx context.Context, in *grpc.UpdateDbcRequest) (*emptypb.Empty, error) {
-	service := commands.NewCreateDbcCommandHandler(s.dbs)
-	_, err := service.Execute(ctx, &commands.CreateDbcCommandRequest{
-		TemplateName: in.Dbc.TemplateName,
-		DbcFile:      in.Dbc.DbcFile,
-	})
-
-	if err != nil {
-		return nil, err
-	}
-	return &emptypb.Empty{}, nil
-}
-
-func (s *DbcConfigService) UpdateDbc(ctx context.Context, in *grpc.UpdateDbcRequest) (*emptypb.Empty, error) {
-	service := commands.NewUpdateDbcCommandHandler(s.dbs)
-	_, err := service.Execute(ctx, &commands.UpdateDbcCommandRequest{
+func (s *DbcConfigService) UpsertDbc(ctx context.Context, in *grpc.UpdateDbcRequest) (*emptypb.Empty, error) {
+	service := commands.NewUpsertDbcCommandHandler(s.dbs)
+	_, err := service.Execute(ctx, &commands.UpsertDbcCommandRequest{
 		TemplateName: in.Dbc.TemplateName,
 		DbcFile:      in.Dbc.DbcFile,
 	})
