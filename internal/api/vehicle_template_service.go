@@ -69,7 +69,7 @@ func (s *VehicleTemplateService) GetVehicleTemplate(ctx context.Context, request
 	return vehicleTemplate, nil
 }
 
-func (s *VehicleTemplateService) CreateVehicleTemplate(ctx context.Context, request *grpc.VehicleTemplate) (*emptypb.Empty, error) {
+func (s *VehicleTemplateService) CreateVehicleTemplate(ctx context.Context, request *grpc.VehicleTemplate) (*grpc.CreateVehicleTemplateResponse, error) {
 	service := commands.NewCreateVehicleTemplateCommandHandler(s.dbs)
 
 	command := commands.CreateVehicleTemplateCommandRequest{
@@ -89,7 +89,9 @@ func (s *VehicleTemplateService) CreateVehicleTemplate(ctx context.Context, requ
 		return nil, err
 	}
 
-	return resp, nil
+	return &grpc.CreateVehicleTemplateResponse{
+		Id: int64(*resp),
+	}, nil
 }
 
 func (s *VehicleTemplateService) UpdateVehicleTemplate(ctx context.Context, request *grpc.VehicleTemplate) (*emptypb.Empty, error) {

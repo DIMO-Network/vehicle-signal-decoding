@@ -32,7 +32,7 @@ const (
 type VehicleTemplateServiceClient interface {
 	GetVehicleTemplates(ctx context.Context, in *GetVehicleTemplatesRequest, opts ...grpc.CallOption) (*GetVehicleTemplatesResponse, error)
 	GetVehicleTemplate(ctx context.Context, in *GetVehicleTemplateRequest, opts ...grpc.CallOption) (*VehicleTemplate, error)
-	CreateVehicleTemplate(ctx context.Context, in *VehicleTemplate, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	CreateVehicleTemplate(ctx context.Context, in *VehicleTemplate, opts ...grpc.CallOption) (*CreateVehicleTemplateResponse, error)
 	UpdateVehicleTemplate(ctx context.Context, in *VehicleTemplate, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
@@ -62,8 +62,8 @@ func (c *vehicleTemplateServiceClient) GetVehicleTemplate(ctx context.Context, i
 	return out, nil
 }
 
-func (c *vehicleTemplateServiceClient) CreateVehicleTemplate(ctx context.Context, in *VehicleTemplate, opts ...grpc.CallOption) (*emptypb.Empty, error) {
-	out := new(emptypb.Empty)
+func (c *vehicleTemplateServiceClient) CreateVehicleTemplate(ctx context.Context, in *VehicleTemplate, opts ...grpc.CallOption) (*CreateVehicleTemplateResponse, error) {
+	out := new(CreateVehicleTemplateResponse)
 	err := c.cc.Invoke(ctx, VehicleTemplateService_CreateVehicleTemplate_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -86,7 +86,7 @@ func (c *vehicleTemplateServiceClient) UpdateVehicleTemplate(ctx context.Context
 type VehicleTemplateServiceServer interface {
 	GetVehicleTemplates(context.Context, *GetVehicleTemplatesRequest) (*GetVehicleTemplatesResponse, error)
 	GetVehicleTemplate(context.Context, *GetVehicleTemplateRequest) (*VehicleTemplate, error)
-	CreateVehicleTemplate(context.Context, *VehicleTemplate) (*emptypb.Empty, error)
+	CreateVehicleTemplate(context.Context, *VehicleTemplate) (*CreateVehicleTemplateResponse, error)
 	UpdateVehicleTemplate(context.Context, *VehicleTemplate) (*emptypb.Empty, error)
 	mustEmbedUnimplementedVehicleTemplateServiceServer()
 }
@@ -101,7 +101,7 @@ func (UnimplementedVehicleTemplateServiceServer) GetVehicleTemplates(context.Con
 func (UnimplementedVehicleTemplateServiceServer) GetVehicleTemplate(context.Context, *GetVehicleTemplateRequest) (*VehicleTemplate, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetVehicleTemplate not implemented")
 }
-func (UnimplementedVehicleTemplateServiceServer) CreateVehicleTemplate(context.Context, *VehicleTemplate) (*emptypb.Empty, error) {
+func (UnimplementedVehicleTemplateServiceServer) CreateVehicleTemplate(context.Context, *VehicleTemplate) (*CreateVehicleTemplateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateVehicleTemplate not implemented")
 }
 func (UnimplementedVehicleTemplateServiceServer) UpdateVehicleTemplate(context.Context, *VehicleTemplate) (*emptypb.Empty, error) {

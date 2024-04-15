@@ -250,6 +250,53 @@ func (x *DeleteTemplateDeviceDefinitionRequest) GetId() int64 {
 	return 0
 }
 
+type CreateTemplateDeviceDefinitionResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Id int64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+}
+
+func (x *CreateTemplateDeviceDefinitionResponse) Reset() {
+	*x = CreateTemplateDeviceDefinitionResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_pkg_grpc_template_device_definition_proto_msgTypes[4]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *CreateTemplateDeviceDefinitionResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateTemplateDeviceDefinitionResponse) ProtoMessage() {}
+
+func (x *CreateTemplateDeviceDefinitionResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_pkg_grpc_template_device_definition_proto_msgTypes[4]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateTemplateDeviceDefinitionResponse.ProtoReflect.Descriptor instead.
+func (*CreateTemplateDeviceDefinitionResponse) Descriptor() ([]byte, []int) {
+	return file_pkg_grpc_template_device_definition_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *CreateTemplateDeviceDefinitionResponse) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
 var File_pkg_grpc_template_device_definition_proto protoreflect.FileDescriptor
 
 var file_pkg_grpc_template_device_definition_proto_rawDesc = []byte{
@@ -292,15 +339,20 @@ var file_pkg_grpc_template_device_definition_proto_rawDesc = []byte{
 	0x6c, 0x65, 0x74, 0x65, 0x54, 0x65, 0x6d, 0x70, 0x6c, 0x61, 0x74, 0x65, 0x44, 0x65, 0x76, 0x69,
 	0x63, 0x65, 0x44, 0x65, 0x66, 0x69, 0x6e, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x71, 0x75,
 	0x65, 0x73, 0x74, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52,
-	0x02, 0x69, 0x64, 0x32, 0x8c, 0x04, 0x0a, 0x1f, 0x54, 0x65, 0x6d, 0x70, 0x6c, 0x61, 0x74, 0x65,
-	0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x44, 0x65, 0x66, 0x69, 0x6e, 0x69, 0x74, 0x69, 0x6f, 0x6e,
-	0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0x58, 0x0a, 0x1e, 0x43, 0x72, 0x65, 0x61, 0x74,
+	0x02, 0x69, 0x64, 0x22, 0x38, 0x0a, 0x26, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x54, 0x65, 0x6d,
+	0x70, 0x6c, 0x61, 0x74, 0x65, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x44, 0x65, 0x66, 0x69, 0x6e,
+	0x69, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x0e, 0x0a,
+	0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x02, 0x69, 0x64, 0x32, 0xa2, 0x04,
+	0x0a, 0x1f, 0x54, 0x65, 0x6d, 0x70, 0x6c, 0x61, 0x74, 0x65, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65,
+	0x44, 0x65, 0x66, 0x69, 0x6e, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63,
+	0x65, 0x12, 0x6e, 0x0a, 0x1e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x54, 0x65, 0x6d, 0x70, 0x6c,
+	0x61, 0x74, 0x65, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x44, 0x65, 0x66, 0x69, 0x6e, 0x69, 0x74,
+	0x69, 0x6f, 0x6e, 0x12, 0x1e, 0x2e, 0x67, 0x72, 0x70, 0x63, 0x2e, 0x54, 0x65, 0x6d, 0x70, 0x6c,
+	0x61, 0x74, 0x65, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x44, 0x65, 0x66, 0x69, 0x6e, 0x69, 0x74,
+	0x69, 0x6f, 0x6e, 0x1a, 0x2c, 0x2e, 0x67, 0x72, 0x70, 0x63, 0x2e, 0x43, 0x72, 0x65, 0x61, 0x74,
 	0x65, 0x54, 0x65, 0x6d, 0x70, 0x6c, 0x61, 0x74, 0x65, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x44,
-	0x65, 0x66, 0x69, 0x6e, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x1e, 0x2e, 0x67, 0x72, 0x70, 0x63,
-	0x2e, 0x54, 0x65, 0x6d, 0x70, 0x6c, 0x61, 0x74, 0x65, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x44,
-	0x65, 0x66, 0x69, 0x6e, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x1a, 0x16, 0x2e, 0x67, 0x6f, 0x6f, 0x67,
-	0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x45, 0x6d, 0x70, 0x74,
-	0x79, 0x12, 0x58, 0x0a, 0x1e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x54, 0x65, 0x6d, 0x70, 0x6c,
+	0x65, 0x66, 0x69, 0x6e, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x12, 0x58, 0x0a, 0x1e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x54, 0x65, 0x6d, 0x70, 0x6c,
 	0x61, 0x74, 0x65, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x44, 0x65, 0x66, 0x69, 0x6e, 0x69, 0x74,
 	0x69, 0x6f, 0x6e, 0x12, 0x1e, 0x2e, 0x67, 0x72, 0x70, 0x63, 0x2e, 0x54, 0x65, 0x6d, 0x70, 0x6c,
 	0x61, 0x74, 0x65, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x44, 0x65, 0x66, 0x69, 0x6e, 0x69, 0x74,
@@ -344,29 +396,30 @@ func file_pkg_grpc_template_device_definition_proto_rawDescGZIP() []byte {
 	return file_pkg_grpc_template_device_definition_proto_rawDescData
 }
 
-var file_pkg_grpc_template_device_definition_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_pkg_grpc_template_device_definition_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_pkg_grpc_template_device_definition_proto_goTypes = []interface{}{
 	(*TemplateDeviceDefinition)(nil),               // 0: grpc.TemplateDeviceDefinition
 	(*GetTemplateDeviceDefinitionResponse)(nil),    // 1: grpc.GetTemplateDeviceDefinitionResponse
 	(*GetTemplateDeviceDefinitionByIdRequest)(nil), // 2: grpc.GetTemplateDeviceDefinitionByIdRequest
 	(*DeleteTemplateDeviceDefinitionRequest)(nil),  // 3: grpc.DeleteTemplateDeviceDefinitionRequest
-	(*timestamppb.Timestamp)(nil),                  // 4: google.protobuf.Timestamp
-	(*emptypb.Empty)(nil),                          // 5: google.protobuf.Empty
+	(*CreateTemplateDeviceDefinitionResponse)(nil), // 4: grpc.CreateTemplateDeviceDefinitionResponse
+	(*timestamppb.Timestamp)(nil),                  // 5: google.protobuf.Timestamp
+	(*emptypb.Empty)(nil),                          // 6: google.protobuf.Empty
 }
 var file_pkg_grpc_template_device_definition_proto_depIdxs = []int32{
-	4, // 0: grpc.TemplateDeviceDefinition.created_at:type_name -> google.protobuf.Timestamp
-	4, // 1: grpc.TemplateDeviceDefinition.updated_at:type_name -> google.protobuf.Timestamp
+	5, // 0: grpc.TemplateDeviceDefinition.created_at:type_name -> google.protobuf.Timestamp
+	5, // 1: grpc.TemplateDeviceDefinition.updated_at:type_name -> google.protobuf.Timestamp
 	0, // 2: grpc.GetTemplateDeviceDefinitionResponse.items:type_name -> grpc.TemplateDeviceDefinition
 	0, // 3: grpc.TemplateDeviceDefinitionService.CreateTemplateDeviceDefinition:input_type -> grpc.TemplateDeviceDefinition
 	0, // 4: grpc.TemplateDeviceDefinitionService.UpdateTemplateDeviceDefinition:input_type -> grpc.TemplateDeviceDefinition
 	2, // 5: grpc.TemplateDeviceDefinitionService.GetTemplateDeviceDefinition:input_type -> grpc.GetTemplateDeviceDefinitionByIdRequest
-	5, // 6: grpc.TemplateDeviceDefinitionService.GetTemplateDeviceDefinitions:input_type -> google.protobuf.Empty
+	6, // 6: grpc.TemplateDeviceDefinitionService.GetTemplateDeviceDefinitions:input_type -> google.protobuf.Empty
 	3, // 7: grpc.TemplateDeviceDefinitionService.DeleteTemplateDeviceDefinition:input_type -> grpc.DeleteTemplateDeviceDefinitionRequest
-	5, // 8: grpc.TemplateDeviceDefinitionService.CreateTemplateDeviceDefinition:output_type -> google.protobuf.Empty
-	5, // 9: grpc.TemplateDeviceDefinitionService.UpdateTemplateDeviceDefinition:output_type -> google.protobuf.Empty
+	4, // 8: grpc.TemplateDeviceDefinitionService.CreateTemplateDeviceDefinition:output_type -> grpc.CreateTemplateDeviceDefinitionResponse
+	6, // 9: grpc.TemplateDeviceDefinitionService.UpdateTemplateDeviceDefinition:output_type -> google.protobuf.Empty
 	0, // 10: grpc.TemplateDeviceDefinitionService.GetTemplateDeviceDefinition:output_type -> grpc.TemplateDeviceDefinition
 	1, // 11: grpc.TemplateDeviceDefinitionService.GetTemplateDeviceDefinitions:output_type -> grpc.GetTemplateDeviceDefinitionResponse
-	5, // 12: grpc.TemplateDeviceDefinitionService.DeleteTemplateDeviceDefinition:output_type -> google.protobuf.Empty
+	6, // 12: grpc.TemplateDeviceDefinitionService.DeleteTemplateDeviceDefinition:output_type -> google.protobuf.Empty
 	8, // [8:13] is the sub-list for method output_type
 	3, // [3:8] is the sub-list for method input_type
 	3, // [3:3] is the sub-list for extension type_name
@@ -428,6 +481,18 @@ func file_pkg_grpc_template_device_definition_proto_init() {
 				return nil
 			}
 		}
+		file_pkg_grpc_template_device_definition_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*CreateTemplateDeviceDefinitionResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	file_pkg_grpc_template_device_definition_proto_msgTypes[0].OneofWrappers = []interface{}{}
 	type x struct{}
@@ -436,7 +501,7 @@ func file_pkg_grpc_template_device_definition_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_pkg_grpc_template_device_definition_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

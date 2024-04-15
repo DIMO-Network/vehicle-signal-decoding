@@ -28,10 +28,12 @@ message DeleteTemplateDeviceDefinitionRequest {
   int64 id = 1;
 }
 
-
+message CreateTemplateDeviceDefinitionResponse {
+  int64 id = 1;
+}
 
 service TemplateDeviceDefinitionService {
-  rpc CreateTemplateDeviceDefinition(TemplateDeviceDefinition) returns (google.protobuf.Empty);
+  rpc CreateTemplateDeviceDefinition(TemplateDeviceDefinition) returns (CreateTemplateDeviceDefinitionResponse);
   rpc UpdateTemplateDeviceDefinition(TemplateDeviceDefinition) returns (google.protobuf.Empty);
   rpc GetTemplateDeviceDefinition(GetTemplateDeviceDefinitionByIdRequest) returns (TemplateDeviceDefinition);
   rpc GetTemplateDeviceDefinitions(google.protobuf.Empty) returns (GetTemplateDeviceDefinitionResponse);

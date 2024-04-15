@@ -25,7 +25,7 @@ func NewTemplateDeviceDefinitionService(logger *zerolog.Logger, dbs func() *db.R
 	}
 }
 
-func (s *TemplateDeviceDefinitionService) CreateTemplateDeviceDefinition(ctx context.Context, request *grpc.TemplateDeviceDefinition) (*emptypb.Empty, error) {
+func (s *TemplateDeviceDefinitionService) CreateTemplateDeviceDefinition(ctx context.Context, request *grpc.TemplateDeviceDefinition) (*grpc.CreateTemplateDeviceDefinitionResponse, error) {
 	service := commands.NewCreateTemplateDeviceDefinitionCommandHandler(s.dbs)
 
 	rq := commands.CreateTemplateDeviceDefinitionCommand{
@@ -41,7 +41,9 @@ func (s *TemplateDeviceDefinitionService) CreateTemplateDeviceDefinition(ctx con
 		return nil, err
 	}
 
-	return response, nil
+	return &grpc.CreateTemplateDeviceDefinitionResponse{
+		Id: *response,
+	}, nil
 }
 
 func (s *TemplateDeviceDefinitionService) UpdateTemplateDeviceDefinition(ctx context.Context, request *grpc.TemplateDeviceDefinition) (*emptypb.Empty, error) {

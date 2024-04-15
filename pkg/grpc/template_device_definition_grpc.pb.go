@@ -31,7 +31,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type TemplateDeviceDefinitionServiceClient interface {
-	CreateTemplateDeviceDefinition(ctx context.Context, in *TemplateDeviceDefinition, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	CreateTemplateDeviceDefinition(ctx context.Context, in *TemplateDeviceDefinition, opts ...grpc.CallOption) (*CreateTemplateDeviceDefinitionResponse, error)
 	UpdateTemplateDeviceDefinition(ctx context.Context, in *TemplateDeviceDefinition, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	GetTemplateDeviceDefinition(ctx context.Context, in *GetTemplateDeviceDefinitionByIdRequest, opts ...grpc.CallOption) (*TemplateDeviceDefinition, error)
 	GetTemplateDeviceDefinitions(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetTemplateDeviceDefinitionResponse, error)
@@ -46,8 +46,8 @@ func NewTemplateDeviceDefinitionServiceClient(cc grpc.ClientConnInterface) Templ
 	return &templateDeviceDefinitionServiceClient{cc}
 }
 
-func (c *templateDeviceDefinitionServiceClient) CreateTemplateDeviceDefinition(ctx context.Context, in *TemplateDeviceDefinition, opts ...grpc.CallOption) (*emptypb.Empty, error) {
-	out := new(emptypb.Empty)
+func (c *templateDeviceDefinitionServiceClient) CreateTemplateDeviceDefinition(ctx context.Context, in *TemplateDeviceDefinition, opts ...grpc.CallOption) (*CreateTemplateDeviceDefinitionResponse, error) {
+	out := new(CreateTemplateDeviceDefinitionResponse)
 	err := c.cc.Invoke(ctx, TemplateDeviceDefinitionService_CreateTemplateDeviceDefinition_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -95,7 +95,7 @@ func (c *templateDeviceDefinitionServiceClient) DeleteTemplateDeviceDefinition(c
 // All implementations must embed UnimplementedTemplateDeviceDefinitionServiceServer
 // for forward compatibility
 type TemplateDeviceDefinitionServiceServer interface {
-	CreateTemplateDeviceDefinition(context.Context, *TemplateDeviceDefinition) (*emptypb.Empty, error)
+	CreateTemplateDeviceDefinition(context.Context, *TemplateDeviceDefinition) (*CreateTemplateDeviceDefinitionResponse, error)
 	UpdateTemplateDeviceDefinition(context.Context, *TemplateDeviceDefinition) (*emptypb.Empty, error)
 	GetTemplateDeviceDefinition(context.Context, *GetTemplateDeviceDefinitionByIdRequest) (*TemplateDeviceDefinition, error)
 	GetTemplateDeviceDefinitions(context.Context, *emptypb.Empty) (*GetTemplateDeviceDefinitionResponse, error)
@@ -107,7 +107,7 @@ type TemplateDeviceDefinitionServiceServer interface {
 type UnimplementedTemplateDeviceDefinitionServiceServer struct {
 }
 
-func (UnimplementedTemplateDeviceDefinitionServiceServer) CreateTemplateDeviceDefinition(context.Context, *TemplateDeviceDefinition) (*emptypb.Empty, error) {
+func (UnimplementedTemplateDeviceDefinitionServiceServer) CreateTemplateDeviceDefinition(context.Context, *TemplateDeviceDefinition) (*CreateTemplateDeviceDefinitionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateTemplateDeviceDefinition not implemented")
 }
 func (UnimplementedTemplateDeviceDefinitionServiceServer) UpdateTemplateDeviceDefinition(context.Context, *TemplateDeviceDefinition) (*emptypb.Empty, error) {

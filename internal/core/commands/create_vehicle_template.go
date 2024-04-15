@@ -7,7 +7,6 @@ import (
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
-	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type CreateVehicleTemplateCommandHandler struct {
@@ -26,7 +25,7 @@ type CreateVehicleTemplateCommandRequest struct {
 	ModelWhitelist []string
 }
 
-func (h CreateVehicleTemplateCommandHandler) Execute(ctx context.Context, req *CreateVehicleTemplateCommandRequest) (*emptypb.Empty, error) {
+func (h CreateVehicleTemplateCommandHandler) Execute(ctx context.Context, req *CreateVehicleTemplateCommandRequest) (*int, error) {
 	vehicleTemplate := &models.TemplateVehicle{
 		YearStart:      int(req.YearStart),
 		YearEnd:        int(req.YearEnd),
@@ -43,5 +42,5 @@ func (h CreateVehicleTemplateCommandHandler) Execute(ctx context.Context, req *C
 		return nil, err
 	}
 
-	return &emptypb.Empty{}, nil
+	return &vehicleTemplate.ID, nil
 }

@@ -7,7 +7,6 @@ import (
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
-	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type CreateTemplateDeviceDefinitionCommandHandler struct {
@@ -24,7 +23,7 @@ func NewCreateTemplateDeviceDefinitionCommandHandler(dbs func() *db.ReaderWriter
 	return &CreateTemplateDeviceDefinitionCommandHandler{DBS: dbs}
 }
 
-func (h *CreateTemplateDeviceDefinitionCommandHandler) Execute(ctx context.Context, cmd CreateTemplateDeviceDefinitionCommand) (*emptypb.Empty, error) {
+func (h *CreateTemplateDeviceDefinitionCommandHandler) Execute(ctx context.Context, cmd CreateTemplateDeviceDefinitionCommand) (*int64, error) {
 	templateDeviceDefinition := &models.TemplateDeviceDefinition{
 		DeviceDefinitionID: cmd.DeviceDefinitionID,
 		TemplateName:       cmd.TemplateName,
@@ -37,5 +36,5 @@ func (h *CreateTemplateDeviceDefinitionCommandHandler) Execute(ctx context.Conte
 		return nil, err
 	}
 
-	return &emptypb.Empty{}, nil
+	return &templateDeviceDefinition.ID, nil
 }
