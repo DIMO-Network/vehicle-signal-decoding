@@ -23,7 +23,7 @@ func NewGetTemplateDeviceDefinitionAllQueryHandler(dbs func() *db.ReaderWriter) 
 
 func (h *GetTemplateDeviceDefinitionAllQueryHandler) Handle(ctx context.Context, _ GetTemplateDeviceDefinitionAllQuery) (*grpc.GetTemplateDeviceDefinitionResponse, error) {
 	templateDeviceDefinitions, err := models.TemplateDeviceDefinitions(
-		qm.OrderBy("template_name, update_at asc"),
+		qm.OrderBy("template_name, updated_at asc"),
 	).All(ctx, h.DBS().Reader)
 
 	if err != nil {
