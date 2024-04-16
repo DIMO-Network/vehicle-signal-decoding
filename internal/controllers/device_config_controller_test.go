@@ -12,6 +12,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways"
+
 	common2 "github.com/ethereum/go-ethereum/common"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -278,7 +280,14 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_EmptyDBC() {
 	err = ds.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
 	require.NoError(s.T(), err)
 
-	s.mockDeviceTemplateSvc.EXPECT().ResolveDeviceConfiguration(gomock.Any(), mockedUserDevice).Return(&appmodels.DeviceConfigResponse{
+	s.mockDeviceTemplateSvc.EXPECT().ResolveDeviceConfiguration(gomock.Any(), mockedUserDevice, &gateways.VehicleInfo{
+		TokenID: 123,
+		Definition: gateways.VehicleDefinition{
+			Make:  "Ford",
+			Model: "Mustang",
+			Year:  2020,
+		},
+	}).Return(&appmodels.DeviceConfigResponse{
 		PidURL:           "http://localhost:3000/v1/device-config/pids/some-template-emptydbc@v1.0.0",
 		DeviceSettingURL: "http://localhost:3000/v1/device-config/settings/default-hev-emptydbc@v1.0.0",
 	}, nil)
@@ -344,6 +353,13 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_DecodeVIN() {
 		Vin:                &vin,
 		DeviceDefinitionId: mockedDeviceDefinition.DeviceDefinitionId,
 		//PowerTrainType:     "HEV",
+	}, &gateways.VehicleInfo{
+		TokenID: 123,
+		Definition: gateways.VehicleDefinition{
+			Make:  "Ford",
+			Model: "Mustang",
+			Year:  2020,
+		},
 	}).Return(&appmodels.DeviceConfigResponse{
 		PidURL:           "http://localhost:3000/v1/device-config/pids/some-template@v1.0.0",
 		DeviceSettingURL: "http://localhost:3000/v1/device-config/settings/default-hev@v1.0.0",
@@ -415,6 +431,13 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_ProtocolOverrideQS()
 		Vin:                &vin,
 		DeviceDefinitionId: mockedDeviceDefinition.DeviceDefinitionId,
 		CANProtocol:        "7",
+	}, &gateways.VehicleInfo{
+		TokenID: 123,
+		Definition: gateways.VehicleDefinition{
+			Make:  "Ford",
+			Model: "Mustang",
+			Year:  2020,
+		},
 	}).Return(&appmodels.DeviceConfigResponse{
 		PidURL:           "http://localhost:3000/v1/device-config/pids/some-template-protocol-override@v1.0.0",
 		DeviceSettingURL: "http://localhost:3000/v1/device-config/settings/default-hev-protocol-override@v1.0.0",
@@ -496,6 +519,13 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_FallbackLogic() {
 		Vin:                &vin,
 		DeviceDefinitionId: mockedDeviceDefinition.DeviceDefinitionId,
 		CANProtocol:        "7",
+	}, &gateways.VehicleInfo{
+		TokenID: 123,
+		Definition: gateways.VehicleDefinition{
+			Make:  "Ford",
+			Model: "Mustang",
+			Year:  2020,
+		},
 	}).Return(&appmodels.DeviceConfigResponse{
 		PidURL:           "http://localhost:3000/v1/device-config/pids/parent-template@v1.0.0",
 		DeviceSettingURL: "http://localhost:3000/v1/device-config/settings/parent-settings-fallback@v1.0.0",

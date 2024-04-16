@@ -3,9 +3,10 @@ package services
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	"github.com/DIMO-Network/shared"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways"
-	"strings"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/appmodels"
 	common2 "github.com/ethereum/go-ethereum/common"
@@ -246,8 +247,8 @@ func (dts *deviceTemplateService) selectAndFetchTemplate(ctx context.Context, ca
 	if matchedTemplateName == "" {
 		// compare by year first, then in memory below we'll look for make and/or model
 		templateVehicles, err := models.TemplateVehicles(
-			models.TemplateVehicleWhere.YearStart.LTE(vehicle.VehicleDefinition.Year),
-			models.TemplateVehicleWhere.YearEnd.GTE(vehicle.VehicleDefinition.Year),
+			models.TemplateVehicleWhere.YearStart.LTE(vehicle.Definition.Year),
+			models.TemplateVehicleWhere.YearEnd.GTE(vehicle.Definition.Year),
 			qm.Load(models.TemplateVehicleRels.TemplateNameTemplate),
 		).All(ctx, dts.db)
 
@@ -260,10 +261,10 @@ func (dts *deviceTemplateService) selectAndFetchTemplate(ctx context.Context, ca
 			if tv.R.TemplateNameTemplate.Protocol == canProtocol {
 				matchedTemplateName = tv.TemplateName
 				// now any matches for make
-				if tv.MakeSlug.String == shared.SlugString(vehicle.VehicleDefinition.Make) {
+				if tv.MakeSlug.String == shared.SlugString(vehicle.Definition.Make) {
 					matchedTemplateName = tv.TemplateName
 					// now see if there is also a model slug match
-					if modelMatch(tv.ModelWhitelist, shared.SlugString(vehicle.VehicleDefinition.Model)) {
+					if modelMatch(tv.ModelWhitelist, shared.SlugString(vehicle.Definition.Model)) {
 						break
 					}
 				}

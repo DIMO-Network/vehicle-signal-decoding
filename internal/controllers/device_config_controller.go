@@ -5,10 +5,11 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	"github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways"
 	"io"
 	"strings"
 	"time"
+
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/appmodels"
 
@@ -340,6 +341,9 @@ func (d *DeviceConfigController) GetConfigURLsFromEthAddr(c *fiber.Ctx) error {
 	// todo query database for device eth addr to template mapping
 
 	vehicle, err := d.identityAPI.QueryIdentityAPIForVehicle(common2.HexToAddress(ethAddr))
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": fmt.Sprintf("no minted vehicle for device EthAddr: %s", ethAddr)})
+	}
 	// we still need this to get the powertrain
 	ud, err := d.userDeviceSvc.GetUserDeviceByEthAddr(c.Context(), common2.HexToAddress(ethAddr))
 	if err != nil {

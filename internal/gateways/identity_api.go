@@ -88,7 +88,7 @@ func (i *identityAPIService) fetchVehicleWithQuery(query string) (*VehicleInfo, 
 
 	var vehicleResponse struct {
 		Data struct {
-			AfterMarketDevice struct {
+			AftermarketDevice struct {
 				Vehicle VehicleInfo `json:"vehicle"`
 			} `json:"aftermarketDevice"`
 		} `json:"data"`
@@ -98,18 +98,18 @@ func (i *identityAPIService) fetchVehicleWithQuery(query string) (*VehicleInfo, 
 		return nil, err
 	}
 
-	if vehicleResponse.Data.AfterMarketDevice.Vehicle.TokenID == 0 {
+	if vehicleResponse.Data.AftermarketDevice.Vehicle.TokenID == 0 {
 		return nil, ErrNotFound
 	}
 
-	return &vehicleResponse.Data.AfterMarketDevice.Vehicle, nil
+	return &vehicleResponse.Data.AftermarketDevice.Vehicle, nil
 }
 
 // potential issue having these not in a separate models package for testing
 
 type VehicleInfo struct {
-	TokenID           uint64            `json:"tokenId"`
-	VehicleDefinition VehicleDefinition `json:"definition"`
+	TokenID    uint64            `json:"tokenId"`
+	Definition VehicleDefinition `json:"definition"`
 }
 
 type VehicleDefinition struct {

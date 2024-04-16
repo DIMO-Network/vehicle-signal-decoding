@@ -6,6 +6,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways"
+
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	pb "github.com/DIMO-Network/devices-api/pkg/grpc"
 	"github.com/DIMO-Network/shared/db"
@@ -106,12 +108,10 @@ func (s *DeviceTemplateServiceTestSuite) TestRetrieveAndSetVehicleInfo() {
 		deviceDefSvc: s.mockDeviceDefSvc,
 	}
 
-	vehicleMake, vehicleModel, vehicleYear, err := dts.retrieveAndSetVehicleInfo(s.ctx, ud)
+	powertrain, err := dts.retrievePowertrain(s.ctx, ud.DeviceDefinitionId)
 
 	require.NoError(s.T(), err)
-	assert.Equal(s.T(), "Ford", vehicleMake)
-	assert.Equal(s.T(), "Mustang", vehicleModel)
-	assert.Equal(s.T(), 2021, vehicleYear)
+	assert.Equal(s.T(), "ICE", powertrain)
 }
 
 func (s *DeviceTemplateServiceTestSuite) TestSetPowerTrainType() {
@@ -147,8 +147,7 @@ func (s *DeviceTemplateServiceTestSuite) TestSetPowerTrainType() {
 	}
 }
 
-func (s *DeviceTemplateServiceTestSuite) TestSetCANProtocol() {
-
+func (s *DeviceTemplateServiceTestSuite) TestConvertCANProtocol() {
 	testCases := []struct {
 		name        string
 		initialCAN  string
@@ -174,8 +173,8 @@ func (s *DeviceTemplateServiceTestSuite) TestSetCANProtocol() {
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
 			ud := &pb.UserDevice{CANProtocol: tc.initialCAN}
-			s.sut.setCANProtocol(ud)
-			assert.Equal(s.T(), tc.expectedCAN, ud.CANProtocol)
+			cp := convertCANProtocol(s.sut.log, ud.CANProtocol)
+			assert.Equal(s.T(), tc.expectedCAN, cp)
 		})
 	}
 }
@@ -205,12 +204,17 @@ func (s *DeviceTemplateServiceTestSuite) TestSelectAndFetchTemplate_DeviceDefini
 		CANProtocol:        models.CanProtocolTypeCAN29_500,
 		PowerTrainType:     "HEV",
 	}
+	vehicle := &gateways.VehicleInfo{
+		TokenID: 123,
+		Definition: gateways.VehicleDefinition{
+			Make:  "Ford",
+			Model: "Mustang",
+			Year:  2021,
+		},
+	}
 
-	vehicleMake := "Ford"
-	vehicleModel := "Mustang"
-	vehicleYear := 2021
-
-	fetchedTemplate, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice, vehicleMake, vehicleModel, vehicleYear)
+	fetchedTemplate, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice.CANProtocol, mockedUserDevice.PowerTrainType,
+		mockedUserDevice.DeviceDefinitionId, vehicle)
 
 	require.NoError(s.T(), err)
 	assert.NotNil(s.T(), fetchedTemplate)
@@ -254,12 +258,17 @@ func (s *DeviceTemplateServiceTestSuite) TestSelectAndFetchTemplate_MMY() {
 		CANProtocol:        models.CanProtocolTypeCAN29_500,
 		PowerTrainType:     "HEV",
 	}
+	vehicle := &gateways.VehicleInfo{
+		TokenID: 123,
+		Definition: gateways.VehicleDefinition{
+			Make:  "Ford",
+			Model: "Mustang",
+			Year:  2021,
+		},
+	}
 
-	vehicleMake := "Ford"
-	vehicleModel := "Mustang"
-	vehicleYear := 2021
-
-	fetchedTemplate, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice, vehicleMake, vehicleModel, vehicleYear)
+	fetchedTemplate, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice.CANProtocol, mockedUserDevice.PowerTrainType,
+		mockedUserDevice.DeviceDefinitionId, vehicle)
 
 	require.NoError(s.T(), err)
 	assert.NotNil(s.T(), fetchedTemplate)
@@ -315,11 +324,17 @@ func (s *DeviceTemplateServiceTestSuite) TestSelectAndFetchTemplate_ModelWhiteli
 		PowerTrainType:     "ICE",
 	}
 
-	vehicleMake := "Ford"
-	vehicleModel := "Mustang"
-	vehicleYear := 2021
+	vehicle := &gateways.VehicleInfo{
+		TokenID: 123,
+		Definition: gateways.VehicleDefinition{
+			Make:  "Ford",
+			Model: "Mustang",
+			Year:  2021,
+		},
+	}
 
-	fetchedTemplate, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice, vehicleMake, vehicleModel, vehicleYear)
+	fetchedTemplate, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice.CANProtocol, mockedUserDevice.PowerTrainType,
+		mockedUserDevice.DeviceDefinitionId, vehicle)
 
 	require.NoError(s.T(), err)
 	assert.NotNil(s.T(), fetchedTemplate)
@@ -361,12 +376,17 @@ func (s *DeviceTemplateServiceTestSuite) TestSelectAndFetchTemplate_YearRange() 
 		PowerTrainType:     template.Powertrain,
 		CANProtocol:        template.Protocol,
 	}
+	vehicle := &gateways.VehicleInfo{
+		TokenID: 123,
+		Definition: gateways.VehicleDefinition{
+			Make:  "Ford",
+			Model: "Mustang",
+			Year:  2020,
+		},
+	}
 
-	vehicleMake := "Ford"
-	vehicleModel := "Mustang"
-	vehicleYear := 2019
-
-	fetchedTemplate, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice, vehicleMake, vehicleModel, vehicleYear)
+	fetchedTemplate, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice.CANProtocol, mockedUserDevice.PowerTrainType,
+		mockedUserDevice.DeviceDefinitionId, vehicle)
 
 	require.NoError(s.T(), err)
 	assert.NotNil(s.T(), fetchedTemplate)
@@ -401,11 +421,17 @@ func (s *DeviceTemplateServiceTestSuite) TestSelectAndFetchTemplate_PowertrainPr
 		PowerTrainType:     "HEV",
 	}
 
-	vehicleMake := "Ford"
-	vehicleModel := "Mustang"
-	vehicleYear := 2021
+	vehicle := &gateways.VehicleInfo{
+		TokenID: 123,
+		Definition: gateways.VehicleDefinition{
+			Make:  "Ford",
+			Model: "Mustang",
+			Year:  2021,
+		},
+	}
 
-	fetchedTemplate, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice, vehicleMake, vehicleModel, vehicleYear)
+	fetchedTemplate, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice.CANProtocol, mockedUserDevice.PowerTrainType,
+		mockedUserDevice.DeviceDefinitionId, vehicle)
 
 	require.NoError(s.T(), err)
 	assert.NotNil(s.T(), fetchedTemplate)
@@ -439,12 +465,17 @@ func (s *DeviceTemplateServiceTestSuite) TestSelectAndFetchTemplate_Default() {
 		CANProtocol:        models.CanProtocolTypeCAN29_500,
 		PowerTrainType:     "HEV",
 	}
+	vehicle := &gateways.VehicleInfo{
+		TokenID: 123,
+		Definition: gateways.VehicleDefinition{
+			Make:  "NonExistingMake",
+			Model: "NonExistingModel",
+			Year:  2010,
+		},
+	}
 
-	vehicleMake := "NonExistingMake"
-	vehicleModel := "NonExistingModel"
-	vehicleYear := 2010
-
-	fetchedTemplate, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice, vehicleMake, vehicleModel, vehicleYear)
+	fetchedTemplate, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice.CANProtocol, mockedUserDevice.PowerTrainType,
+		mockedUserDevice.DeviceDefinitionId, vehicle)
 
 	require.NoError(s.T(), err)
 	assert.NotNil(s.T(), fetchedTemplate)
