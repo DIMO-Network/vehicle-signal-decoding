@@ -14,6 +14,7 @@ import (
 
 	grpc "github.com/DIMO-Network/devices-api/pkg/grpc"
 	appmodels "github.com/DIMO-Network/vehicle-signal-decoding/internal/core/appmodels"
+	gateways "github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways"
 	models "github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 	common "github.com/ethereum/go-ethereum/common"
 	fiber "github.com/gofiber/fiber/v2"
@@ -44,18 +45,18 @@ func (m *MockDeviceTemplateService) EXPECT() *MockDeviceTemplateServiceMockRecor
 }
 
 // ResolveDeviceConfiguration mocks base method.
-func (m *MockDeviceTemplateService) ResolveDeviceConfiguration(c *fiber.Ctx, ud *grpc.UserDevice) (*appmodels.DeviceConfigResponse, error) {
+func (m *MockDeviceTemplateService) ResolveDeviceConfiguration(c *fiber.Ctx, ud *grpc.UserDevice, vehicle *gateways.VehicleInfo) (*appmodels.DeviceConfigResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ResolveDeviceConfiguration", c, ud)
+	ret := m.ctrl.Call(m, "ResolveDeviceConfiguration", c, ud, vehicle)
 	ret0, _ := ret[0].(*appmodels.DeviceConfigResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ResolveDeviceConfiguration indicates an expected call of ResolveDeviceConfiguration.
-func (mr *MockDeviceTemplateServiceMockRecorder) ResolveDeviceConfiguration(c, ud any) *gomock.Call {
+func (mr *MockDeviceTemplateServiceMockRecorder) ResolveDeviceConfiguration(c, ud, vehicle any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResolveDeviceConfiguration", reflect.TypeOf((*MockDeviceTemplateService)(nil).ResolveDeviceConfiguration), c, ud)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResolveDeviceConfiguration", reflect.TypeOf((*MockDeviceTemplateService)(nil).ResolveDeviceConfiguration), c, ud, vehicle)
 }
 
 // StoreDeviceConfigUsed mocks base method.

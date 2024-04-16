@@ -3,6 +3,8 @@ package services
 import (
 	"context"
 	"fmt"
+	"github.com/DIMO-Network/shared"
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways"
 	"strings"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/appmodels"
@@ -28,7 +30,7 @@ import (
 //go:generate mockgen -source device_template_service.go -destination mocks/device_template_service_mock.go
 type DeviceTemplateService interface {
 	StoreDeviceConfigUsed(ctx context.Context, address common2.Address, dbcURL, pidURL, settingURL, firmwareVersion *string) (*models.DeviceTemplateStatus, error)
-	ResolveDeviceConfiguration(c *fiber.Ctx, ud *pb.UserDevice) (*appmodels.DeviceConfigResponse, error)
+	ResolveDeviceConfiguration(c *fiber.Ctx, ud *pb.UserDevice, vehicle *gateways.VehicleInfo) (*appmodels.DeviceConfigResponse, error)
 }
 
 type deviceTemplateService struct {
@@ -97,15 +99,15 @@ func (dts *deviceTemplateService) StoreDeviceConfigUsed(ctx context.Context, add
 	return dt, nil
 }
 
-func (dts *deviceTemplateService) ResolveDeviceConfiguration(c *fiber.Ctx, ud *pb.UserDevice) (*appmodels.DeviceConfigResponse, error) {
-	dts.setCANProtocol(ud)
-
-	vehicleMake, vehicleModel, vehicleYear, err := dts.retrieveAndSetVehicleInfo(c.Context(), ud)
+func (dts *deviceTemplateService) ResolveDeviceConfiguration(c *fiber.Ctx, ud *pb.UserDevice, vehicle *gateways.VehicleInfo) (*appmodels.DeviceConfigResponse, error) {
+	canProtocl := convertCANProtocol(dts.log, ud.CANProtocol)
+	// todo (jreate): what about powertrain at the style level... But ideally it is stored at vehicle level. this could come from oracle?
+	powertrain, err := dts.retrievePowertrain(c.Context(), ud.DeviceDefinitionId)
 	if err != nil {
-		return nil, errors.Wrap(err, fmt.Sprintf("Failed to retrieve device definition: %s", ud.DeviceDefinitionId))
+		return nil, errors.Wrap(err, fmt.Sprintf("Failed to retrieve powertrain for ddid: %s", ud.DeviceDefinitionId))
 	}
 
-	matchedTemplate, err := dts.selectAndFetchTemplate(c.Context(), ud, vehicleMake, vehicleModel, vehicleYear)
+	matchedTemplate, err := dts.selectAndFetchTemplate(c.Context(), canProtocl, powertrain, ud.DeviceDefinitionId, vehicle)
 	if err != nil {
 		return nil, err
 	}
@@ -138,21 +140,21 @@ func (dts *deviceTemplateService) ResolveDeviceConfiguration(c *fiber.Ctx, ud *p
 		}
 
 		if deviceSetting == nil {
-			var powertrain string
+			var pt string
 			if ud.PowerTrainType != "" {
-				powertrain = ud.PowerTrainType
+				pt = ud.PowerTrainType
 			} else {
-				powertrain = matchedTemplate.Powertrain
+				pt = matchedTemplate.Powertrain
 			}
 			// default will be whatever gets ordered first
-			deviceSetting, dbErr = models.DeviceSettings(models.DeviceSettingWhere.Powertrain.EQ(powertrain),
+			deviceSetting, dbErr = models.DeviceSettings(models.DeviceSettingWhere.Powertrain.EQ(pt),
 				qm.OrderBy(models.DeviceSettingColumns.Name)).One(c.Context(), dts.db)
 			if errors.Is(dbErr, sql.ErrNoRows) {
 				// grab the first record in db
 				deviceSetting, dbErr = models.DeviceSettings(qm.OrderBy(models.DeviceSettingColumns.Name)).One(c.Context(), dts.db)
 			}
 			if dbErr != nil {
-				return nil, errors.Wrap(err, fmt.Sprintf("Failed to retrieve device setting. Powertrain: %s", powertrain))
+				return nil, errors.Wrap(err, fmt.Sprintf("Failed to retrieve device setting. Powertrain: %s", pt))
 			}
 		}
 		// device settings have a name key separate from templateName since simpler setup
@@ -177,24 +179,25 @@ func (dts *deviceTemplateService) buildConfigRoute(ct configType, name, version 
 	return fmt.Sprintf("%s/v1/device-config/%s/%s@%s", dts.settings.DeploymentURL, ct, name, version)
 }
 
-// retrieveAndSetVehicleInfo figures out what if any device definition information corresponds to the UserDevice.
-// also calls setPowerTrainType to find and set a default Powertrain, returns Make, Model, Year.
-func (dts *deviceTemplateService) retrieveAndSetVehicleInfo(ctx context.Context, ud *pb.UserDevice) (string, string, int, error) {
-
-	var ddResponse *pgrpc.GetDeviceDefinitionItemResponse
-	deviceDefinitionID := ud.DeviceDefinitionId
+// retrievePowertrain gets the powertrain for the device definition id from attributes, if empty defaults to ICE
+func (dts *deviceTemplateService) retrievePowertrain(ctx context.Context, deviceDefinitionID string) (string, error) {
 	ddResponse, err := dts.deviceDefSvc.GetDeviceDefinitionByID(ctx, deviceDefinitionID)
 	if err != nil {
-		return "", "", 0, fmt.Errorf("failed to retrieve device definition for deviceDefinitionId %s: %w", deviceDefinitionID, err)
+		return "", fmt.Errorf("failed to retrieve device definition for deviceDefinitionId %s: %w", deviceDefinitionID, err)
 	}
 
-	vehicleYear := int(ddResponse.Type.Year)
-	vehicleMake := ddResponse.Type.MakeSlug
-	vehicleModel := ddResponse.Type.ModelSlug
+	var powerTrainType string
+	for _, attribute := range ddResponse.DeviceAttributes {
+		if attribute.Name == "powertrain_type" {
+			powerTrainType = attribute.Value
+			break
+		}
+	}
+	if powerTrainType == "" {
+		powerTrainType = "ICE"
+	}
 
-	setPowerTrainType(ddResponse, ud)
-
-	return vehicleMake, vehicleModel, vehicleYear, nil
+	return powerTrainType, nil
 }
 
 func setPowerTrainType(ddResponse *pgrpc.GetDeviceDefinitionItemResponse, ud *pb.UserDevice) {
@@ -215,12 +218,12 @@ func setPowerTrainType(ddResponse *pgrpc.GetDeviceDefinitionItemResponse, ud *pb
 
 // selectAndFetchTemplate figures out the right template to use based on the protocol, powertrain, year range, make, and /or model.
 // Returns default template if nothing found. Requirees ud.CANProtocol and Powertrain to be set to something
-func (dts *deviceTemplateService) selectAndFetchTemplate(ctx context.Context, ud *pb.UserDevice, vehicleMake, vehicleModel string, vehicleYear int) (*models.Template, error) {
+func (dts *deviceTemplateService) selectAndFetchTemplate(ctx context.Context, canProtocol, powertrain, definitionID string, vehicle *gateways.VehicleInfo) (*models.Template, error) {
 	// guard
-	if ud.CANProtocol == "" {
+	if canProtocol == "" {
 		return nil, fmt.Errorf("CANProtocol is required in the user device")
 	}
-	if ud.PowerTrainType == "" {
+	if powertrain == "" {
 		return nil, fmt.Errorf("PowerTrainType is required in the user device")
 	}
 
@@ -228,7 +231,7 @@ func (dts *deviceTemplateService) selectAndFetchTemplate(ctx context.Context, ud
 
 	// First, try to find a template based on device definitions
 	deviceDefinitions, err := models.TemplateDeviceDefinitions(
-		models.TemplateDeviceDefinitionWhere.DeviceDefinitionID.EQ(ud.DeviceDefinitionId),
+		models.TemplateDeviceDefinitionWhere.DeviceDefinitionID.EQ(definitionID),
 	).All(ctx, dts.db)
 
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
@@ -243,24 +246,24 @@ func (dts *deviceTemplateService) selectAndFetchTemplate(ctx context.Context, ud
 	if matchedTemplateName == "" {
 		// compare by year first, then in memory below we'll look for make and/or model
 		templateVehicles, err := models.TemplateVehicles(
-			models.TemplateVehicleWhere.YearStart.LTE(vehicleYear),
-			models.TemplateVehicleWhere.YearEnd.GTE(vehicleYear),
+			models.TemplateVehicleWhere.YearStart.LTE(vehicle.VehicleDefinition.Year),
+			models.TemplateVehicleWhere.YearEnd.GTE(vehicle.VehicleDefinition.Year),
 			qm.Load(models.TemplateVehicleRels.TemplateNameTemplate),
 		).All(ctx, dts.db)
 
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf("failed to query templates for make: %s, model: %s, year: %d: %w", vehicleMake, vehicleModel, vehicleYear, err)
+			return nil, fmt.Errorf("failed to query templates for vehicle: %+v: %w", vehicle, err)
 		}
 		// if anything is returned, try finding a match by make and/or model
 		for _, tv := range templateVehicles {
 			// any matches for year & same protocol
-			if tv.R.TemplateNameTemplate.Protocol == ud.CANProtocol {
+			if tv.R.TemplateNameTemplate.Protocol == canProtocol {
 				matchedTemplateName = tv.TemplateName
 				// now any matches for make
-				if tv.MakeSlug.String == vehicleMake {
+				if tv.MakeSlug.String == shared.SlugString(vehicle.VehicleDefinition.Make) {
 					matchedTemplateName = tv.TemplateName
-					// now see if there is also a model match
-					if modelMatch(tv.ModelWhitelist, vehicleModel) {
+					// now see if there is also a model slug match
+					if modelMatch(tv.ModelWhitelist, shared.SlugString(vehicle.VehicleDefinition.Model)) {
 						break
 					}
 				}
@@ -272,18 +275,18 @@ func (dts *deviceTemplateService) selectAndFetchTemplate(ctx context.Context, ud
 	// Third, fallback to query by protocol and powertrain. Match by protocol first
 	if matchedTemplateName == "" {
 		templates, err := models.Templates(
-			models.TemplateWhere.Protocol.EQ(ud.CANProtocol),
+			models.TemplateWhere.Protocol.EQ(canProtocol),
 		).All(ctx, dts.db)
 
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf("failed to query templates for protocol: %s and powertrain: %s: %w", ud.CANProtocol, ud.PowerTrainType, err)
+			return nil, fmt.Errorf("failed to query templates for protocol: %s and powertrain: %s: %w", canProtocol, powertrain, err)
 		}
 		if len(templates) > 0 {
 			// match the first one just in case
 			matchedTemplateName = templates[0].TemplateName
 			// now see if also have a powertrain match
 			for _, t := range templates {
-				if t.Powertrain == ud.PowerTrainType {
+				if t.Powertrain == powertrain {
 					matchedTemplateName = t.TemplateName
 					break
 				}
@@ -331,17 +334,17 @@ func modelMatch(modelList types.StringArray, modelName string) bool {
 	return false
 }
 
-// setCANProtocol converts autopi/macaron style Protocol (6 or 7) to our VSD style protocol, but always returning a default if nothing found
-func (dts *deviceTemplateService) setCANProtocol(ud *pb.UserDevice) {
-	switch ud.CANProtocol {
+// convertCANProtocol converts autopi/macaron style Protocol (6 or 7) to our VSD style protocol (db enum), but always returning a default if nothing found
+func convertCANProtocol(logger zerolog.Logger, canProtocolSimple string) string {
+	switch canProtocolSimple {
 	case "6":
-		ud.CANProtocol = models.CanProtocolTypeCAN11_500
+		return models.CanProtocolTypeCAN11_500
 	case "7":
-		ud.CANProtocol = models.CanProtocolTypeCAN29_500
+		return models.CanProtocolTypeCAN29_500
 	case "":
-		ud.CANProtocol = models.CanProtocolTypeCAN11_500
+		return models.CanProtocolTypeCAN11_500
 	default:
-		dts.log.Warn().Str("user_device_id", ud.Id).Msgf("invalid protocol detected: %s", ud.CANProtocol)
-		ud.CANProtocol = models.CanProtocolTypeCAN11_500
+		logger.Warn().Msgf("invalid protocol detected: %s", canProtocolSimple)
+		return models.CanProtocolTypeCAN11_500
 	}
 }
