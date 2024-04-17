@@ -12,7 +12,6 @@ import (
 	common2 "github.com/ethereum/go-ethereum/common"
 	"github.com/volatiletech/null/v8"
 
-	pgrpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	pb "github.com/DIMO-Network/devices-api/pkg/grpc"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
 	"github.com/gofiber/fiber/v2"
@@ -100,6 +99,7 @@ func (dts *deviceTemplateService) StoreDeviceConfigUsed(ctx context.Context, add
 	return dt, nil
 }
 
+// ResolveDeviceConfiguration figures out what template to return based on protocol, powertrain, vehicle or definition (vehicle could be nil)
 func (dts *deviceTemplateService) ResolveDeviceConfiguration(c *fiber.Ctx, ud *pb.UserDevice, vehicle *gateways.VehicleInfo) (*appmodels.DeviceConfigResponse, error) {
 	canProtocl := convertCANProtocol(dts.log, ud.CANProtocol)
 	// todo (jreate): what about powertrain at the style level... But ideally it is stored at vehicle level. this could come from oracle?
@@ -201,22 +201,6 @@ func (dts *deviceTemplateService) retrievePowertrain(ctx context.Context, device
 	return powerTrainType, nil
 }
 
-func setPowerTrainType(ddResponse *pgrpc.GetDeviceDefinitionItemResponse, ud *pb.UserDevice) {
-	var powerTrainType string
-	for _, attribute := range ddResponse.DeviceAttributes {
-		if attribute.Name == "powertrain_type" {
-			powerTrainType = attribute.Value
-			break
-		}
-	}
-	if ud.PowerTrainType == "" {
-		ud.PowerTrainType = powerTrainType
-		if ud.PowerTrainType == "" {
-			ud.PowerTrainType = "ICE"
-		}
-	}
-}
-
 // selectAndFetchTemplate figures out the right template to use based on the protocol, powertrain, year range, make, and /or model.
 // Returns default template if nothing found. Requirees ud.CANProtocol and Powertrain to be set to something
 func (dts *deviceTemplateService) selectAndFetchTemplate(ctx context.Context, canProtocol, powertrain, definitionID string, vehicle *gateways.VehicleInfo) (*models.Template, error) {
@@ -242,18 +226,34 @@ func (dts *deviceTemplateService) selectAndFetchTemplate(ctx context.Context, ca
 	if len(deviceDefinitions) > 0 {
 		matchedTemplateName = deviceDefinitions[0].TemplateName
 	}
+	year := 0
+	mk := ""
+	model := ""
+	if vehicle == nil {
+		definition, err := dts.deviceDefSvc.GetDeviceDefinitionByID(ctx, definitionID)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to query device definition %s", definitionID)
+		}
+		year = int(definition.Type.Year)
+		mk = definition.Type.Make
+		model = definition.Type.Model
+	} else {
+		year = vehicle.Definition.Year
+		mk = vehicle.Definition.Make
+		model = vehicle.Definition.Model
+	}
 
 	// Second, try to find a template based on Year, then Make & Model
 	if matchedTemplateName == "" {
 		// compare by year first, then in memory below we'll look for make and/or model
 		templateVehicles, err := models.TemplateVehicles(
-			models.TemplateVehicleWhere.YearStart.LTE(vehicle.Definition.Year),
-			models.TemplateVehicleWhere.YearEnd.GTE(vehicle.Definition.Year),
+			models.TemplateVehicleWhere.YearStart.LTE(year),
+			models.TemplateVehicleWhere.YearEnd.GTE(year),
 			qm.Load(models.TemplateVehicleRels.TemplateNameTemplate),
 		).All(ctx, dts.db)
 
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf("failed to query templates for vehicle: %+v: %w", vehicle, err)
+			return nil, fmt.Errorf("failed to query templates for vehicle: %s: %w", fmt.Sprintf("%d %s %s", year, mk, model), err)
 		}
 		// if anything is returned, try finding a match by make and/or model
 		for _, tv := range templateVehicles {
@@ -261,10 +261,10 @@ func (dts *deviceTemplateService) selectAndFetchTemplate(ctx context.Context, ca
 			if tv.R.TemplateNameTemplate.Protocol == canProtocol {
 				matchedTemplateName = tv.TemplateName
 				// now any matches for make
-				if tv.MakeSlug.String == shared.SlugString(vehicle.Definition.Make) {
+				if tv.MakeSlug.String == shared.SlugString(mk) {
 					matchedTemplateName = tv.TemplateName
 					// now see if there is also a model slug match
-					if modelMatch(tv.ModelWhitelist, shared.SlugString(vehicle.Definition.Model)) {
+					if modelMatch(tv.ModelWhitelist, shared.SlugString(model)) {
 						break
 					}
 				}

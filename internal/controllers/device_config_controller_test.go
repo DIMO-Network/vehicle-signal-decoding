@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	mock_gateways "github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways/mocks"
 	"io"
 	"net/http"
 	"os"
@@ -64,6 +65,7 @@ type DeviceConfigControllerTestSuite struct {
 	mockDeviceTemplateSvc *mock_services.MockDeviceTemplateService
 	controller            *DeviceConfigController
 	app                   *fiber.App
+	mockIdentityAPI       *mock_gateways.MockIdentityAPI
 }
 
 const dbSchemaName = "vehicle_signal_decoding"
@@ -77,7 +79,9 @@ func (s *DeviceConfigControllerTestSuite) SetupSuite() {
 	s.mockUserDeviceSvc = mock_services.NewMockUserDeviceService(s.mockCtrl)
 	s.mockDeviceDefSvc = mock_services.NewMockDeviceDefinitionsService(s.mockCtrl)
 	s.mockDeviceTemplateSvc = mock_services.NewMockDeviceTemplateService(s.mockCtrl)
-	ctrl := NewDeviceConfigController(&config.Settings{Port: "3000", DeploymentURL: "http://localhost:3000"}, s.logger, s.pdb.DBS().Reader.DB, s.mockUserDeviceSvc, s.mockDeviceDefSvc, s.mockDeviceTemplateSvc)
+	s.mockIdentityAPI = mock_gateways.NewMockIdentityAPI(s.mockCtrl)
+	ctrl := NewDeviceConfigController(&config.Settings{Port: "3000", DeploymentURL: "http://localhost:3000"}, s.logger,
+		s.pdb.DBS().Reader.DB, s.mockUserDeviceSvc, s.mockDeviceDefSvc, s.mockDeviceTemplateSvc, s.mockIdentityAPI)
 	s.controller = &ctrl
 	s.app = fiber.New()
 }
@@ -237,7 +241,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetDBCFileByTemplateName() {
 	assert.Equal(s.T(), template.Version, templateFromDB.Version)
 }
 
-func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_EmptyDBC() {
+func (s *DeviceConfigControllerTestSuite) TestGetConfigURLsFromVIN_EmptyDBC() {
 	vin := "TMBEK6NW1N3088739"
 
 	mockedUserDevice := &pb.UserDevice{
@@ -310,7 +314,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_EmptyDBC() {
 	assert.Empty(s.T(), receivedResp.DbcURL)
 }
 
-func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_DecodeVIN() {
+func (s *DeviceConfigControllerTestSuite) TestGetConfigURLsFromVIN_DecodeVIN() {
 	vin := "TMBEK6NW1N3088739"
 
 	template := &models.Template{
@@ -353,14 +357,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_DecodeVIN() {
 		Vin:                &vin,
 		DeviceDefinitionId: mockedDeviceDefinition.DeviceDefinitionId,
 		//PowerTrainType:     "HEV",
-	}, &gateways.VehicleInfo{
-		TokenID: 123,
-		Definition: gateways.VehicleDefinition{
-			Make:  "Ford",
-			Model: "Mustang",
-			Year:  2020,
-		},
-	}).Return(&appmodels.DeviceConfigResponse{
+	}, nil).Return(&appmodels.DeviceConfigResponse{
 		PidURL:           "http://localhost:3000/v1/device-config/pids/some-template@v1.0.0",
 		DeviceSettingURL: "http://localhost:3000/v1/device-config/settings/default-hev@v1.0.0",
 	}, nil)
@@ -382,7 +379,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_DecodeVIN() {
 	assert.Empty(s.T(), receivedResp.DbcURL)
 }
 
-func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_ProtocolOverrideQS() {
+func (s *DeviceConfigControllerTestSuite) TestGetConfigURLsFromVIN_ProtocolOverrideQS() {
 
 	vin := "TMBEK6NW1N3088739"
 
@@ -431,14 +428,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_ProtocolOverrideQS()
 		Vin:                &vin,
 		DeviceDefinitionId: mockedDeviceDefinition.DeviceDefinitionId,
 		CANProtocol:        "7",
-	}, &gateways.VehicleInfo{
-		TokenID: 123,
-		Definition: gateways.VehicleDefinition{
-			Make:  "Ford",
-			Model: "Mustang",
-			Year:  2020,
-		},
-	}).Return(&appmodels.DeviceConfigResponse{
+	}, nil).Return(&appmodels.DeviceConfigResponse{
 		PidURL:           "http://localhost:3000/v1/device-config/pids/some-template-protocol-override@v1.0.0",
 		DeviceSettingURL: "http://localhost:3000/v1/device-config/settings/default-hev-protocol-override@v1.0.0",
 	}, nil)
@@ -462,7 +452,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_ProtocolOverrideQS()
 
 }
 
-func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_FallbackLogic() {
+func (s *DeviceConfigControllerTestSuite) TestGetConfigURLsFromVIN_FallbackLogic() {
 	vin := "TMBEK6NW1N3088739"
 
 	parentTemplate := &models.Template{
@@ -519,14 +509,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLs_FallbackLogic() {
 		Vin:                &vin,
 		DeviceDefinitionId: mockedDeviceDefinition.DeviceDefinitionId,
 		CANProtocol:        "7",
-	}, &gateways.VehicleInfo{
-		TokenID: 123,
-		Definition: gateways.VehicleDefinition{
-			Make:  "Ford",
-			Model: "Mustang",
-			Year:  2020,
-		},
-	}).Return(&appmodels.DeviceConfigResponse{
+	}, nil).Return(&appmodels.DeviceConfigResponse{
 		PidURL:           "http://localhost:3000/v1/device-config/pids/parent-template@v1.0.0",
 		DeviceSettingURL: "http://localhost:3000/v1/device-config/settings/parent-settings-fallback@v1.0.0",
 	}, nil)

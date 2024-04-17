@@ -85,7 +85,7 @@ func TestDeviceTemplateServiceTestSuite(t *testing.T) {
 	suite.Run(t, new(DeviceTemplateServiceTestSuite))
 }
 
-func (s *DeviceTemplateServiceTestSuite) TestRetrieveAndSetVehicleInfo() {
+func (s *DeviceTemplateServiceTestSuite) TestRetrievePowertrain() {
 	ud := &pb.UserDevice{
 		DeviceDefinitionId: "some-definition-id",
 	}
@@ -112,39 +112,6 @@ func (s *DeviceTemplateServiceTestSuite) TestRetrieveAndSetVehicleInfo() {
 
 	require.NoError(s.T(), err)
 	assert.Equal(s.T(), "ICE", powertrain)
-}
-
-func (s *DeviceTemplateServiceTestSuite) TestSetPowerTrainType() {
-
-	testCases := []struct {
-		name          string
-		deviceAttrs   []*p_grpc.DeviceTypeAttribute
-		expectedPower string
-	}{
-		{
-			name: "With Specified Powertrain",
-			deviceAttrs: []*p_grpc.DeviceTypeAttribute{
-				{Name: "powertrain_type", Value: "Electric"},
-			},
-			expectedPower: "Electric",
-		},
-		{
-			name:          "Without Specified Powertrain",
-			deviceAttrs:   []*p_grpc.DeviceTypeAttribute{},
-			expectedPower: "ICE", // Default value
-		},
-	}
-
-	for _, tc := range testCases {
-		s.Run(tc.name, func() {
-			ddResponse := &p_grpc.GetDeviceDefinitionItemResponse{
-				DeviceAttributes: tc.deviceAttrs,
-			}
-			ud := &pb.UserDevice{}
-			setPowerTrainType(ddResponse, ud)
-			assert.Equal(s.T(), tc.expectedPower, ud.PowerTrainType)
-		})
-	}
 }
 
 func (s *DeviceTemplateServiceTestSuite) TestConvertCANProtocol() {
@@ -179,7 +146,7 @@ func (s *DeviceTemplateServiceTestSuite) TestConvertCANProtocol() {
 	}
 }
 
-func (s *DeviceTemplateServiceTestSuite) TestSelectAndFetchTemplate_DeviceDefinitions() {
+func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_DeviceDefinitions() {
 
 	template := &models.Template{
 		TemplateName: "some-template",
@@ -221,7 +188,49 @@ func (s *DeviceTemplateServiceTestSuite) TestSelectAndFetchTemplate_DeviceDefini
 	assert.Equal(s.T(), template.TemplateName, fetchedTemplate.TemplateName)
 }
 
-func (s *DeviceTemplateServiceTestSuite) TestSelectAndFetchTemplate_MMY() {
+func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_nilVehicle() {
+	template := &models.Template{
+		TemplateName: "some-template",
+		Version:      "1.0",
+		Protocol:     models.CanProtocolTypeCAN29_500,
+		Powertrain:   "HEV",
+	}
+	err := template.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
+
+	deviceDef := &models.TemplateDeviceDefinition{
+		DeviceDefinitionID: "device-def-id",
+		TemplateName:       template.TemplateName,
+	}
+	err = deviceDef.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
+
+	mockedUserDevice := &pb.UserDevice{
+		Id:                 ksuid.New().String(),
+		UserId:             ksuid.New().String(),
+		DeviceDefinitionId: ksuid.New().String(),
+		CANProtocol:        models.CanProtocolTypeCAN29_500,
+		PowerTrainType:     "HEV",
+	}
+	s.mockDeviceDefSvc.EXPECT().GetDeviceDefinitionByID(gomock.Any(), mockedUserDevice.DeviceDefinitionId).Return(&p_grpc.GetDeviceDefinitionItemResponse{
+		DeviceDefinitionId: mockedUserDevice.DeviceDefinitionId,
+		Type: &p_grpc.DeviceType{
+			Type:  "vehicle",
+			Make:  "Ford",
+			Model: "Mustang",
+			Year:  2021,
+		},
+	}, nil)
+
+	fetchedTemplate, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice.CANProtocol, mockedUserDevice.PowerTrainType,
+		mockedUserDevice.DeviceDefinitionId, nil)
+
+	require.NoError(s.T(), err)
+	assert.NotNil(s.T(), fetchedTemplate)
+	assert.Equal(s.T(), template.TemplateName, fetchedTemplate.TemplateName)
+}
+
+func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_MMY() {
 
 	decoy := &models.Template{
 		TemplateName: "mmy-template-decoy",
@@ -275,7 +284,7 @@ func (s *DeviceTemplateServiceTestSuite) TestSelectAndFetchTemplate_MMY() {
 	assert.Equal(s.T(), template.TemplateName, fetchedTemplate.TemplateName)
 }
 
-func (s *DeviceTemplateServiceTestSuite) TestSelectAndFetchTemplate_ModelWhitelistMatch() {
+func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_ModelWhitelistMatch() {
 
 	decoyTemplate := &models.Template{
 		TemplateName: "decoy-template",
@@ -341,7 +350,7 @@ func (s *DeviceTemplateServiceTestSuite) TestSelectAndFetchTemplate_ModelWhiteli
 	assert.Equal(s.T(), template.TemplateName, fetchedTemplate.TemplateName)
 }
 
-func (s *DeviceTemplateServiceTestSuite) TestSelectAndFetchTemplate_YearRange() {
+func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_YearRange() {
 
 	template2 := &models.Template{
 		TemplateName: "default-template",
@@ -393,7 +402,7 @@ func (s *DeviceTemplateServiceTestSuite) TestSelectAndFetchTemplate_YearRange() 
 	assert.Equal(s.T(), template.TemplateName, fetchedTemplate.TemplateName)
 }
 
-func (s *DeviceTemplateServiceTestSuite) TestSelectAndFetchTemplate_PowertrainProtocol() {
+func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_PowertrainProtocol() {
 
 	decoy := &models.Template{
 		TemplateName: "protocol-powertrain-template-decoy",
@@ -438,7 +447,7 @@ func (s *DeviceTemplateServiceTestSuite) TestSelectAndFetchTemplate_PowertrainPr
 	assert.Equal(s.T(), template.TemplateName, fetchedTemplate.TemplateName)
 }
 
-func (s *DeviceTemplateServiceTestSuite) TestSelectAndFetchTemplate_Default() {
+func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_Default() {
 
 	nonDefaultTmpl := &models.Template{
 		TemplateName: "some-template-special",

@@ -51,7 +51,8 @@ type DeviceConfigController struct {
 const latestFirmwareURL = "https://binaries.dimo.zone/DIMO-Network/Macaron/releases/latest"
 
 // NewDeviceConfigController constructor
-func NewDeviceConfigController(settings *config.Settings, logger *zerolog.Logger, database *sql.DB, userDeviceSvc services.UserDeviceService, deviceDefSvc services.DeviceDefinitionsService, deviceTemplateService services.DeviceTemplateService) DeviceConfigController {
+func NewDeviceConfigController(settings *config.Settings, logger *zerolog.Logger, database *sql.DB, userDeviceSvc services.UserDeviceService,
+	deviceDefSvc services.DeviceDefinitionsService, deviceTemplateService services.DeviceTemplateService, identityAPI gateways.IdentityAPI) DeviceConfigController {
 	fwVersionAPI, _ := shared.NewHTTPClientWrapper(latestFirmwareURL, "", 10*time.Second, nil, true)
 
 	return DeviceConfigController{
@@ -62,7 +63,7 @@ func NewDeviceConfigController(settings *config.Settings, logger *zerolog.Logger
 		deviceDefSvc:          deviceDefSvc,
 		deviceTemplateService: deviceTemplateService,
 		fwVersionAPI:          fwVersionAPI,
-		identityAPI:           gateways.NewIdentityAPIService(logger),
+		identityAPI:           identityAPI,
 	}
 }
 
