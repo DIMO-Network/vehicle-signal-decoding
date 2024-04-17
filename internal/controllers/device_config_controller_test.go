@@ -13,8 +13,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways"
-
 	common2 "github.com/ethereum/go-ethereum/common"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -284,14 +282,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLsFromVIN_EmptyDBC() {
 	err = ds.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
 	require.NoError(s.T(), err)
 
-	s.mockDeviceTemplateSvc.EXPECT().ResolveDeviceConfiguration(gomock.Any(), mockedUserDevice, &gateways.VehicleInfo{
-		TokenID: 123,
-		Definition: gateways.VehicleDefinition{
-			Make:  "Ford",
-			Model: "Mustang",
-			Year:  2020,
-		},
-	}).Return(&appmodels.DeviceConfigResponse{
+	s.mockDeviceTemplateSvc.EXPECT().ResolveDeviceConfiguration(gomock.Any(), mockedUserDevice, nil).Return(&appmodels.DeviceConfigResponse{
 		PidURL:           "http://localhost:3000/v1/device-config/pids/some-template-emptydbc@v1.0.0",
 		DeviceSettingURL: "http://localhost:3000/v1/device-config/settings/default-hev-emptydbc@v1.0.0",
 	}, nil)
