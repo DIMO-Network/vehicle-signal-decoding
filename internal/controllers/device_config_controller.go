@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways"
+
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/appmodels"
 
 	gdata "github.com/DIMO-Network/device-data-api/pkg/grpc"
@@ -43,12 +45,14 @@ type DeviceConfigController struct {
 	deviceDefSvc          services.DeviceDefinitionsService
 	deviceTemplateService services.DeviceTemplateService
 	fwVersionAPI          shared.HTTPClientWrapper
+	identityAPI           gateways.IdentityAPI
 }
 
 const latestFirmwareURL = "https://binaries.dimo.zone/DIMO-Network/Macaron/releases/latest"
 
 // NewDeviceConfigController constructor
-func NewDeviceConfigController(settings *config.Settings, logger *zerolog.Logger, database *sql.DB, userDeviceSvc services.UserDeviceService, deviceDefSvc services.DeviceDefinitionsService, deviceTemplateService services.DeviceTemplateService) DeviceConfigController {
+func NewDeviceConfigController(settings *config.Settings, logger *zerolog.Logger, database *sql.DB, userDeviceSvc services.UserDeviceService,
+	deviceDefSvc services.DeviceDefinitionsService, deviceTemplateService services.DeviceTemplateService, identityAPI gateways.IdentityAPI) DeviceConfigController {
 	fwVersionAPI, _ := shared.NewHTTPClientWrapper(latestFirmwareURL, "", 10*time.Second, nil, true)
 
 	return DeviceConfigController{
@@ -59,8 +63,8 @@ func NewDeviceConfigController(settings *config.Settings, logger *zerolog.Logger
 		deviceDefSvc:          deviceDefSvc,
 		deviceTemplateService: deviceTemplateService,
 		fwVersionAPI:          fwVersionAPI,
+		identityAPI:           identityAPI,
 	}
-
 }
 
 // DeviceTemplateStatusResponse status on template and firmware versions
@@ -313,7 +317,7 @@ func (d *DeviceConfigController) GetConfigURLsFromVIN(c *fiber.Ctx) error {
 		}
 	}
 
-	response, err := d.deviceTemplateService.ResolveDeviceConfiguration(c, ud)
+	response, err := d.deviceTemplateService.ResolveDeviceConfiguration(c, ud, nil)
 	if err != nil {
 		return err
 	}
@@ -335,6 +339,13 @@ func (d *DeviceConfigController) GetConfigURLsFromEthAddr(c *fiber.Ctx) error {
 	ethAddr := c.Params("ethAddr")
 	protocol := c.Query("protocol", "")
 
+	// todo query database for device eth addr to template mapping
+
+	vehicle, err := d.identityAPI.QueryIdentityAPIForVehicle(common2.HexToAddress(ethAddr))
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": fmt.Sprintf("no minted vehicle for device EthAddr: %s", ethAddr)})
+	}
+	// we still need this to get the powertrain
 	ud, err := d.userDeviceSvc.GetUserDeviceByEthAddr(c.Context(), common2.HexToAddress(ethAddr))
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": fmt.Sprintf("no connected user device found for EthAddr: %s", ethAddr)})
@@ -344,7 +355,7 @@ func (d *DeviceConfigController) GetConfigURLsFromEthAddr(c *fiber.Ctx) error {
 		ud.CANProtocol = protocol
 	}
 
-	response, err := d.deviceTemplateService.ResolveDeviceConfiguration(c, ud)
+	response, err := d.deviceTemplateService.ResolveDeviceConfiguration(c, ud, vehicle)
 	if err != nil {
 		return err
 	}
@@ -382,7 +393,7 @@ func (d *DeviceConfigController) GetConfigStatusByEthAddr(c *fiber.Ctx) error {
 	if dts != nil {
 		deviceFWVers = dts.FirmwareVersion.String
 		// figure out what the config should be
-		deviceConfiguration, err := d.deviceTemplateService.ResolveDeviceConfiguration(c, ud)
+		deviceConfiguration, err := d.deviceTemplateService.ResolveDeviceConfiguration(c, ud, nil)
 		if err != nil {
 			return err
 		}
