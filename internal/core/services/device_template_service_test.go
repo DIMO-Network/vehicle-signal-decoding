@@ -402,6 +402,61 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_YearRange()
 	assert.Equal(s.T(), template.TemplateName, fetchedTemplate.TemplateName)
 }
 
+func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_YearRange_Default() {
+	insertTestTemplatesNoise(s.ctx, s.T(), s.pdb)
+	// same as YearRange test but if vehicle is older, we still get the default template
+	templateDefault := &models.Template{
+		TemplateName: "default-template",
+		Version:      "1.0",
+		Protocol:     models.CanProtocolTypeCAN11_500,
+		Powertrain:   "ICE",
+	}
+	err := templateDefault.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
+
+	template2019 := &models.Template{
+		TemplateName:       "2019plus-template",
+		ParentTemplateName: null.StringFrom(templateDefault.TemplateName),
+		Version:            "1.0",
+		Protocol:           models.CanProtocolTypeCAN11_500,
+		Powertrain:         "ICE",
+	}
+	err = template2019.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
+
+	templateVehicle := &models.TemplateVehicle{
+		TemplateName: template2019.TemplateName,
+		YearStart:    2019,
+		YearEnd:      2025,
+	}
+	err = templateVehicle.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
+
+	mockedUserDevice := &pb.UserDevice{
+		Id:                 ksuid.New().String(),
+		UserId:             ksuid.New().String(),
+		DeviceDefinitionId: "2008-vehicle",
+		PowerTrainType:     "ICE",
+		CANProtocol:        models.CanProtocolTypeCAN11_500,
+	}
+	vehicle := &gateways.VehicleInfo{
+		TokenID: 123,
+		Definition: gateways.VehicleDefinition{
+			Make:  "Ford",
+			Model: "Mustang",
+			Year:  2008, // year outside of bounds for 2019 plus template
+		},
+	}
+
+	fetchedTemplate, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice.CANProtocol, mockedUserDevice.PowerTrainType,
+		mockedUserDevice.DeviceDefinitionId, vehicle)
+
+	require.NoError(s.T(), err)
+	assert.NotNil(s.T(), fetchedTemplate)
+	// we want the default template
+	assert.Equal(s.T(), templateDefault.TemplateName, fetchedTemplate.TemplateName)
+}
+
 func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_PowertrainProtocol() {
 
 	decoy := &models.Template{
@@ -536,4 +591,43 @@ func Test_deviceTemplateService_buildConfigRoute(t *testing.T) {
 			assert.Equalf(t, tt.want, dts.buildConfigRoute(tt.args.ct, tt.args.name, tt.args.version), "buildConfigRoute(%v, %v, %v)", tt.args.ct, tt.args.name, tt.args.version)
 		})
 	}
+}
+
+// insert some noise to make sure our logic works even when many templates
+func insertTestTemplatesNoise(ctx context.Context, t *testing.T, pdb db.Store) {
+	template := &models.Template{
+		TemplateName: "ford-passive-odo-0x430",
+		Version:      "1.0",
+		Protocol:     models.CanProtocolTypeCAN11_500,
+		Powertrain:   "ICE",
+	}
+	err := template.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	require.NoError(t, err)
+
+	template2 := &models.Template{
+		TemplateName: "mg-zs-ev",
+		Version:      "1.0",
+		Protocol:     models.CanProtocolTypeCAN11_500,
+		Powertrain:   "BEV",
+	}
+	err = template2.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	require.NoError(t, err)
+
+	template3 := &models.Template{
+		TemplateName: "2021-toyota-rav4-hybrid",
+		Version:      "1.0",
+		Protocol:     models.CanProtocolTypeCAN11_500,
+		Powertrain:   "HEV",
+	}
+	err = template3.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	require.NoError(t, err)
+
+	template4 := &models.Template{
+		TemplateName: "default-phev-can11",
+		Version:      "1.0",
+		Protocol:     models.CanProtocolTypeCAN11_500,
+		Powertrain:   "PHEV",
+	}
+	err = template4.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	require.NoError(t, err)
 }
