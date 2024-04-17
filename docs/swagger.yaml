@@ -343,6 +343,9 @@ paths:
       - device-config
 securityDefinitions:
   BearerAuth:
+    description: 'Flow to get your device config: start by Getting the URL''s to your
+      device''s configuration: `/device-config/eth-addr/:ethAddr/urls` or by vin,
+      check readme for details.'
     in: header
     name: Authorization
     type: apiKey

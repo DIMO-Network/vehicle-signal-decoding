@@ -18,6 +18,7 @@ import (
 // @securityDefinitions.apikey  BearerAuth
 // @in                          header
 // @name                        Authorization
+// @description 			    Flow to get your device config: start by Getting the URL's to your device's configuration: `/device-config/eth-addr/:ethAddr/urls` or by vin, check readme for details.
 func main() {
 
 	gitSha1 := os.Getenv("GIT_SHA1")

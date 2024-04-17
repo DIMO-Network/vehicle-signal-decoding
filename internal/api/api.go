@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"errors"
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways"
 	"os"
 	"os/signal"
 	"runtime/debug"
@@ -124,6 +125,7 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 	userDeviceSvc := services.NewUserDeviceService(settings)
 	deviceDefsvc := services.NewDeviceDefinitionsService(settings)
 	deviceTemplatesvc := services.NewDeviceTemplateService(database.DBS().Writer.DB, deviceDefsvc, logger, settings)
+	identityAPI := gateways.NewIdentityAPIService(&logger)
 	// todo: this is messy - we open the connection but are never closing it, or wrapping this in a class that handles the connection for us
 	usersClient := getUsersClient(logger, settings.UsersGRPCAddr)
 
@@ -156,7 +158,8 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 		return c.Status(fiber.StatusOK).SendString("healthy")
 	})
 
-	deviceConfigController := controllers.NewDeviceConfigController(settings, &logger, database.DBS().Reader.DB, userDeviceSvc, deviceDefsvc, deviceTemplatesvc)
+	deviceConfigController := controllers.NewDeviceConfigController(settings, &logger, database.DBS().Reader.DB, userDeviceSvc,
+		deviceDefsvc, deviceTemplatesvc, identityAPI)
 	jobsController := controllers.NewJobsController(settings, &logger, database.DBS().Reader.DB, userDeviceSvc, deviceDefsvc)
 
 	v1 := app.Group("/v1")
