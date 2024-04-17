@@ -146,8 +146,8 @@ func (s *DeviceTemplateServiceTestSuite) TestConvertCANProtocol() {
 	}
 }
 
-func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_DeviceDefinitions() {
-
+func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_DeviceDefinitionIDMatch() {
+	// match based on specific device definition id, protocol and powertrain
 	template := &models.Template{
 		TemplateName: "some-template",
 		Version:      "1.0",
@@ -167,10 +167,11 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_DeviceDefin
 	mockedUserDevice := &pb.UserDevice{
 		Id:                 ksuid.New().String(),
 		UserId:             ksuid.New().String(),
-		DeviceDefinitionId: ksuid.New().String(),
+		DeviceDefinitionId: "device-def-id",
 		CANProtocol:        models.CanProtocolTypeCAN29_500,
 		PowerTrainType:     "HEV",
 	}
+	// this shouldn't matter since match is based on a specific device definition id
 	vehicle := &gateways.VehicleInfo{
 		TokenID: 123,
 		Definition: gateways.VehicleDefinition{
@@ -188,7 +189,7 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_DeviceDefin
 	assert.Equal(s.T(), template.TemplateName, fetchedTemplate.TemplateName)
 }
 
-func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_nilVehicle() {
+func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_nilVehicle_matchDDID() {
 	template := &models.Template{
 		TemplateName: "some-template",
 		Version:      "1.0",
@@ -208,7 +209,7 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_nilVehicle(
 	mockedUserDevice := &pb.UserDevice{
 		Id:                 ksuid.New().String(),
 		UserId:             ksuid.New().String(),
-		DeviceDefinitionId: ksuid.New().String(),
+		DeviceDefinitionId: "device-def-id",
 		CANProtocol:        models.CanProtocolTypeCAN29_500,
 		PowerTrainType:     "HEV",
 	}
@@ -220,7 +221,7 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_nilVehicle(
 			Model: "Mustang",
 			Year:  2021,
 		},
-	}, nil)
+	}, nil) // nil vehicle still should work
 
 	fetchedTemplate, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice.CANProtocol, mockedUserDevice.PowerTrainType,
 		mockedUserDevice.DeviceDefinitionId, nil)
@@ -457,8 +458,8 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_YearRange_D
 	assert.Equal(s.T(), templateDefault.TemplateName, fetchedTemplate.TemplateName)
 }
 
-func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_PowertrainProtocol() {
-
+func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_MatchPowertrainProtocol() {
+	// match a default template based on protocol and powertrain
 	decoy := &models.Template{
 		TemplateName: "protocol-powertrain-template-decoy",
 		Version:      "1.0",
@@ -467,9 +468,9 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_PowertrainP
 	}
 	err := decoy.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
 	require.NoError(s.T(), err)
-
+	// must have the default start word here b/c it has no special vehicle, DD or device mapping
 	template := &models.Template{
-		TemplateName: "protocol-powertrain-template",
+		TemplateName: "default-protocol-powertrain-template",
 		Version:      "1.0",
 		Protocol:     models.CanProtocolTypeCAN29_500,
 		Powertrain:   "HEV",
@@ -502,12 +503,12 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_PowertrainP
 	assert.Equal(s.T(), template.TemplateName, fetchedTemplate.TemplateName)
 }
 
-func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_Default() {
-
+func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_DefaultMatch() {
+	insertTestTemplatesNoise(s.ctx, s.T(), s.pdb)
 	nonDefaultTmpl := &models.Template{
 		TemplateName: "some-template-special",
 		Version:      "1.0",
-		Protocol:     "CAN11_500",
+		Protocol:     models.CanProtocolTypeCAN29_500,
 		Powertrain:   "ICE",
 	}
 	err := nonDefaultTmpl.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
@@ -516,7 +517,7 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_Default() {
 	defaultTemplate := &models.Template{
 		TemplateName: "default-some-template",
 		Version:      "1.0",
-		Protocol:     "CAN11_500",
+		Protocol:     models.CanProtocolTypeCAN11_500,
 		Powertrain:   "ICE",
 	}
 	err = defaultTemplate.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
@@ -526,8 +527,8 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_Default() {
 		Id:                 ksuid.New().String(),
 		UserId:             ksuid.New().String(),
 		DeviceDefinitionId: "non-existing-def-id",
-		CANProtocol:        models.CanProtocolTypeCAN29_500,
-		PowerTrainType:     "HEV",
+		CANProtocol:        models.CanProtocolTypeCAN11_500,
+		PowerTrainType:     "ICE",
 	}
 	vehicle := &gateways.VehicleInfo{
 		TokenID: 123,

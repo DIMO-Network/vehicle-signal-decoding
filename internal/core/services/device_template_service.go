@@ -272,43 +272,27 @@ func (dts *deviceTemplateService) selectAndFetchTemplate(ctx context.Context, ca
 		}
 
 	}
-
-	// Third, fallback to query by protocol and powertrain. Match by protocol first
+	// todo here is the problem - we're not filtering by "default" and powertrain and canprotocol
+	// todo thought: iterate again after filtering by powertrain for "default" startword.
+	// Third, default templates come into play: fallback to query by protocol, 'default' as first word, and powertrain
 	if matchedTemplateName == "" {
 		templates, err := models.Templates(
 			models.TemplateWhere.Protocol.EQ(canProtocol),
+			models.TemplateWhere.Powertrain.EQ(powertrain),
+			qm.Where("template_name like 'default%'"),
 		).All(ctx, dts.db)
 
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("failed to query templates for protocol: %s and powertrain: %s: %w", canProtocol, powertrain, err)
 		}
+		if len(templates) == 0 {
+			return nil, fmt.Errorf("configuration error - no default template found for protocol: %s and powertrain: %s", canProtocol, powertrain)
+		}
 		if len(templates) > 0 {
-			// match the first one just in case
 			matchedTemplateName = templates[0].TemplateName
-			// now see if also have a powertrain match
-			for _, t := range templates {
-				if t.Powertrain == powertrain {
-					matchedTemplateName = t.TemplateName
-					break
-				}
-			}
 		}
-	}
-
-	// Fallback to default template if still no match is found
-	if matchedTemplateName == "" {
-		defaultTemplates, err := models.Templates(
-			qm.Where("template_name like 'default%'"),
-		).All(ctx, dts.db)
-
-		if err != nil {
-			return nil, fmt.Errorf("failed to query for default templates: %w", err)
-		}
-
-		if len(defaultTemplates) > 0 {
-			matchedTemplateName = defaultTemplates[0].TemplateName
-		} else {
-			return nil, errors.New("no default templates found")
+		if len(templates) > 1 {
+			dts.log.Warn().Msgf("more than one default template found for protocol: %s and powertrain: %s (%d templates found)", canProtocol, powertrain, len(templates))
 		}
 	}
 
