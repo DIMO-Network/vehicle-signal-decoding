@@ -131,6 +131,10 @@ require (
 	github.com/docker/docker v24.0.7+incompatible // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
+<<<<<<< HEAD
+=======
+	github.com/golang/protobuf v1.5.4 // indirect
+>>>>>>> 32a5520 (SM-766 use identity-api for vehicle, refactoring powertrain (#95))
 	github.com/google/uuid v1.6.0
 	github.com/klauspost/compress v1.17.8 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect

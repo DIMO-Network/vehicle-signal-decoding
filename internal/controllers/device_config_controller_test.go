@@ -14,6 +14,8 @@ import (
 
 	mock_gateways "github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways/mocks"
 
+	mock_gateways "github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways/mocks"
+
 	common2 "github.com/ethereum/go-ethereum/common"
 
 	"google.golang.org/protobuf/types/known/timestamppb"

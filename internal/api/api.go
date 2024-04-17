@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"errors"
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways"
 	"os"
 	"os/signal"
 	"runtime/debug"
