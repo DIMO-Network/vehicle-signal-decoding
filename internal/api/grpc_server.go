@@ -33,6 +33,7 @@ func StartGrpcServer(logger zerolog.Logger, dbs func() *db.ReaderWriter, s *conf
 	dbcConfigService := NewDbcConfigService(&logger, dbs)
 	vehicleTemplateService := NewVehicleTemplateService(&logger, dbs)
 	templateDeviceDefinitionService := NewTemplateDeviceDefinitionService(&logger, dbs)
+	aftermarketDeviceTemplateService := NewAftermarketDeviceTemplateService(&logger, dbs)
 
 	grpcRecovery := GRPCPanicker{Logger: &logger}
 	server := grpc.NewServer(
@@ -48,6 +49,7 @@ func StartGrpcServer(logger zerolog.Logger, dbs func() *db.ReaderWriter, s *conf
 	pkggrpc.RegisterDbcConfigServiceServer(server, dbcConfigService)
 	pkggrpc.RegisterVehicleTemplateServiceServer(server, vehicleTemplateService)
 	pkggrpc.RegisterTemplateDeviceDefinitionServiceServer(server, templateDeviceDefinitionService)
+	pkggrpc.RegisterAftermarketDeviceTemplateServiceServer(server, aftermarketDeviceTemplateService)
 
 	logger.Info().Str("port", s.GRPCPort).Msgf("started grpc server on port: %v", s.GRPCPort)
 

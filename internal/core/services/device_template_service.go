@@ -12,7 +12,6 @@ import (
 	pgrpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	pb "github.com/DIMO-Network/devices-api/pkg/grpc"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
-	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"github.com/volatiletech/sqlboiler/v4/types"
@@ -28,7 +27,7 @@ import (
 //go:generate mockgen -source device_template_service.go -destination mocks/device_template_service_mock.go
 type DeviceTemplateService interface {
 	StoreDeviceConfigUsed(ctx context.Context, address common2.Address, dbcURL, pidURL, settingURL, firmwareVersion *string) (*models.DeviceTemplateStatus, error)
-	ResolveDeviceConfiguration(c *fiber.Ctx, ud *pb.UserDevice) (*appmodels.DeviceConfigResponse, error)
+	ResolveDeviceConfiguration(ctx context.Context, ud *pb.UserDevice, ethAddress []byte) (*appmodels.DeviceConfigResponse, error)
 }
 
 type deviceTemplateService struct {
@@ -97,15 +96,15 @@ func (dts *deviceTemplateService) StoreDeviceConfigUsed(ctx context.Context, add
 	return dt, nil
 }
 
-func (dts *deviceTemplateService) ResolveDeviceConfiguration(c *fiber.Ctx, ud *pb.UserDevice) (*appmodels.DeviceConfigResponse, error) {
+func (dts *deviceTemplateService) ResolveDeviceConfiguration(ctx context.Context, ud *pb.UserDevice, ethAddress []byte) (*appmodels.DeviceConfigResponse, error) {
 	dts.setCANProtocol(ud)
 
-	vehicleMake, vehicleModel, vehicleYear, err := dts.retrieveAndSetVehicleInfo(c.Context(), ud)
+	vehicleMake, vehicleModel, vehicleYear, err := dts.retrieveAndSetVehicleInfo(ctx, ud)
 	if err != nil {
 		return nil, errors.Wrap(err, fmt.Sprintf("Failed to retrieve device definition: %s", ud.DeviceDefinitionId))
 	}
 
-	matchedTemplate, err := dts.selectAndFetchTemplate(c.Context(), ud, vehicleMake, vehicleModel, vehicleYear)
+	matchedTemplate, err := dts.selectAndFetchTemplate(ctx, ud, vehicleMake, vehicleModel, vehicleYear)
 	if err != nil {
 		return nil, err
 	}
@@ -146,10 +145,10 @@ func (dts *deviceTemplateService) ResolveDeviceConfiguration(c *fiber.Ctx, ud *p
 			}
 			// default will be whatever gets ordered first
 			deviceSetting, dbErr = models.DeviceSettings(models.DeviceSettingWhere.Powertrain.EQ(powertrain),
-				qm.OrderBy(models.DeviceSettingColumns.Name)).One(c.Context(), dts.db)
+				qm.OrderBy(models.DeviceSettingColumns.Name)).One(ctx, dts.db)
 			if errors.Is(dbErr, sql.ErrNoRows) {
 				// grab the first record in db
-				deviceSetting, dbErr = models.DeviceSettings(qm.OrderBy(models.DeviceSettingColumns.Name)).One(c.Context(), dts.db)
+				deviceSetting, dbErr = models.DeviceSettings(qm.OrderBy(models.DeviceSettingColumns.Name)).One(ctx, dts.db)
 			}
 			if dbErr != nil {
 				return nil, errors.Wrap(err, fmt.Sprintf("Failed to retrieve device setting. Powertrain: %s", powertrain))
@@ -157,6 +156,23 @@ func (dts *deviceTemplateService) ResolveDeviceConfiguration(c *fiber.Ctx, ud *p
 		}
 		// device settings have a name key separate from templateName since simpler setup
 		response.DeviceSettingURL = dts.buildConfigRoute(Setting, deviceSetting.Name, deviceSetting.Version)
+	}
+
+	aftermarketDeviceTemplate, err := models.AftermarketDeviceToTemplates(models.AftermarketDeviceToTemplateWhere.AftermarketDeviceEthereumAddress.EQ(ethAddress)).One(ctx, dts.db)
+
+	if err != nil {
+		return nil, errors.Wrap(err, "Failed to retrieve aftermarket device template")
+	}
+
+	if aftermarketDeviceTemplate != nil {
+
+		afktemplate, err := models.Templates(models.TemplateWhere.TemplateName.EQ(aftermarketDeviceTemplate.TemplateName)).One(ctx, dts.db)
+
+		if err != nil {
+			return nil, errors.Wrap(err, "Failed to retrieve aftermarket device template")
+		}
+
+		response.DeviceTemplateURL = dts.buildConfigRoute(Setting, afktemplate.TemplateName, afktemplate.Version)
 	}
 
 	dts.log.Info().Str("vin", *ud.Vin).Msgf(fmt.Sprintf("template configuration urls for VIN %s, dbc: %s, pids: %s, settings: %s",

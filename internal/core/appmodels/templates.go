@@ -14,6 +14,8 @@ type DeviceConfigResponse struct {
 	DeviceSettingURL string `json:"deviceSettingUrl"`
 	// DbcURL including the version for the dbc file, usually same as pidurl template version
 	DbcURL string `json:"dbcUrl,omitempty"`
+	// DeviceTemplateURL including the version for the device template
+	DeviceTemplateURL string `json:"deviceTemplateUrl"`
 }
 
 // SettingsData used for the template device power settings mostly

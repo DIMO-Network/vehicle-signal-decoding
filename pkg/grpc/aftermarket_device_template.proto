@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc";
+
+package grpc;
+
+message AftermarketDeviceTemplate {
+  bytes ethereum_address = 1;
+  string template_name = 2;
+  google.protobuf.Timestamp created_at = 3;
+  google.protobuf.Timestamp updated_at = 4;
+}
+
+message AftermarketDeviceTemplateRequest {
+  bytes ethereum_address = 1;
+  string template_name = 2;
+}
+
+message AftermarketDeviceTemplates {
+  repeated AftermarketDeviceTemplate items = 1;
+}
+
+service AftermarketDeviceTemplateService {
+  rpc CreateAftermarketDeviceTemplate(AftermarketDeviceTemplateRequest) returns (google.protobuf.Empty);
+  rpc DeleteAftermarketDeviceTemplate(AftermarketDeviceTemplateRequest) returns (google.protobuf.Empty);
+  rpc GetAftermarketDeviceTemplates(google.protobuf.Empty) returns (AftermarketDeviceTemplates);
+  rpc UpdateAftermarketDeviceTemplate(AftermarketDeviceTemplateRequest) returns (google.protobuf.Empty);
+}
