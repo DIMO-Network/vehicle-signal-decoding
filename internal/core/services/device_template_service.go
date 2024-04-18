@@ -27,7 +27,7 @@ import (
 //go:generate mockgen -source device_template_service.go -destination mocks/device_template_service_mock.go
 type DeviceTemplateService interface {
 	StoreDeviceConfigUsed(ctx context.Context, address common2.Address, dbcURL, pidURL, settingURL, firmwareVersion *string) (*models.DeviceTemplateStatus, error)
-	ResolveDeviceConfiguration(ctx context.Context, ud *pb.UserDevice, ethAddress []byte) (*appmodels.DeviceConfigResponse, error)
+	ResolveDeviceConfiguration(ctx context.Context, ud *pb.UserDevice, ethAddress common2.Address) (*appmodels.DeviceConfigResponse, error)
 }
 
 type deviceTemplateService struct {
@@ -96,7 +96,7 @@ func (dts *deviceTemplateService) StoreDeviceConfigUsed(ctx context.Context, add
 	return dt, nil
 }
 
-func (dts *deviceTemplateService) ResolveDeviceConfiguration(ctx context.Context, ud *pb.UserDevice, ethAddress []byte) (*appmodels.DeviceConfigResponse, error) {
+func (dts *deviceTemplateService) ResolveDeviceConfiguration(ctx context.Context, ud *pb.UserDevice, ethAddress common2.Address) (*appmodels.DeviceConfigResponse, error) {
 	dts.setCANProtocol(ud)
 
 	vehicleMake, vehicleModel, vehicleYear, err := dts.retrieveAndSetVehicleInfo(ctx, ud)
@@ -158,7 +158,7 @@ func (dts *deviceTemplateService) ResolveDeviceConfiguration(ctx context.Context
 		response.DeviceSettingURL = dts.buildConfigRoute(Setting, deviceSetting.Name, deviceSetting.Version)
 	}
 
-	aftermarketDeviceTemplate, err := models.AftermarketDeviceToTemplates(models.AftermarketDeviceToTemplateWhere.AftermarketDeviceEthereumAddress.EQ(ethAddress)).One(ctx, dts.db)
+	aftermarketDeviceTemplate, err := models.AftermarketDeviceToTemplates(models.AftermarketDeviceToTemplateWhere.AftermarketDeviceEthereumAddress.EQ(ethAddress.Bytes())).One(ctx, dts.db)
 
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to retrieve aftermarket device template")

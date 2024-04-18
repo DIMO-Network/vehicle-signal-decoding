@@ -344,7 +344,7 @@ func (d *DeviceConfigController) GetConfigURLsFromEthAddr(c *fiber.Ctx) error {
 		ud.CANProtocol = protocol
 	}
 
-	response, err := d.deviceTemplateService.ResolveDeviceConfiguration(c, ud)
+	response, err := d.deviceTemplateService.ResolveDeviceConfiguration(c.Context(), ud, common2.HexToAddress(ethAddr))
 	if err != nil {
 		return err
 	}
