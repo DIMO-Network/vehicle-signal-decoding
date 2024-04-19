@@ -84,7 +84,7 @@ func (h *GetPidAllQueryHandler) getPidsByTemplate(ctx context.Context, templateN
 			Pid:                  item.Pid,
 			Formula:              item.Formula,
 			IntervalSeconds:      int32(item.IntervalSeconds),
-			Protocol:             item.Protocol,
+			Protocol:             item.Protocol.String,
 			SignalName:           item.SignalName,
 			CanFlowControlClear:  item.CanFlowControlClear.Bool,
 			CanFlowControlIdPair: item.CanFlowControlIDPair.String,

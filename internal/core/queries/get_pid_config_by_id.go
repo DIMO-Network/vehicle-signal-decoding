@@ -49,7 +49,7 @@ func (h GetPidByIDQueryHandler) Handle(ctx context.Context, query *GetPidByIDQue
 			Pid:             item.Pid,
 			Formula:         item.Formula,
 			IntervalSeconds: int32(item.IntervalSeconds),
-			Protocol:        item.Protocol,
+			Protocol:        item.Protocol.Ptr(),
 			SignalName:      item.SignalName,
 			CreatedAt:       timestamppb.New(item.CreatedAt),
 			UpdatedAt:       timestamppb.New(item.UpdatedAt),

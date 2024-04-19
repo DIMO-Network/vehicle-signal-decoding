@@ -16,7 +16,7 @@ message PidConfig {
   bytes pid = 5;
   string formula = 6;
   int32 interval_seconds = 7;
-  string protocol = 8;
+  optional string protocol = 8;
   string signal_name = 9;
   int32 bytes_returned = 10;
   google.protobuf.Timestamp created_at = 11;

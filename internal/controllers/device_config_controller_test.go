@@ -132,7 +132,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetPIDsByTemplate() {
 		Pid:             []byte{0xa6},
 		Formula:         "A*5",
 		IntervalSeconds: 60,
-		Protocol:        models.CanProtocolTypeCAN11_500,
+		Protocol:        null.StringFrom(models.CanProtocolTypeCAN11_500),
 	}
 
 	err = pc.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
