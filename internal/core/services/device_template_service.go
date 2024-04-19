@@ -31,6 +31,7 @@ import (
 type DeviceTemplateService interface {
 	StoreDeviceConfigUsed(ctx context.Context, address common2.Address, dbcURL, pidURL, settingURL, firmwareVersion *string) (*models.DeviceTemplateStatus, error)
 	ResolveDeviceConfiguration(c *fiber.Ctx, ud *pb.UserDevice, vehicle *gateways.VehicleInfo) (*appmodels.DeviceConfigResponse, error)
+	// todo: pass in a ResolveConfigRequest instead of pb.UserDevice - this is not tied to a user device
 }
 
 type deviceTemplateService struct {
@@ -326,6 +327,22 @@ func convertCANProtocol(logger zerolog.Logger, canProtocolSimple string) string 
 		return models.CanProtocolTypeCAN11_500
 	case "7":
 		return models.CanProtocolTypeCAN29_500
+	case "8":
+		return models.CanProtocolTypeCAN11_250
+	case "9":
+		return models.CanProtocolTypeCAN29_250
+	case "66":
+		// car supports UDS vin query
+		return models.CanProtocolTypeCAN11_500
+	case "77":
+		// car supports UDS vin query
+		return models.CanProtocolTypeCAN29_500
+	case "88":
+		// car supports UDS vin query
+		return models.CanProtocolTypeCAN11_250
+	case "99":
+		// car supports UDS vin query
+		return models.CanProtocolTypeCAN29_250
 	case "":
 		return models.CanProtocolTypeCAN11_500
 	default:

@@ -30,7 +30,7 @@ type UpdatePidCommandRequest struct {
 	Pid                  []byte
 	Formula              string
 	IntervalSeconds      int32
-	Protocol             string
+	Protocol             *string
 	SignalName           string
 	CanFlowControlClear  *bool
 	CanFlowControlIDPair *string
@@ -60,7 +60,7 @@ func (h UpdatePidCommandHandler) Execute(ctx context.Context, req *UpdatePidComm
 	pid.Pid = req.Pid
 	pid.Formula = req.Formula
 	pid.IntervalSeconds = int(req.IntervalSeconds)
-	pid.Protocol = req.Protocol
+	pid.Protocol = null.StringFromPtr(req.Protocol)
 	pid.SignalName = req.SignalName
 	pid.CanFlowControlClear = null.BoolFromPtr(req.CanFlowControlClear)
 	pid.CanFlowControlIDPair = null.StringFromPtr(req.CanFlowControlIDPair)

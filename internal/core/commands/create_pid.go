@@ -31,7 +31,7 @@ type CreatePidCommandRequest struct {
 	Pid                  []byte
 	Formula              string
 	IntervalSeconds      int32
-	Protocol             string
+	Protocol             *string
 	SignalName           string
 	CanFlowControlClear  *bool
 	CanFlowControlIDPair *string
@@ -66,7 +66,7 @@ func (h CreatePidCommandHandler) Execute(ctx context.Context, req *CreatePidComm
 		Pid:                  req.Pid,
 		Formula:              common.PrependFormulaTypeDefault(req.Formula),
 		IntervalSeconds:      int(req.IntervalSeconds),
-		Protocol:             req.Protocol,
+		Protocol:             null.StringFromPtr(req.Protocol),
 		SignalName:           req.SignalName,
 		CanFlowControlClear:  null.BoolFromPtr(req.CanFlowControlClear),
 		CanFlowControlIDPair: null.StringFromPtr(req.CanFlowControlIDPair),

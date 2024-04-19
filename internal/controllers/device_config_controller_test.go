@@ -6,12 +6,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	mock_gateways "github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways/mocks"
 	"io"
 	"net/http"
 	"os"
 	"testing"
 	"time"
+
+	mock_gateways "github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways/mocks"
 
 	common2 "github.com/ethereum/go-ethereum/common"
 
@@ -131,7 +132,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetPIDsByTemplate() {
 		Pid:             []byte{0xa6},
 		Formula:         "A*5",
 		IntervalSeconds: 60,
-		Protocol:        models.CanProtocolTypeCAN11_500,
+		Protocol:        null.StringFrom(models.CanProtocolTypeCAN11_500),
 	}
 
 	err = pc.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
@@ -158,7 +159,57 @@ func (s *DeviceConfigControllerTestSuite) TestGetPIDsByTemplate() {
 	s.Equal(uint32(166), pids.Requests[0].Pid)
 	s.Equal(pc.Formula, pids.Requests[0].Formula)
 	s.Equal(pc.IntervalSeconds, int(pids.Requests[0].IntervalSeconds))
-	s.Equal(pc.Protocol, pids.Requests[0].Protocol)
+	s.Equal(pc.Protocol.String, pids.Requests[0].Protocol)
+	s.Equal(template.Version, pids.Version)
+}
+
+func (s *DeviceConfigControllerTestSuite) TestGetPIDsByTemplate_InheritProtocol() {
+
+	template := models.Template{
+		TemplateName: "exampleTemplate",
+		Version:      "1.0",
+		Protocol:     models.CanProtocolTypeCAN11_250,
+		Powertrain:   "ICE",
+	}
+	err := template.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	s.Require().NoError(err)
+
+	pc := models.PidConfig{
+		ID:              1,
+		SignalName:      "odometer",
+		TemplateName:    "exampleTemplate",
+		Header:          []byte{0x07, 0xdf},
+		Mode:            []byte{0x01},
+		Pid:             []byte{0xa6},
+		Formula:         "A*5",
+		IntervalSeconds: 60,
+	}
+
+	err = pc.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	s.Require().NoError(err)
+
+	s.app.Get("/device-config/:templateName/pids", s.controller.GetPIDsByTemplate)
+
+	request := dbtest.BuildRequest("GET", "/device-config/"+template.TemplateName+"/pids", "")
+	response, err := s.app.Test(request)
+	s.Require().NoError(err)
+
+	body, err := io.ReadAll(response.Body)
+	s.Require().NoError(err)
+
+	s.Equal(fiber.StatusOK, response.StatusCode)
+	pids := grpc.PIDRequests{}
+	err = json.Unmarshal(body, &pids)
+	s.Require().NoError(err)
+
+	s.Equal(1, len(pids.Requests))
+	s.Equal(pc.SignalName, pids.Requests[0].Name)
+	s.Equal(uint32(2015), pids.Requests[0].Header)
+	s.Equal(uint32(1), pids.Requests[0].Mode)
+	s.Equal(uint32(166), pids.Requests[0].Pid)
+	s.Equal(pc.Formula, pids.Requests[0].Formula)
+	s.Equal(pc.IntervalSeconds, int(pids.Requests[0].IntervalSeconds))
+	s.Equal(template.Protocol, pids.Requests[0].Protocol)
 	s.Equal(template.Version, pids.Version)
 }
 

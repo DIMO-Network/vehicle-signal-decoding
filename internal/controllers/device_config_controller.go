@@ -161,7 +161,12 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 			Pid:             pidUint32,
 			Formula:         common.PrependFormulaTypeDefault(pidConfig.Formula),
 			IntervalSeconds: uint32(pidConfig.IntervalSeconds),
-			Protocol:        pidConfig.Protocol,
+		}
+		// the pid can override the protocol, otherwise use one at template level.
+		if pidConfig.Protocol.Valid {
+			pid.Protocol = pidConfig.Protocol.String
+		} else {
+			pid.Protocol = template.Protocol
 		}
 		if pidConfig.CanFlowControlClear.Valid {
 			pid.CanFlowControlClear = pidConfig.CanFlowControlClear.Bool
@@ -293,7 +298,7 @@ func (d *DeviceConfigController) GetDBCFileByTemplateName(c *fiber.Ctx) error {
 // @Success      200 {object} appmodels.DeviceConfigResponse "Successfully retrieved configuration URLs"
 // @Failure 404  "Not Found - No templates available for the given parameters"
 // @Param        vin  path   string  true   "vehicle identification number (VIN)"
-// @Param        protocol  query   string  false  "CAN Protocol, '6' or '7'"
+// @Param        protocol  query   string  false  "CAN Protocol, '6' or '7', 8,9,66,77,88,99"
 // @Router       /device-config/vin/{vin}/urls [get]
 func (d *DeviceConfigController) GetConfigURLsFromVIN(c *fiber.Ctx) error {
 	vin := c.Params("vin")
