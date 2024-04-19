@@ -23,7 +23,6 @@ const (
 	AftermarketDeviceTemplateService_CreateAftermarketDeviceTemplate_FullMethodName = "/grpc.AftermarketDeviceTemplateService/CreateAftermarketDeviceTemplate"
 	AftermarketDeviceTemplateService_DeleteAftermarketDeviceTemplate_FullMethodName = "/grpc.AftermarketDeviceTemplateService/DeleteAftermarketDeviceTemplate"
 	AftermarketDeviceTemplateService_GetAftermarketDeviceTemplates_FullMethodName   = "/grpc.AftermarketDeviceTemplateService/GetAftermarketDeviceTemplates"
-	AftermarketDeviceTemplateService_UpdateAftermarketDeviceTemplate_FullMethodName = "/grpc.AftermarketDeviceTemplateService/UpdateAftermarketDeviceTemplate"
 )
 
 // AftermarketDeviceTemplateServiceClient is the client API for AftermarketDeviceTemplateService service.
@@ -33,7 +32,6 @@ type AftermarketDeviceTemplateServiceClient interface {
 	CreateAftermarketDeviceTemplate(ctx context.Context, in *AftermarketDeviceTemplateRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	DeleteAftermarketDeviceTemplate(ctx context.Context, in *AftermarketDeviceTemplateRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	GetAftermarketDeviceTemplates(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*AftermarketDeviceTemplates, error)
-	UpdateAftermarketDeviceTemplate(ctx context.Context, in *AftermarketDeviceTemplateRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
 type aftermarketDeviceTemplateServiceClient struct {
@@ -71,15 +69,6 @@ func (c *aftermarketDeviceTemplateServiceClient) GetAftermarketDeviceTemplates(c
 	return out, nil
 }
 
-func (c *aftermarketDeviceTemplateServiceClient) UpdateAftermarketDeviceTemplate(ctx context.Context, in *AftermarketDeviceTemplateRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
-	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, AftermarketDeviceTemplateService_UpdateAftermarketDeviceTemplate_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // AftermarketDeviceTemplateServiceServer is the server API for AftermarketDeviceTemplateService service.
 // All implementations must embed UnimplementedAftermarketDeviceTemplateServiceServer
 // for forward compatibility
@@ -87,7 +76,6 @@ type AftermarketDeviceTemplateServiceServer interface {
 	CreateAftermarketDeviceTemplate(context.Context, *AftermarketDeviceTemplateRequest) (*emptypb.Empty, error)
 	DeleteAftermarketDeviceTemplate(context.Context, *AftermarketDeviceTemplateRequest) (*emptypb.Empty, error)
 	GetAftermarketDeviceTemplates(context.Context, *emptypb.Empty) (*AftermarketDeviceTemplates, error)
-	UpdateAftermarketDeviceTemplate(context.Context, *AftermarketDeviceTemplateRequest) (*emptypb.Empty, error)
 	mustEmbedUnimplementedAftermarketDeviceTemplateServiceServer()
 }
 
@@ -103,9 +91,6 @@ func (UnimplementedAftermarketDeviceTemplateServiceServer) DeleteAftermarketDevi
 }
 func (UnimplementedAftermarketDeviceTemplateServiceServer) GetAftermarketDeviceTemplates(context.Context, *emptypb.Empty) (*AftermarketDeviceTemplates, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAftermarketDeviceTemplates not implemented")
-}
-func (UnimplementedAftermarketDeviceTemplateServiceServer) UpdateAftermarketDeviceTemplate(context.Context, *AftermarketDeviceTemplateRequest) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateAftermarketDeviceTemplate not implemented")
 }
 func (UnimplementedAftermarketDeviceTemplateServiceServer) mustEmbedUnimplementedAftermarketDeviceTemplateServiceServer() {
 }
@@ -175,24 +160,6 @@ func _AftermarketDeviceTemplateService_GetAftermarketDeviceTemplates_Handler(srv
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AftermarketDeviceTemplateService_UpdateAftermarketDeviceTemplate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AftermarketDeviceTemplateRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AftermarketDeviceTemplateServiceServer).UpdateAftermarketDeviceTemplate(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: AftermarketDeviceTemplateService_UpdateAftermarketDeviceTemplate_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AftermarketDeviceTemplateServiceServer).UpdateAftermarketDeviceTemplate(ctx, req.(*AftermarketDeviceTemplateRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // AftermarketDeviceTemplateService_ServiceDesc is the grpc.ServiceDesc for AftermarketDeviceTemplateService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -211,10 +178,6 @@ var AftermarketDeviceTemplateService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetAftermarketDeviceTemplates",
 			Handler:    _AftermarketDeviceTemplateService_GetAftermarketDeviceTemplates_Handler,
-		},
-		{
-			MethodName: "UpdateAftermarketDeviceTemplate",
-			Handler:    _AftermarketDeviceTemplateService_UpdateAftermarketDeviceTemplate_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

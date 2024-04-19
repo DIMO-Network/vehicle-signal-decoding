@@ -130,7 +130,7 @@ func (dts *deviceTemplateService) ResolveDeviceConfiguration(ctx context.Context
 		var dbErr error
 		if matchedTemplate.ParentTemplateName.Valid {
 			deviceSetting, dbErr = models.DeviceSettings(models.DeviceSettingWhere.TemplateName.EQ(matchedTemplate.ParentTemplateName),
-				qm.OrderBy(models.DeviceSettingColumns.Name)).One(c.Context(), dts.db)
+				qm.OrderBy(models.DeviceSettingColumns.Name)).One(ctx, dts.db)
 			if dbErr != nil && !errors.Is(dbErr, sql.ErrNoRows) {
 				return nil, errors.Wrap(dbErr, "Failed to retrieve device setting for parent template")
 			}

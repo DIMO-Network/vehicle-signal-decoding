@@ -3,6 +3,8 @@ package api
 import (
 	"context"
 	"github.com/DIMO-Network/shared/db"
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/commands"
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/queries"
 	"github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -22,17 +24,43 @@ func NewAftermarketDeviceTemplateService(logger *zerolog.Logger, dbs func() *db.
 }
 
 func (s *AftermarketDeviceTemplateService) CreateAftermarketDeviceTemplate(ctx context.Context, request *grpc.AftermarketDeviceTemplateRequest) (*emptypb.Empty, error) {
-	return nil, nil
+	service := commands.NewCreateAftermarketDeviceTemplateCommandHandler(s.dbs)
+
+	err := service.Execute(ctx, commands.CreateAftermarketDeviceTemplateCommand{
+		AftermarketDeviceEthereumAddress: request.EthereumAddress,
+		TemplateName:                     request.TemplateName,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &emptypb.Empty{}, nil
 }
 
 func (s *AftermarketDeviceTemplateService) GetAftermarketDeviceTemplates(ctx context.Context, _ *emptypb.Empty) (*grpc.AftermarketDeviceTemplates, error) {
-	return nil, nil
-}
+	service := queries.NewGetAftermarketDeviceTemplateAll(s.dbs)
 
-func (s *AftermarketDeviceTemplateService) UpdateAftermarketDeviceTemplate(ctx context.Context, request *grpc.AftermarketDeviceTemplateRequest) (*emptypb.Empty, error) {
-	return nil, nil
+	response, err := service.Handle(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return response, nil
 }
 
 func (s *AftermarketDeviceTemplateService) DeleteAftermarketDeviceTemplate(ctx context.Context, request *grpc.AftermarketDeviceTemplateRequest) (*emptypb.Empty, error) {
-	return nil, nil
+	service := commands.NewDeleteAftermarketDeviceTemplateCommandHandler(s.dbs)
+
+	err := service.Execute(ctx, commands.DeleteAftermarketDeviceTemplateCommand{
+		AftermarketDeviceEthereumAddress: request.EthereumAddress,
+		TemplateName:                     request.TemplateName,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &emptypb.Empty{}, nil
 }

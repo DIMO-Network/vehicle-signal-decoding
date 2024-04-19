@@ -27,5 +27,4 @@ service AftermarketDeviceTemplateService {
   rpc CreateAftermarketDeviceTemplate(AftermarketDeviceTemplateRequest) returns (google.protobuf.Empty);
   rpc DeleteAftermarketDeviceTemplate(AftermarketDeviceTemplateRequest) returns (google.protobuf.Empty);
   rpc GetAftermarketDeviceTemplates(google.protobuf.Empty) returns (AftermarketDeviceTemplates);
-  rpc UpdateAftermarketDeviceTemplate(AftermarketDeviceTemplateRequest) returns (google.protobuf.Empty);
 }
