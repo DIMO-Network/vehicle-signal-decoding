@@ -161,7 +161,12 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 			Pid:             pidUint32,
 			Formula:         common.PrependFormulaTypeDefault(pidConfig.Formula),
 			IntervalSeconds: uint32(pidConfig.IntervalSeconds),
-			Protocol:        pidConfig.Protocol,
+		}
+		// the pid can override the protocol, otherwise use one at template level.
+		if pidConfig.Protocol.Valid {
+			pid.Protocol = pidConfig.Protocol.String
+		} else {
+			pid.Protocol = template.Protocol
 		}
 		if pidConfig.CanFlowControlClear.Valid {
 			pid.CanFlowControlClear = pidConfig.CanFlowControlClear.Bool
