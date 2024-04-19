@@ -104,7 +104,6 @@ func (dts *deviceTemplateService) ResolveDeviceConfiguration(ctx context.Context
 	// todo (jreate): what about powertrain at the style level... But ideally it is stored at vehicle level. this could come from oracle?
 	powertrain, err := dts.retrievePowertrain(ctx, ud.DeviceDefinitionId)
 
-	vehicleMake, vehicleModel, vehicleYear, err := dts.retrieveAndSetVehicleInfo(ctx, ud)
 	if err != nil {
 		return nil, errors.Wrap(err, fmt.Sprintf("Failed to retrieve powertrain for ddid: %s", ud.DeviceDefinitionId))
 	}

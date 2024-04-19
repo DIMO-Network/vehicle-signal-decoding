@@ -3,12 +3,13 @@ package api
 import (
 	"context"
 	"errors"
-	"github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways"
 	"os"
 	"os/signal"
 	"runtime/debug"
 	"strings"
 	"syscall"
+
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways"
 
 	pb "github.com/DIMO-Network/users-api/pkg/grpc"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/middleware/owner"

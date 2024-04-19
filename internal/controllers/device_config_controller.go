@@ -317,7 +317,7 @@ func (d *DeviceConfigController) GetConfigURLsFromVIN(c *fiber.Ctx) error {
 		}
 	}
 
-	response, err := d.deviceTemplateService.ResolveDeviceConfiguration(c, ud, nil)
+	response, err := d.deviceTemplateService.ResolveDeviceConfiguration(c.Context(), ud, nil, common2.HexToAddress(""))
 	if err != nil {
 		return err
 	}
@@ -393,7 +393,7 @@ func (d *DeviceConfigController) GetConfigStatusByEthAddr(c *fiber.Ctx) error {
 	if dts != nil {
 		deviceFWVers = dts.FirmwareVersion.String
 		// figure out what the config should be
-		deviceConfiguration, err := d.deviceTemplateService.ResolveDeviceConfiguration(c, ud, nil)
+		deviceConfiguration, err := d.deviceTemplateService.ResolveDeviceConfiguration(c.Context(), ud, nil, common2.HexToAddress(""))
 		if err != nil {
 			return err
 		}
