@@ -4,29 +4,27 @@
 package models
 
 var TableNames = struct {
-	DBCCodes                  string
-	DBCFiles                  string
-	DeviceSettings            string
-	DeviceTemplateStatus      string
-	Jobs                      string
-	PidConfigs                string
-	SerialToTemplateOverrides string
-	TemplateDeviceDefinitions string
-	TemplateTypes             string
-	TemplateVehicles          string
-	Templates                 string
-	TestSignals               string
+	AftermarketDeviceToTemplate string
+	DBCCodes                    string
+	DBCFiles                    string
+	DeviceSettings              string
+	DeviceTemplateStatus        string
+	Jobs                        string
+	PidConfigs                  string
+	TemplateDeviceDefinitions   string
+	TemplateVehicles            string
+	Templates                   string
+	TestSignals                 string
 }{
-	DBCCodes:                  "dbc_codes",
-	DBCFiles:                  "dbc_files",
-	DeviceSettings:            "device_settings",
-	DeviceTemplateStatus:      "device_template_status",
-	Jobs:                      "jobs",
-	PidConfigs:                "pid_configs",
-	SerialToTemplateOverrides: "serial_to_template_overrides",
-	TemplateDeviceDefinitions: "template_device_definitions",
-	TemplateTypes:             "template_types",
-	TemplateVehicles:          "template_vehicles",
-	Templates:                 "templates",
-	TestSignals:               "test_signals",
+	AftermarketDeviceToTemplate: "aftermarket_device_to_template",
+	DBCCodes:                    "dbc_codes",
+	DBCFiles:                    "dbc_files",
+	DeviceSettings:              "device_settings",
+	DeviceTemplateStatus:        "device_template_status",
+	Jobs:                        "jobs",
+	PidConfigs:                  "pid_configs",
+	TemplateDeviceDefinitions:   "template_device_definitions",
+	TemplateVehicles:            "template_vehicles",
+	Templates:                   "templates",
+	TestSignals:                 "test_signals",
 }
