@@ -233,6 +233,9 @@ func (d *DeviceConfigController) GetDeviceSettingsByName(c *fiber.Ctx) error {
 	} else {
 		return fiber.NewError(fiber.StatusNotFound, "Settings data is null")
 	}
+	if settings.MinVoltageOBDLoggers == 0 {
+		settings.MinVoltageOBDLoggers = 13.3
+	}
 
 	protoDeviceSettings := &grpc.DeviceSetting{
 		TemplateName:                             dbDeviceSettings.Name, // in future add a Name field, once safe to change proto
