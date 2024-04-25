@@ -3,6 +3,8 @@ package api
 import (
 	"context"
 
+	common2 "github.com/ethereum/go-ethereum/common"
+
 	"github.com/DIMO-Network/shared/db"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/commands"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/queries"
@@ -43,6 +45,20 @@ func (s *AftermarketDeviceTemplateService) GetAftermarketDeviceTemplates(ctx con
 	service := queries.NewGetAftermarketDeviceTemplateAll(s.dbs)
 
 	response, err := service.Handle(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+
+func (s *AftermarketDeviceTemplateService) GetAftermarketDeviceTemplate(ctx context.Context, request *grpc.AftermarketDeviceTemplateRequest) (*grpc.AftermarketDeviceTemplate, error) {
+	service := queries.NewGetAftermarketDeviceTemplateByEthereumAddress(s.dbs)
+
+	ethAddress := common2.BytesToAddress(request.EthereumAddress)
+
+	response, err := service.Handle(ctx, ethAddress)
 
 	if err != nil {
 		return nil, err
