@@ -115,13 +115,13 @@ func (dts *deviceTemplateService) FindDirectDeviceToTemplateConfig(ctx context.C
 	}
 
 	// only set dbc url if we have dbc
-	dbcFile, err := models.FindDBCFile(ctx, dts.db, deviceToTemplate.TemplateName)
+	dbcFile, _ := models.FindDBCFile(ctx, dts.db, deviceToTemplate.TemplateName)
 	if dbcFile != nil {
 		response.DbcURL = dts.buildConfigRoute(DBC, deviceToTemplate.TemplateName, deviceToTemplate.R.TemplateNameTemplate.Version)
 	}
 
 	// use specific settings otherwise use fallback to first one
-	deviceSetting, err := models.DeviceSettings(models.DeviceSettingWhere.TemplateName.EQ(null.StringFrom(deviceToTemplate.TemplateName))).One(ctx, dts.db)
+	deviceSetting, _ := models.DeviceSettings(models.DeviceSettingWhere.TemplateName.EQ(null.StringFrom(deviceToTemplate.TemplateName))).One(ctx, dts.db)
 	if deviceSetting != nil {
 		response.DeviceSettingURL = dts.buildConfigRoute(Setting, deviceSetting.Name, deviceSetting.Version)
 	} else {
