@@ -965,7 +965,7 @@ func (o PidConfigSlice) UpdateAll(ctx context.Context, exec boil.ContextExecutor
 
 // Upsert attempts an insert using an executor, and does an update or ignore on conflict.
 // See boil.Columns documentation for how to properly use updateColumns and insertColumns.
-func (o *PidConfig) Upsert(ctx context.Context, exec boil.ContextExecutor, updateOnConflict bool, conflictColumns []string, updateColumns, insertColumns boil.Columns) error {
+func (o *PidConfig) Upsert(ctx context.Context, exec boil.ContextExecutor, updateOnConflict bool, conflictColumns []string, updateColumns, insertColumns boil.Columns, opts ...UpsertOptionFunc) error {
 	if o == nil {
 		return errors.New("models: no pid_configs provided for upsert")
 	}
@@ -1019,7 +1019,7 @@ func (o *PidConfig) Upsert(ctx context.Context, exec boil.ContextExecutor, updat
 	var err error
 
 	if !cached {
-		insert, ret := insertColumns.InsertColumnSet(
+		insert, _ := insertColumns.InsertColumnSet(
 			pidConfigAllColumns,
 			pidConfigColumnsWithDefault,
 			pidConfigColumnsWithoutDefault,
@@ -1035,12 +1035,18 @@ func (o *PidConfig) Upsert(ctx context.Context, exec boil.ContextExecutor, updat
 			return errors.New("models: unable to upsert pid_configs, could not build update column list")
 		}
 
+		ret := strmangle.SetComplement(pidConfigAllColumns, strmangle.SetIntersect(insert, update))
+
 		conflict := conflictColumns
-		if len(conflict) == 0 {
+		if len(conflict) == 0 && updateOnConflict && len(update) != 0 {
+			if len(pidConfigPrimaryKeyColumns) == 0 {
+				return errors.New("models: unable to upsert pid_configs, could not build conflict column list")
+			}
+
 			conflict = make([]string, len(pidConfigPrimaryKeyColumns))
 			copy(conflict, pidConfigPrimaryKeyColumns)
 		}
-		cache.query = buildUpsertQueryPostgres(dialect, "\"vehicle_signal_decoding_api\".\"pid_configs\"", updateOnConflict, ret, update, conflict, insert)
+		cache.query = buildUpsertQueryPostgres(dialect, "\"vehicle_signal_decoding_api\".\"pid_configs\"", updateOnConflict, ret, update, conflict, insert, opts...)
 
 		cache.valueMapping, err = queries.BindMapping(pidConfigType, pidConfigMapping, insert)
 		if err != nil {

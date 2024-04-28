@@ -343,15 +343,20 @@ func (d *DeviceConfigController) GetConfigURLsFromVIN(c *fiber.Ctx) error {
 func (d *DeviceConfigController) GetConfigURLsFromEthAddr(c *fiber.Ctx) error {
 	ethAddr := c.Params("ethAddr")
 	protocol := c.Query("protocol", "")
+	address := common2.HexToAddress(ethAddr)
 
-	// todo query database for device eth addr to template mapping
+	// first check for direct mapping
+	directConfig := d.deviceTemplateService.FindDirectDeviceToTemplateConfig(c.Context(), address)
+	if directConfig != nil {
+		return c.JSON(directConfig)
+	}
 
-	vehicle, err := d.identityAPI.QueryIdentityAPIForVehicle(common2.HexToAddress(ethAddr))
+	vehicle, err := d.identityAPI.QueryIdentityAPIForVehicle(address)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": fmt.Sprintf("no minted vehicle for device EthAddr: %s", ethAddr)})
 	}
 	// we still need this to get the powertrain
-	ud, err := d.userDeviceSvc.GetUserDeviceByEthAddr(c.Context(), common2.HexToAddress(ethAddr))
+	ud, err := d.userDeviceSvc.GetUserDeviceByEthAddr(c.Context(), address)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": fmt.Sprintf("no connected user device found for EthAddr: %s", ethAddr)})
 	}
