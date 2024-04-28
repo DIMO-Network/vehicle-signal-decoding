@@ -100,6 +100,20 @@ func (dts *deviceTemplateService) StoreDeviceConfigUsed(ctx context.Context, add
 	return dt, nil
 }
 
+func (dts *deviceTemplateService) FindDirectDeviceToTemplateConfig(ctx context.Context, address common2.Address) *appmodels.DeviceConfigResponse {
+	deviceToTemplate, err := models.AftermarketDeviceToTemplates(
+		models.AftermarketDeviceToTemplateWhere.AftermarketDeviceEthereumAddress.EQ(address.Bytes()),
+		qm.Load(models.AftermarketDeviceToTemplateRels)).One(ctx, dts.db)
+	if err != nil || deviceToTemplate == nil {
+		return nil
+	}
+	response := appmodels.DeviceConfigResponse{
+		PidURL: dts.buildConfigRoute(PIDs, deviceToTemplate.TemplateName, matchedTemplate.Version),
+	}
+
+	return &response
+}
+
 // ResolveDeviceConfiguration figures out what template to return based on protocol, powertrain, vehicle or definition (vehicle could be nil)
 func (dts *deviceTemplateService) ResolveDeviceConfiguration(c *fiber.Ctx, ud *pb.UserDevice, vehicle *gateways.VehicleInfo) (*appmodels.DeviceConfigResponse, error) {
 	canProtocl := convertCANProtocol(dts.log, ud.CANProtocol)
