@@ -102,6 +102,7 @@ func (dts *deviceTemplateService) StoreDeviceConfigUsed(ctx context.Context, add
 	return dt, nil
 }
 
+// FindDirectDeviceToTemplateConfig retrieves the device configuration for a specific device address
 func (dts *deviceTemplateService) FindDirectDeviceToTemplateConfig(ctx context.Context, address common2.Address) *appmodels.DeviceConfigResponse {
 	deviceToTemplate, err := models.AftermarketDeviceToTemplates(
 		models.AftermarketDeviceToTemplateWhere.AftermarketDeviceEthereumAddress.EQ(address.Bytes()),
