@@ -32,6 +32,8 @@ type DeviceTemplateService interface {
 	StoreDeviceConfigUsed(ctx context.Context, address common2.Address, dbcURL, pidURL, settingURL, firmwareVersion *string) (*models.DeviceTemplateStatus, error)
 	ResolveDeviceConfiguration(c *fiber.Ctx, ud *pb.UserDevice, vehicle *gateways.VehicleInfo) (*appmodels.DeviceConfigResponse, error)
 	// todo: pass in a ResolveConfigRequest instead of pb.UserDevice - this is not tied to a user device
+
+	FindDirectDeviceToTemplateConfig(ctx context.Context, address common2.Address) *appmodels.DeviceConfigResponse
 }
 
 type deviceTemplateService struct {
@@ -98,6 +100,42 @@ func (dts *deviceTemplateService) StoreDeviceConfigUsed(ctx context.Context, add
 	}
 
 	return dt, nil
+}
+
+// FindDirectDeviceToTemplateConfig retrieves the device configuration for a specific device address
+func (dts *deviceTemplateService) FindDirectDeviceToTemplateConfig(ctx context.Context, address common2.Address) *appmodels.DeviceConfigResponse {
+	deviceToTemplate, err := models.AftermarketDeviceToTemplates(
+		models.AftermarketDeviceToTemplateWhere.AftermarketDeviceEthereumAddress.EQ(address.Bytes()),
+		qm.Load(models.AftermarketDeviceToTemplateRels.TemplateNameTemplate),
+	).One(ctx, dts.db)
+	if err != nil || deviceToTemplate == nil {
+		return nil
+	}
+	response := appmodels.DeviceConfigResponse{
+		PidURL: dts.buildConfigRoute(PIDs, deviceToTemplate.TemplateName, deviceToTemplate.R.TemplateNameTemplate.Version),
+	}
+
+	// only set dbc url if we have dbc
+	dbcFile, _ := models.FindDBCFile(ctx, dts.db, deviceToTemplate.TemplateName)
+	if dbcFile != nil {
+		response.DbcURL = dts.buildConfigRoute(DBC, deviceToTemplate.TemplateName, deviceToTemplate.R.TemplateNameTemplate.Version)
+	}
+
+	// use specific settings otherwise use fallback to first one
+	deviceSetting, _ := models.DeviceSettings(models.DeviceSettingWhere.TemplateName.EQ(null.StringFrom(deviceToTemplate.TemplateName))).One(ctx, dts.db)
+	if deviceSetting != nil {
+		response.DeviceSettingURL = dts.buildConfigRoute(Setting, deviceSetting.Name, deviceSetting.Version)
+	} else {
+		// fallback jic
+		deviceSetting, err = models.DeviceSettings().One(ctx, dts.db)
+		if err != nil {
+			dts.log.Error().Err(err).Msg("Failed to retrieve device settings for FindDirectDeviceToTemplateConfig")
+		} else if deviceSetting != nil {
+			response.DeviceSettingURL = dts.buildConfigRoute(Setting, deviceSetting.Name, deviceSetting.Version)
+		}
+	}
+
+	return &response
 }
 
 // ResolveDeviceConfiguration figures out what template to return based on protocol, powertrain, vehicle or definition (vehicle could be nil)

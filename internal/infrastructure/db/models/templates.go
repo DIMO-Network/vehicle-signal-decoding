@@ -94,26 +94,29 @@ var TemplateWhere = struct {
 
 // TemplateRels is where relationship names are stored.
 var TemplateRels = struct {
-	TemplateNameDBCFile                   string
-	TemplateNameDeviceSettings            string
-	TemplateNamePidConfigs                string
-	TemplateNameTemplateDeviceDefinitions string
-	TemplateNameTemplateVehicles          string
+	TemplateNameDBCFile                      string
+	TemplateNameAftermarketDeviceToTemplates string
+	TemplateNameDeviceSettings               string
+	TemplateNamePidConfigs                   string
+	TemplateNameTemplateDeviceDefinitions    string
+	TemplateNameTemplateVehicles             string
 }{
-	TemplateNameDBCFile:                   "TemplateNameDBCFile",
-	TemplateNameDeviceSettings:            "TemplateNameDeviceSettings",
-	TemplateNamePidConfigs:                "TemplateNamePidConfigs",
-	TemplateNameTemplateDeviceDefinitions: "TemplateNameTemplateDeviceDefinitions",
-	TemplateNameTemplateVehicles:          "TemplateNameTemplateVehicles",
+	TemplateNameDBCFile:                      "TemplateNameDBCFile",
+	TemplateNameAftermarketDeviceToTemplates: "TemplateNameAftermarketDeviceToTemplates",
+	TemplateNameDeviceSettings:               "TemplateNameDeviceSettings",
+	TemplateNamePidConfigs:                   "TemplateNamePidConfigs",
+	TemplateNameTemplateDeviceDefinitions:    "TemplateNameTemplateDeviceDefinitions",
+	TemplateNameTemplateVehicles:             "TemplateNameTemplateVehicles",
 }
 
 // templateR is where relationships are stored.
 type templateR struct {
-	TemplateNameDBCFile                   *DBCFile                      `boil:"TemplateNameDBCFile" json:"TemplateNameDBCFile" toml:"TemplateNameDBCFile" yaml:"TemplateNameDBCFile"`
-	TemplateNameDeviceSettings            DeviceSettingSlice            `boil:"TemplateNameDeviceSettings" json:"TemplateNameDeviceSettings" toml:"TemplateNameDeviceSettings" yaml:"TemplateNameDeviceSettings"`
-	TemplateNamePidConfigs                PidConfigSlice                `boil:"TemplateNamePidConfigs" json:"TemplateNamePidConfigs" toml:"TemplateNamePidConfigs" yaml:"TemplateNamePidConfigs"`
-	TemplateNameTemplateDeviceDefinitions TemplateDeviceDefinitionSlice `boil:"TemplateNameTemplateDeviceDefinitions" json:"TemplateNameTemplateDeviceDefinitions" toml:"TemplateNameTemplateDeviceDefinitions" yaml:"TemplateNameTemplateDeviceDefinitions"`
-	TemplateNameTemplateVehicles          TemplateVehicleSlice          `boil:"TemplateNameTemplateVehicles" json:"TemplateNameTemplateVehicles" toml:"TemplateNameTemplateVehicles" yaml:"TemplateNameTemplateVehicles"`
+	TemplateNameDBCFile                      *DBCFile                         `boil:"TemplateNameDBCFile" json:"TemplateNameDBCFile" toml:"TemplateNameDBCFile" yaml:"TemplateNameDBCFile"`
+	TemplateNameAftermarketDeviceToTemplates AftermarketDeviceToTemplateSlice `boil:"TemplateNameAftermarketDeviceToTemplates" json:"TemplateNameAftermarketDeviceToTemplates" toml:"TemplateNameAftermarketDeviceToTemplates" yaml:"TemplateNameAftermarketDeviceToTemplates"`
+	TemplateNameDeviceSettings               DeviceSettingSlice               `boil:"TemplateNameDeviceSettings" json:"TemplateNameDeviceSettings" toml:"TemplateNameDeviceSettings" yaml:"TemplateNameDeviceSettings"`
+	TemplateNamePidConfigs                   PidConfigSlice                   `boil:"TemplateNamePidConfigs" json:"TemplateNamePidConfigs" toml:"TemplateNamePidConfigs" yaml:"TemplateNamePidConfigs"`
+	TemplateNameTemplateDeviceDefinitions    TemplateDeviceDefinitionSlice    `boil:"TemplateNameTemplateDeviceDefinitions" json:"TemplateNameTemplateDeviceDefinitions" toml:"TemplateNameTemplateDeviceDefinitions" yaml:"TemplateNameTemplateDeviceDefinitions"`
+	TemplateNameTemplateVehicles             TemplateVehicleSlice             `boil:"TemplateNameTemplateVehicles" json:"TemplateNameTemplateVehicles" toml:"TemplateNameTemplateVehicles" yaml:"TemplateNameTemplateVehicles"`
 }
 
 // NewStruct creates a new relationship struct
@@ -126,6 +129,13 @@ func (r *templateR) GetTemplateNameDBCFile() *DBCFile {
 		return nil
 	}
 	return r.TemplateNameDBCFile
+}
+
+func (r *templateR) GetTemplateNameAftermarketDeviceToTemplates() AftermarketDeviceToTemplateSlice {
+	if r == nil {
+		return nil
+	}
+	return r.TemplateNameAftermarketDeviceToTemplates
 }
 
 func (r *templateR) GetTemplateNameDeviceSettings() DeviceSettingSlice {
@@ -483,6 +493,20 @@ func (o *Template) TemplateNameDBCFile(mods ...qm.QueryMod) dbcFileQuery {
 	return DBCFiles(queryMods...)
 }
 
+// TemplateNameAftermarketDeviceToTemplates retrieves all the aftermarket_device_to_template's AftermarketDeviceToTemplates with an executor via template_name column.
+func (o *Template) TemplateNameAftermarketDeviceToTemplates(mods ...qm.QueryMod) aftermarketDeviceToTemplateQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"vehicle_signal_decoding_api\".\"aftermarket_device_to_template\".\"template_name\"=?", o.TemplateName),
+	)
+
+	return AftermarketDeviceToTemplates(queryMods...)
+}
+
 // TemplateNameDeviceSettings retrieves all the device_setting's DeviceSettings with an executor via template_name column.
 func (o *Template) TemplateNameDeviceSettings(mods ...qm.QueryMod) deviceSettingQuery {
 	var queryMods []qm.QueryMod
@@ -646,6 +670,119 @@ func (templateL) LoadTemplateNameDBCFile(ctx context.Context, e boil.ContextExec
 				local.R.TemplateNameDBCFile = foreign
 				if foreign.R == nil {
 					foreign.R = &dbcFileR{}
+				}
+				foreign.R.TemplateNameTemplate = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// LoadTemplateNameAftermarketDeviceToTemplates allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (templateL) LoadTemplateNameAftermarketDeviceToTemplates(ctx context.Context, e boil.ContextExecutor, singular bool, maybeTemplate interface{}, mods queries.Applicator) error {
+	var slice []*Template
+	var object *Template
+
+	if singular {
+		var ok bool
+		object, ok = maybeTemplate.(*Template)
+		if !ok {
+			object = new(Template)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeTemplate)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeTemplate))
+			}
+		}
+	} else {
+		s, ok := maybeTemplate.(*[]*Template)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeTemplate)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeTemplate))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &templateR{}
+		}
+		args[object.TemplateName] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &templateR{}
+			}
+			args[obj.TemplateName] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`vehicle_signal_decoding_api.aftermarket_device_to_template`),
+		qm.WhereIn(`vehicle_signal_decoding_api.aftermarket_device_to_template.template_name in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load aftermarket_device_to_template")
+	}
+
+	var resultSlice []*AftermarketDeviceToTemplate
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice aftermarket_device_to_template")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on aftermarket_device_to_template")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for aftermarket_device_to_template")
+	}
+
+	if len(aftermarketDeviceToTemplateAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.TemplateNameAftermarketDeviceToTemplates = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &aftermarketDeviceToTemplateR{}
+			}
+			foreign.R.TemplateNameTemplate = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.TemplateName == foreign.TemplateName {
+				local.R.TemplateNameAftermarketDeviceToTemplates = append(local.R.TemplateNameAftermarketDeviceToTemplates, foreign)
+				if foreign.R == nil {
+					foreign.R = &aftermarketDeviceToTemplateR{}
 				}
 				foreign.R.TemplateNameTemplate = local
 				break
@@ -1154,6 +1291,59 @@ func (o *Template) SetTemplateNameDBCFile(ctx context.Context, exec boil.Context
 		}
 	} else {
 		related.R.TemplateNameTemplate = o
+	}
+	return nil
+}
+
+// AddTemplateNameAftermarketDeviceToTemplates adds the given related objects to the existing relationships
+// of the template, optionally inserting them as new records.
+// Appends related to o.R.TemplateNameAftermarketDeviceToTemplates.
+// Sets related.R.TemplateNameTemplate appropriately.
+func (o *Template) AddTemplateNameAftermarketDeviceToTemplates(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*AftermarketDeviceToTemplate) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.TemplateName = o.TemplateName
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"vehicle_signal_decoding_api\".\"aftermarket_device_to_template\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"template_name"}),
+				strmangle.WhereClause("\"", "\"", 2, aftermarketDeviceToTemplatePrimaryKeyColumns),
+			)
+			values := []interface{}{o.TemplateName, rel.AftermarketDeviceEthereumAddress, rel.TemplateName}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.TemplateName = o.TemplateName
+		}
+	}
+
+	if o.R == nil {
+		o.R = &templateR{
+			TemplateNameAftermarketDeviceToTemplates: related,
+		}
+	} else {
+		o.R.TemplateNameAftermarketDeviceToTemplates = append(o.R.TemplateNameAftermarketDeviceToTemplates, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &aftermarketDeviceToTemplateR{
+				TemplateNameTemplate: o,
+			}
+		} else {
+			rel.R.TemplateNameTemplate = o
+		}
 	}
 	return nil
 }
@@ -1710,7 +1900,7 @@ func (o TemplateSlice) UpdateAll(ctx context.Context, exec boil.ContextExecutor,
 
 // Upsert attempts an insert using an executor, and does an update or ignore on conflict.
 // See boil.Columns documentation for how to properly use updateColumns and insertColumns.
-func (o *Template) Upsert(ctx context.Context, exec boil.ContextExecutor, updateOnConflict bool, conflictColumns []string, updateColumns, insertColumns boil.Columns) error {
+func (o *Template) Upsert(ctx context.Context, exec boil.ContextExecutor, updateOnConflict bool, conflictColumns []string, updateColumns, insertColumns boil.Columns, opts ...UpsertOptionFunc) error {
 	if o == nil {
 		return errors.New("models: no templates provided for upsert")
 	}
@@ -1764,7 +1954,7 @@ func (o *Template) Upsert(ctx context.Context, exec boil.ContextExecutor, update
 	var err error
 
 	if !cached {
-		insert, ret := insertColumns.InsertColumnSet(
+		insert, _ := insertColumns.InsertColumnSet(
 			templateAllColumns,
 			templateColumnsWithDefault,
 			templateColumnsWithoutDefault,
@@ -1780,12 +1970,18 @@ func (o *Template) Upsert(ctx context.Context, exec boil.ContextExecutor, update
 			return errors.New("models: unable to upsert templates, could not build update column list")
 		}
 
+		ret := strmangle.SetComplement(templateAllColumns, strmangle.SetIntersect(insert, update))
+
 		conflict := conflictColumns
-		if len(conflict) == 0 {
+		if len(conflict) == 0 && updateOnConflict && len(update) != 0 {
+			if len(templatePrimaryKeyColumns) == 0 {
+				return errors.New("models: unable to upsert templates, could not build conflict column list")
+			}
+
 			conflict = make([]string, len(templatePrimaryKeyColumns))
 			copy(conflict, templatePrimaryKeyColumns)
 		}
-		cache.query = buildUpsertQueryPostgres(dialect, "\"vehicle_signal_decoding_api\".\"templates\"", updateOnConflict, ret, update, conflict, insert)
+		cache.query = buildUpsertQueryPostgres(dialect, "\"vehicle_signal_decoding_api\".\"templates\"", updateOnConflict, ret, update, conflict, insert, opts...)
 
 		cache.valueMapping, err = queries.BindMapping(templateType, templateMapping, insert)
 		if err != nil {

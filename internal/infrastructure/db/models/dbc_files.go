@@ -854,7 +854,7 @@ func (o DBCFileSlice) UpdateAll(ctx context.Context, exec boil.ContextExecutor, 
 
 // Upsert attempts an insert using an executor, and does an update or ignore on conflict.
 // See boil.Columns documentation for how to properly use updateColumns and insertColumns.
-func (o *DBCFile) Upsert(ctx context.Context, exec boil.ContextExecutor, updateOnConflict bool, conflictColumns []string, updateColumns, insertColumns boil.Columns) error {
+func (o *DBCFile) Upsert(ctx context.Context, exec boil.ContextExecutor, updateOnConflict bool, conflictColumns []string, updateColumns, insertColumns boil.Columns, opts ...UpsertOptionFunc) error {
 	if o == nil {
 		return errors.New("models: no dbc_files provided for upsert")
 	}
@@ -908,7 +908,7 @@ func (o *DBCFile) Upsert(ctx context.Context, exec boil.ContextExecutor, updateO
 	var err error
 
 	if !cached {
-		insert, ret := insertColumns.InsertColumnSet(
+		insert, _ := insertColumns.InsertColumnSet(
 			dbcFileAllColumns,
 			dbcFileColumnsWithDefault,
 			dbcFileColumnsWithoutDefault,
@@ -924,12 +924,18 @@ func (o *DBCFile) Upsert(ctx context.Context, exec boil.ContextExecutor, updateO
 			return errors.New("models: unable to upsert dbc_files, could not build update column list")
 		}
 
+		ret := strmangle.SetComplement(dbcFileAllColumns, strmangle.SetIntersect(insert, update))
+
 		conflict := conflictColumns
-		if len(conflict) == 0 {
+		if len(conflict) == 0 && updateOnConflict && len(update) != 0 {
+			if len(dbcFilePrimaryKeyColumns) == 0 {
+				return errors.New("models: unable to upsert dbc_files, could not build conflict column list")
+			}
+
 			conflict = make([]string, len(dbcFilePrimaryKeyColumns))
 			copy(conflict, dbcFilePrimaryKeyColumns)
 		}
-		cache.query = buildUpsertQueryPostgres(dialect, "\"vehicle_signal_decoding_api\".\"dbc_files\"", updateOnConflict, ret, update, conflict, insert)
+		cache.query = buildUpsertQueryPostgres(dialect, "\"vehicle_signal_decoding_api\".\"dbc_files\"", updateOnConflict, ret, update, conflict, insert, opts...)
 
 		cache.valueMapping, err = queries.BindMapping(dbcFileType, dbcFileMapping, insert)
 		if err != nil {

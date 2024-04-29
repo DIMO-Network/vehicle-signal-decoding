@@ -290,6 +290,33 @@ func (s *DeviceConfigControllerTestSuite) TestGetDBCFileByTemplateName() {
 	assert.Equal(s.T(), template.Version, templateFromDB.Version)
 }
 
+func (s *DeviceConfigControllerTestSuite) TestGetConfigURLsFromDeviceEthAddr() {
+	addr := common2.HexToAddress("0xDC1eE274BCA98b421293f3737D1b9E4563c60cb3")
+
+	s.mockDeviceTemplateSvc.EXPECT().FindDirectDeviceToTemplateConfig(gomock.Any(), addr).Return(&appmodels.DeviceConfigResponse{
+		PidURL:           "http://localhost:3000/v1/device-config/pids/some-template-emptydbc@v1.0.0",
+		DeviceSettingURL: "http://localhost:3000/v1/device-config/settings/default-hev-emptydbc@v1.0.0",
+		DbcURL:           "",
+	})
+
+	s.app.Get("/config-urls/eth-addr/:ethAddr", s.controller.GetConfigURLsFromEthAddr)
+
+	request := dbtest.BuildRequest("GET", "/config-urls/eth-addr/"+addr.Hex(), "")
+	response, err := s.app.Test(request)
+	require.NoError(s.T(), err)
+
+	body, _ := io.ReadAll(response.Body)
+	require.Equal(s.T(), fiber.StatusOK, response.StatusCode)
+
+	var receivedResp appmodels.DeviceConfigResponse
+	err = json.Unmarshal(body, &receivedResp)
+	require.NoError(s.T(), err)
+
+	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/pids/%s@v1.0.0", "some-template-emptydbc"), receivedResp.PidURL)
+	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/settings/%s@v1.0.0", "default-hev-emptydbc"), receivedResp.DeviceSettingURL)
+	assert.Empty(s.T(), receivedResp.DbcURL)
+}
+
 func (s *DeviceConfigControllerTestSuite) TestGetConfigURLsFromVIN_EmptyDBC() {
 	vin := "TMBEK6NW1N3088739"
 

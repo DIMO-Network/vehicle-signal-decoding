@@ -44,6 +44,20 @@ func (m *MockDeviceTemplateService) EXPECT() *MockDeviceTemplateServiceMockRecor
 	return m.recorder
 }
 
+// FindDirectDeviceToTemplateConfig mocks base method.
+func (m *MockDeviceTemplateService) FindDirectDeviceToTemplateConfig(ctx context.Context, address common.Address) *appmodels.DeviceConfigResponse {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindDirectDeviceToTemplateConfig", ctx, address)
+	ret0, _ := ret[0].(*appmodels.DeviceConfigResponse)
+	return ret0
+}
+
+// FindDirectDeviceToTemplateConfig indicates an expected call of FindDirectDeviceToTemplateConfig.
+func (mr *MockDeviceTemplateServiceMockRecorder) FindDirectDeviceToTemplateConfig(ctx, address any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindDirectDeviceToTemplateConfig", reflect.TypeOf((*MockDeviceTemplateService)(nil).FindDirectDeviceToTemplateConfig), ctx, address)
+}
+
 // ResolveDeviceConfiguration mocks base method.
 func (m *MockDeviceTemplateService) ResolveDeviceConfiguration(c *fiber.Ctx, ud *grpc.UserDevice, vehicle *gateways.VehicleInfo) (*appmodels.DeviceConfigResponse, error) {
 	m.ctrl.T.Helper()
