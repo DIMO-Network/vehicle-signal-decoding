@@ -299,9 +299,9 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLsFromDeviceEthAddr() {
 		DbcURL:           "",
 	})
 
-	s.app.Get("/config-urls/:ethAddr", s.controller.GetConfigURLsFromEthAddr)
+	s.app.Get("/config-urls/eth-addr/:ethAddr", s.controller.GetConfigURLsFromEthAddr)
 
-	request := dbtest.BuildRequest("GET", "/config-urls/"+addr.Hex(), "")
+	request := dbtest.BuildRequest("GET", "/config-urls/eth-addr/"+addr.Hex(), "")
 	response, err := s.app.Test(request)
 	require.NoError(s.T(), err)
 
