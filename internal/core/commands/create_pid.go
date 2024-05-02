@@ -5,8 +5,6 @@ import (
 
 	"github.com/volatiletech/null/v8"
 
-	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/common"
-
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/exceptions"
 	"github.com/pkg/errors"
@@ -64,7 +62,7 @@ func (h CreatePidCommandHandler) Execute(ctx context.Context, req *CreatePidComm
 		Header:               req.Header,
 		Mode:                 req.Mode,
 		Pid:                  req.Pid,
-		Formula:              common.PrependFormulaTypeDefault(req.Formula),
+		Formula:              req.Formula,
 		IntervalSeconds:      int(req.IntervalSeconds),
 		Protocol:             null.StringFromPtr(req.Protocol),
 		SignalName:           req.SignalName,
