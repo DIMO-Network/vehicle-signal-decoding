@@ -37,7 +37,7 @@ func (h *CreateAftermarketDeviceTemplateCommandHandler) Execute(ctx context.Cont
 
 	if exists {
 		return &exceptions.ConflictError{
-			Err: errors.Errorf("Already a template registered for: %s", cmd.TemplateName),
+			Err: errors.Errorf("Already a template registered for: %s", cmd.AftermarketDeviceEthereumAddress),
 		}
 	}
 
