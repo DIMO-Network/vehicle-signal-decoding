@@ -62,8 +62,17 @@ func (h UpdatePidCommandHandler) Execute(ctx context.Context, req *UpdatePidComm
 	pid.IntervalSeconds = int(req.IntervalSeconds)
 	pid.Protocol = null.StringFromPtr(req.Protocol)
 	pid.SignalName = req.SignalName
-	pid.CanFlowControlClear = null.BoolFromPtr(req.CanFlowControlClear)
-	pid.CanFlowControlIDPair = null.StringFromPtr(req.CanFlowControlIDPair)
+
+	canFlowControlClear := null.BoolFromPtr(req.CanFlowControlClear)
+	canFlowControlIDPair := null.StringFromPtr(req.CanFlowControlIDPair)
+
+	if !canFlowControlClear.Valid {
+		pid.CanFlowControlClear = null.BoolFromPtr(req.CanFlowControlClear)
+	}
+
+	if canFlowControlIDPair.Valid {
+		pid.CanFlowControlIDPair = null.StringFromPtr(req.CanFlowControlIDPair)
+	}
 
 	if _, err := pid.Update(ctx, h.DBS().Writer.DB, boil.Infer()); err != nil {
 		return nil, &exceptions.InternalError{
