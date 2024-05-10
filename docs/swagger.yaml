@@ -17,6 +17,8 @@ definitions:
     properties:
       battery_critical_level_voltage:
         type: number
+      min_voltage_obd_loggers:
+        type: number
       safety_cut_out_voltage:
         type: number
       sleep_timer_event_driven_interval_secs:
@@ -326,7 +328,7 @@ paths:
         name: vin
         required: true
         type: string
-      - description: CAN Protocol, '6' or '7'
+      - description: CAN Protocol, '6' or '7', 8,9,66,77,88,99
         in: query
         name: protocol
         type: string
