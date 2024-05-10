@@ -233,6 +233,9 @@ func (d *DeviceConfigController) GetDeviceSettingsByName(c *fiber.Ctx) error {
 	} else {
 		return fiber.NewError(fiber.StatusNotFound, "Settings data is null")
 	}
+	if settings.MinVoltageOBDLoggers == 0 {
+		settings.MinVoltageOBDLoggers = 13.3
+	}
 
 	protoDeviceSettings := &grpc.DeviceSetting{
 		TemplateName:                             dbDeviceSettings.Name, // in future add a Name field, once safe to change proto
@@ -242,6 +245,7 @@ func (d *DeviceConfigController) GetDeviceSettingsByName(c *fiber.Ctx) error {
 		SleepTimerEventDrivenIntervalSecs:        float32(3600), // not used by Macaron
 		SleepTimerInactivityAfterSleepSecs:       float32(21600),
 		SleepTimerInactivityFallbackIntervalSecs: float32(21600),
+		MinVoltageObdLoggers:                     float32(settings.MinVoltageOBDLoggers),
 		//TemplateName: dbDeviceSettings.TemplateName.String, // in future we could do this, could be empty
 		//Version: "v1.0.1", // for future - once safe to change proto file
 	}
