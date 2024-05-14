@@ -326,10 +326,12 @@ func (d *DeviceConfigController) GetConfigURLsFromVIN(c *fiber.Ctx) error {
 		}
 	}
 
-	response, err := d.deviceTemplateService.ResolveDeviceConfiguration(c, ud, nil)
+	response, strategy, err := d.deviceTemplateService.ResolveDeviceConfiguration(c, ud, nil)
 	if err != nil {
 		return err
 	}
+	d.log.Info().Str("vin", *ud.Vin).Msgf(fmt.Sprintf("template configuration urls for VIN %s. strategy: %s. dbc: %s, pids: %s, settings: %s",
+		*ud.Vin, strategy, response.DbcURL, response.PidURL, response.DeviceSettingURL))
 
 	return c.JSON(response)
 }
@@ -352,6 +354,8 @@ func (d *DeviceConfigController) GetConfigURLsFromEthAddr(c *fiber.Ctx) error {
 	// first check for direct mapping
 	directConfig := d.deviceTemplateService.FindDirectDeviceToTemplateConfig(c.Context(), address)
 	if directConfig != nil {
+		d.log.Info().Str("ethAddr", ethAddr).Msgf(fmt.Sprintf("template configuration urls for eth addr %s. strategy: direct. dbc: %s, pids: %s, settings: %s",
+			ethAddr, directConfig.DbcURL, directConfig.PidURL, directConfig.DeviceSettingURL))
 		return c.JSON(directConfig)
 	}
 
@@ -369,10 +373,13 @@ func (d *DeviceConfigController) GetConfigURLsFromEthAddr(c *fiber.Ctx) error {
 		ud.CANProtocol = protocol
 	}
 
-	response, err := d.deviceTemplateService.ResolveDeviceConfiguration(c, ud, vehicle)
+	response, strategy, err := d.deviceTemplateService.ResolveDeviceConfiguration(c, ud, vehicle)
 	if err != nil {
 		return err
 	}
+
+	d.log.Info().Str("vin", *ud.Vin).Msgf(fmt.Sprintf("template configuration urls for VIN %s and eth Addr: %s. strategy: %s. dbc: %s, pids: %s, settings: %s",
+		*ud.Vin, ethAddr, strategy, response.DbcURL, response.PidURL, response.DeviceSettingURL))
 
 	return c.JSON(response)
 }
@@ -407,7 +414,7 @@ func (d *DeviceConfigController) GetConfigStatusByEthAddr(c *fiber.Ctx) error {
 	if dts != nil {
 		deviceFWVers = dts.FirmwareVersion.String
 		// figure out what the config should be
-		deviceConfiguration, err := d.deviceTemplateService.ResolveDeviceConfiguration(c, ud, nil)
+		deviceConfiguration, _, err := d.deviceTemplateService.ResolveDeviceConfiguration(c, ud, nil)
 		if err != nil {
 			return err
 		}

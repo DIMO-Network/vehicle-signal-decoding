@@ -181,12 +181,13 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_DeviceDefin
 		},
 	}
 
-	fetchedTemplate, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice.CANProtocol, mockedUserDevice.PowerTrainType,
+	fetchedTemplate, strategy, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice.CANProtocol, mockedUserDevice.PowerTrainType,
 		mockedUserDevice.DeviceDefinitionId, vehicle)
 
 	require.NoError(s.T(), err)
 	assert.NotNil(s.T(), fetchedTemplate)
 	assert.Equal(s.T(), template.TemplateName, fetchedTemplate.TemplateName)
+	assert.Equal(s.T(), "definition mapping", strategy)
 }
 
 func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_nilVehicle_matchDDID() {
@@ -223,12 +224,13 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_nilVehicle_
 		},
 	}, nil) // nil vehicle still should work
 
-	fetchedTemplate, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice.CANProtocol, mockedUserDevice.PowerTrainType,
+	fetchedTemplate, strategy, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice.CANProtocol, mockedUserDevice.PowerTrainType,
 		mockedUserDevice.DeviceDefinitionId, nil)
 
 	require.NoError(s.T(), err)
 	assert.NotNil(s.T(), fetchedTemplate)
 	assert.Equal(s.T(), template.TemplateName, fetchedTemplate.TemplateName)
+	assert.Equal(s.T(), "definition mapping", strategy)
 }
 
 func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_MMY() {
@@ -253,8 +255,8 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_MMY() {
 
 	templateVehicle := &models.TemplateVehicle{
 		TemplateName:   template.TemplateName,
-		MakeSlug:       null.StringFrom("Ford"),
-		ModelWhitelist: types.StringArray{"Mustang"},
+		MakeSlug:       null.StringFrom("ford"),
+		ModelWhitelist: types.StringArray{"mustang"},
 		YearStart:      2010,
 		YearEnd:        2025,
 	}
@@ -277,12 +279,13 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_MMY() {
 		},
 	}
 
-	fetchedTemplate, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice.CANProtocol, mockedUserDevice.PowerTrainType,
+	fetchedTemplate, strategy, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice.CANProtocol, mockedUserDevice.PowerTrainType,
 		mockedUserDevice.DeviceDefinitionId, vehicle)
 
 	require.NoError(s.T(), err)
 	assert.NotNil(s.T(), fetchedTemplate)
 	assert.Equal(s.T(), template.TemplateName, fetchedTemplate.TemplateName)
+	assert.Equal(s.T(), "vehicle and year mapping, makeSlug match, model match", strategy)
 }
 
 func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_ModelWhitelistMatch() {
@@ -318,8 +321,8 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_ModelWhitel
 
 	templateVehicle := &models.TemplateVehicle{
 		TemplateName:   template.TemplateName,
-		MakeSlug:       null.StringFrom("Ford"),
-		ModelWhitelist: types.StringArray{"Mustang"},
+		MakeSlug:       null.StringFrom("ford"),
+		ModelWhitelist: types.StringArray{"mustang"},
 		YearStart:      2010,
 		YearEnd:        2025,
 	}
@@ -343,12 +346,13 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_ModelWhitel
 		},
 	}
 
-	fetchedTemplate, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice.CANProtocol, mockedUserDevice.PowerTrainType,
+	fetchedTemplate, strategy, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice.CANProtocol, mockedUserDevice.PowerTrainType,
 		mockedUserDevice.DeviceDefinitionId, vehicle)
 
 	require.NoError(s.T(), err)
 	assert.NotNil(s.T(), fetchedTemplate)
 	assert.Equal(s.T(), template.TemplateName, fetchedTemplate.TemplateName)
+	assert.Equal(s.T(), "vehicle and year mapping, makeSlug match, model match", strategy)
 }
 
 func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_YearRange() {
@@ -395,12 +399,13 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_YearRange()
 		},
 	}
 
-	fetchedTemplate, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice.CANProtocol, mockedUserDevice.PowerTrainType,
+	fetchedTemplate, strategy, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice.CANProtocol, mockedUserDevice.PowerTrainType,
 		mockedUserDevice.DeviceDefinitionId, vehicle)
 
 	require.NoError(s.T(), err)
 	assert.NotNil(s.T(), fetchedTemplate)
 	assert.Equal(s.T(), template.TemplateName, fetchedTemplate.TemplateName)
+	assert.Equal(s.T(), "vehicle and year mapping, protocol match", strategy)
 }
 
 func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_YearRange_Default() {
@@ -449,13 +454,14 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_YearRange_D
 		},
 	}
 
-	fetchedTemplate, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice.CANProtocol, mockedUserDevice.PowerTrainType,
+	fetchedTemplate, strategy, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice.CANProtocol, mockedUserDevice.PowerTrainType,
 		mockedUserDevice.DeviceDefinitionId, vehicle)
 
 	require.NoError(s.T(), err)
 	assert.NotNil(s.T(), fetchedTemplate)
 	// we want the default template
 	assert.Equal(s.T(), templateDefault.TemplateName, fetchedTemplate.TemplateName)
+	assert.Equal(s.T(), "protocol and powertrain match, default", strategy)
 }
 
 func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_MatchPowertrainProtocol() {
@@ -495,12 +501,13 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_MatchPowert
 		},
 	}
 
-	fetchedTemplate, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice.CANProtocol, mockedUserDevice.PowerTrainType,
+	fetchedTemplate, strategy, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice.CANProtocol, mockedUserDevice.PowerTrainType,
 		mockedUserDevice.DeviceDefinitionId, vehicle)
 
 	require.NoError(s.T(), err)
 	assert.NotNil(s.T(), fetchedTemplate)
 	assert.Equal(s.T(), template.TemplateName, fetchedTemplate.TemplateName)
+	assert.Equal(s.T(), "protocol and powertrain match, default", strategy)
 }
 
 func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_DefaultMatch() {
@@ -539,12 +546,13 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_DefaultMatc
 		},
 	}
 
-	fetchedTemplate, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice.CANProtocol, mockedUserDevice.PowerTrainType,
+	fetchedTemplate, strategy, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice.CANProtocol, mockedUserDevice.PowerTrainType,
 		mockedUserDevice.DeviceDefinitionId, vehicle)
 
 	require.NoError(s.T(), err)
 	assert.NotNil(s.T(), fetchedTemplate)
 	assert.Equal(s.T(), defaultTemplate.TemplateName, fetchedTemplate.TemplateName)
+	assert.Equal(s.T(), "protocol and powertrain match, default", strategy)
 }
 
 func Test_deviceTemplateService_buildConfigRoute(t *testing.T) {
