@@ -20,8 +20,6 @@ import (
 	"github.com/tidwall/gjson"
 	"golang.org/x/mod/semver"
 
-	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/common"
-
 	"github.com/volatiletech/sqlboiler/v4/types"
 
 	pb "github.com/DIMO-Network/devices-api/pkg/grpc"
@@ -159,7 +157,7 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 			Header:          headerUint32,
 			Mode:            modeUint32,
 			Pid:             pidUint32,
-			Formula:         common.PrependFormulaTypeDefault(pidConfig.Formula),
+			Formula:         pidConfig.Formula,
 			IntervalSeconds: uint32(pidConfig.IntervalSeconds),
 		}
 		// the pid can override the protocol, otherwise use one at template level.

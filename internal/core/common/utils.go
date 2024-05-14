@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
-	"strings"
 
 	"github.com/volatiletech/null/v8"
 )
@@ -29,19 +28,6 @@ func ResolveEtherumAddressFromString(etherumAddress string) ([]byte, error) {
 	}
 
 	return ethAddrBytes, nil
-}
-
-func PrependFormulaTypeDefault(formula string) string {
-	if len(formula) > 4 {
-		if strings.HasPrefix(formula, DBCFormulaType.String()) {
-			return formula
-		}
-		if strings.HasPrefix(formula, CustomFormulaType.String()) {
-			return formula
-		}
-		return DBCFormulaType.String() + ": " + formula
-	}
-	return formula
 }
 
 func RemoveSpecialCharacter(input string) string {
