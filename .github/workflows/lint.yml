@@ -20,8 +20,8 @@ jobs:
         uses: actions/checkout@v3
 
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v5
+        uses: golangci/golangci-lint-action@v6
         with:
           version: latest
           only-new-issues: false
-          args: --modules-download-mode=readonly -E prealloc -E revive -E goimports -E deadcode -E errcheck -E gosimple -E govet -E ineffassign -E staticcheck -E structcheck -E typecheck -E unused -E varcheck --timeout=5m
+          args: --modules-download-mode=readonly --timeout=5m

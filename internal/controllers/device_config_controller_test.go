@@ -363,7 +363,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLsFromVIN_EmptyDBC() {
 	s.mockDeviceTemplateSvc.EXPECT().ResolveDeviceConfiguration(gomock.Any(), mockedUserDevice, nil).Return(&appmodels.DeviceConfigResponse{
 		PidURL:           "http://localhost:3000/v1/device-config/pids/some-template-emptydbc@v1.0.0",
 		DeviceSettingURL: "http://localhost:3000/v1/device-config/settings/default-hev-emptydbc@v1.0.0",
-	}, nil)
+	}, "definition match", nil)
 
 	s.app.Get("/config-urls/:vin", s.controller.GetConfigURLsFromVIN)
 
@@ -429,7 +429,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLsFromVIN_DecodeVIN() {
 	}, nil).Return(&appmodels.DeviceConfigResponse{
 		PidURL:           "http://localhost:3000/v1/device-config/pids/some-template@v1.0.0",
 		DeviceSettingURL: "http://localhost:3000/v1/device-config/settings/default-hev@v1.0.0",
-	}, nil)
+	}, "definition match", nil)
 	s.app.Get("/config-urls/:vin", s.controller.GetConfigURLsFromVIN)
 
 	request := dbtest.BuildRequest("GET", "/config-urls/"+vin, "")
@@ -500,7 +500,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLsFromVIN_ProtocolOverr
 	}, nil).Return(&appmodels.DeviceConfigResponse{
 		PidURL:           "http://localhost:3000/v1/device-config/pids/some-template-protocol-override@v1.0.0",
 		DeviceSettingURL: "http://localhost:3000/v1/device-config/settings/default-hev-protocol-override@v1.0.0",
-	}, nil)
+	}, "something", nil)
 
 	s.app.Get("/config-urls/:vin", s.controller.GetConfigURLsFromVIN)
 
@@ -581,7 +581,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLsFromVIN_FallbackLogic
 	}, nil).Return(&appmodels.DeviceConfigResponse{
 		PidURL:           "http://localhost:3000/v1/device-config/pids/parent-template@v1.0.0",
 		DeviceSettingURL: "http://localhost:3000/v1/device-config/settings/parent-settings-fallback@v1.0.0",
-	}, nil)
+	}, "definition match", nil)
 
 	s.app.Get("/config-urls/:vin", s.controller.GetConfigURLsFromVIN)
 

@@ -30,7 +30,7 @@ import (
 //go:generate mockgen -source device_template_service.go -destination mocks/device_template_service_mock.go
 type DeviceTemplateService interface {
 	StoreDeviceConfigUsed(ctx context.Context, address common2.Address, dbcURL, pidURL, settingURL, firmwareVersion *string) (*models.DeviceTemplateStatus, error)
-	ResolveDeviceConfiguration(c *fiber.Ctx, ud *pb.UserDevice, vehicle *gateways.VehicleInfo) (*appmodels.DeviceConfigResponse, error)
+	ResolveDeviceConfiguration(c *fiber.Ctx, ud *pb.UserDevice, vehicle *gateways.VehicleInfo) (*appmodels.DeviceConfigResponse, string, error)
 	// todo: pass in a ResolveConfigRequest instead of pb.UserDevice - this is not tied to a user device
 
 	FindDirectDeviceToTemplateConfig(ctx context.Context, address common2.Address) *appmodels.DeviceConfigResponse
@@ -139,20 +139,20 @@ func (dts *deviceTemplateService) FindDirectDeviceToTemplateConfig(ctx context.C
 }
 
 // ResolveDeviceConfiguration figures out what template to return based on protocol, powertrain, vehicle or definition (vehicle could be nil)
-func (dts *deviceTemplateService) ResolveDeviceConfiguration(c *fiber.Ctx, ud *pb.UserDevice, vehicle *gateways.VehicleInfo) (*appmodels.DeviceConfigResponse, error) {
+func (dts *deviceTemplateService) ResolveDeviceConfiguration(c *fiber.Ctx, ud *pb.UserDevice, vehicle *gateways.VehicleInfo) (*appmodels.DeviceConfigResponse, string, error) {
 	canProtocl := convertCANProtocol(dts.log, ud.CANProtocol)
 	// todo (jreate): what about powertrain at the style level... But ideally it is stored at vehicle level. this could come from oracle?
 	powertrain, err := dts.retrievePowertrain(c.Context(), ud.DeviceDefinitionId)
 	if err != nil {
-		return nil, errors.Wrap(err, fmt.Sprintf("Failed to retrieve powertrain for ddid: %s", ud.DeviceDefinitionId))
+		return nil, "", errors.Wrap(err, fmt.Sprintf("Failed to retrieve powertrain for ddid: %s", ud.DeviceDefinitionId))
 	}
 
-	matchedTemplate, err := dts.selectAndFetchTemplate(c.Context(), canProtocl, powertrain, ud.DeviceDefinitionId, vehicle)
+	matchedTemplate, strategy, err := dts.selectAndFetchTemplate(c.Context(), canProtocl, powertrain, ud.DeviceDefinitionId, vehicle)
 	if err != nil {
-		return nil, err
+		return nil, strategy, err
 	}
 	if matchedTemplate == nil {
-		return nil, errors.New("matched template is nil")
+		return nil, strategy, errors.New("matched template is nil")
 	}
 
 	response := appmodels.DeviceConfigResponse{
@@ -175,7 +175,7 @@ func (dts *deviceTemplateService) ResolveDeviceConfiguration(c *fiber.Ctx, ud *p
 			deviceSetting, dbErr = models.DeviceSettings(models.DeviceSettingWhere.TemplateName.EQ(matchedTemplate.ParentTemplateName),
 				qm.OrderBy(models.DeviceSettingColumns.Name)).One(c.Context(), dts.db)
 			if dbErr != nil && !errors.Is(dbErr, sql.ErrNoRows) {
-				return nil, errors.Wrap(dbErr, "Failed to retrieve device setting for parent template")
+				return nil, strategy, errors.Wrap(dbErr, "Failed to retrieve device setting for parent template")
 			}
 		}
 
@@ -194,17 +194,14 @@ func (dts *deviceTemplateService) ResolveDeviceConfiguration(c *fiber.Ctx, ud *p
 				deviceSetting, dbErr = models.DeviceSettings(qm.OrderBy(models.DeviceSettingColumns.Name)).One(c.Context(), dts.db)
 			}
 			if dbErr != nil {
-				return nil, errors.Wrap(err, fmt.Sprintf("Failed to retrieve device setting. Powertrain: %s", pt))
+				return nil, strategy, errors.Wrap(err, fmt.Sprintf("Failed to retrieve device setting. Powertrain: %s", pt))
 			}
 		}
 		// device settings have a name key separate from templateName since simpler setup
 		response.DeviceSettingURL = dts.buildConfigRoute(Setting, deviceSetting.Name, deviceSetting.Version)
 	}
 
-	dts.log.Info().Str("vin", *ud.Vin).Msgf(fmt.Sprintf("template configuration urls for VIN %s, dbc: %s, pids: %s, settings: %s",
-		*ud.Vin, response.DbcURL, response.PidURL, response.DeviceSettingURL))
-
-	return &response, nil
+	return &response, strategy, nil
 }
 
 type configType string
@@ -242,13 +239,14 @@ func (dts *deviceTemplateService) retrievePowertrain(ctx context.Context, device
 
 // selectAndFetchTemplate figures out the right template to use based on the protocol, powertrain, year range, make, and /or model.
 // Returns default template if nothing found. Requirees ud.CANProtocol and Powertrain to be set to something
-func (dts *deviceTemplateService) selectAndFetchTemplate(ctx context.Context, canProtocol, powertrain, definitionID string, vehicle *gateways.VehicleInfo) (*models.Template, error) {
+func (dts *deviceTemplateService) selectAndFetchTemplate(ctx context.Context, canProtocol, powertrain, definitionID string, vehicle *gateways.VehicleInfo) (*models.Template, string, error) {
+	strategy := "" // strategy used to find right template
 	// guard
 	if canProtocol == "" {
-		return nil, fmt.Errorf("CANProtocol is required in the user device")
+		return nil, strategy, fmt.Errorf("CANProtocol is required in the user device")
 	}
 	if powertrain == "" {
-		return nil, fmt.Errorf("PowerTrainType is required in the user device")
+		return nil, strategy, fmt.Errorf("PowerTrainType is required in the user device")
 	}
 
 	var matchedTemplateName string
@@ -259,11 +257,12 @@ func (dts *deviceTemplateService) selectAndFetchTemplate(ctx context.Context, ca
 	).All(ctx, dts.db)
 
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return nil, fmt.Errorf("failed to query template device definitions: %w", err)
+		return nil, strategy, fmt.Errorf("failed to query template device definitions: %w", err)
 	}
 
 	if len(deviceDefinitions) > 0 {
 		matchedTemplateName = deviceDefinitions[0].TemplateName
+		strategy = "definition mapping"
 	}
 	year := 0
 	mk := ""
@@ -271,7 +270,7 @@ func (dts *deviceTemplateService) selectAndFetchTemplate(ctx context.Context, ca
 	if vehicle == nil {
 		definition, err := dts.deviceDefSvc.GetDeviceDefinitionByID(ctx, definitionID)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to query device definition %s", definitionID)
+			return nil, strategy, errors.Wrapf(err, "failed to query device definition %s", definitionID)
 		}
 		year = int(definition.Type.Year)
 		mk = definition.Type.Make
@@ -292,27 +291,39 @@ func (dts *deviceTemplateService) selectAndFetchTemplate(ctx context.Context, ca
 		).All(ctx, dts.db)
 
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf("failed to query templates for vehicle: %s: %w", fmt.Sprintf("%d %s %s", year, mk, model), err)
+			return nil, strategy, fmt.Errorf("failed to query templates for vehicle: %s: %w", fmt.Sprintf("%d %s %s", year, mk, model), err)
 		}
-		// if anything is returned, try finding a match by make and/or model
+		if len(templateVehicles) > 0 {
+			strategy = "vehicle and year mapping"
+		}
+		// try finding a match by make and/or model
 		for _, tv := range templateVehicles {
-			// any matches for year & same protocol
-			if tv.R.TemplateNameTemplate.Protocol == canProtocol {
+			// match by make and/or model
+			if tv.MakeSlug.String == shared.SlugString(mk) {
 				matchedTemplateName = tv.TemplateName
-				// now any matches for make
-				if tv.MakeSlug.String == shared.SlugString(mk) {
-					matchedTemplateName = tv.TemplateName
-					// now see if there is also a model slug match
-					if modelMatch(tv.ModelWhitelist, shared.SlugString(model)) {
-						break
+				strategy += ", makeSlug match"
+				// now see if there is also a model slug match
+				if modelMatch(tv.ModelWhitelist, shared.SlugString(model)) {
+					strategy += ", model match"
+					break
+				}
+			}
+		}
+		// if no matches, try casting a wider net matching by protocol, but only for templates that don't have a make assigned
+		if matchedTemplateName == "" {
+			for _, tv := range templateVehicles {
+				if tv.MakeSlug.IsZero() {
+					// any matches for same protocol if nothing make or model specific
+					if tv.R.TemplateNameTemplate.Protocol == canProtocol {
+						matchedTemplateName = tv.TemplateName
+						strategy += ", protocol match"
 					}
 				}
 			}
 		}
 
 	}
-	// todo here is the problem - we're not filtering by "default" and powertrain and canprotocol
-	// todo thought: iterate again after filtering by powertrain for "default" startword.
+
 	// Third, default templates come into play: fallback to query by protocol, 'default' as first word, and powertrain
 	if matchedTemplateName == "" {
 		templates, err := models.Templates(
@@ -322,13 +333,14 @@ func (dts *deviceTemplateService) selectAndFetchTemplate(ctx context.Context, ca
 		).All(ctx, dts.db)
 
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf("failed to query templates for protocol: %s and powertrain: %s: %w", canProtocol, powertrain, err)
+			return nil, strategy, fmt.Errorf("failed to query templates for protocol: %s and powertrain: %s: %w", canProtocol, powertrain, err)
 		}
 		if len(templates) == 0 {
-			return nil, fmt.Errorf("configuration error - no default template found for protocol: %s and powertrain: %s", canProtocol, powertrain)
+			return nil, strategy, fmt.Errorf("configuration error - no default template found for protocol: %s and powertrain: %s", canProtocol, powertrain)
 		}
 		if len(templates) > 0 {
 			matchedTemplateName = templates[0].TemplateName
+			strategy = "protocol and powertrain match, default"
 		}
 		if len(templates) > 1 {
 			dts.log.Warn().Msgf("more than one default template found for protocol: %s and powertrain: %s (%d templates found)", canProtocol, powertrain, len(templates))
@@ -342,16 +354,16 @@ func (dts *deviceTemplateService) selectAndFetchTemplate(ctx context.Context, ca
 		qm.Load(models.TemplateRels.TemplateNameDeviceSettings),
 	).One(ctx, dts.db)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch template by name %s: %w", matchedTemplateName, err)
+		return nil, strategy, fmt.Errorf("failed to fetch template by name %s: %w", matchedTemplateName, err)
 	}
 
-	return matchedTemplate, nil
+	return matchedTemplate, strategy, nil
 }
 
 // modelMatch simply returns if the modelName is in the model List
-func modelMatch(modelList types.StringArray, modelName string) bool {
+func modelMatch(modelList types.StringArray, modelSlug string) bool {
 	for _, m := range modelList {
-		if strings.EqualFold(m, modelName) {
+		if strings.EqualFold(m, modelSlug) {
 			return true
 		}
 	}
