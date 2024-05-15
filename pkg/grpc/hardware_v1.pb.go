@@ -35,6 +35,7 @@ type DeviceSetting struct {
 	SleepTimerInactivityFallbackIntervalSecs float32 `protobuf:"fixed32,7,opt,name=sleep_timer_inactivity_fallback_interval_secs,json=sleepTimerInactivityFallbackIntervalSecs,proto3" json:"sleep_timer_inactivity_fallback_interval_secs,omitempty"`
 	WakeTriggerVoltageLevel                  float32 `protobuf:"fixed32,8,opt,name=wake_trigger_voltage_level,json=wakeTriggerVoltageLevel,proto3" json:"wake_trigger_voltage_level,omitempty"`
 	MinVoltageObdLoggers                     float32 `protobuf:"fixed32,9,opt,name=min_voltage_obd_loggers,json=minVoltageObdLoggers,proto3" json:"min_voltage_obd_loggers,omitempty"`
+	LocationFrequencySecs                    float32 `protobuf:"fixed32,10,opt,name=location_frequency_secs,json=locationFrequencySecs,proto3" json:"location_frequency_secs,omitempty"`
 }
 
 func (x *DeviceSetting) Reset() {
@@ -121,6 +122,13 @@ func (x *DeviceSetting) GetSleepTimerInactivityFallbackIntervalSecs() float32 {
 func (x *DeviceSetting) GetWakeTriggerVoltageLevel() float32 {
 	if x != nil {
 		return x.WakeTriggerVoltageLevel
+	}
+	return 0
+}
+
+func (x *DeviceSetting) GetLocationFrequencySecs() float32 {
+	if x != nil {
+		return x.LocationFrequencySecs
 	}
 	return 0
 }
