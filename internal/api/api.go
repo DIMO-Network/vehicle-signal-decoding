@@ -154,7 +154,9 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 		StackTraceHandler: nil,
 	}))
 	app.Use(cors.New())
-
+	app.Get("/", func(c *fiber.Ctx) error {
+		return c.Status(fiber.StatusOK).SendString("healthy")
+	})
 	app.Get("/health", func(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusOK).SendString("healthy")
 	})
