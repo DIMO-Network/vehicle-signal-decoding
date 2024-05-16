@@ -235,6 +235,10 @@ func (d *DeviceConfigController) GetDeviceSettingsByName(c *fiber.Ctx) error {
 		settings.MinVoltageOBDLoggers = 13.3
 	}
 
+	if settings.LocationFrequencySecs == 0 {
+		settings.LocationFrequencySecs = 20
+	}
+
 	protoDeviceSettings := &grpc.DeviceSetting{
 		TemplateName:                             dbDeviceSettings.Name, // in future add a Name field, once safe to change proto
 		SafetyCutOutVoltage:                      float32(settings.SafetyCutOutVoltage),
