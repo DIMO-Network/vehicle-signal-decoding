@@ -18,6 +18,7 @@ message DeviceSetting {
   float sleep_timer_inactivity_fallback_interval_secs = 7;
   float wake_trigger_voltage_level = 8;
   float min_voltage_obd_loggers = 9;
+  float location_frequency_secs = 10;
 }
 
 // PIDs configuration for device to query obd

@@ -17,3 +17,6 @@ vendor/
 
 # ignore settings file as it could contain secrets
 settings.yaml
+
+# ignore .idea directory
+.idea/

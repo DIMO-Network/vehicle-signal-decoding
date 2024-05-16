@@ -22,4 +22,5 @@ type SettingsData struct {
 	SleepTimerEventDrivenPeriodSecs float64 `json:"sleep_timer_event_driven_period_secs"` //nolint
 	WakeTriggerVoltageLevel         float64 `json:"wake_trigger_voltage_level"`           //nolint
 	MinVoltageOBDLoggers            float64 `json:"min_voltage_obd_loggers"`              //nolint
+	LocationFrequencySecs           float64 `json:"location_frequency_secs"`              //nolint
 }

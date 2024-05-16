@@ -235,6 +235,10 @@ func (d *DeviceConfigController) GetDeviceSettingsByName(c *fiber.Ctx) error {
 		settings.MinVoltageOBDLoggers = 13.3
 	}
 
+	if settings.LocationFrequencySecs == 0 {
+		settings.LocationFrequencySecs = 20
+	}
+
 	protoDeviceSettings := &grpc.DeviceSetting{
 		TemplateName:                             dbDeviceSettings.Name, // in future add a Name field, once safe to change proto
 		SafetyCutOutVoltage:                      float32(settings.SafetyCutOutVoltage),
@@ -244,6 +248,7 @@ func (d *DeviceConfigController) GetDeviceSettingsByName(c *fiber.Ctx) error {
 		SleepTimerInactivityAfterSleepSecs:       float32(21600),
 		SleepTimerInactivityFallbackIntervalSecs: float32(21600),
 		MinVoltageObdLoggers:                     float32(settings.MinVoltageOBDLoggers),
+		LocationFrequencySecs:                    float32(settings.LocationFrequencySecs),
 		//TemplateName: dbDeviceSettings.TemplateName.String, // in future we could do this, could be empty
 		//Version: "v1.0.1", // for future - once safe to change proto file
 	}
