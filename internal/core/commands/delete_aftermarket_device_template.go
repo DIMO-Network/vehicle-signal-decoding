@@ -23,7 +23,6 @@ func NewDeleteAftermarketDeviceTemplateCommandHandler(dbs func() *db.ReaderWrite
 func (h *DeleteAftermarketDeviceTemplateCommandHandler) Execute(ctx context.Context, cmd DeleteAftermarketDeviceTemplateCommand) error {
 	_, err := models.AftermarketDeviceToTemplates(
 		models.AftermarketDeviceToTemplateWhere.AftermarketDeviceEthereumAddress.EQ(cmd.AftermarketDeviceEthereumAddress),
-		models.AftermarketDeviceToTemplateWhere.TemplateName.EQ(cmd.TemplateName),
 	).DeleteAll(ctx, h.DBS().Writer)
 
 	if err != nil {
