@@ -37,6 +37,7 @@ type PidConfig struct {
 	SignalName           string      `boil:"signal_name" json:"signal_name" toml:"signal_name" yaml:"signal_name"`
 	CanFlowControlClear  null.Bool   `boil:"can_flow_control_clear" json:"can_flow_control_clear,omitempty" toml:"can_flow_control_clear" yaml:"can_flow_control_clear,omitempty"`
 	CanFlowControlIDPair null.String `boil:"can_flow_control_id_pair" json:"can_flow_control_id_pair,omitempty" toml:"can_flow_control_id_pair" yaml:"can_flow_control_id_pair,omitempty"`
+	Enabled              bool        `boil:"enabled" json:"enabled" toml:"enabled" yaml:"enabled"`
 
 	R *pidConfigR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L pidConfigL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -56,6 +57,7 @@ var PidConfigColumns = struct {
 	SignalName           string
 	CanFlowControlClear  string
 	CanFlowControlIDPair string
+	Enabled              string
 }{
 	ID:                   "id",
 	TemplateName:         "template_name",
@@ -70,6 +72,7 @@ var PidConfigColumns = struct {
 	SignalName:           "signal_name",
 	CanFlowControlClear:  "can_flow_control_clear",
 	CanFlowControlIDPair: "can_flow_control_id_pair",
+	Enabled:              "enabled",
 }
 
 var PidConfigTableColumns = struct {
@@ -86,6 +89,7 @@ var PidConfigTableColumns = struct {
 	SignalName           string
 	CanFlowControlClear  string
 	CanFlowControlIDPair string
+	Enabled              string
 }{
 	ID:                   "pid_configs.id",
 	TemplateName:         "pid_configs.template_name",
@@ -100,6 +104,7 @@ var PidConfigTableColumns = struct {
 	SignalName:           "pid_configs.signal_name",
 	CanFlowControlClear:  "pid_configs.can_flow_control_clear",
 	CanFlowControlIDPair: "pid_configs.can_flow_control_id_pair",
+	Enabled:              "pid_configs.enabled",
 }
 
 // Generated where
@@ -165,6 +170,7 @@ var PidConfigWhere = struct {
 	SignalName           whereHelperstring
 	CanFlowControlClear  whereHelpernull_Bool
 	CanFlowControlIDPair whereHelpernull_String
+	Enabled              whereHelperbool
 }{
 	ID:                   whereHelperint64{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"id\""},
 	TemplateName:         whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"template_name\""},
@@ -179,6 +185,7 @@ var PidConfigWhere = struct {
 	SignalName:           whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"signal_name\""},
 	CanFlowControlClear:  whereHelpernull_Bool{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"can_flow_control_clear\""},
 	CanFlowControlIDPair: whereHelpernull_String{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"can_flow_control_id_pair\""},
+	Enabled:              whereHelperbool{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"enabled\""},
 }
 
 // PidConfigRels is where relationship names are stored.
@@ -209,9 +216,9 @@ func (r *pidConfigR) GetTemplateNameTemplate() *Template {
 type pidConfigL struct{}
 
 var (
-	pidConfigAllColumns            = []string{"id", "template_name", "header", "mode", "pid", "formula", "interval_seconds", "protocol", "created_at", "updated_at", "signal_name", "can_flow_control_clear", "can_flow_control_id_pair"}
+	pidConfigAllColumns            = []string{"id", "template_name", "header", "mode", "pid", "formula", "interval_seconds", "protocol", "created_at", "updated_at", "signal_name", "can_flow_control_clear", "can_flow_control_id_pair", "enabled"}
 	pidConfigColumnsWithoutDefault = []string{"template_name", "pid", "formula", "interval_seconds", "signal_name"}
-	pidConfigColumnsWithDefault    = []string{"id", "header", "mode", "protocol", "created_at", "updated_at", "can_flow_control_clear", "can_flow_control_id_pair"}
+	pidConfigColumnsWithDefault    = []string{"id", "header", "mode", "protocol", "created_at", "updated_at", "can_flow_control_clear", "can_flow_control_id_pair", "enabled"}
 	pidConfigPrimaryKeyColumns     = []string{"id"}
 	pidConfigGeneratedColumns      = []string{}
 )
@@ -965,7 +972,7 @@ func (o PidConfigSlice) UpdateAll(ctx context.Context, exec boil.ContextExecutor
 
 // Upsert attempts an insert using an executor, and does an update or ignore on conflict.
 // See boil.Columns documentation for how to properly use updateColumns and insertColumns.
-func (o *PidConfig) Upsert(ctx context.Context, exec boil.ContextExecutor, updateOnConflict bool, conflictColumns []string, updateColumns, insertColumns boil.Columns, opts ...UpsertOptionFunc) error {
+func (o *PidConfig) Upsert(ctx context.Context, exec boil.ContextExecutor, updateOnConflict bool, conflictColumns []string, updateColumns, insertColumns boil.Columns) error {
 	if o == nil {
 		return errors.New("models: no pid_configs provided for upsert")
 	}
@@ -1019,7 +1026,7 @@ func (o *PidConfig) Upsert(ctx context.Context, exec boil.ContextExecutor, updat
 	var err error
 
 	if !cached {
-		insert, _ := insertColumns.InsertColumnSet(
+		insert, ret := insertColumns.InsertColumnSet(
 			pidConfigAllColumns,
 			pidConfigColumnsWithDefault,
 			pidConfigColumnsWithoutDefault,
@@ -1035,18 +1042,12 @@ func (o *PidConfig) Upsert(ctx context.Context, exec boil.ContextExecutor, updat
 			return errors.New("models: unable to upsert pid_configs, could not build update column list")
 		}
 
-		ret := strmangle.SetComplement(pidConfigAllColumns, strmangle.SetIntersect(insert, update))
-
 		conflict := conflictColumns
-		if len(conflict) == 0 && updateOnConflict && len(update) != 0 {
-			if len(pidConfigPrimaryKeyColumns) == 0 {
-				return errors.New("models: unable to upsert pid_configs, could not build conflict column list")
-			}
-
+		if len(conflict) == 0 {
 			conflict = make([]string, len(pidConfigPrimaryKeyColumns))
 			copy(conflict, pidConfigPrimaryKeyColumns)
 		}
-		cache.query = buildUpsertQueryPostgres(dialect, "\"vehicle_signal_decoding_api\".\"pid_configs\"", updateOnConflict, ret, update, conflict, insert, opts...)
+		cache.query = buildUpsertQueryPostgres(dialect, "\"vehicle_signal_decoding_api\".\"pid_configs\"", updateOnConflict, ret, update, conflict, insert)
 
 		cache.valueMapping, err = queries.BindMapping(pidConfigType, pidConfigMapping, insert)
 		if err != nil {

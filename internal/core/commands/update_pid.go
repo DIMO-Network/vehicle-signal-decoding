@@ -34,6 +34,7 @@ type UpdatePidCommandRequest struct {
 	SignalName           string
 	CanFlowControlClear  *bool
 	CanFlowControlIDPair *string
+	Enabled              bool
 }
 
 type UpdatePidCommandResponse struct {
@@ -53,6 +54,7 @@ func (h UpdatePidCommandHandler) Execute(ctx context.Context, req *UpdatePidComm
 			Err: err,
 		}
 	}
+
 	pid.ID = req.ID
 	pid.TemplateName = req.TemplateName
 	pid.Header = req.Header
@@ -62,6 +64,7 @@ func (h UpdatePidCommandHandler) Execute(ctx context.Context, req *UpdatePidComm
 	pid.IntervalSeconds = int(req.IntervalSeconds)
 	pid.Protocol = null.StringFromPtr(req.Protocol)
 	pid.SignalName = req.SignalName
+	pid.Enabled = req.Enabled
 
 	canFlowControlClear := null.BoolFromPtr(req.CanFlowControlClear)
 	canFlowControlIDPair := null.StringFromPtr(req.CanFlowControlIDPair)
