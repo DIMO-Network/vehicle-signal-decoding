@@ -69,7 +69,6 @@ func (h *GetPidAllQueryHandler) Handle(ctx context.Context, request *GetPidAllQu
 func (h *GetPidAllQueryHandler) getPidsByTemplate(ctx context.Context, templateName string) ([]*grpc.PidSummary, error) {
 	allPidConfigs, err := models.PidConfigs(
 		models.PidConfigWhere.TemplateName.EQ(templateName),
-		models.PidConfigWhere.Enabled.EQ(true),
 		qm.OrderBy(models.PidConfigColumns.SignalName),
 	).All(ctx, h.DBS().Reader)
 
@@ -92,6 +91,7 @@ func (h *GetPidAllQueryHandler) getPidsByTemplate(ctx context.Context, templateN
 			SignalName:           item.SignalName,
 			CanFlowControlClear:  item.CanFlowControlClear.Bool,
 			CanFlowControlIdPair: item.CanFlowControlIDPair.String,
+			Enabled:              item.Enabled,
 		})
 	}
 

@@ -105,3 +105,16 @@ func (s *PidConfigService) DeletePid(ctx context.Context, in *grpc.DeletePidRequ
 
 	return &emptypb.Empty{}, nil
 }
+
+func (s *PidConfigService) ChangePidEnableStatus(ctx context.Context, in *grpc.ChangePidEnableStatusRequest) (*emptypb.Empty, error) {
+	service := commands.NewUpdateEnableStatusPidCommandHandler(s.dbs)
+	err := service.Execute(ctx, &commands.UpdateEnableStatusPidCommandRequest{
+		ID: in.Id,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &emptypb.Empty{}, nil
+}
