@@ -67,7 +67,11 @@ func (h *GetPidAllQueryHandler) Handle(ctx context.Context, request *GetPidAllQu
 }
 
 func (h *GetPidAllQueryHandler) getPidsByTemplate(ctx context.Context, templateName string) ([]*grpc.PidSummary, error) {
-	allPidConfigs, err := models.PidConfigs(models.PidConfigWhere.TemplateName.EQ(templateName), qm.OrderBy(models.PidConfigColumns.SignalName)).All(ctx, h.DBS().Reader)
+	allPidConfigs, err := models.PidConfigs(
+		models.PidConfigWhere.TemplateName.EQ(templateName),
+		models.PidConfigWhere.Enabled.EQ(true),
+		qm.OrderBy(models.PidConfigColumns.SignalName),
+	).All(ctx, h.DBS().Reader)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to get PidConfigs: %w", err)
