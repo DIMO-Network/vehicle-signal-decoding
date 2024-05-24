@@ -1313,7 +1313,7 @@ func (o *Template) AddTemplateNameAftermarketDeviceToTemplates(ctx context.Conte
 				strmangle.SetParamNames("\"", "\"", 1, []string{"template_name"}),
 				strmangle.WhereClause("\"", "\"", 2, aftermarketDeviceToTemplatePrimaryKeyColumns),
 			)
-			values := []interface{}{o.TemplateName, rel.AftermarketDeviceEthereumAddress, rel.TemplateName}
+			values := []interface{}{o.TemplateName, rel.AftermarketDeviceEthereumAddress}
 
 			if boil.IsDebug(ctx) {
 				writer := boil.DebugWriterFrom(ctx)
@@ -1900,7 +1900,7 @@ func (o TemplateSlice) UpdateAll(ctx context.Context, exec boil.ContextExecutor,
 
 // Upsert attempts an insert using an executor, and does an update or ignore on conflict.
 // See boil.Columns documentation for how to properly use updateColumns and insertColumns.
-func (o *Template) Upsert(ctx context.Context, exec boil.ContextExecutor, updateOnConflict bool, conflictColumns []string, updateColumns, insertColumns boil.Columns, opts ...UpsertOptionFunc) error {
+func (o *Template) Upsert(ctx context.Context, exec boil.ContextExecutor, updateOnConflict bool, conflictColumns []string, updateColumns, insertColumns boil.Columns) error {
 	if o == nil {
 		return errors.New("models: no templates provided for upsert")
 	}
@@ -1954,7 +1954,7 @@ func (o *Template) Upsert(ctx context.Context, exec boil.ContextExecutor, update
 	var err error
 
 	if !cached {
-		insert, _ := insertColumns.InsertColumnSet(
+		insert, ret := insertColumns.InsertColumnSet(
 			templateAllColumns,
 			templateColumnsWithDefault,
 			templateColumnsWithoutDefault,
@@ -1970,18 +1970,12 @@ func (o *Template) Upsert(ctx context.Context, exec boil.ContextExecutor, update
 			return errors.New("models: unable to upsert templates, could not build update column list")
 		}
 
-		ret := strmangle.SetComplement(templateAllColumns, strmangle.SetIntersect(insert, update))
-
 		conflict := conflictColumns
-		if len(conflict) == 0 && updateOnConflict && len(update) != 0 {
-			if len(templatePrimaryKeyColumns) == 0 {
-				return errors.New("models: unable to upsert templates, could not build conflict column list")
-			}
-
+		if len(conflict) == 0 {
 			conflict = make([]string, len(templatePrimaryKeyColumns))
 			copy(conflict, templatePrimaryKeyColumns)
 		}
-		cache.query = buildUpsertQueryPostgres(dialect, "\"vehicle_signal_decoding_api\".\"templates\"", updateOnConflict, ret, update, conflict, insert, opts...)
+		cache.query = buildUpsertQueryPostgres(dialect, "\"vehicle_signal_decoding_api\".\"templates\"", updateOnConflict, ret, update, conflict, insert)
 
 		cache.valueMapping, err = queries.BindMapping(templateType, templateMapping, insert)
 		if err != nil {

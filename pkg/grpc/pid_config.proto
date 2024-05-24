@@ -23,6 +23,7 @@ message PidConfig {
   google.protobuf.Timestamp updated_at = 12;
   optional bool can_flow_control_clear = 13;
   optional string can_flow_control_id_pair = 14;
+  bool enabled = 15;
 }
 
 message PidSummary {
