@@ -39,6 +39,7 @@ message PidSummary {
   bool is_parent_pid = 10;
   bool can_flow_control_clear = 11;
   string can_flow_control_id_pair = 12;
+  bool enabled = 13;
 }
 
 message GetPidListRequest {
@@ -66,12 +67,17 @@ message DeletePidRequest {
   string template_name = 2;
 }
 
+message ChangePidEnableStatusRequest {
+  int64 id = 1;
+}
+
 service PidConfigService {
 rpc CreatePid (UpdatePidRequest) returns (google.protobuf.Empty);
 rpc UpdatePid (UpdatePidRequest) returns (google.protobuf.Empty);
 rpc GetPidList (GetPidListRequest) returns (GetPidListResponse);
 rpc GetPidByID (GetPidByIDRequest) returns (GetPidByIDResponse);
 rpc DeletePid (DeletePidRequest) returns (google.protobuf.Empty);
+rpc ChangePidEnableStatus (ChangePidEnableStatusRequest) returns (google.protobuf.Empty);
 }
 
 

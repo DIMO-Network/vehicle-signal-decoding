@@ -103,6 +103,7 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 
 	pidConfigs, err := models.PidConfigs(
 		models.PidConfigWhere.TemplateName.EQ(templateName),
+		models.PidConfigWhere.Enabled.EQ(true),
 	).All(c.Context(), d.db)
 
 	if err != nil {
