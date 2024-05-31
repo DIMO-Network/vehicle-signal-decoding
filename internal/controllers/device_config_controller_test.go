@@ -163,6 +163,101 @@ func (s *DeviceConfigControllerTestSuite) TestGetPIDsByTemplate() {
 	s.Equal(template.Version, pids.Version)
 }
 
+func (s *DeviceConfigControllerTestSuite) TestGetPIDsByParentTemplate() {
+
+	levelTemplate1 := models.Template{
+		TemplateName: "levelTemplate1",
+		Version:      "1.0",
+		Protocol:     models.CanProtocolTypeCAN11_500,
+		Powertrain:   "ICE",
+	}
+	err := levelTemplate1.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	s.Require().NoError(err)
+
+	pcLevel1 := models.PidConfig{
+		ID:              2,
+		SignalName:      "aux_battery_soc",
+		TemplateName:    levelTemplate1.TemplateName,
+		Header:          []byte{0x07, 0xdf},
+		Mode:            []byte{0x01},
+		Pid:             []byte{0xa6},
+		Formula:         "A*3",
+		IntervalSeconds: 60,
+		Protocol:        null.StringFrom(models.CanProtocolTypeCAN11_500),
+	}
+
+	err = pcLevel1.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	s.Require().NoError(err)
+
+	levelTemplate2 := models.Template{
+		TemplateName:       "levelTemplate2",
+		ParentTemplateName: null.StringFrom(levelTemplate1.TemplateName),
+		Version:            "1.0",
+		Protocol:           models.CanProtocolTypeCAN11_500,
+		Powertrain:         "ICE",
+	}
+	err = levelTemplate2.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	s.Require().NoError(err)
+
+	pcLevel2 := models.PidConfig{
+		ID:              3,
+		SignalName:      "aux_battery_voltage",
+		TemplateName:    levelTemplate2.TemplateName,
+		Header:          []byte{0x07, 0xdf},
+		Mode:            []byte{0x01},
+		Pid:             []byte{0xa6},
+		Formula:         "A*4",
+		IntervalSeconds: 60,
+		Protocol:        null.StringFrom(models.CanProtocolTypeCAN11_500),
+	}
+
+	err = pcLevel2.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	s.Require().NoError(err)
+
+	template := models.Template{
+		TemplateName:       "exampleTemplate",
+		ParentTemplateName: null.StringFrom(levelTemplate2.TemplateName),
+		Version:            "1.0",
+		Protocol:           models.CanProtocolTypeCAN11_500,
+		Powertrain:         "ICE",
+	}
+	err = template.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	s.Require().NoError(err)
+
+	pc := models.PidConfig{
+		ID:              1,
+		SignalName:      "odometer",
+		TemplateName:    template.TemplateName,
+		Header:          []byte{0x07, 0xdf},
+		Mode:            []byte{0x01},
+		Pid:             []byte{0xa6},
+		Formula:         "A*5",
+		IntervalSeconds: 60,
+		Protocol:        null.StringFrom(models.CanProtocolTypeCAN11_500),
+	}
+
+	err = pc.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	s.Require().NoError(err)
+
+	s.app.Get("/device-config/:templateName/pids", s.controller.GetPIDsByTemplate)
+
+	request := dbtest.BuildRequest("GET", "/device-config/"+template.TemplateName+"/pids", "")
+	response, err := s.app.Test(request)
+	s.Require().NoError(err)
+
+	body, err := io.ReadAll(response.Body)
+	s.Require().NoError(err)
+
+	s.Equal(fiber.StatusOK, response.StatusCode)
+	pids := grpc.PIDRequests{}
+	err = json.Unmarshal(body, &pids)
+	s.Require().NoError(err)
+
+	s.Equal(3, len(pids.Requests))
+
+	s.Equal(template.Version, pids.Version)
+}
+
 func (s *DeviceConfigControllerTestSuite) TestGetPIDsByTemplate_InheritProtocol() {
 
 	template := models.Template{
