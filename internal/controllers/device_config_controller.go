@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"io"
 	"strings"
 	"time"
@@ -101,30 +102,34 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 		return errors.Wrapf(err, "Failed to retrieve Template %s", templateName)
 	}
 
-	pidConfigs, err := models.PidConfigs(
-		models.PidConfigWhere.TemplateName.EQ(templateName),
-		models.PidConfigWhere.Enabled.EQ(true),
-	).All(c.Context(), d.db)
+	var templates []models.Template
+	currentTemplate := template
+	for {
+		templates = append(templates, *currentTemplate)
 
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return fiber.NewError(fiber.StatusNotFound, "No PID data found for the given template name.")
+		if currentTemplate.ParentTemplateName.Valid {
+			currentTemplate, err = models.FindTemplate(c.Context(), d.db, currentTemplate.ParentTemplateName.String)
+			if err != nil {
+				if errors.Is(err, sql.ErrNoRows) {
+					break
+				}
+				return errors.Wrapf(err, "Failed to retrieve parent Template %s", currentTemplate.ParentTemplateName.String)
+			}
+		} else {
+			break
 		}
-		return errors.Wrap(err, "Failed to retrieve PID Configs")
 	}
 
-	// Check if template has a parent and retrieve its PID configs
-	if template.ParentTemplateName.Valid {
-		pidConfigsParent, err := models.PidConfigs(
-			models.PidConfigWhere.TemplateName.EQ(template.ParentTemplateName.String),
-		).All(c.Context(), d.db)
+	templateNames := make([]interface{}, len(templates))
+	for i, tmpl := range templates {
+		templateNames[i] = tmpl.TemplateName
+	}
 
-		if err != nil && !errors.Is(err, sql.ErrNoRows) {
-			return errors.Wrap(err, "Failed to retrieve Parent PID Configs")
-		}
-
-		// Append the parent pidConfigs to the original pidConfigs
-		pidConfigs = append(pidConfigs, pidConfigsParent...)
+	pidConfigs, err := models.PidConfigs(
+		qm.WhereIn("template_name IN ?", templateNames...),
+	).All(c.Context(), d.db)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return errors.Wrap(err, "Failed to retrieve PID Configs")
 	}
 
 	protoPIDs := &grpc.PIDRequests{
