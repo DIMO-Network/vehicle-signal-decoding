@@ -92,6 +92,7 @@ func (h *GetPidAllQueryHandler) getPidsByTemplate(ctx context.Context, templateN
 			CanFlowControlClear:  item.CanFlowControlClear.Bool,
 			CanFlowControlIdPair: item.CanFlowControlIDPair.String,
 			Enabled:              item.Enabled,
+			VssCovesaName:        item.VSSCovesaName.String,
 		})
 	}
 
