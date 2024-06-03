@@ -38,6 +38,7 @@ type PidConfig struct {
 	CanFlowControlClear  null.Bool   `boil:"can_flow_control_clear" json:"can_flow_control_clear,omitempty" toml:"can_flow_control_clear" yaml:"can_flow_control_clear,omitempty"`
 	CanFlowControlIDPair null.String `boil:"can_flow_control_id_pair" json:"can_flow_control_id_pair,omitempty" toml:"can_flow_control_id_pair" yaml:"can_flow_control_id_pair,omitempty"`
 	Enabled              bool        `boil:"enabled" json:"enabled" toml:"enabled" yaml:"enabled"`
+	VSSCovesaName        null.String `boil:"vss_covesa_name" json:"vss_covesa_name,omitempty" toml:"vss_covesa_name" yaml:"vss_covesa_name,omitempty"`
 
 	R *pidConfigR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L pidConfigL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -58,6 +59,7 @@ var PidConfigColumns = struct {
 	CanFlowControlClear  string
 	CanFlowControlIDPair string
 	Enabled              string
+	VSSCovesaName        string
 }{
 	ID:                   "id",
 	TemplateName:         "template_name",
@@ -73,6 +75,7 @@ var PidConfigColumns = struct {
 	CanFlowControlClear:  "can_flow_control_clear",
 	CanFlowControlIDPair: "can_flow_control_id_pair",
 	Enabled:              "enabled",
+	VSSCovesaName:        "vss_covesa_name",
 }
 
 var PidConfigTableColumns = struct {
@@ -90,6 +93,7 @@ var PidConfigTableColumns = struct {
 	CanFlowControlClear  string
 	CanFlowControlIDPair string
 	Enabled              string
+	VSSCovesaName        string
 }{
 	ID:                   "pid_configs.id",
 	TemplateName:         "pid_configs.template_name",
@@ -105,6 +109,7 @@ var PidConfigTableColumns = struct {
 	CanFlowControlClear:  "pid_configs.can_flow_control_clear",
 	CanFlowControlIDPair: "pid_configs.can_flow_control_id_pair",
 	Enabled:              "pid_configs.enabled",
+	VSSCovesaName:        "pid_configs.vss_covesa_name",
 }
 
 // Generated where
@@ -171,6 +176,7 @@ var PidConfigWhere = struct {
 	CanFlowControlClear  whereHelpernull_Bool
 	CanFlowControlIDPair whereHelpernull_String
 	Enabled              whereHelperbool
+	VSSCovesaName        whereHelpernull_String
 }{
 	ID:                   whereHelperint64{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"id\""},
 	TemplateName:         whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"template_name\""},
@@ -186,6 +192,7 @@ var PidConfigWhere = struct {
 	CanFlowControlClear:  whereHelpernull_Bool{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"can_flow_control_clear\""},
 	CanFlowControlIDPair: whereHelpernull_String{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"can_flow_control_id_pair\""},
 	Enabled:              whereHelperbool{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"enabled\""},
+	VSSCovesaName:        whereHelpernull_String{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"vss_covesa_name\""},
 }
 
 // PidConfigRels is where relationship names are stored.
@@ -216,9 +223,9 @@ func (r *pidConfigR) GetTemplateNameTemplate() *Template {
 type pidConfigL struct{}
 
 var (
-	pidConfigAllColumns            = []string{"id", "template_name", "header", "mode", "pid", "formula", "interval_seconds", "protocol", "created_at", "updated_at", "signal_name", "can_flow_control_clear", "can_flow_control_id_pair", "enabled"}
+	pidConfigAllColumns            = []string{"id", "template_name", "header", "mode", "pid", "formula", "interval_seconds", "protocol", "created_at", "updated_at", "signal_name", "can_flow_control_clear", "can_flow_control_id_pair", "enabled", "vss_covesa_name"}
 	pidConfigColumnsWithoutDefault = []string{"template_name", "pid", "formula", "interval_seconds", "signal_name"}
-	pidConfigColumnsWithDefault    = []string{"id", "header", "mode", "protocol", "created_at", "updated_at", "can_flow_control_clear", "can_flow_control_id_pair", "enabled"}
+	pidConfigColumnsWithDefault    = []string{"id", "header", "mode", "protocol", "created_at", "updated_at", "can_flow_control_clear", "can_flow_control_id_pair", "enabled", "vss_covesa_name"}
 	pidConfigPrimaryKeyColumns     = []string{"id"}
 	pidConfigGeneratedColumns      = []string{}
 )
