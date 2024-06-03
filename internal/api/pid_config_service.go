@@ -36,6 +36,7 @@ func (s *PidConfigService) CreatePid(ctx context.Context, in *grpc.UpdatePidRequ
 		SignalName:           in.Pid.SignalName,
 		CanFlowControlClear:  in.Pid.CanFlowControlClear,
 		CanFlowControlIDPair: in.Pid.CanFlowControlIdPair,
+		VSSCovesaSignalName:  in.Pid.VssCovesaName,
 	})
 
 	if err != nil {
