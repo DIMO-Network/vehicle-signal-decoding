@@ -57,7 +57,7 @@ func SyncCovesaSignalNames(ctx context.Context, logger zerolog.Logger, config *c
 
 		for _, convertibleSignal := range convertibleSignals {
 			for _, conversion := range convertibleSignal.Conversions {
-				if pidConfig.SignalName == conversion.OriginalName {
+				if strings.EqualFold(pidConfig.SignalName, conversion.OriginalName) {
 
 					pidConfig.VSSCovesaName = null.StringFrom(convertibleSignal.VspecName)
 					_, err := pidConfig.Update(ctx, sqlDb.DBS().Writer, boil.Infer())
