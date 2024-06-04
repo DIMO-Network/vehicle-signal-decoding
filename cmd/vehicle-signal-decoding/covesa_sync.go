@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"strings"
+
 	"github.com/DIMO-Network/model-garage/pkg/schema"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
@@ -10,8 +12,18 @@ import (
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"gopkg.in/yaml.v3"
-	"strings"
 )
+
+// nolint
+type convertibleSignal struct {
+	VspecName   string `yaml:"vspecName"`
+	IsArray     bool   `yaml:"isArray"`
+	Conversions []struct {
+		OriginalName string `yaml:"originalName"`
+		OriginalType string `yaml:"originalType"`
+		IsArray      bool   `yaml:"isArray"`
+	}
+}
 
 func SyncCovesaSignalNames(ctx context.Context, logger zerolog.Logger, config *config.Settings, _ []string) {
 	sqlDb := db.NewDbConnectionFromSettings(ctx, &config.DB, true)
@@ -26,16 +38,6 @@ func SyncCovesaSignalNames(ctx context.Context, logger zerolog.Logger, config *c
 	}
 
 	definitions := []byte(schema.DefinitionsYAML())
-
-	type convertibleSignal struct {
-		VspecName   string `yaml:"vspecName"`
-		IsArray     bool   `yaml:"isArray"`
-		Conversions []struct {
-			OriginalName string `yaml:"originalName"`
-			OriginalType string `yaml:"originalType"`
-			IsArray      bool   `yaml:"isArray"`
-		}
-	}
 
 	convertibleSignals := make([]convertibleSignal, 0)
 
@@ -83,7 +85,8 @@ func SyncCovesaSignalNames(ctx context.Context, logger zerolog.Logger, config *c
 
 	if len(unTranslatedSignals) > 0 {
 		logger.Info().
-			Int("total_updated", totalUpdated)
+			Int("total_updated", totalUpdated).
+			Msg("successfully updated pid configs")
 
 		logger.Warn().
 			Strs("untranslated_signals", unTranslatedSignals).
