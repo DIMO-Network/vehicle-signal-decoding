@@ -2,6 +2,7 @@ package commands
 
 import (
 	"context"
+
 	"github.com/volatiletech/sqlboiler/v4/boil"
 
 	"github.com/DIMO-Network/shared/db"

@@ -5,10 +5,11 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"io"
 	"strings"
 	"time"
+
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways"
 
