@@ -60,6 +60,7 @@ func (s *PidConfigService) UpdatePid(ctx context.Context, in *grpc.UpdatePidRequ
 		CanFlowControlClear:  in.Pid.CanFlowControlClear,
 		CanFlowControlIDPair: in.Pid.CanFlowControlIdPair,
 		Enabled:              in.Pid.Enabled,
+		VSSCovesaSignalName:  in.Pid.VssCovesaName,
 	})
 
 	if err != nil {

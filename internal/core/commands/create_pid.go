@@ -59,31 +59,17 @@ func (h CreatePidCommandHandler) Execute(ctx context.Context, req *CreatePidComm
 	}
 
 	pid := &models.PidConfig{
-		TemplateName:    req.TemplateName,
-		Header:          req.Header,
-		Mode:            req.Mode,
-		Pid:             req.Pid,
-		Formula:         req.Formula,
-		IntervalSeconds: int(req.IntervalSeconds),
-		Protocol:        null.StringFromPtr(req.Protocol),
-		SignalName:      req.SignalName,
-	}
-
-	canFlowControlClear := null.BoolFromPtr(req.CanFlowControlClear)
-	canFlowControlIDPair := null.StringFromPtr(req.CanFlowControlIDPair)
-
-	vSSCovesaName := null.StringFromPtr(req.VSSCovesaSignalName)
-
-	if !canFlowControlClear.Valid {
-		pid.CanFlowControlClear = canFlowControlClear
-	}
-
-	if canFlowControlIDPair.Valid {
-		pid.CanFlowControlIDPair = canFlowControlIDPair
-	}
-
-	if vSSCovesaName.Valid {
-		pid.VSSCovesaName = vSSCovesaName
+		TemplateName:         req.TemplateName,
+		Header:               req.Header,
+		Mode:                 req.Mode,
+		Pid:                  req.Pid,
+		Formula:              req.Formula,
+		IntervalSeconds:      int(req.IntervalSeconds),
+		Protocol:             null.StringFromPtr(req.Protocol),
+		SignalName:           req.SignalName,
+		CanFlowControlClear:  null.BoolFromPtr(req.CanFlowControlClear),
+		CanFlowControlIDPair: null.StringFromPtr(req.CanFlowControlIDPair),
+		VSSCovesaName:        null.StringFromPtr(req.VSSCovesaSignalName),
 	}
 
 	err = pid.Insert(ctx, h.DBS().Writer, boil.Infer())
