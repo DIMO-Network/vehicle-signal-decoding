@@ -59,9 +59,15 @@ func SyncCovesaSignalNames(ctx context.Context, logger zerolog.Logger, config *c
 
 		for _, convertibleSignal := range convertibleSignals {
 			for _, conversion := range convertibleSignal.Conversions {
-				if strings.EqualFold(pidConfig.SignalName, conversion.OriginalName) {
 
-					pidConfig.VSSCovesaName = null.StringFrom(convertibleSignal.VspecName)
+				pidSignalName := strings.ReplaceAll(pidConfig.SignalName, " ", "")
+				conversionOriginalName := strings.ReplaceAll(conversion.OriginalName, " ", "")
+
+				if strings.EqualFold(pidSignalName, conversionOriginalName) {
+
+					vspecName := strings.ReplaceAll(convertibleSignal.VspecName, " ", "")
+
+					pidConfig.VSSCovesaName = null.StringFrom(vspecName)
 					_, err := pidConfig.Update(ctx, sqlDb.DBS().Writer, boil.Infer())
 
 					if err != nil {
@@ -73,11 +79,11 @@ func SyncCovesaSignalNames(ctx context.Context, logger zerolog.Logger, config *c
 
 				} else {
 
-					if alreadyInSlice(unTranslatedSignals, pidConfig.SignalName) {
+					if alreadyInSlice(unTranslatedSignals, pidSignalName) {
 						continue
 					}
 
-					unTranslatedSignals = append(unTranslatedSignals, pidConfig.SignalName)
+					unTranslatedSignals = append(unTranslatedSignals, pidSignalName)
 				}
 			}
 		}
