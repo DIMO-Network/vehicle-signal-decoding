@@ -32,6 +32,7 @@ func (s *TemplateConfigService) CreateTemplate(ctx context.Context, in *grpc.Upd
 		Powertrain:         in.Template.Powertrain,
 		DBC:                in.Template.Dbc,
 		TemplateVehicles:   in.Template.TemplateVehicles,
+		Comments:           in.Template.Comments,
 	})
 
 	if err != nil {
@@ -50,6 +51,7 @@ func (s *TemplateConfigService) UpdateTemplate(ctx context.Context, in *grpc.Upd
 		Powertrain:         in.Template.Powertrain,
 		DBC:                in.Template.Dbc,
 		TemplateVehicles:   in.Template.TemplateVehicles,
+		Comments:           in.Template.Comments,
 	})
 
 	if err != nil {

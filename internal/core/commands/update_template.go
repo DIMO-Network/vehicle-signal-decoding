@@ -29,6 +29,7 @@ type UpdateTemplateCommandRequest struct {
 	Powertrain         string
 	DBC                string
 	TemplateVehicles   []string
+	Comments           *string
 }
 
 type UpdateTemplateCommandResponse struct {
@@ -54,6 +55,7 @@ func (h UpdateTemplateCommandHandler) Execute(ctx context.Context, req *UpdateTe
 	template.Version = req.Version
 	template.Protocol = req.Protocol
 	template.Powertrain = req.Powertrain
+	template.Comments = null.StringFromPtr(req.Comments)
 
 	if _, err := template.Update(ctx, h.DBS().Writer.DB, boil.Infer()); err != nil {
 		return nil, &exceptions.InternalError{
