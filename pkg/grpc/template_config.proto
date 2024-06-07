@@ -20,6 +20,7 @@ message Template {
   repeated string template_vehicles = 10;
   google.protobuf.Timestamp created_at = 11;
   google.protobuf.Timestamp updated_at = 12;
+  optional string comments = 13;
 }
 
 message TemplateSummary {

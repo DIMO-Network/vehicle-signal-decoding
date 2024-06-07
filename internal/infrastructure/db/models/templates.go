@@ -31,6 +31,7 @@ type Template struct {
 	UpdatedAt          time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
 	Protocol           string      `boil:"protocol" json:"protocol" toml:"protocol" yaml:"protocol"`
 	Powertrain         string      `boil:"powertrain" json:"powertrain" toml:"powertrain" yaml:"powertrain"`
+	Comments           null.String `boil:"comments" json:"comments,omitempty" toml:"comments" yaml:"comments,omitempty"`
 
 	R *templateR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L templateL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -44,6 +45,7 @@ var TemplateColumns = struct {
 	UpdatedAt          string
 	Protocol           string
 	Powertrain         string
+	Comments           string
 }{
 	TemplateName:       "template_name",
 	ParentTemplateName: "parent_template_name",
@@ -52,6 +54,7 @@ var TemplateColumns = struct {
 	UpdatedAt:          "updated_at",
 	Protocol:           "protocol",
 	Powertrain:         "powertrain",
+	Comments:           "comments",
 }
 
 var TemplateTableColumns = struct {
@@ -62,6 +65,7 @@ var TemplateTableColumns = struct {
 	UpdatedAt          string
 	Protocol           string
 	Powertrain         string
+	Comments           string
 }{
 	TemplateName:       "templates.template_name",
 	ParentTemplateName: "templates.parent_template_name",
@@ -70,6 +74,7 @@ var TemplateTableColumns = struct {
 	UpdatedAt:          "templates.updated_at",
 	Protocol:           "templates.protocol",
 	Powertrain:         "templates.powertrain",
+	Comments:           "templates.comments",
 }
 
 // Generated where
@@ -82,6 +87,7 @@ var TemplateWhere = struct {
 	UpdatedAt          whereHelpertime_Time
 	Protocol           whereHelperstring
 	Powertrain         whereHelperstring
+	Comments           whereHelpernull_String
 }{
 	TemplateName:       whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"templates\".\"template_name\""},
 	ParentTemplateName: whereHelpernull_String{field: "\"vehicle_signal_decoding_api\".\"templates\".\"parent_template_name\""},
@@ -90,6 +96,7 @@ var TemplateWhere = struct {
 	UpdatedAt:          whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"templates\".\"updated_at\""},
 	Protocol:           whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"templates\".\"protocol\""},
 	Powertrain:         whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"templates\".\"powertrain\""},
+	Comments:           whereHelpernull_String{field: "\"vehicle_signal_decoding_api\".\"templates\".\"comments\""},
 }
 
 // TemplateRels is where relationship names are stored.
@@ -170,9 +177,9 @@ func (r *templateR) GetTemplateNameTemplateVehicles() TemplateVehicleSlice {
 type templateL struct{}
 
 var (
-	templateAllColumns            = []string{"template_name", "parent_template_name", "version", "created_at", "updated_at", "protocol", "powertrain"}
+	templateAllColumns            = []string{"template_name", "parent_template_name", "version", "created_at", "updated_at", "protocol", "powertrain", "comments"}
 	templateColumnsWithoutDefault = []string{"template_name", "version", "protocol", "powertrain"}
-	templateColumnsWithDefault    = []string{"parent_template_name", "created_at", "updated_at"}
+	templateColumnsWithDefault    = []string{"parent_template_name", "created_at", "updated_at", "comments"}
 	templatePrimaryKeyColumns     = []string{"template_name"}
 	templateGeneratedColumns      = []string{}
 )

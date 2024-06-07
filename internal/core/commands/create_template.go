@@ -28,6 +28,7 @@ type CreateTemplateCommandRequest struct {
 	Powertrain         string
 	DBC                string
 	TemplateVehicles   []string
+	Comments           *string
 }
 
 type CreateTemplateCommandResponse struct {
@@ -54,6 +55,7 @@ func (h CreateTemplateCommandHandler) Execute(ctx context.Context, req *CreateTe
 		Version:            req.Version,
 		Protocol:           req.Protocol,
 		Powertrain:         req.Powertrain,
+		Comments:           null.StringFromPtr(req.Comments),
 	}
 
 	err = template.Insert(ctx, h.DBS().Writer, boil.Infer())

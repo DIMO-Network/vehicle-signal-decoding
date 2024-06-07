@@ -65,6 +65,7 @@ func (h GetTemplateByNameQueryHandler) Handle(ctx context.Context, query *GetTem
 			Powertrain:         item.Powertrain,
 			HasDbc:             hasDbc,
 			PidsCount:          int32(pidsCount),
+			Comments:           &item.Comments.String,
 			CreatedAt:          timestamppb.New(item.CreatedAt),
 			UpdatedAt:          timestamppb.New(item.UpdatedAt),
 		},
