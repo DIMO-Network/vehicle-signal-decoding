@@ -386,6 +386,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetDBCFileByTemplateName() {
 }
 
 func (s *DeviceConfigControllerTestSuite) TestGetConfigURLsFromDeviceEthAddr() {
+	// basic happy path, mocked out underlying template selection logic
 	addr := common2.HexToAddress("0xDC1eE274BCA98b421293f3737D1b9E4563c60cb3")
 
 	s.mockDeviceTemplateSvc.EXPECT().FindDirectDeviceToTemplateConfig(gomock.Any(), addr).Return(&appmodels.DeviceConfigResponse{
