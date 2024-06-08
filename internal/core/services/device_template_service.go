@@ -298,14 +298,18 @@ func (dts *deviceTemplateService) selectAndFetchTemplate(ctx context.Context, ca
 		}
 		// try finding a match by make and/or model
 		for _, tv := range templateVehicles {
-			// match by make and/or model
-			if tv.MakeSlug.String == shared.SlugString(mk) {
-				matchedTemplateName = tv.TemplateName
-				strategy += ", makeSlug match"
-				// now see if there is also a model slug match
-				if modelMatch(tv.ModelWhitelist, shared.SlugString(model)) {
-					strategy += ", model match"
+			if tv.MakeSlug.Valid && len(tv.ModelWhitelist) > 0 {
+				if tv.MakeSlug.String == shared.SlugString(mk) && modelMatch(tv.ModelWhitelist, shared.SlugString(model)) {
+					// match by make and models
+					matchedTemplateName = tv.TemplateName
+					strategy += ", makeSlug match, model match"
 					break
+				}
+			} else if len(tv.ModelWhitelist) == 0 {
+				// match by make only
+				if tv.MakeSlug.String == shared.SlugString(mk) {
+					matchedTemplateName = tv.TemplateName
+					strategy += ", makeSlug match"
 				}
 			}
 		}
