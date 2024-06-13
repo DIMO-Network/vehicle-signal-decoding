@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/DIMO-Network/shared/db"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
@@ -15,16 +16,12 @@ import (
 	"os"
 )
 
-type TemplateReportService struct {
-	log *zerolog.Logger
-}
-
-// todo call this from command line. fixup all log statements. get credentials from settings. consider storing in memory
-// note that may need to change scope of the credentials like below.
-
 // BuildReport uses google api to generate a google spreadsheet
-func BuildReport(settings *config.Settings) error {
+func BuildReport(settings *config.Settings, log zerolog.Logger) error {
 	ctx := context.Background()
+
+	pdb := db.NewDbConnectionFromSettings(ctx, &settings.DB, true)
+	pdb.WaitForDB(log)
 
 	// If modifying these scopes, delete your previously saved token.json.
 	config, err := google.ConfigFromJSON([]byte(settings.GoogleSheetsCreds), sheets.SpreadsheetsScope)
@@ -68,7 +65,8 @@ func BuildReport(settings *config.Settings) error {
 // getClient uses a Context and Config to retrieve a Token
 // then generate a Client. It returns the generated Client.
 func getClient(config *oauth2.Config) (*http.Client, error) {
-	tokFile := "token.json"
+	// note tmp folder gets cleared on reboot
+	tokFile := "/tmp/token.json"
 	// grab existing token that is stored locally - replace this with in memory storage
 	tok, err := tokenFromFile(tokFile)
 	if err != nil {
