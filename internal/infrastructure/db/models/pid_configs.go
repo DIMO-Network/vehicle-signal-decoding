@@ -39,6 +39,7 @@ type PidConfig struct {
 	CanFlowControlIDPair null.String `boil:"can_flow_control_id_pair" json:"can_flow_control_id_pair,omitempty" toml:"can_flow_control_id_pair" yaml:"can_flow_control_id_pair,omitempty"`
 	Enabled              bool        `boil:"enabled" json:"enabled" toml:"enabled" yaml:"enabled"`
 	VSSCovesaName        null.String `boil:"vss_covesa_name" json:"vss_covesa_name,omitempty" toml:"vss_covesa_name" yaml:"vss_covesa_name,omitempty"`
+	Unit                 null.String `boil:"unit" json:"unit,omitempty" toml:"unit" yaml:"unit,omitempty"`
 
 	R *pidConfigR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L pidConfigL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -60,6 +61,7 @@ var PidConfigColumns = struct {
 	CanFlowControlIDPair string
 	Enabled              string
 	VSSCovesaName        string
+	Unit                 string
 }{
 	ID:                   "id",
 	TemplateName:         "template_name",
@@ -76,6 +78,7 @@ var PidConfigColumns = struct {
 	CanFlowControlIDPair: "can_flow_control_id_pair",
 	Enabled:              "enabled",
 	VSSCovesaName:        "vss_covesa_name",
+	Unit:                 "unit",
 }
 
 var PidConfigTableColumns = struct {
@@ -94,6 +97,7 @@ var PidConfigTableColumns = struct {
 	CanFlowControlIDPair string
 	Enabled              string
 	VSSCovesaName        string
+	Unit                 string
 }{
 	ID:                   "pid_configs.id",
 	TemplateName:         "pid_configs.template_name",
@@ -110,6 +114,7 @@ var PidConfigTableColumns = struct {
 	CanFlowControlIDPair: "pid_configs.can_flow_control_id_pair",
 	Enabled:              "pid_configs.enabled",
 	VSSCovesaName:        "pid_configs.vss_covesa_name",
+	Unit:                 "pid_configs.unit",
 }
 
 // Generated where
@@ -177,6 +182,7 @@ var PidConfigWhere = struct {
 	CanFlowControlIDPair whereHelpernull_String
 	Enabled              whereHelperbool
 	VSSCovesaName        whereHelpernull_String
+	Unit                 whereHelpernull_String
 }{
 	ID:                   whereHelperint64{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"id\""},
 	TemplateName:         whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"template_name\""},
@@ -193,6 +199,7 @@ var PidConfigWhere = struct {
 	CanFlowControlIDPair: whereHelpernull_String{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"can_flow_control_id_pair\""},
 	Enabled:              whereHelperbool{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"enabled\""},
 	VSSCovesaName:        whereHelpernull_String{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"vss_covesa_name\""},
+	Unit:                 whereHelpernull_String{field: "\"vehicle_signal_decoding_api\".\"pid_configs\".\"unit\""},
 }
 
 // PidConfigRels is where relationship names are stored.
@@ -223,9 +230,9 @@ func (r *pidConfigR) GetTemplateNameTemplate() *Template {
 type pidConfigL struct{}
 
 var (
-	pidConfigAllColumns            = []string{"id", "template_name", "header", "mode", "pid", "formula", "interval_seconds", "protocol", "created_at", "updated_at", "signal_name", "can_flow_control_clear", "can_flow_control_id_pair", "enabled", "vss_covesa_name"}
+	pidConfigAllColumns            = []string{"id", "template_name", "header", "mode", "pid", "formula", "interval_seconds", "protocol", "created_at", "updated_at", "signal_name", "can_flow_control_clear", "can_flow_control_id_pair", "enabled", "vss_covesa_name", "unit"}
 	pidConfigColumnsWithoutDefault = []string{"template_name", "pid", "formula", "interval_seconds", "signal_name"}
-	pidConfigColumnsWithDefault    = []string{"id", "header", "mode", "protocol", "created_at", "updated_at", "can_flow_control_clear", "can_flow_control_id_pair", "enabled", "vss_covesa_name"}
+	pidConfigColumnsWithDefault    = []string{"id", "header", "mode", "protocol", "created_at", "updated_at", "can_flow_control_clear", "can_flow_control_id_pair", "enabled", "vss_covesa_name", "unit"}
 	pidConfigPrimaryKeyColumns     = []string{"id"}
 	pidConfigGeneratedColumns      = []string{}
 )

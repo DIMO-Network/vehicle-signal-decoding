@@ -25,6 +25,7 @@ message PidConfig {
   optional string can_flow_control_id_pair = 14;
   bool enabled = 15;
   optional string vss_covesa_name = 16;
+  optional string unit = 17;
 }
 
 message PidSummary {
@@ -42,6 +43,7 @@ message PidSummary {
   string can_flow_control_id_pair = 12;
   bool enabled = 13;
   string vss_covesa_name = 14;
+  string unit = 15;
 }
 
 message GetPidListRequest {
