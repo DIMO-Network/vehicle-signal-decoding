@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/services"
 	"log"
 	"os"
 
@@ -48,6 +50,11 @@ func main() {
 		migrateDatabase(ctx, logger, &settings, os.Args)
 	case "covesa_sync":
 		SyncCovesaSignalNames(ctx, logger, &settings, os.Args)
+	case "sheets-template-report":
+		err = services.BuildReport(&settings)
+		if err != nil {
+			fmt.Println(err)
+		}
 	default:
 		api.Run(ctx, logger, &settings)
 	}
