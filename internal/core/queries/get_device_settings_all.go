@@ -33,22 +33,24 @@ func (h GetDeviceSettingsAllQueryHandler) Handle(ctx context.Context, _ *GetDevi
 		return nil, fmt.Errorf("failed to get DeviceSettings: %w", err)
 	}
 
-	deviceSettingsList := make([]*grpc.DeviceSettings, 0, len(all))
+	deviceSettingsList := make([]*grpc.DeviceSettingConfig, 0, len(all))
 
 	for _, item := range all {
-		// Convert null.JSON to []byte
-		jsonBytes, err := item.Settings.MarshalJSON()
-		if err != nil {
-			h.logger.Error().Err(err).Msgf("Failed to marshal settings for template: %s", item.Name)
-			continue
+
+		settings := &grpc.DeviceSetting{}
+
+		if item.Settings.Valid {
+			err := item.Settings.Unmarshal(settings)
+			if err != nil {
+				h.logger.Error().Err(err).Msg("Failed to unmarshal settings JSON")
+				continue
+			}
 		}
 
-		settingsString := string(jsonBytes)
-
-		deviceSettings := &grpc.DeviceSettings{
+		deviceSettings := &grpc.DeviceSettingConfig{
 			Name:       item.Name,
-			Settings:   settingsString,
-			Powertrain: item.Powertrain,
+			Settings:   settings,
+			PowerTrain: item.Powertrain,
 		}
 		deviceSettingsList = append(deviceSettingsList, deviceSettings)
 	}

@@ -37,19 +37,21 @@ func (h GetDeviceSettingsByNameQueryHandler) Handle(ctx context.Context, query *
 		return nil, fmt.Errorf("failed to get device setting by name: %w", err)
 	}
 
-	jsonBytes, err := item.Settings.MarshalJSON()
-	if err != nil {
-		h.logger.Error().Err(err).Msg("Failed to marshal settings JSON")
-		return nil, fmt.Errorf("failed to marshal settings JSON: %w", err)
+	settings := &grpc.DeviceSetting{}
+
+	if item.Settings.Valid {
+		err := item.Settings.Unmarshal(&settings)
+		if err != nil {
+			h.logger.Error().Err(err).Msg("Failed to unmarshal settings JSON")
+			return nil, fmt.Errorf("failed to unmarshal settings JSON: %w", err)
+		}
 	}
 
-	settingsString := string(jsonBytes)
-
 	result := &grpc.GetDeviceSettingByNameResponse{
-		DeviceSettings: &grpc.DeviceSettings{
+		DeviceSettings: &grpc.DeviceSettingConfig{
 			Name:       item.Name,
-			Settings:   settingsString,
-			Powertrain: item.Powertrain,
+			Settings:   settings,
+			PowerTrain: item.Powertrain,
 		},
 	}
 
