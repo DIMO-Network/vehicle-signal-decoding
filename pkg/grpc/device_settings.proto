@@ -1,20 +1,22 @@
 syntax = "proto3";
 
 import "google/protobuf/empty.proto";
+import "pkg/grpc/hardware_v1.proto";
 
 option go_package = "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc";
 
 package grpc;
-// used in Admin - todo rename this to be more admin specific and update admin after
-message DeviceSettings {
+
+
+message DeviceSettingConfig {
   string name = 1;
   string template_name = 2;
-  string settings = 3;
-  string powertrain = 4;
+  DeviceSetting settings = 3;
+  string powerTrain = 4;
 }
 
 message GetDeviceSettingListResponse {
-  repeated DeviceSettings device_settings = 1;
+  repeated DeviceSettingConfig device_settings = 1;
 }
 
 message GetDeviceSettingByNameRequest {
@@ -22,11 +24,11 @@ message GetDeviceSettingByNameRequest {
 }
 
 message GetDeviceSettingByNameResponse {
-  DeviceSettings device_settings = 1;
+  DeviceSettingConfig device_settings = 1;
 }
 
 message UpdateDeviceSettingsRequest {
-  DeviceSettings device_settings = 1;
+  DeviceSettingConfig device_settings = 1;
 }
 
 service DeviceSettingsService {
