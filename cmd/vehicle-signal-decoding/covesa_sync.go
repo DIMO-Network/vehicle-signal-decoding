@@ -39,6 +39,13 @@ func SyncCovesaSignalNames(ctx context.Context, logger zerolog.Logger, config *c
 
 	definitions := []byte(schema.DefinitionsYAML())
 
+	covesaSignals := strings.NewReader(schema.VssRel42DIMO())
+	signals, err := schema.LoadSignalsCSV(covesaSignals)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("failed to load covesa signals")
+		return
+	}
+
 	convertibleSignals := make([]convertibleSignal, 0)
 
 	err = yaml.Unmarshal(definitions, &convertibleSignals)
@@ -68,6 +75,14 @@ func SyncCovesaSignalNames(ctx context.Context, logger zerolog.Logger, config *c
 					vspecName := strings.ReplaceAll(convertibleSignal.VspecName, " ", "")
 
 					pidConfig.VSSCovesaName = null.StringFrom(vspecName)
+
+					for _, signal := range signals {
+						if strings.EqualFold(signal.Name, vspecName) {
+							pidConfig.Unit = null.StringFrom(signal.Unit)
+							break
+						}
+					}
+
 					_, err := pidConfig.Update(ctx, sqlDb.DBS().Writer, boil.Infer())
 
 					if err != nil {
