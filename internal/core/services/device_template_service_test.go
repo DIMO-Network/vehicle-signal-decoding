@@ -355,6 +355,73 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_ModelWhitel
 	assert.Equal(s.T(), "vehicle and year mapping, makeSlug match, model match", strategy)
 }
 
+func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_ModelWhitelistMatch_DifferentPowertrain() {
+	// two templates same Make but different models - pickup the ones with th right models
+	decoyTemplate := &models.Template{
+		TemplateName: "decoy-template",
+		Version:      "1.0",
+		Protocol:     models.CanProtocolTypeCAN11_500,
+		Powertrain:   "ICE",
+	}
+	err := decoyTemplate.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
+
+	template := &models.Template{
+		TemplateName: "template",
+		Version:      "1.0",
+		Protocol:     models.CanProtocolTypeCAN11_500,
+		Powertrain:   "BEV",
+	}
+	err = template.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
+
+	// template vehicles with different model whitelists
+	decoyTemplateVehicle := &models.TemplateVehicle{
+		TemplateName:   decoyTemplate.TemplateName,
+		MakeSlug:       null.StringFrom("ford"),
+		ModelWhitelist: types.StringArray{"fiesta", "mach-e", "f150", "focus", "bronco"},
+		YearStart:      2010,
+		YearEnd:        2025,
+	}
+	err = decoyTemplateVehicle.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
+
+	templateVehicle := &models.TemplateVehicle{
+		TemplateName:   template.TemplateName,
+		MakeSlug:       null.StringFrom("ford"),
+		ModelWhitelist: types.StringArray{"mustang"},
+		YearStart:      2010,
+		YearEnd:        2025,
+	}
+	err = templateVehicle.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
+
+	mockedUserDevice := &pb.UserDevice{
+		Id:                 ksuid.New().String(),
+		UserId:             ksuid.New().String(),
+		DeviceDefinitionId: "non-existing-def-id",
+		CANProtocol:        models.CanProtocolTypeCAN11_500,
+		PowerTrainType:     "ICE", // powertrain does not match template
+	}
+
+	vehicle := &gateways.VehicleInfo{
+		TokenID: 123,
+		Definition: gateways.VehicleDefinition{
+			Make:  "Ford",
+			Model: "Mustang",
+			Year:  2021,
+		},
+	}
+
+	fetchedTemplate, strategy, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice.CANProtocol, mockedUserDevice.PowerTrainType,
+		mockedUserDevice.DeviceDefinitionId, vehicle)
+
+	require.NoError(s.T(), err)
+	assert.NotNil(s.T(), fetchedTemplate)
+	assert.Equal(s.T(), template.TemplateName, fetchedTemplate.TemplateName)
+	assert.Equal(s.T(), "vehicle and year mapping, makeSlug match, model match", strategy)
+}
+
 func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_ModelDoesNotMatch() {
 	// two templates one default, one with matching Make but not models, pickup the default
 	defaultTemplate := &models.Template{
