@@ -48,9 +48,10 @@ func (h GetDeviceSettingsAllQueryHandler) Handle(ctx context.Context, _ *GetDevi
 		}
 
 		deviceSettings := &grpc.DeviceSettingConfig{
-			Name:       item.Name,
-			Settings:   settings,
-			PowerTrain: item.Powertrain,
+			Name:         item.Name,
+			PowerTrain:   item.Powertrain,
+			Version:      item.Version,
+			TemplateName: item.TemplateName.Ptr(),
 		}
 		deviceSettingsList = append(deviceSettingsList, deviceSettings)
 	}
