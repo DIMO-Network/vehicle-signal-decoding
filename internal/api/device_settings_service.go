@@ -33,7 +33,10 @@ func (s *DeviceSettingsConfigService) CreateDeviceSettings(ctx context.Context, 
 	inboundDeviceSettings := in.DeviceSettings.Settings
 
 	_, err := service.Execute(ctx, &commands.CreateDeviceSettingsCommandRequest{
-		Name: in.DeviceSettings.Name,
+		Name:         in.DeviceSettings.Name,
+		TemplateName: in.DeviceSettings.TemplateName,
+		Version:      in.DeviceSettings.Version,
+		PowerTrain:   in.DeviceSettings.PowerTrain,
 		Settings: appmodels.SettingsData{
 			SafetyCutOutVoltage:                      float64(inboundDeviceSettings.SafetyCutOutVoltage),
 			SleepTimerEventDrivenPeriodSecs:          float64(inboundDeviceSettings.SleepTimerEventDrivenPeriodSecs),
@@ -58,7 +61,10 @@ func (s *DeviceSettingsConfigService) UpdateDeviceSettings(ctx context.Context, 
 	service := commands.NewUpdateDeviceSettingsCommandHandler(s.dbs)
 	inboundDeviceSettings := in.DeviceSettings.Settings
 	_, err := service.Execute(ctx, &commands.UpdateDeviceSettingsCommandRequest{
-		Name: in.DeviceSettings.Name,
+		Name:         in.DeviceSettings.Name,
+		TemplateName: in.DeviceSettings.TemplateName,
+		Version:      in.DeviceSettings.Version,
+		PowerTrain:   in.DeviceSettings.PowerTrain,
 		Settings: appmodels.SettingsData{
 			SafetyCutOutVoltage:                      float64(inboundDeviceSettings.SafetyCutOutVoltage),
 			SleepTimerEventDrivenPeriodSecs:          float64(inboundDeviceSettings.SleepTimerEventDrivenPeriodSecs),

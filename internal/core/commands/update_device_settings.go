@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/appmodels"
 
@@ -26,8 +27,11 @@ func NewUpdateDeviceSettingsCommandHandler(dbs func() *db.ReaderWriter) UpdateDe
 }
 
 type UpdateDeviceSettingsCommandRequest struct {
-	Name     string
-	Settings appmodels.SettingsData `json:"settings"`
+	Name         string                 `json:"name"`
+	TemplateName *string                `json:"templateName"`
+	PowerTrain   string                 `json:"powerTrain"`
+	Version      string                 `json:"version"`
+	Settings     appmodels.SettingsData `json:"settings"`
 }
 
 type UpdateDeviceSettingsCommandResponse struct {
@@ -55,7 +59,12 @@ func (h UpdateDeviceSettingsCommandHandler) Execute(ctx context.Context, req *Up
 	}
 
 	deviceSettings.Name = req.Name
+	deviceSettings.TemplateName = null.StringFromPtr(req.TemplateName)
+	deviceSettings.Powertrain = req.PowerTrain
 	deviceSettings.Settings = null.NewJSON(settingsJSON, true)
+	deviceSettings.Version = req.Version
+
+	deviceSettings.UpdatedAt = time.Now().UTC()
 
 	if _, err := deviceSettings.Update(ctx, h.DBS().Writer.DB, boil.Infer()); err != nil {
 		return nil, &exceptions.InternalError{

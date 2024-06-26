@@ -3,6 +3,7 @@ package commands
 import (
 	"context"
 	"encoding/json"
+	"time"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/appmodels"
 
@@ -25,8 +26,11 @@ func NewCreateDeviceSettingsCommandHandler(dbs func() *db.ReaderWriter) CreateDe
 }
 
 type CreateDeviceSettingsCommandRequest struct {
-	Name     string
-	Settings appmodels.SettingsData `json:"settings"`
+	Name         string
+	TemplateName *string                `json:"templateName"`
+	Version      string                 `json:"version"`
+	PowerTrain   string                 `json:"powerTrain"`
+	Settings     appmodels.SettingsData `json:"settings"`
 }
 
 type CreateDeviceSettingsCommandResponse struct {
@@ -57,8 +61,12 @@ func (h CreateDeviceSettingsCommandHandler) Execute(ctx context.Context, req *Cr
 	settingsJSON := null.JSONFrom(settingsBytes)
 
 	deviceSetting := &models.DeviceSetting{
-		Name:     req.Name,
-		Settings: settingsJSON,
+		Name:         req.Name,
+		Settings:     settingsJSON,
+		Version:      req.Version,
+		Powertrain:   req.PowerTrain,
+		TemplateName: null.StringFromPtr(req.TemplateName),
+		CreatedAt:    time.Now().UTC(),
 	}
 
 	err = deviceSetting.Insert(ctx, h.DBS().Writer, boil.Infer())
