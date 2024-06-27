@@ -36,17 +36,6 @@ func (h GetDeviceSettingsAllQueryHandler) Handle(ctx context.Context, _ *GetDevi
 	deviceSettingsList := make([]*grpc.DeviceSettingConfig, 0, len(all))
 
 	for _, item := range all {
-
-		settings := &grpc.DeviceSetting{}
-
-		if item.Settings.Valid {
-			err := item.Settings.Unmarshal(settings)
-			if err != nil {
-				h.logger.Error().Err(err).Msg("Failed to unmarshal settings JSON")
-				continue
-			}
-		}
-
 		deviceSettings := &grpc.DeviceSettingConfig{
 			Name:         item.Name,
 			PowerTrain:   item.Powertrain,

@@ -58,11 +58,13 @@ func (h UpdateDeviceSettingsCommandHandler) Execute(ctx context.Context, req *Up
 		}
 	}
 
-	deviceSettings.Name = req.Name
-	deviceSettings.TemplateName = null.StringFromPtr(req.TemplateName)
 	deviceSettings.Powertrain = req.PowerTrain
 	deviceSettings.Settings = null.NewJSON(settingsJSON, true)
 	deviceSettings.Version = req.Version
+
+	if req.TemplateName != nil {
+		deviceSettings.TemplateName = null.StringFromPtr(req.TemplateName)
+	}
 
 	deviceSettings.UpdatedAt = time.Now().UTC()
 
