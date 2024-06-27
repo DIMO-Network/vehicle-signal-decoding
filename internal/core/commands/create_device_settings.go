@@ -61,15 +61,12 @@ func (h CreateDeviceSettingsCommandHandler) Execute(ctx context.Context, req *Cr
 	settingsJSON := null.JSONFrom(settingsBytes)
 
 	deviceSetting := &models.DeviceSetting{
-		Name:       req.Name,
-		Settings:   settingsJSON,
-		Version:    req.Version,
-		Powertrain: req.PowerTrain,
-		CreatedAt:  time.Now().UTC(),
-	}
-
-	if req.TemplateName != nil {
-		deviceSetting.TemplateName = null.StringFromPtr(req.TemplateName)
+		Name:         req.Name,
+		Settings:     settingsJSON,
+		Version:      req.Version,
+		Powertrain:   req.PowerTrain,
+		TemplateName: null.StringFromPtr(req.TemplateName),
+		CreatedAt:    time.Now().UTC(),
 	}
 
 	err = deviceSetting.Insert(ctx, h.DBS().Writer, boil.Infer())
