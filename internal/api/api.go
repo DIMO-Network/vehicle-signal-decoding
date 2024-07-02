@@ -3,6 +3,10 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/utils"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"os"
 	"os/signal"
 	"runtime/debug"
@@ -184,7 +188,45 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 
 	// device to template and fw status
 	v1.Get("/device-config/eth-addr/:ethAddr/status", deviceConfigController.GetConfigStatusByEthAddr)
-	v1.Patch("/device-config/eth-addr/:ethAddr/status", jwtAuth, deviceMw, deviceConfigController.PatchConfigStatusByEthAddr)
+
+	// jwt authentication wrapper, which also calls another authentication method if jwt fails
+	jwtAuthWrapper := func(c *fiber.Ctx) error {
+		if err := jwtAuth(c); err != nil {
+			// If JWT authentication fails, call the next middleware function
+			return c.Next()
+		}
+
+		// If JWT authentication succeeds, don't call the next middleware function
+		// Instead, skip to the handler after the second authentication middleware
+		return deviceMw(c)
+	}
+
+	// EC recover authentication middleware
+	ecRecoverAuth := func(c *fiber.Ctx) error {
+		ethAddr := c.Params("ethAddr")
+		addr := common.HexToAddress(ethAddr)
+
+		// get signature from header
+		signature := c.Get("Signature")
+		if signature == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Signature not found in request header",
+			})
+		}
+		sig := common.FromHex(signature)
+
+		hash := crypto.Keccak256Hash(c.Body())
+		if recAddr, err := utils.Ecrecover(hash.Bytes(), sig); err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString(fmt.Sprintf("Failed to recover an address from the signature: %s", ethAddr))
+		} else if recAddr != addr {
+			return c.Status(fiber.StatusUnauthorized).SendString("Unauthorized")
+		}
+
+		// If EC recover authentication succeeds, call the next middleware function
+		return c.Next()
+	}
+
+	v1.Patch("/device-config/eth-addr/:ethAddr/status", jwtAuthWrapper, ecRecoverAuth, deviceMw, deviceConfigController.PatchConfigStatusByEthAddr)
 
 	// Jobs endpoint
 	v1.Get("/device-config/eth-addr/:ethAddr/jobs", jobsController.GetJobsFromEthAddr)
