@@ -470,7 +470,6 @@ func (d *DeviceConfigController) GetConfigStatusByEthAddr(c *fiber.Ctx) error {
 // @Param        ethAddr  path   string  true  "Ethereum Address"
 // @Param        config body DeviceTemplateStatusPatch true "set any properties that were updated on the device"
 // @Security     BearerAuth
-// @Security     SignatureAuth
 // @Router       /device-config/eth-addr/{ethAddr}/status [patch]
 func (d *DeviceConfigController) PatchConfigStatusByEthAddr(c *fiber.Ctx) error {
 	ethAddr := c.Params("ethAddr")
