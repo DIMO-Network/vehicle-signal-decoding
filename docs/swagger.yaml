@@ -17,6 +17,8 @@ definitions:
     properties:
       battery_critical_level_voltage:
         type: number
+      location_frequency_secs:
+        type: number
       min_voltage_obd_loggers:
         type: number
       safety_cut_out_voltage:
@@ -243,6 +245,7 @@ paths:
           description: unable to parse request or storage failure
       security:
       - BearerAuth: []
+      - SignatureAuth: []
       tags:
       - device-config
   /device-config/eth-addr/{ethAddr}/urls:
@@ -350,5 +353,9 @@ securityDefinitions:
       check readme for details.'
     in: header
     name: Authorization
+    type: apiKey
+  SignatureAuth:
+    in: header
+    name: Signature
     type: apiKey
 swagger: "2.0"
