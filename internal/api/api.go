@@ -4,14 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/DIMO-Network/vehicle-signal-decoding/internal/utils"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 	"os"
 	"os/signal"
 	"runtime/debug"
 	"strings"
 	"syscall"
+
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/utils"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways"
 
