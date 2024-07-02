@@ -56,7 +56,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 
 	go StartGrpcServer(logger, pdb.DBS, settings, s3Client)
 	startWebAPI(logger, settings, pdb)
-	//startVehicleSignalConsumer(logger, settings, pdb)
+	startVehicleSignalConsumer(logger, settings, pdb)
 	startMonitoringServer(logger, settings)
 
 	c := make(chan os.Signal, 1)                    // Create channel to signify a signal being sent with length of 1
