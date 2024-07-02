@@ -123,8 +123,7 @@ type UsersClient struct {
 }
 
 func (c *UsersClient) GetUserByEthAddr(_ context.Context, _ *pb.GetUserByEthRequest, _ ...grpc.CallOption) (*pb.User, error) {
-	//TODO implement me
-	panic("implement me")
+	return nil, status.Error(codes.NotFound, "Not implemented.")
 }
 
 func (c *UsersClient) GetUser(_ context.Context, in *pb.GetUserRequest, _ ...grpc.CallOption) (*pb.User, error) {
