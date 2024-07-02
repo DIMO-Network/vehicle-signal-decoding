@@ -245,6 +245,7 @@ paths:
           description: unable to parse request or storage failure
       security:
       - BearerAuth: []
+      - SignatureAuth: []
       tags:
       - device-config
   /device-config/eth-addr/{ethAddr}/urls:
@@ -352,5 +353,9 @@ securityDefinitions:
       check readme for details.'
     in: header
     name: Authorization
+    type: apiKey
+  SignatureAuth:
+    in: header
+    name: Signature
     type: apiKey
 swagger: "2.0"

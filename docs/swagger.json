@@ -177,6 +177,9 @@
                 "security": [
                     {
                         "BearerAuth": []
+                    },
+                    {
+                        "SignatureAuth": []
                     }
                 ],
                 "description": "Set what template and/or firmware was applied. None of the properties are required. Will not be set if not passed in.",
@@ -514,6 +517,11 @@
             "description": "Flow to get your device config: start by Getting the URL's to your device's configuration: `/device-config/eth-addr/:ethAddr/urls` or by vin, check readme for details.",
             "type": "apiKey",
             "name": "Authorization",
+            "in": "header"
+        },
+        "SignatureAuth": {
+            "type": "apiKey",
+            "name": "Signature",
             "in": "header"
         }
     }

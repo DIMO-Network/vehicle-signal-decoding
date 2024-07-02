@@ -145,7 +145,34 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 		ErrorHandler: func(_ *fiber.Ctx, err error) error {
 			return fiber.NewError(fiber.StatusUnauthorized, "Invalid JWT. "+err.Error())
 		},
+		SuccessHandler: func(c *fiber.Ctx) error {
+			// do not call c.Next(), because we want to skip  the second Auth
+			return nil
+		},
 	})
+
+	// EC recover authentication middleware
+	etherSigVerificationMiddleware := func(c *fiber.Ctx) error {
+		ethAddr := c.Params("ethAddr")
+
+		// get signature from header
+		signature := c.Get("Signature")
+		if signature == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Signature not found in request header",
+			})
+		}
+
+		ok, err := utils.VerifySignature(c.Body(), signature, ethAddr)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString(fmt.Sprintf("Failed to recover an address from the signature: %s", ethAddr))
+		} else if !ok {
+			return c.Status(fiber.StatusUnauthorized).SendString("Unauthorized")
+		}
+
+		// If EC recover authentication succeeds, call the next middleware function
+		return c.Next()
+	}
 
 	app.Use(metrics.HTTPMetricsMiddleware)
 
@@ -186,10 +213,10 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 	// device to template and fw status
 	v1.Get("/device-config/eth-addr/:ethAddr/status", deviceConfigController.GetConfigStatusByEthAddr)
 
-	// jwt authentication wrapper, which also calls another authentication method if jwt fails
-	jwtAuthWrapper := func(c *fiber.Ctx) error {
+	// jwt authentication middleware, which also calls another authentication method if jwt fails
+	jwtAuthenticationMiddleware := func(c *fiber.Ctx) error {
 		if err := jwtAuth(c); err != nil {
-			// If JWT authentication fails, call the next middleware function
+			// If JWT authentication fails, call the next middleware function, which is EC recover authentication
 			return c.Next()
 		}
 
@@ -198,30 +225,7 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 		return deviceMw(c)
 	}
 
-	// EC recover authentication middleware
-	ecRecoverAuth := func(c *fiber.Ctx) error {
-		ethAddr := c.Params("ethAddr")
-
-		// get signature from header
-		signature := c.Get("Signature")
-		if signature == "" {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": "Signature not found in request header",
-			})
-		}
-
-		ok, err := utils.VerifySignature(c.Body(), signature, ethAddr)
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).SendString(fmt.Sprintf("Failed to recover an address from the signature: %s", ethAddr))
-		} else if !ok {
-			return c.Status(fiber.StatusUnauthorized).SendString("Unauthorized")
-		}
-
-		// If EC recover authentication succeeds, call the next middleware function
-		return c.Next()
-	}
-
-	v1.Patch("/device-config/eth-addr/:ethAddr/status", jwtAuthWrapper, ecRecoverAuth, deviceMw, deviceConfigController.PatchConfigStatusByEthAddr)
+	v1.Patch("/device-config/eth-addr/:ethAddr/status", jwtAuthenticationMiddleware, etherSigVerificationMiddleware, deviceMw, deviceConfigController.PatchConfigStatusByEthAddr)
 
 	// Jobs endpoint
 	v1.Get("/device-config/eth-addr/:ethAddr/jobs", jobsController.GetJobsFromEthAddr)
