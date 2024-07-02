@@ -122,6 +122,11 @@ type UsersClient struct {
 	Store map[string]*pb.User
 }
 
+func (c *UsersClient) GetUserByEthAddr(_ context.Context, _ *pb.GetUserByEthRequest, _ ...grpc.CallOption) (*pb.User, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (c *UsersClient) GetUser(_ context.Context, in *pb.GetUserRequest, _ ...grpc.CallOption) (*pb.User, error) {
 	u, ok := c.Store[in.Id]
 	if !ok {
