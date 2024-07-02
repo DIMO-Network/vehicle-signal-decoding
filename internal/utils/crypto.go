@@ -40,10 +40,10 @@ func Ecrecover(hash, sig []byte) (common.Address, error) {
 }
 
 // VerifySignature godoc
-// @Description checks if the provided signature corresponds to the given message and Ethereum address.
-// @param body []byte The original message that was signed.
-// @param signature string The signature that needs to be verified.
-// @param ethAddr string The Ethereum address of the signer.
+// checks if the provided signature corresponds to the given message and Ethereum address.
+// body []byte The original message that was signed.
+// signature string The signature that needs to be verified.
+// ethAddr string The Ethereum address of the signer.
 // @return bool Indicates whether the signature is valid or not.
 // @return error If there was an issue during the verification process.
 func VerifySignature(body []byte, signature string, ethAddr string) (bool, error) {
