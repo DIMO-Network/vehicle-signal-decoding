@@ -122,10 +122,6 @@ type UsersClient struct {
 	Store map[string]*pb.User
 }
 
-func (c *UsersClient) GetUserByEthAddr(_ context.Context, _ *pb.GetUserByEthRequest, _ ...grpc.CallOption) (*pb.User, error) {
-	return nil, status.Error(codes.NotFound, "Not implemented.")
-}
-
 func (c *UsersClient) GetUser(_ context.Context, in *pb.GetUserRequest, _ ...grpc.CallOption) (*pb.User, error) {
 	u, ok := c.Store[in.Id]
 	if !ok {

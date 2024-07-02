@@ -49,7 +49,7 @@ func (h GetCanBusDumpFileByEthAddressQueryHandler) Handle(ctx context.Context, q
 	files := []*pgrpc.GetCanBusDumpFileItemResponse{}
 
 	for _, item := range response.Contents {
-		if *item.Size > 0 {
+		if item.Size > 0 {
 			files = append(files, &pgrpc.GetCanBusDumpFileItemResponse{
 				Id:        common.RemoveSpecialCharacter(*item.ETag),
 				Name:      filepath.Base(*item.Key),

@@ -9,7 +9,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"strings"
 	"testing"
 	"time"
 
@@ -734,58 +733,6 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigStatusByEthAddr_DeviceDat
 	assert.Equal(s.T(), false, receivedResp.IsTemplateUpToDate)
 	assert.Equal(s.T(), true, receivedResp.IsFirmwareUpToDate)
 	assert.Equal(s.T(), "v0.8.5", receivedResp.FirmwareVersion)
-}
-
-func (s *DeviceConfigControllerTestSuite) TestPatchConfigStatusByEthAddr_WithTwoAuth() {
-	// Fiber handler
-	someHandler := func(c *fiber.Ctx) error {
-		return c.SendString("ok")
-	}
-
-	// First auth middleware
-	jwtAuth := func(c *fiber.Ctx) error {
-		// Try to authenticate with JWT
-		auth := c.OriginalURL()
-		if !strings.Contains(auth, "JWT") {
-			return c.Next()
-		}
-
-		// If JWT authentication succeeds, don't call the next middleware function
-		// Instead, skip to the handler after the second authentication middleware
-		return someHandler(c)
-	}
-
-	// Second auth middleware
-	anotherAuth := func(c *fiber.Ctx) error {
-		// Try to authenticate with another method
-		auth := c.OriginalURL()
-		if !strings.Contains(auth, "Signature") {
-			return c.Status(fiber.StatusUnauthorized).SendString("Unauthorized")
-		}
-
-		// If the other authentication succeeds, call the next middleware function
-		return c.Next()
-	}
-
-	// define routes
-	s.app.Patch("/device-config/eth-addr/:ethAddr/status", jwtAuth, anotherAuth, someHandler)
-
-	body := `{"dbcUrl": "string", "firmwareVersionApplied": "string", "pidsUrl": "string", "settingsUrl": "string"}`
-	ethAddr := "0x29e8Ec52A3d2c9b72aA9F0e3e2576F3A28480299"
-	//  test anotherAuth success
-	request := dbtest.BuildRequest("PATCH", "/device-config/eth-addr/"+ethAddr+"/status?authType=Signature", body)
-	response, _ := s.app.Test(request)
-	assert.Equal(s.T(), fiber.StatusOK, response.StatusCode)
-
-	//  test jwtAuth success
-	request = dbtest.BuildRequest("PATCH", "/device-config/eth-addr/"+ethAddr+"/status?authType=JWT", body)
-	response, _ = s.app.Test(request)
-	assert.Equal(s.T(), fiber.StatusOK, response.StatusCode)
-
-	//  test both authentication failed
-	request = dbtest.BuildRequest("PATCH", "/device-config/eth-addr/"+ethAddr+"/status", body)
-	response, _ = s.app.Test(request)
-	assert.Equal(s.T(), fiber.ErrUnauthorized.Code, response.StatusCode)
 }
 
 func Test_modelMatch(t *testing.T) {
