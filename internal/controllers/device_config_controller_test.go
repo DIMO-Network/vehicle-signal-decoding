@@ -782,7 +782,7 @@ func (s *DeviceConfigControllerTestSuite) TestPatchConfigStatusByEthAddr_WithTwo
 	response, _ = s.app.Test(request)
 	assert.Equal(s.T(), fiber.StatusOK, response.StatusCode)
 
-	//  test both authentication failed success
+	//  test both authentication failed
 	request = dbtest.BuildRequest("PATCH", "/device-config/eth-addr/"+ethAddr+"/status", body)
 	response, _ = s.app.Test(request)
 	assert.Equal(s.T(), fiber.ErrUnauthorized.Code, response.StatusCode)
