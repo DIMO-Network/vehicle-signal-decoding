@@ -56,7 +56,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 
 	go StartGrpcServer(logger, pdb.DBS, settings, s3Client)
 	startWebAPI(logger, settings, pdb)
-	startVehicleSignalConsumer(logger, settings, pdb)
+	//startVehicleSignalConsumer(logger, settings, pdb)
 	startMonitoringServer(logger, settings)
 
 	c := make(chan os.Signal, 1)                    // Create channel to signify a signal being sent with length of 1
@@ -145,7 +145,7 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 		ErrorHandler: func(_ *fiber.Ctx, err error) error {
 			return fiber.NewError(fiber.StatusUnauthorized, "Invalid JWT. "+err.Error())
 		},
-		SuccessHandler: func(c *fiber.Ctx) error {
+		SuccessHandler: func(_ *fiber.Ctx) error {
 			// do not call c.Next(), because we want to skip  the second Auth
 			return nil
 		},
