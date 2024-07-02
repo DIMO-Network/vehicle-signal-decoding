@@ -10,14 +10,10 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/DIMO-Network/vehicle-signal-decoding/internal/utils"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
-
-	"github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways"
-
 	pb "github.com/DIMO-Network/users-api/pkg/grpc"
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/middleware/owner"
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/utils"
 	jwtware "github.com/gofiber/contrib/jwt"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -205,7 +201,6 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 	// EC recover authentication middleware
 	ecRecoverAuth := func(c *fiber.Ctx) error {
 		ethAddr := c.Params("ethAddr")
-		addr := common.HexToAddress(ethAddr)
 
 		// get signature from header
 		signature := c.Get("Signature")
@@ -214,12 +209,11 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 				"error": "Signature not found in request header",
 			})
 		}
-		sig := common.FromHex(signature)
 
-		hash := crypto.Keccak256Hash(c.Body())
-		if recAddr, err := utils.Ecrecover(hash.Bytes(), sig); err != nil {
+		ok, err := utils.VerifySignature(c.Body(), signature, ethAddr)
+		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).SendString(fmt.Sprintf("Failed to recover an address from the signature: %s", ethAddr))
-		} else if recAddr != addr {
+		} else if !ok {
 			return c.Status(fiber.StatusUnauthorized).SendString("Unauthorized")
 		}
 

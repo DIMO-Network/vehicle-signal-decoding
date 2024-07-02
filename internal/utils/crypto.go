@@ -38,3 +38,23 @@ func Ecrecover(hash, sig []byte) (common.Address, error) {
 
 	return crypto.PubkeyToAddress(*pk), nil
 }
+
+// VerifySignature godoc
+// @Description checks if the provided signature corresponds to the given message and Ethereum address.
+// @param body []byte The original message that was signed.
+// @param signature string The signature that needs to be verified.
+// @param ethAddr string The Ethereum address of the signer.
+// @return bool Indicates whether the signature is valid or not.
+// @return error If there was an issue during the verification process.
+func VerifySignature(body []byte, signature string, ethAddr string) (bool, error) {
+	addr := common.HexToAddress(ethAddr)
+	sig := common.FromHex(signature)
+	hash := crypto.Keccak256Hash(body)
+
+	recAddr, err := Ecrecover(hash.Bytes(), sig)
+	if err != nil {
+		return false, err
+	}
+
+	return recAddr == addr, nil
+}
