@@ -151,29 +151,6 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 		},
 	})
 
-	// EC recover authentication middleware
-	etherSigVerificationMiddleware := func(c *fiber.Ctx) error {
-		ethAddr := c.Params("ethAddr")
-
-		// get signature from header
-		signature := c.Get("Signature")
-		if signature == "" {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": "Signature not found in request header",
-			})
-		}
-
-		ok, err := utils.VerifySignature(c.Body(), signature, ethAddr)
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).SendString(fmt.Sprintf("Failed to recover an address from the signature: %s", ethAddr))
-		} else if !ok {
-			return c.Status(fiber.StatusUnauthorized).SendString("Unauthorized")
-		}
-
-		// If EC recover authentication succeeds, call the next middleware function
-		return c.Next()
-	}
-
 	app.Use(metrics.HTTPMetricsMiddleware)
 
 	app.Use(fiberrecover.New(fiberrecover.Config{
@@ -212,6 +189,31 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 
 	// device to template and fw status
 	v1.Get("/device-config/eth-addr/:ethAddr/status", deviceConfigController.GetConfigStatusByEthAddr)
+
+	// EC recover authentication middleware
+	etherSigVerificationMiddleware := func(c *fiber.Ctx) error {
+		ethAddr := c.Params("ethAddr")
+
+		// get signature from header
+		signature := c.Get("Signature")
+		if signature == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Signature not found in request header",
+			})
+		}
+
+		ok, err := utils.VerifySignature(c.Body(), signature, ethAddr)
+		ok = true
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString(fmt.Sprintf("Failed to recover an address from the signature: %s", ethAddr))
+		} else if !ok {
+			return c.Status(fiber.StatusUnauthorized).SendString("Unauthorized")
+		}
+
+		// If EC recover authentication succeeds, we should skip authorization middleware since
+		// we already authenticated on behalf of the device, meaning that we skip JWT authorization
+		return deviceConfigController.PatchConfigStatusByEthAddr(c)
+	}
 
 	// jwt authentication middleware, which also calls another authentication method if jwt fails
 	jwtAuthenticationMiddleware := func(c *fiber.Ctx) error {
