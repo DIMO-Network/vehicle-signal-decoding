@@ -203,7 +203,6 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 		}
 
 		ok, err := utils.VerifySignature(c.Body(), signature, ethAddr)
-		ok = true
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).SendString(fmt.Sprintf("Failed to recover an address from the signature: %s", ethAddr))
 		} else if !ok {
