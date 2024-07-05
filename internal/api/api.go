@@ -197,8 +197,8 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 		// get signature from header
 		signature := c.Get("Signature")
 		if signature == "" {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": "Signature not found in request header",
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error": "Valid JWT or signature required for authentication, neither were provided nor JWT is invalid",
 			})
 		}
 
