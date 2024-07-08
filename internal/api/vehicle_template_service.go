@@ -117,3 +117,17 @@ func (s *VehicleTemplateService) UpdateVehicleTemplate(ctx context.Context, requ
 
 	return resp, nil
 }
+
+func (s *VehicleTemplateService) DeleteVehicleTemplate(ctx context.Context, request *grpc.DeleteVehicleTemplateRequest) (*emptypb.Empty, error) {
+	service := commands.NewDeleteVehicleTemplateCommandHandler(s.dbs)
+
+	resp, err := service.Execute(ctx, commands.DeleteVehicleTemplateCommand{
+		ID: request.Id,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}

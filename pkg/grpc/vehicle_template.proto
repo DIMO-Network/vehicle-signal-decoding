@@ -35,9 +35,14 @@ message CreateVehicleTemplateResponse {
     int64 id = 1;
 }
 
+message DeleteVehicleTemplateRequest {
+    int64 id = 1;
+}
+
 service VehicleTemplateService {
     rpc GetVehicleTemplates(GetVehicleTemplatesRequest) returns (GetVehicleTemplatesResponse) {}
     rpc GetVehicleTemplate(GetVehicleTemplateRequest) returns (VehicleTemplate) {}
     rpc CreateVehicleTemplate(VehicleTemplate) returns (CreateVehicleTemplateResponse) {}
     rpc UpdateVehicleTemplate(VehicleTemplate) returns (google.protobuf.Empty) {}
+    rpc DeleteVehicleTemplate(DeleteVehicleTemplateRequest) returns (google.protobuf.Empty) {}
 }

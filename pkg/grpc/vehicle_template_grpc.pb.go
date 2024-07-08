@@ -24,6 +24,7 @@ const (
 	VehicleTemplateService_GetVehicleTemplate_FullMethodName    = "/grpc.VehicleTemplateService/GetVehicleTemplate"
 	VehicleTemplateService_CreateVehicleTemplate_FullMethodName = "/grpc.VehicleTemplateService/CreateVehicleTemplate"
 	VehicleTemplateService_UpdateVehicleTemplate_FullMethodName = "/grpc.VehicleTemplateService/UpdateVehicleTemplate"
+	VehicleTemplateService_DeleteVehicleTemplate_FullMethodName = "/grpc.VehicleTemplateService/DeleteVehicleTemplate"
 )
 
 // VehicleTemplateServiceClient is the client API for VehicleTemplateService service.
@@ -34,6 +35,7 @@ type VehicleTemplateServiceClient interface {
 	GetVehicleTemplate(ctx context.Context, in *GetVehicleTemplateRequest, opts ...grpc.CallOption) (*VehicleTemplate, error)
 	CreateVehicleTemplate(ctx context.Context, in *VehicleTemplate, opts ...grpc.CallOption) (*CreateVehicleTemplateResponse, error)
 	UpdateVehicleTemplate(ctx context.Context, in *VehicleTemplate, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	DeleteVehicleTemplate(ctx context.Context, in *DeleteVehicleTemplateRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
 type vehicleTemplateServiceClient struct {
@@ -80,6 +82,15 @@ func (c *vehicleTemplateServiceClient) UpdateVehicleTemplate(ctx context.Context
 	return out, nil
 }
 
+func (c *vehicleTemplateServiceClient) DeleteVehicleTemplate(ctx context.Context, in *DeleteVehicleTemplateRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, VehicleTemplateService_DeleteVehicleTemplate_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // VehicleTemplateServiceServer is the server API for VehicleTemplateService service.
 // All implementations must embed UnimplementedVehicleTemplateServiceServer
 // for forward compatibility
@@ -88,6 +99,7 @@ type VehicleTemplateServiceServer interface {
 	GetVehicleTemplate(context.Context, *GetVehicleTemplateRequest) (*VehicleTemplate, error)
 	CreateVehicleTemplate(context.Context, *VehicleTemplate) (*CreateVehicleTemplateResponse, error)
 	UpdateVehicleTemplate(context.Context, *VehicleTemplate) (*emptypb.Empty, error)
+	DeleteVehicleTemplate(context.Context, *DeleteVehicleTemplateRequest) (*emptypb.Empty, error)
 	mustEmbedUnimplementedVehicleTemplateServiceServer()
 }
 
@@ -106,6 +118,9 @@ func (UnimplementedVehicleTemplateServiceServer) CreateVehicleTemplate(context.C
 }
 func (UnimplementedVehicleTemplateServiceServer) UpdateVehicleTemplate(context.Context, *VehicleTemplate) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateVehicleTemplate not implemented")
+}
+func (UnimplementedVehicleTemplateServiceServer) DeleteVehicleTemplate(context.Context, *DeleteVehicleTemplateRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteVehicleTemplate not implemented")
 }
 func (UnimplementedVehicleTemplateServiceServer) mustEmbedUnimplementedVehicleTemplateServiceServer() {
 }
@@ -193,6 +208,24 @@ func _VehicleTemplateService_UpdateVehicleTemplate_Handler(srv interface{}, ctx 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _VehicleTemplateService_DeleteVehicleTemplate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteVehicleTemplateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(VehicleTemplateServiceServer).DeleteVehicleTemplate(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: VehicleTemplateService_DeleteVehicleTemplate_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(VehicleTemplateServiceServer).DeleteVehicleTemplate(ctx, req.(*DeleteVehicleTemplateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // VehicleTemplateService_ServiceDesc is the grpc.ServiceDesc for VehicleTemplateService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -215,6 +248,10 @@ var VehicleTemplateService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateVehicleTemplate",
 			Handler:    _VehicleTemplateService_UpdateVehicleTemplate_Handler,
+		},
+		{
+			MethodName: "DeleteVehicleTemplate",
+			Handler:    _VehicleTemplateService_DeleteVehicleTemplate_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
