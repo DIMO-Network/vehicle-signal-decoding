@@ -38,6 +38,48 @@
                 }
             }
         },
+        "/device-config/eth-addr/{ethAddr}/hw/status": {
+            "patch": {
+                "security": [
+                    {
+                        "SignatureAuth": []
+                    }
+                ],
+                "description": "Set what template and/or firmware was applied. None of the properties are required. Will not be set if not passed in.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "device-config"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Ethereum Address",
+                        "name": "ethAddr",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "set any properties that were updated on the device",
+                        "name": "config",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_controllers.DeviceTemplateStatusPatch"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully updated"
+                    },
+                    "500": {
+                        "description": "unable to parse request or storage failure"
+                    }
+                }
+            }
+        },
         "/device-config/eth-addr/{ethAddr}/jobs": {
             "get": {
                 "description": "Retrieve the jobs based on device's Ethereum Address.",
@@ -177,9 +219,6 @@
                 "security": [
                     {
                         "BearerAuth": []
-                    },
-                    {
-                        "SignatureAuth": []
                     }
                 ],
                 "description": "Set what template and/or firmware was applied. None of the properties are required. Will not be set if not passed in.",

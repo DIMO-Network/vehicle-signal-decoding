@@ -132,6 +132,33 @@ paths:
           description: No DBC file found for the given template name.
       tags:
       - device-config
+  /device-config/eth-addr/{ethAddr}/hw/status:
+    patch:
+      description: Set what template and/or firmware was applied. None of the properties
+        are required. Will not be set if not passed in.
+      parameters:
+      - description: Ethereum Address
+        in: path
+        name: ethAddr
+        required: true
+        type: string
+      - description: set any properties that were updated on the device
+        in: body
+        name: config
+        required: true
+        schema:
+          $ref: '#/definitions/internal_controllers.DeviceTemplateStatusPatch'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully updated
+        "500":
+          description: unable to parse request or storage failure
+      security:
+      - SignatureAuth: []
+      tags:
+      - device-config
   /device-config/eth-addr/{ethAddr}/jobs:
     get:
       description: Retrieve the jobs based on device's Ethereum Address.
@@ -245,7 +272,6 @@ paths:
           description: unable to parse request or storage failure
       security:
       - BearerAuth: []
-      - SignatureAuth: []
       tags:
       - device-config
   /device-config/eth-addr/{ethAddr}/urls:
