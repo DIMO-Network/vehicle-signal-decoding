@@ -135,7 +135,8 @@ paths:
   /device-config/eth-addr/{ethAddr}/hw/status:
     patch:
       description: Set what template and/or firmware was applied. None of the properties
-        are required. Will not be set if not passed in.
+        are required. Will not be set if not passed in.  Endpoint is meant only for
+        hardware devices self-reporting their template update.
       parameters:
       - description: Ethereum Address
         in: path
