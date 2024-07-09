@@ -3,11 +3,15 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"os/signal"
 	"runtime/debug"
 	"strings"
 	"syscall"
+
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/utils"
+	jwtware "github.com/gofiber/contrib/jwt"
 
 	pb "github.com/DIMO-Network/users-api/pkg/grpc"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways"
@@ -136,17 +140,12 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 		ReadBufferSize:        16000,
 	})
 
-	// // secured paths
-	// jwtAuth := jwtware.New(jwtware.Config{
-	// 	JWKSetURLs: []string{settings.JwtKeySetURL},
-	// 	ErrorHandler: func(_ *fiber.Ctx, err error) error {
-	// 		return fiber.NewError(fiber.StatusUnauthorized, "Invalid JWT. "+err.Error())
-	// 	},
-	// 	SuccessHandler: func(_ *fiber.Ctx) error {
-	// 		// do not call c.Next(), because we want to skip  the second Auth
-	// 		return nil
-	// 	},
-	// })
+	jwtAuth := jwtware.New(jwtware.Config{
+		JWKSetURLs: []string{settings.JwtKeySetURL},
+		ErrorHandler: func(_ *fiber.Ctx, err error) error {
+			return fiber.NewError(fiber.StatusUnauthorized, "Invalid JWT. "+err.Error())
+		},
+	})
 
 	app.Use(metrics.HTTPMetricsMiddleware)
 
@@ -187,43 +186,35 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 	// device to template and fw status
 	v1.Get("/device-config/eth-addr/:ethAddr/status", deviceConfigController.GetConfigStatusByEthAddr)
 
-	// // EC recover authentication middleware
-	// etherSigVerificationMiddleware := func(c *fiber.Ctx) error {
-	// 	ethAddr := c.Params("ethAddr")
+	// EC recover authentication middleware
+	etherSigAuth := func(c *fiber.Ctx) error {
+		ethAddr := c.Params("ethAddr")
 
-	// 	// get signature from header
-	// 	signature := c.Get("Signature")
-	// 	if signature == "" {
-	// 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-	// 			"error": "Valid JWT or signature required for authentication, neither were provided nor JWT is invalid",
-	// 		})
-	// 	}
+		// get signature from header
+		signature := c.Get("Signature")
+		if signature == "" {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error": "Signature not found in request header",
+			})
+		}
 
-	// 	ok, err := utils.VerifySignature(c.Body(), signature, ethAddr)
-	// 	if err != nil {
-	// 		return c.Status(fiber.StatusInternalServerError).SendString(fmt.Sprintf("Failed to recover an address from the signature: %s", ethAddr))
-	// 	} else if !ok {
-	// 		return c.Status(fiber.StatusUnauthorized).SendString("Unauthorized")
-	// 	}
+		ok, err := utils.VerifySignature(c.Body(), signature, ethAddr)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString(fmt.Sprintf("Failed to recover an address from the signature: %s", ethAddr))
+		} else if !ok {
+			return c.Status(fiber.StatusUnauthorized).SendString("Unauthorized")
+		}
 
-	// 	// If EC recover authentication succeeds, we should skip authorization middleware since
-	// 	// we already authenticated on behalf of the device, meaning that we skip JWT authorization
-	// 	return deviceConfigController.PatchConfigStatusByEthAddr(c)
-	// }
+		// If EC recover authentication succeeds, we should skip authorization middleware since
+		// we already authenticated on behalf of the device
+		return c.Next()
+	}
 
-	// // jwt authentication middleware, which also calls another authentication method if jwt fails
-	// jwtAuthenticationMiddleware := func(c *fiber.Ctx) error {
-	// 	if err := jwtAuth(c); err != nil {
-	// 		// If JWT authentication fails, call the next middleware function, which is EC recover authentication
-	// 		return c.Next()
-	// 	}
+	// Jwt authentication
+	v1.Patch("/device-config/eth-addr/:ethAddr/status", jwtAuth, deviceMw, deviceConfigController.PatchConfigStatusByEthAddr)
 
-	// 	// If JWT authentication succeeds, don't call the next middleware function
-	// 	// Instead, skip to the handler after the second authentication middleware
-	// 	return deviceMw(c)
-	// }
-
-	v1.Patch("/device-config/eth-addr/:ethAddr/status", deviceMw, deviceConfigController.PatchConfigStatusByEthAddr)
+	// Signature authentication
+	v1.Patch("/device-config/eth-addr/:ethAddr/hw/status", etherSigAuth, deviceConfigController.PatchHwConfigStatusByEthAddr)
 
 	// Jobs endpoint
 	v1.Get("/device-config/eth-addr/:ethAddr/jobs", jobsController.GetJobsFromEthAddr)

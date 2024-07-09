@@ -6,10 +6,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/utils"
 	"io"
 	"net/http"
 	"os"
-	"strings"
 	"testing"
 	"time"
 
@@ -736,56 +736,58 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigStatusByEthAddr_DeviceDat
 	assert.Equal(s.T(), "v0.8.5", receivedResp.FirmwareVersion)
 }
 
-func (s *DeviceConfigControllerTestSuite) TestPatchConfigStatusByEthAddr_WithTwoAuth() {
+func (s *DeviceConfigControllerTestSuite) TestPatchConfigStatusByEthAddr_WithSignatureAuth() {
 	// Fiber handler
 	someHandler := func(c *fiber.Ctx) error {
 		return c.SendString("ok")
 	}
 
-	// First auth middleware
-	jwtAuth := func(c *fiber.Ctx) error {
-		// Try to authenticate with JWT
-		auth := c.OriginalURL()
-		if !strings.Contains(auth, "JWT") {
-			return c.Next()
+	//  Auth middleware
+	etherSigAuth := func(c *fiber.Ctx) error {
+		ethAddr := c.Params("ethAddr")
+
+		// get signature from header
+		signature := c.Get("Signature")
+		if signature == "" {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error": "Signature not found in request header",
+			})
 		}
 
-		// If JWT authentication succeeds, don't call the next middleware function
-		// Instead, skip to the handler after the second authentication middleware
-		return someHandler(c)
-	}
-
-	// Second auth middleware
-	anotherAuth := func(c *fiber.Ctx) error {
-		// Try to authenticate with another method
-		auth := c.OriginalURL()
-		if !strings.Contains(auth, "Signature") {
+		ok, err := utils.VerifySignature(c.Body(), signature, ethAddr)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString(fmt.Sprintf("Failed to recover an address from the signature: %s", ethAddr))
+		} else if !ok {
 			return c.Status(fiber.StatusUnauthorized).SendString("Unauthorized")
 		}
 
-		// If the other authentication succeeds, call the next middleware function
 		return c.Next()
 	}
 
 	// define routes
-	s.app.Patch("/device-config/eth-addr/:ethAddr/status", jwtAuth, anotherAuth, someHandler)
+	s.app.Patch("/device-config/eth-addr/:ethAddr/hw/status", etherSigAuth, someHandler)
 
 	body := `{"dbcUrl": "string", "firmwareVersionApplied": "string", "pidsUrl": "string", "settingsUrl": "string"}`
 	ethAddr := "0x29e8Ec52A3d2c9b72aA9F0e3e2576F3A28480299"
-	//  test anotherAuth success
-	request := dbtest.BuildRequest("PATCH", "/device-config/eth-addr/"+ethAddr+"/status?authType=Signature", body)
+	//  500 status, invalid signature length
+	request := dbtest.BuildRequest("PATCH", "/device-config/eth-addr/"+ethAddr+"/hw/status", body)
+	request.Header.Set("Signature", "0x29e8Ec52A3d2c9b72aA9F0e3e2576F3A28480299")
 	response, _ := s.app.Test(request)
-	assert.Equal(s.T(), fiber.StatusOK, response.StatusCode)
+	assert.Equal(s.T(), fiber.StatusInternalServerError, response.StatusCode)
 
-	//  test jwtAuth success
-	request = dbtest.BuildRequest("PATCH", "/device-config/eth-addr/"+ethAddr+"/status?authType=JWT", body)
+	//  401 status, Unauthorized
+	request = dbtest.BuildRequest("PATCH", "/device-config/eth-addr/"+ethAddr+"/hw/status", body)
+	request.Header.Set("Signature", "0xc5f9d93a1990d9f14c71de0fe3770668b82fb9994e3ef5d1221021d09c933dc1662a1de8fbf71e526e1bdc133b166f628c1ee9c5afd9655571ca0835796efe031c")
+	response, _ = s.app.Test(request)
+	assert.Equal(s.T(), fiber.StatusUnauthorized, response.StatusCode)
+
+	//  200 status, OK
+	ethAddr = "0x98D78d711C0ec544F6fb5d54fcf6559CF41546a9"
+	body = `{"dbcUrl":"https://vehicle-signal-decoding.dev.dimo.zone/v1/device-config/dbc/default-ice-can11@1.0.1","deviceSettingUrl":"https://vehicle-signal-decoding.dev.dimo.zone/v1/device-config/settings/default-phev@1.0.1","pidUrl":"https://vehicle-signal-decoding.dev.dimo.zone/v1/device-config/pids/default-ice-can11@1.0.1","firmwareVersionApplied":"v1.0.0"}`
+	request = dbtest.BuildRequest("PATCH", "/device-config/eth-addr/"+ethAddr+"/hw/status", body)
+	request.Header.Set("Signature", "0x872cad8e0cc413537f069fb5c67ba2f34f437befa4f73cf65449359be0e26c422c9ffe5a641cb2b5ad6dcebee26016803284a024ca87e6db91a4c6b9ee3336de1b")
 	response, _ = s.app.Test(request)
 	assert.Equal(s.T(), fiber.StatusOK, response.StatusCode)
-
-	//  test both authentication failed
-	request = dbtest.BuildRequest("PATCH", "/device-config/eth-addr/"+ethAddr+"/status", body)
-	response, _ = s.app.Test(request)
-	assert.Equal(s.T(), fiber.ErrUnauthorized.Code, response.StatusCode)
 }
 
 func Test_modelMatch(t *testing.T) {

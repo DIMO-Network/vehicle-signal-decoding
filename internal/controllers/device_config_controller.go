@@ -470,7 +470,6 @@ func (d *DeviceConfigController) GetConfigStatusByEthAddr(c *fiber.Ctx) error {
 // @Param        ethAddr  path   string  true  "Ethereum Address"
 // @Param        config body DeviceTemplateStatusPatch true "set any properties that were updated on the device"
 // @Security     BearerAuth
-// @Security     SignatureAuth
 // @Router       /device-config/eth-addr/{ethAddr}/status [patch]
 func (d *DeviceConfigController) PatchConfigStatusByEthAddr(c *fiber.Ctx) error {
 	ethAddr := c.Params("ethAddr")
@@ -488,6 +487,20 @@ func (d *DeviceConfigController) PatchConfigStatusByEthAddr(c *fiber.Ctx) error 
 	}
 
 	return c.SendStatus(fiber.StatusOK)
+}
+
+// PatchHwConfigStatusByEthAddr godoc
+// @Description  Set what template and/or firmware was applied. None of the properties are required. Will not be set if not passed in. Endpoint is meant only for hardware devices self-reporting their template update.
+// @Tags         device-config
+// @Produce      json
+// @Success      200 "Successfully updated"
+// @Failure 500  "unable to parse request or storage failure"
+// @Param        ethAddr  path   string  true  "Ethereum Address"
+// @Param        config body DeviceTemplateStatusPatch true "set any properties that were updated on the device"
+// @Security     SignatureAuth
+// @Router       /device-config/eth-addr/{ethAddr}/hw/status [patch]
+func (d *DeviceConfigController) PatchHwConfigStatusByEthAddr(c *fiber.Ctx) error {
+	return d.PatchConfigStatusByEthAddr(c)
 }
 
 func parseOutFWVersion(data *gdata.RawDeviceDataResponse) string {
