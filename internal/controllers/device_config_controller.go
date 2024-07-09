@@ -490,7 +490,7 @@ func (d *DeviceConfigController) PatchConfigStatusByEthAddr(c *fiber.Ctx) error 
 }
 
 // PatchHwConfigStatusByEthAddr godoc
-// @Description  Set what template and/or firmware was applied. None of the properties are required. Will not be set if not passed in.  Endpoint is meant only for hardware devices self-reporting their template update.
+// @Description  Set what template and/or firmware was applied. None of the properties are required. Will not be set if not passed in. Endpoint is meant only for hardware devices self-reporting their template update.
 // @Tags         device-config
 // @Produce      json
 // @Success      200 "Successfully updated"
