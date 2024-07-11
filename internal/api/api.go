@@ -120,7 +120,7 @@ func startMonitoringServer(logger zerolog.Logger, settings *config.Settings) {
 		}
 	}()
 
-	logger.Info().Str("port", settings.MonitoringPort).Msg("Started monitoring web server.")
+	logger.Info().Str("port", settings.MonitoringPort).Msg("started monitoring web server.")
 }
 
 func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.Store) *fiber.App {
