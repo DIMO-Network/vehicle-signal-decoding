@@ -6,12 +6,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/DIMO-Network/vehicle-signal-decoding/internal/utils"
 	"io"
 	"net/http"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/utils"
 
 	mock_gateways "github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways/mocks"
 

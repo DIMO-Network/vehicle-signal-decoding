@@ -70,9 +70,12 @@ func NewDeviceConfigController(settings *config.Settings, logger *zerolog.Logger
 // DeviceTemplateStatusResponse status on template and firmware versions
 type DeviceTemplateStatusResponse struct {
 	// IsTemplateUpToDate based on information we have, based on what was set last by mobile app
-	IsTemplateUpToDate bool   `json:"isTemplateUpToDate"`
-	FirmwareVersion    string `json:"firmwareVersion,omitempty"`
-	IsFirmwareUpToDate bool   `json:"isFirmwareUpToDate"`
+	IsTemplateUpToDate  bool   `json:"isTemplateUpToDate"`
+	FirmwareVersion     string `json:"firmwareVersion,omitempty"`
+	IsFirmwareUpToDate  bool   `json:"isFirmwareUpToDate"`
+	TemplateDbcURL      string `json:"templateDbcUrl,omitempty"`
+	TemplatePidURL      string `json:"templatePidUrl,omitempty"`
+	TemplateSettingsURL string `json:"templateSettingsUrl,omitempty"`
 }
 
 func bytesToUint32(b []byte) (uint32, error) {
@@ -453,12 +456,17 @@ func (d *DeviceConfigController) GetConfigStatusByEthAddr(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-
-	return c.JSON(DeviceTemplateStatusResponse{
+	resp := DeviceTemplateStatusResponse{
 		IsTemplateUpToDate: isTemplateUpdated,
 		IsFirmwareUpToDate: isFwUpToDate(latestFirmwareStr, deviceFWVers),
 		FirmwareVersion:    deviceFWVers,
-	})
+	}
+	if dts != nil {
+		resp.TemplateDbcURL = dts.TemplateDBCURL.String
+		resp.TemplatePidURL = dts.TemplatePidURL.String
+		resp.TemplateSettingsURL = dts.TemplateSettingsURL.String
+	}
+	return c.JSON(resp)
 }
 
 // PatchConfigStatusByEthAddr godoc
