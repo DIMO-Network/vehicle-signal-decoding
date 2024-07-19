@@ -96,6 +96,12 @@ definitions:
         description: IsTemplateUpToDate based on information we have, based on what
           was set last by mobile app
         type: boolean
+      templateDbcUrl:
+        type: string
+      templatePidUrl:
+        type: string
+      templateSettingsUrl:
+        type: string
     type: object
   internal_controllers.JobResponse:
     properties:
@@ -135,7 +141,7 @@ paths:
   /device-config/eth-addr/{ethAddr}/hw/status:
     patch:
       description: Set what template and/or firmware was applied. None of the properties
-        are required. Will not be set if not passed in.  Endpoint is meant only for
+        are required. Will not be set if not passed in. Endpoint is meant only for
         hardware devices self-reporting their template update.
       parameters:
       - description: Ethereum Address
