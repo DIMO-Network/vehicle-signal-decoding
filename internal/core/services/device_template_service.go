@@ -65,13 +65,13 @@ func (dts *deviceTemplateService) StoreDeviceConfigUsed(ctx context.Context, add
 		// update - only set if not nil
 		if settingURL != nil {
 			dt.TemplateSettingsURL = null.StringFromPtr(settingURL)
-		}
-		if dbcURL != nil {
-			dt.TemplateDBCURL = null.StringFromPtr(dbcURL)
+			// if the template dbc url is nil we want to set it to null
 		}
 		if pidURL != nil {
 			dt.TemplatePidURL = null.StringFromPtr(pidURL)
 		}
+		dt.TemplateDBCURL = null.StringFromPtr(dbcURL)
+
 		if firmwareVersion != nil {
 			fwv := *firmwareVersion
 			if len(fwv) > 1 {
