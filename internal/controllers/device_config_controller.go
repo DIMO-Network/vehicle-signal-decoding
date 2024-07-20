@@ -5,10 +5,11 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	"github.com/DIMO-Network/shared/device"
 	"io"
 	"strings"
 	"time"
+
+	"github.com/DIMO-Network/shared/device"
 
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 
@@ -490,11 +491,11 @@ func (d *DeviceConfigController) PatchConfigStatusByEthAddr(c *fiber.Ctx) error 
 	}
 
 	// control for deprecated properties still used by mobile app for patching
-	if payload.PidsUrl != "" {
-		payload.PidURL = payload.PidsUrl
+	if payload.PidsURL != "" {
+		payload.PidURL = payload.PidsURL
 	}
-	if payload.SettingsUrl != "" {
-		payload.DeviceSettingURL = payload.SettingsUrl
+	if payload.SettingsURL != "" {
+		payload.DeviceSettingURL = payload.SettingsURL
 	}
 
 	_, err = d.deviceTemplateService.StoreDeviceConfigUsed(c.Context(), addr, payload.DbcURL, payload.PidURL, payload.DeviceSettingURL, payload.FirmwareVersionApplied)
@@ -544,12 +545,14 @@ type DeviceTemplateStatusPatch struct {
 	device.ConfigResponse
 	// FirmwareVersionApplied version of firmware that was confirmed installed on device
 	FirmwareVersionApplied string `json:"firmwareVersionApplied"`
-	// PidsUrl exists for backwards compatibility
+
+	// PidsURL exists for backwards compatibility
 	// Deprecated
-	PidsUrl string `json:"pidsUrl"`
+	PidsURL string `json:"pidsUrl"`
+
 	// SettingsUrl exists for backwards compatibiltiy
 	// Deprecated
-	SettingsUrl string `json:"settingsUrl"`
+	SettingsURL string `json:"settingsUrl"`
 }
 
 func padByteArray(input []byte, targetLength int) []byte {
