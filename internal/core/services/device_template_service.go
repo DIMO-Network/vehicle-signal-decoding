@@ -3,8 +3,9 @@ package services
 import (
 	"context"
 	"fmt"
-	"github.com/DIMO-Network/shared/device"
 	"strings"
+
+	"github.com/DIMO-Network/shared/device"
 
 	"github.com/DIMO-Network/shared"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways"
