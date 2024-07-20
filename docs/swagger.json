@@ -284,7 +284,7 @@
                     "200": {
                         "description": "Successfully retrieved configuration URLs",
                         "schema": {
-                            "$ref": "#/definitions/github_com_DIMO-Network_vehicle-signal-decoding_internal_core_appmodels.DeviceConfigResponse"
+                            "$ref": "#/definitions/device.ConfigResponse"
                         }
                     },
                     "400": {
@@ -388,7 +388,7 @@
                     "200": {
                         "description": "Successfully retrieved configuration URLs",
                         "schema": {
-                            "$ref": "#/definitions/github_com_DIMO-Network_vehicle-signal-decoding_internal_core_appmodels.DeviceConfigResponse"
+                            "$ref": "#/definitions/device.ConfigResponse"
                         }
                     },
                     "404": {
@@ -399,7 +399,7 @@
         }
     },
     "definitions": {
-        "github_com_DIMO-Network_vehicle-signal-decoding_internal_core_appmodels.DeviceConfigResponse": {
+        "device.ConfigResponse": {
             "type": "object",
             "properties": {
                 "dbcUrl": {
@@ -504,19 +504,27 @@
             "type": "object",
             "properties": {
                 "dbcUrl": {
-                    "description": "DBCFileURL template dbc file url with version as returned from api",
+                    "description": "DbcURL including the version for the dbc file, usually same as pidurl template version",
+                    "type": "string"
+                },
+                "deviceSettingUrl": {
+                    "description": "DeviceSettingURL including the version for the settings",
                     "type": "string"
                 },
                 "firmwareVersionApplied": {
                     "description": "FirmwareVersionApplied version of firmware that was confirmed installed on device",
                     "type": "string"
                 },
+                "pidUrl": {
+                    "description": "PidURL including the version for the template",
+                    "type": "string"
+                },
                 "pidsUrl": {
-                    "description": "PidsURL template pids url with version as returned from api",
+                    "description": "PidsUrl exists for backwards compatibility\nDeprecated",
                     "type": "string"
                 },
                 "settingsUrl": {
-                    "description": "SettingsURL template settings url with version as returned from api",
+                    "description": "SettingsUrl exists for backwards compatibiltiy\nDeprecated",
                     "type": "string"
                 }
             }
@@ -534,14 +542,13 @@
                     "description": "IsTemplateUpToDate based on information we have, based on what was set last by mobile app",
                     "type": "boolean"
                 },
-                "templateDbcUrl": {
-                    "type": "string"
-                },
-                "templatePidUrl": {
-                    "type": "string"
-                },
-                "templateSettingsUrl": {
-                    "type": "string"
+                "template": {
+                    "description": "Template contains the current urls server has for this device",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/device.ConfigResponse"
+                        }
+                    ]
                 }
             }
         },

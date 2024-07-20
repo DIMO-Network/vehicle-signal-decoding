@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/DIMO-Network/shared/device"
+
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways"
@@ -70,12 +72,11 @@ func NewDeviceConfigController(settings *config.Settings, logger *zerolog.Logger
 // DeviceTemplateStatusResponse status on template and firmware versions
 type DeviceTemplateStatusResponse struct {
 	// IsTemplateUpToDate based on information we have, based on what was set last by mobile app
-	IsTemplateUpToDate  bool   `json:"isTemplateUpToDate"`
-	FirmwareVersion     string `json:"firmwareVersion,omitempty"`
-	IsFirmwareUpToDate  bool   `json:"isFirmwareUpToDate"`
-	TemplateDbcURL      string `json:"templateDbcUrl,omitempty"`
-	TemplatePidURL      string `json:"templatePidUrl,omitempty"`
-	TemplateSettingsURL string `json:"templateSettingsUrl,omitempty"`
+	IsTemplateUpToDate bool   `json:"isTemplateUpToDate"`
+	FirmwareVersion    string `json:"firmwareVersion,omitempty"`
+	IsFirmwareUpToDate bool   `json:"isFirmwareUpToDate"`
+	// Template contains the current urls server has for this device
+	Template device.ConfigResponse `json:"template"`
 }
 
 func bytesToUint32(b []byte) (uint32, error) {
@@ -462,9 +463,9 @@ func (d *DeviceConfigController) GetConfigStatusByEthAddr(c *fiber.Ctx) error {
 		FirmwareVersion:    deviceFWVers,
 	}
 	if dts != nil {
-		resp.TemplateDbcURL = dts.TemplateDBCURL.String
-		resp.TemplatePidURL = dts.TemplatePidURL.String
-		resp.TemplateSettingsURL = dts.TemplateSettingsURL.String
+		resp.Template.DbcURL = dts.TemplateDBCURL.String
+		resp.Template.PidURL = dts.TemplatePidURL.String
+		resp.Template.DeviceSettingURL = dts.TemplateSettingsURL.String
 	}
 	return c.JSON(resp)
 }
@@ -489,7 +490,15 @@ func (d *DeviceConfigController) PatchConfigStatusByEthAddr(c *fiber.Ctx) error 
 		return err
 	}
 
-	_, err = d.deviceTemplateService.StoreDeviceConfigUsed(c.Context(), addr, payload.DbcURL, payload.PidsURL, payload.SettingsURL, payload.FirmwareVersionApplied)
+	// control for deprecated properties still used by mobile app for patching
+	if payload.PidsURL != "" {
+		payload.PidURL = payload.PidsURL
+	}
+	if payload.SettingsURL != "" {
+		payload.DeviceSettingURL = payload.SettingsURL
+	}
+
+	_, err = d.deviceTemplateService.StoreDeviceConfigUsed(c.Context(), addr, payload.DbcURL, payload.PidURL, payload.DeviceSettingURL, payload.FirmwareVersionApplied)
 	if err != nil {
 		return err
 	}
@@ -533,14 +542,17 @@ func parseOutTemplateAndVersion(templateNameWithVersion string) (string, string)
 }
 
 type DeviceTemplateStatusPatch struct {
-	// SettingsURL template settings url with version as returned from api
-	SettingsURL *string `json:"settingsUrl"`
-	// PidsURL template pids url with version as returned from api
-	PidsURL *string `json:"pidsUrl"`
-	// DBCFileURL template dbc file url with version as returned from api
-	DbcURL *string `json:"dbcUrl"`
+	device.ConfigResponse
 	// FirmwareVersionApplied version of firmware that was confirmed installed on device
-	FirmwareVersionApplied *string `json:"firmwareVersionApplied"`
+	FirmwareVersionApplied string `json:"firmwareVersionApplied"`
+
+	// PidsURL exists for backwards compatibility
+	// Deprecated
+	PidsURL string `json:"pidsUrl"`
+
+	// SettingsUrl exists for backwards compatibiltiy
+	// Deprecated
+	SettingsURL string `json:"settingsUrl"`
 }
 
 func padByteArray(input []byte, targetLength int) []byte {

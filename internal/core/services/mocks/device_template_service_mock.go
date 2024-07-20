@@ -75,7 +75,7 @@ func (mr *MockDeviceTemplateServiceMockRecorder) ResolveDeviceConfiguration(c, u
 }
 
 // StoreDeviceConfigUsed mocks base method.
-func (m *MockDeviceTemplateService) StoreDeviceConfigUsed(ctx context.Context, address common.Address, dbcURL, pidURL, settingURL, firmwareVersion *string) (*models.DeviceTemplateStatus, error) {
+func (m *MockDeviceTemplateService) StoreDeviceConfigUsed(ctx context.Context, address common.Address, dbcURL, pidURL, settingURL, firmwareVersion string) (*models.DeviceTemplateStatus, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "StoreDeviceConfigUsed", ctx, address, dbcURL, pidURL, settingURL, firmwareVersion)
 	ret0, _ := ret[0].(*models.DeviceTemplateStatus)

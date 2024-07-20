@@ -30,7 +30,7 @@ import (
 
 //go:generate mockgen -source device_template_service.go -destination mocks/device_template_service_mock.go
 type DeviceTemplateService interface {
-	StoreDeviceConfigUsed(ctx context.Context, address common2.Address, dbcURL, pidURL, settingURL, firmwareVersion *string) (*models.DeviceTemplateStatus, error)
+	StoreDeviceConfigUsed(ctx context.Context, address common2.Address, dbcURL, pidURL, settingURL, firmwareVersion string) (*models.DeviceTemplateStatus, error)
 	ResolveDeviceConfiguration(c *fiber.Ctx, ud *pb.UserDevice, vehicle *gateways.VehicleInfo) (*device.ConfigResponse, string, error)
 	// todo: pass in a ResolveConfigRequest instead of pb.UserDevice - this is not tied to a user device
 
@@ -54,8 +54,7 @@ func NewDeviceTemplateService(database *sql.DB, deviceDefSvc DeviceDefinitionsSe
 }
 
 // StoreDeviceConfigUsed stores the configurations that were used by the mobile app to apply onto the device
-func (dts *deviceTemplateService) StoreDeviceConfigUsed(ctx context.Context, address common2.Address, dbcURL, pidURL, settingURL, firmwareVersion *string) (*models.DeviceTemplateStatus, error) {
-
+func (dts *deviceTemplateService) StoreDeviceConfigUsed(ctx context.Context, address common2.Address, dbcURL, pidURL, settingURL, firmwareVersion string) (*models.DeviceTemplateStatus, error) {
 	dt, err := models.DeviceTemplateStatuses(models.DeviceTemplateStatusWhere.DeviceEthAddr.EQ(address.Bytes())).
 		One(ctx, dts.db)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
@@ -63,23 +62,27 @@ func (dts *deviceTemplateService) StoreDeviceConfigUsed(ctx context.Context, add
 	}
 
 	if dt != nil {
-		// update - only set if not nil
-		if settingURL != nil {
-			dt.TemplateSettingsURL = null.StringFromPtr(settingURL)
+		// update - only set if not empty
+		if settingURL != "" {
+			dt.TemplateSettingsURL = null.StringFrom(settingURL)
 			// if the template dbc url is nil we want to set it to null
 		}
-		if pidURL != nil {
-			dt.TemplatePidURL = null.StringFromPtr(pidURL)
+		if pidURL != "" {
+			dt.TemplatePidURL = null.StringFrom(pidURL)
 		}
-		dt.TemplateDBCURL = null.StringFromPtr(dbcURL)
+		if dbcURL != "" {
+			dt.TemplateDBCURL = null.StringFrom(dbcURL)
+		} else {
+			// reset to null
+			dt.TemplateDBCURL = null.StringFromPtr(nil)
+		}
 
-		if firmwareVersion != nil {
-			fwv := *firmwareVersion
-			if len(fwv) > 1 {
-				if fwv[0:1] != "v" {
-					fwv = "v" + fwv
+		if firmwareVersion != "" {
+			if len(firmwareVersion) > 1 {
+				if firmwareVersion[0:1] != "v" {
+					firmwareVersion = "v" + firmwareVersion
 				}
-				dt.FirmwareVersion = null.StringFrom(fwv)
+				dt.FirmwareVersion = null.StringFrom(firmwareVersion)
 			}
 		}
 
@@ -90,10 +93,12 @@ func (dts *deviceTemplateService) StoreDeviceConfigUsed(ctx context.Context, add
 		// create
 		dt = &models.DeviceTemplateStatus{
 			DeviceEthAddr:       address.Bytes(),
-			TemplateDBCURL:      null.StringFromPtr(dbcURL),
-			TemplatePidURL:      null.StringFromPtr(pidURL),
-			TemplateSettingsURL: null.StringFromPtr(settingURL),
-			FirmwareVersion:     null.StringFromPtr(firmwareVersion),
+			TemplatePidURL:      null.StringFrom(pidURL),
+			TemplateSettingsURL: null.StringFrom(settingURL),
+			FirmwareVersion:     null.StringFrom(firmwareVersion),
+		}
+		if dbcURL != "" {
+			dt.TemplateDBCURL = null.StringFrom(dbcURL)
 		}
 		if err = dt.Insert(ctx, dts.db, boil.Infer()); err != nil {
 			return nil, err
