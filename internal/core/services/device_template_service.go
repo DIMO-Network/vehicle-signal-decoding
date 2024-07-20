@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/DIMO-Network/shared/device"
+
 	"github.com/DIMO-Network/shared"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways"
 
-	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/appmodels"
 	common2 "github.com/ethereum/go-ethereum/common"
 	"github.com/volatiletech/null/v8"
 
@@ -30,10 +31,10 @@ import (
 //go:generate mockgen -source device_template_service.go -destination mocks/device_template_service_mock.go
 type DeviceTemplateService interface {
 	StoreDeviceConfigUsed(ctx context.Context, address common2.Address, dbcURL, pidURL, settingURL, firmwareVersion *string) (*models.DeviceTemplateStatus, error)
-	ResolveDeviceConfiguration(c *fiber.Ctx, ud *pb.UserDevice, vehicle *gateways.VehicleInfo) (*appmodels.DeviceConfigResponse, string, error)
+	ResolveDeviceConfiguration(c *fiber.Ctx, ud *pb.UserDevice, vehicle *gateways.VehicleInfo) (*device.ConfigResponse, string, error)
 	// todo: pass in a ResolveConfigRequest instead of pb.UserDevice - this is not tied to a user device
 
-	FindDirectDeviceToTemplateConfig(ctx context.Context, address common2.Address) *appmodels.DeviceConfigResponse
+	FindDirectDeviceToTemplateConfig(ctx context.Context, address common2.Address) *device.ConfigResponse
 }
 
 type deviceTemplateService struct {
@@ -103,7 +104,7 @@ func (dts *deviceTemplateService) StoreDeviceConfigUsed(ctx context.Context, add
 }
 
 // FindDirectDeviceToTemplateConfig retrieves the device configuration for a specific device address
-func (dts *deviceTemplateService) FindDirectDeviceToTemplateConfig(ctx context.Context, address common2.Address) *appmodels.DeviceConfigResponse {
+func (dts *deviceTemplateService) FindDirectDeviceToTemplateConfig(ctx context.Context, address common2.Address) *device.ConfigResponse {
 	deviceToTemplate, err := models.AftermarketDeviceToTemplates(
 		models.AftermarketDeviceToTemplateWhere.AftermarketDeviceEthereumAddress.EQ(address.Bytes()),
 		qm.Load(models.AftermarketDeviceToTemplateRels.TemplateNameTemplate),
@@ -111,7 +112,7 @@ func (dts *deviceTemplateService) FindDirectDeviceToTemplateConfig(ctx context.C
 	if err != nil || deviceToTemplate == nil {
 		return nil
 	}
-	response := appmodels.DeviceConfigResponse{
+	response := device.ConfigResponse{
 		PidURL: dts.buildConfigRoute(PIDs, deviceToTemplate.TemplateName, deviceToTemplate.R.TemplateNameTemplate.Version),
 	}
 
@@ -139,7 +140,7 @@ func (dts *deviceTemplateService) FindDirectDeviceToTemplateConfig(ctx context.C
 }
 
 // ResolveDeviceConfiguration figures out what template to return based on protocol, powertrain, vehicle or definition (vehicle could be nil)
-func (dts *deviceTemplateService) ResolveDeviceConfiguration(c *fiber.Ctx, ud *pb.UserDevice, vehicle *gateways.VehicleInfo) (*appmodels.DeviceConfigResponse, string, error) {
+func (dts *deviceTemplateService) ResolveDeviceConfiguration(c *fiber.Ctx, ud *pb.UserDevice, vehicle *gateways.VehicleInfo) (*device.ConfigResponse, string, error) {
 	canProtocl := convertCANProtocol(dts.log, ud.CANProtocol)
 	// todo (jreate): what about powertrain at the style level... But ideally it is stored at vehicle level. this could come from oracle?
 	powertrain, err := dts.retrievePowertrain(c.Context(), ud.DeviceDefinitionId)
@@ -155,7 +156,7 @@ func (dts *deviceTemplateService) ResolveDeviceConfiguration(c *fiber.Ctx, ud *p
 		return nil, strategy, errors.New("matched template is nil")
 	}
 
-	response := appmodels.DeviceConfigResponse{
+	response := device.ConfigResponse{
 		PidURL: dts.buildConfigRoute(PIDs, matchedTemplate.TemplateName, matchedTemplate.Version),
 	}
 
