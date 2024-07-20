@@ -292,7 +292,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully retrieved configuration URLs",
                         "schema": {
-                            "$ref": "#/definitions/github_com_DIMO-Network_vehicle-signal-decoding_internal_core_appmodels.DeviceConfigResponse"
+                            "$ref": "#/definitions/github_com_DIMO-Network_vehicle-signal-decoding_internal_core_device.ConfigResponse"
                         }
                     },
                     "400": {
@@ -396,7 +396,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully retrieved configuration URLs",
                         "schema": {
-                            "$ref": "#/definitions/github_com_DIMO-Network_vehicle-signal-decoding_internal_core_appmodels.DeviceConfigResponse"
+                            "$ref": "#/definitions/github_com_DIMO-Network_vehicle-signal-decoding_internal_core_device.ConfigResponse"
                         }
                     },
                     "404": {
@@ -407,7 +407,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "github_com_DIMO-Network_vehicle-signal-decoding_internal_core_appmodels.DeviceConfigResponse": {
+        "github_com_DIMO-Network_vehicle-signal-decoding_internal_core_device.ConfigResponse": {
             "type": "object",
             "properties": {
                 "dbcUrl": {

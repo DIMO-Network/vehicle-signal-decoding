@@ -13,7 +13,7 @@ import (
 	reflect "reflect"
 
 	grpc "github.com/DIMO-Network/devices-api/pkg/grpc"
-	appmodels "github.com/DIMO-Network/vehicle-signal-decoding/internal/core/appmodels"
+	device "github.com/DIMO-Network/shared/device"
 	gateways "github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways"
 	models "github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 	common "github.com/ethereum/go-ethereum/common"
@@ -45,10 +45,10 @@ func (m *MockDeviceTemplateService) EXPECT() *MockDeviceTemplateServiceMockRecor
 }
 
 // FindDirectDeviceToTemplateConfig mocks base method.
-func (m *MockDeviceTemplateService) FindDirectDeviceToTemplateConfig(ctx context.Context, address common.Address) *appmodels.DeviceConfigResponse {
+func (m *MockDeviceTemplateService) FindDirectDeviceToTemplateConfig(ctx context.Context, address common.Address) *device.ConfigResponse {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "FindDirectDeviceToTemplateConfig", ctx, address)
-	ret0, _ := ret[0].(*appmodels.DeviceConfigResponse)
+	ret0, _ := ret[0].(*device.ConfigResponse)
 	return ret0
 }
 
@@ -59,10 +59,10 @@ func (mr *MockDeviceTemplateServiceMockRecorder) FindDirectDeviceToTemplateConfi
 }
 
 // ResolveDeviceConfiguration mocks base method.
-func (m *MockDeviceTemplateService) ResolveDeviceConfiguration(c *fiber.Ctx, ud *grpc.UserDevice, vehicle *gateways.VehicleInfo) (*appmodels.DeviceConfigResponse, string, error) {
+func (m *MockDeviceTemplateService) ResolveDeviceConfiguration(c *fiber.Ctx, ud *grpc.UserDevice, vehicle *gateways.VehicleInfo) (*device.ConfigResponse, string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ResolveDeviceConfiguration", c, ud, vehicle)
-	ret0, _ := ret[0].(*appmodels.DeviceConfigResponse)
+	ret0, _ := ret[0].(*device.ConfigResponse)
 	ret1, _ := ret[1].(string)
 	ret2, _ := ret[2].(error)
 	return ret0, ret1, ret2
