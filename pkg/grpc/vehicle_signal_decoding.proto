@@ -136,6 +136,18 @@ message DeleteJobByEtherumAddressRequest {
   string id = 2;
 }
 
+message GetDeviceTemplateStatusByEtherumAddressRequest {
+  bytes etherum_address = 1;
+}
+
+message GetDeviceTemplateStatusResponse {
+  string template_dbc_url = 1;
+  string template_pid_url = 2;
+  string template_settings_url = 3;
+  string firmware_version = 4;
+  google.protobuf.Timestamp updated_at = 5;
+}
+
 service VehicleSignalDecodingService {
   rpc CreateDBCCode(CreateDBCCodeRequest) returns (VehicleSignalBaseResponse);
   rpc UpdateDBCCode(UpdateDBCCodeRequest) returns (VehicleSignalBaseResponse);
@@ -156,4 +168,6 @@ service VehicleSignalDecodingService {
   rpc GetJobsByEtherumAddress(GetJobsByEtherumAddressRequest) returns (GetJobsByEtherumAddressResponse);
   rpc CreateJobsByEtherumAddress(CreateJobByEtherumAddressRequest) returns (GetJobsByEtherumAddressItemResponse);
   rpc DeleteJobsByEtherumAddress(DeleteJobByEtherumAddressRequest) returns (google.protobuf.Empty);
+
+  rpc GetDeviceTemplateStatusByEtherumAddress(GetDeviceTemplateStatusByEtherumAddressRequest) returns (GetDeviceTemplateStatusResponse);
 }
