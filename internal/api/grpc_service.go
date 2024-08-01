@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	common2 "github.com/ethereum/go-ethereum/common"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -252,4 +253,19 @@ func (s *GrpcService) DeleteJobsByEtherumAddress(ctx context.Context, in *pgrpc.
 	}
 
 	return &emptypb.Empty{}, nil
+}
+
+func (s *GrpcService) GetDeviceTemplateStatusByEtherumAddress(ctx context.Context, in *pgrpc.GetDeviceTemplateStatusByEtherumAddressRequest) (*pgrpc.GetDeviceTemplateStatusResponse, error) {
+	service := queries.NewGetDeviceTemplateStatusByEthAddressQuery(s.DBS)
+
+	ethAddress := common2.BytesToAddress(in.EtherumAddress)
+	response, err := service.Handle(ctx, queries.GetDeviceTemplateStatusByEthAddressQuery{
+		EthAddress: ethAddress,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return response, nil
 }
