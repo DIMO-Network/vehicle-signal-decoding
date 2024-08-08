@@ -39,7 +39,10 @@ func (h *GetDeviceTemplateStatusByEthAddressQueryHandler) Handle(ctx context.Con
 		TemplatePidUrl:      deviceTemplateStatus.TemplatePidURL.String,
 		FirmwareVersion:     deviceTemplateStatus.FirmwareVersion.String,
 		TemplateSettingsUrl: deviceTemplateStatus.TemplateSettingsURL.String,
-		UpdatedAt:           timestamppb.New(deviceTemplateStatus.UpdatedAt),
+	}
+
+	if !deviceTemplateStatus.UpdatedAt.IsZero() {
+		response.UpdatedAt = timestamppb.New(deviceTemplateStatus.UpdatedAt)
 	}
 
 	return response, nil
