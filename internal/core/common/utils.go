@@ -37,3 +37,10 @@ func RemoveSpecialCharacter(input string) string {
 
 	return cadenaSinEspeciales
 }
+
+func SafeString(s null.String) string {
+	if s.Valid {
+		return s.String
+	}
+	return ""
+}

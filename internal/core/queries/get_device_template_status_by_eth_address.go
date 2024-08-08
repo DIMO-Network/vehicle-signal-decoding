@@ -3,7 +3,9 @@ package queries
 import (
 	"context"
 	"database/sql"
+
 	"github.com/DIMO-Network/shared/db"
+	corecommon "github.com/DIMO-Network/vehicle-signal-decoding/internal/core/common"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
 	"github.com/ethereum/go-ethereum/common"
@@ -35,10 +37,10 @@ func (h *GetDeviceTemplateStatusByEthAddressQueryHandler) Handle(ctx context.Con
 	}
 
 	response := &grpc.GetDeviceTemplateStatusResponse{
-		TemplateDbcUrl:      deviceTemplateStatus.TemplateSettingsURL.String,
-		TemplatePidUrl:      deviceTemplateStatus.TemplatePidURL.String,
-		FirmwareVersion:     deviceTemplateStatus.FirmwareVersion.String,
-		TemplateSettingsUrl: deviceTemplateStatus.TemplateSettingsURL.String,
+		TemplateDbcUrl:      corecommon.SafeString(deviceTemplateStatus.TemplateSettingsURL),
+		TemplatePidUrl:      corecommon.SafeString(deviceTemplateStatus.TemplatePidURL),
+		FirmwareVersion:     corecommon.SafeString(deviceTemplateStatus.FirmwareVersion),
+		TemplateSettingsUrl: corecommon.SafeString(deviceTemplateStatus.TemplateSettingsURL),
 	}
 
 	if !deviceTemplateStatus.UpdatedAt.IsZero() {
