@@ -98,7 +98,8 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 	// split out version
 	templateName, _ := parseOutTemplateAndVersion(templateNameWithVersion)
 	// ignore version for now since we're not really using it
-
+	// todo: refactor this logic into get_pid_config_all query,
+	// or like break it out into service query? not a fan of the query pattern thing idk.
 	template, err := models.FindTemplate(c.Context(), d.db, templateName)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

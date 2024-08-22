@@ -5,6 +5,8 @@ import "google/protobuf/empty.proto";
 
 option go_package = "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc";
 
+// all of these aimed for dimo-admin usage / internal administrative operations
+
 package grpc;
 
 message CreateDBCCodeRequest {

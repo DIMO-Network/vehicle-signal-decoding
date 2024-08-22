@@ -27,6 +27,9 @@ type GetPidAllQueryRequest struct {
 	TemplateName string
 }
 
+// this currently doesn't serve it's purpose b/c it doesn't refactor the grpc admin call and the rest api call for the device
+// like ideally this is a service type abstraction that everybody can call
+
 func (h *GetPidAllQueryHandler) Handle(ctx context.Context, request *GetPidAllQueryRequest) (*grpc.GetPidListResponse, error) {
 
 	template, err := models.Templates(models.TemplateWhere.TemplateName.EQ(request.TemplateName)).One(ctx, h.DBS().Reader)
@@ -43,6 +46,7 @@ func (h *GetPidAllQueryHandler) Handle(ctx context.Context, request *GetPidAllQu
 
 	parentTemplatePids := make([]*grpc.PidSummary, 0)
 
+	// todo this logic is failed b/c only looks at level above
 	if template.ParentTemplateName.Valid && len(template.ParentTemplateName.String) > 0 {
 		parentTemplatePids, err = h.getPidsByTemplate(ctx, template.ParentTemplateName.String)
 		if err != nil {
