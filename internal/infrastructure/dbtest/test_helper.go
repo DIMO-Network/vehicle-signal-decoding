@@ -168,6 +168,12 @@ func TruncateTables(db *sql.DB, dbName string, t *testing.T) {
 		fmt.Println("error:", err)
 	}
 
+	deleteTemplateStatus := `DELETE FROM device_template_status CASCADE;`
+	_, err = db.Exec(deleteTemplateStatus)
+	if err != nil {
+		fmt.Println("error:", err)
+	}
+
 	deleteTemplateDeviceDefinitionsQuery := `DELETE FROM template_device_definitions CASCADE;`
 	_, err = db.Exec(deleteTemplateDeviceDefinitionsQuery)
 	if err != nil {
