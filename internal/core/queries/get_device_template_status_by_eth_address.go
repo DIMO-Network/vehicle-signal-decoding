@@ -3,6 +3,7 @@ package queries
 import (
 	"context"
 	"database/sql"
+
 	"github.com/DIMO-Network/shared/db"
 	corecommon "github.com/DIMO-Network/vehicle-signal-decoding/internal/core/common"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"

@@ -9,9 +9,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/DIMO-Network/shared/device"
+	"github.com/DIMO-Network/shared/db"
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/queries"
 
-	"github.com/volatiletech/sqlboiler/v4/queries/qm"
+	"github.com/DIMO-Network/shared/device"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways"
 
@@ -42,7 +43,7 @@ import (
 type DeviceConfigController struct {
 	settings              *config.Settings
 	log                   *zerolog.Logger
-	db                    *sql.DB
+	dbs                   func() *db.ReaderWriter
 	userDeviceSvc         services.UserDeviceService
 	deviceDefSvc          services.DeviceDefinitionsService
 	deviceTemplateService services.DeviceTemplateService
@@ -53,14 +54,14 @@ type DeviceConfigController struct {
 const latestFirmwareURL = "https://binaries.dimo.zone/DIMO-Network/Macaron/releases/latest"
 
 // NewDeviceConfigController constructor
-func NewDeviceConfigController(settings *config.Settings, logger *zerolog.Logger, database *sql.DB, userDeviceSvc services.UserDeviceService,
+func NewDeviceConfigController(settings *config.Settings, logger *zerolog.Logger, dbs func() *db.ReaderWriter, userDeviceSvc services.UserDeviceService,
 	deviceDefSvc services.DeviceDefinitionsService, deviceTemplateService services.DeviceTemplateService, identityAPI gateways.IdentityAPI) DeviceConfigController {
 	fwVersionAPI, _ := shared.NewHTTPClientWrapper(latestFirmwareURL, "", 10*time.Second, nil, true)
 
 	return DeviceConfigController{
 		settings:              settings,
 		log:                   logger,
-		db:                    database,
+		dbs:                   dbs,
 		userDeviceSvc:         userDeviceSvc,
 		deviceDefSvc:          deviceDefSvc,
 		deviceTemplateService: deviceTemplateService,
@@ -98,51 +99,19 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 	// split out version
 	templateName, _ := parseOutTemplateAndVersion(templateNameWithVersion)
 	// ignore version for now since we're not really using it
-	// todo: refactor this logic into get_pid_config_all query,
-	// or like break it out into service query? not a fan of the query pattern thing idk.
-	template, err := models.FindTemplate(c.Context(), d.db, templateName)
+	pidConfigs, template, err := queries.GetPidsByTemplate(c.Context(), d.dbs, &queries.GetPidsQueryRequest{
+		TemplateName: templateName,
+	})
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("No template with name: %s found", templateName))
+		if strings.Contains(err.Error(), "not found") {
+			return fiber.ErrNotFound
 		}
-		return errors.Wrapf(err, "Failed to retrieve Template %s", templateName)
-	}
-
-	var templates []models.Template
-	currentTemplate := template
-	for {
-		templates = append(templates, *currentTemplate)
-
-		if currentTemplate.ParentTemplateName.Valid {
-			currentTemplate, err = models.FindTemplate(c.Context(), d.db, currentTemplate.ParentTemplateName.String)
-			if err != nil {
-				if errors.Is(err, sql.ErrNoRows) {
-					break
-				}
-				return errors.Wrapf(err, "Failed to retrieve parent Template %s", currentTemplate.ParentTemplateName.String)
-			}
-		} else {
-			break
-		}
-	}
-
-	templateNames := make([]interface{}, len(templates))
-	for i, tmpl := range templates {
-		templateNames[i] = tmpl.TemplateName
-	}
-
-	pidConfigs, err := models.PidConfigs(
-		qm.WhereIn("template_name IN ?", templateNames...),
-	).All(c.Context(), d.db)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return errors.Wrap(err, "Failed to retrieve PID Configs")
+		return err
 	}
 
 	protoPIDs := &grpc.PIDRequests{
 		TemplateName: templateName,
-	}
-	if template != nil {
-		protoPIDs.Version = template.Version
+		Version:      template.Version,
 	}
 
 	for _, pidConfig := range pidConfigs {
@@ -222,7 +191,7 @@ func (d *DeviceConfigController) GetDeviceSettingsByName(c *fiber.Ctx) error {
 	name, _ := parseOutTemplateAndVersion(nameWithVersion)
 	// ignore version for now since we're not really using it
 
-	dbDeviceSettings, err := models.FindDeviceSetting(c.Context(), d.db, name)
+	dbDeviceSettings, err := models.FindDeviceSetting(c.Context(), d.dbs().Reader, name)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return fiber.NewError(fiber.StatusNotFound, "No Device Settings data found with name: "+name)
@@ -292,7 +261,7 @@ func (d *DeviceConfigController) GetDBCFileByTemplateName(c *fiber.Ctx) error {
 	// ignore version since not really using right now
 
 	dbResult, err := models.DBCFiles(
-		models.DBCFileWhere.TemplateName.EQ(templateName)).One(c.Context(), d.db)
+		models.DBCFileWhere.TemplateName.EQ(templateName)).One(c.Context(), d.dbs().Reader)
 
 	// Error handling
 	if err != nil {
@@ -418,7 +387,7 @@ func (d *DeviceConfigController) GetConfigStatusByEthAddr(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": fmt.Sprintf("no connected user device found for EthAddr: %s", ethAddr)})
 	}
 
-	dts, err := models.DeviceTemplateStatuses(models.DeviceTemplateStatusWhere.DeviceEthAddr.EQ(addr.Bytes())).One(c.Context(), d.db)
+	dts, err := models.DeviceTemplateStatuses(models.DeviceTemplateStatusWhere.DeviceEthAddr.EQ(addr.Bytes())).One(c.Context(), d.dbs().Reader)
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
 			return err

@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+
 	common2 "github.com/ethereum/go-ethereum/common"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"

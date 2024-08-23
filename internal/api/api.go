@@ -129,8 +129,13 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 	deviceDefsvc := services.NewDeviceDefinitionsService(settings)
 	deviceTemplatesvc := services.NewDeviceTemplateService(database.DBS().Writer.DB, deviceDefsvc, logger, settings)
 	identityAPI := gateways.NewIdentityAPIService(&logger)
-	// todo: this is messy - we open the connection but are never closing it, or wrapping this in a class that handles the connection for us
-	usersClient := getUsersClient(logger, settings.UsersGRPCAddr)
+
+	conn, err := grpc.NewClient(settings.UsersGRPCAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		logger.Fatal().Err(err).Msgf("Failed to dial users-api at %s", settings.UsersGRPCAddr)
+	}
+	defer conn.Close() //nolint
+	usersClient := pb.NewUserServiceClient(conn)
 
 	app := fiber.New(fiber.Config{
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
@@ -162,7 +167,7 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 		return c.Status(fiber.StatusOK).SendString("healthy")
 	})
 
-	deviceConfigController := controllers.NewDeviceConfigController(settings, &logger, database.DBS().Reader.DB, userDeviceSvc,
+	deviceConfigController := controllers.NewDeviceConfigController(settings, &logger, database.DBS, userDeviceSvc,
 		deviceDefsvc, deviceTemplatesvc, identityAPI)
 	jobsController := controllers.NewJobsController(settings, &logger, database.DBS().Reader.DB, userDeviceSvc, deviceDefsvc)
 
@@ -216,10 +221,10 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 	// Signature authentication
 	v1.Patch("/device-config/eth-addr/:ethAddr/hw/status", etherSigAuth, deviceConfigController.PatchHwConfigStatusByEthAddr)
 
-	// Jobs endpoint
-	v1.Get("/device-config/eth-addr/:ethAddr/jobs", jobsController.GetJobsFromEthAddr)
-	v1.Get("/device-config/eth-addr/:ethAddr/jobs/pending", jobsController.GetJobsPendingFromEthAddr)
-	v1.Patch("/device-config/eth-addr/:ethAddr/jobs/:jobId/:status", jobsController.PatchJobsFromEthAddr)
+	// Jobs endpoints
+	v1.Get("/device-config/eth-addr/:ethAddr/jobs", etherSigAuth, jobsController.GetJobsFromEthAddr)
+	v1.Get("/device-config/eth-addr/:ethAddr/jobs/pending", etherSigAuth, jobsController.GetJobsPendingFromEthAddr)
+	v1.Patch("/device-config/eth-addr/:ethAddr/jobs/:jobId/:status", etherSigAuth, jobsController.PatchJobsFromEthAddr)
 
 	go func() {
 		if err := app.Listen(":" + settings.Port); err != nil {
@@ -287,13 +292,4 @@ func getS3ServiceClient(ctx context.Context, settings *config.Settings, logger z
 	})
 
 	return s3ServiceClient
-}
-
-func getUsersClient(logger zerolog.Logger, usersAPIGRPCAddr string) pb.UserServiceClient {
-	usersConn, err := grpc.Dial(usersAPIGRPCAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		logger.Fatal().Err(err).Msgf("Failed to dial users-api at %s", usersAPIGRPCAddr)
-	}
-
-	return pb.NewUserServiceClient(usersConn)
 }

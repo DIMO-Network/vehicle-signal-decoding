@@ -82,7 +82,7 @@ func (s *DeviceConfigControllerTestSuite) SetupSuite() {
 	s.mockDeviceTemplateSvc = mock_services.NewMockDeviceTemplateService(s.mockCtrl)
 	s.mockIdentityAPI = mock_gateways.NewMockIdentityAPI(s.mockCtrl)
 	ctrl := NewDeviceConfigController(&config.Settings{Port: "3000", DeploymentURL: "http://localhost:3000"}, s.logger,
-		s.pdb.DBS().Reader.DB, s.mockUserDeviceSvc, s.mockDeviceDefSvc, s.mockDeviceTemplateSvc, s.mockIdentityAPI)
+		s.pdb.DBS, s.mockUserDeviceSvc, s.mockDeviceDefSvc, s.mockDeviceTemplateSvc, s.mockIdentityAPI)
 	s.controller = &ctrl
 	s.app = fiber.New()
 }

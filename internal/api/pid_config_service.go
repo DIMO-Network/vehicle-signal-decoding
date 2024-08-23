@@ -73,8 +73,7 @@ func (s *PidConfigService) UpdatePid(ctx context.Context, in *grpc.UpdatePidRequ
 }
 
 func (s *PidConfigService) GetPidList(ctx context.Context, in *grpc.GetPidListRequest) (*grpc.GetPidListResponse, error) {
-	service := queries.NewGetPidAllQueryHandler(s.dbs, s.logger)
-	response, err := service.Handle(ctx, &queries.GetPidAllQueryRequest{
+	dbPids, _, err := queries.GetPidsByTemplate(ctx, s.dbs, &queries.GetPidsQueryRequest{
 		TemplateName: in.TemplateName,
 	})
 	if err != nil {
@@ -83,7 +82,7 @@ func (s *PidConfigService) GetPidList(ctx context.Context, in *grpc.GetPidListRe
 
 	pidSummaries := make([]*grpc.PidSummary, 0)
 
-	for _, item := range response {
+	for _, item := range dbPids {
 		pidSummaries = append(pidSummaries, &grpc.PidSummary{
 			Id:                   item.ID,
 			TemplateName:         item.TemplateName,
