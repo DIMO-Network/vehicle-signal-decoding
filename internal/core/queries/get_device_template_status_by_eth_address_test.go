@@ -2,12 +2,13 @@ package queries
 
 import (
 	"context"
+	"testing"
+
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
 	common2 "github.com/ethereum/go-ethereum/common"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
-	"testing"
 
 	"github.com/DIMO-Network/shared/db"
 	dbtesthelper "github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/dbtest"

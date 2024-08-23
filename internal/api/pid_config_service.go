@@ -73,14 +73,39 @@ func (s *PidConfigService) UpdatePid(ctx context.Context, in *grpc.UpdatePidRequ
 }
 
 func (s *PidConfigService) GetPidList(ctx context.Context, in *grpc.GetPidListRequest) (*grpc.GetPidListResponse, error) {
-	service := queries.NewGetPidAllQueryHandler(s.dbs, s.logger)
-	response, err := service.Handle(ctx, &queries.GetPidAllQueryRequest{
+	dbPids, _, err := queries.GetPidsByTemplate(ctx, s.dbs, &queries.GetPidsQueryRequest{
 		TemplateName: in.TemplateName,
 	})
 	if err != nil {
 		return nil, err
 	}
-	return response, nil
+
+	pidSummaries := make([]*grpc.PidSummary, 0)
+
+	for _, item := range dbPids {
+		pidSummaries = append(pidSummaries, &grpc.PidSummary{
+			Id:                   item.ID,
+			TemplateName:         item.TemplateName,
+			Header:               item.Header,
+			Mode:                 item.Mode,
+			Pid:                  item.Pid,
+			Formula:              item.Formula,
+			IntervalSeconds:      int32(item.IntervalSeconds),
+			Protocol:             item.Protocol.String,
+			SignalName:           item.SignalName,
+			CanFlowControlClear:  item.CanFlowControlClear.Bool,
+			CanFlowControlIdPair: item.CanFlowControlIDPair.String,
+			Enabled:              item.Enabled,
+			VssCovesaName:        item.VSSCovesaName.String,
+			Unit:                 item.Unit.String,
+			IsParentPid:          item.TemplateName != in.TemplateName,
+		})
+	}
+
+	result := &grpc.GetPidListResponse{
+		Pid: pidSummaries,
+	}
+	return result, nil
 }
 
 func (s *PidConfigService) GetPidByID(ctx context.Context, in *grpc.GetPidByIDRequest) (*grpc.GetPidByIDResponse, error) {

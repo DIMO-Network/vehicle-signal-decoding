@@ -2,100 +2,82 @@ package queries
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
+
+	"github.com/pkg/errors"
 
 	"github.com/DIMO-Network/shared/db"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
-	"github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
-	"github.com/rs/zerolog"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
-type GetPidAllQueryHandler struct {
-	DBS    func() *db.ReaderWriter
-	logger *zerolog.Logger
-}
-
-func NewGetPidAllQueryHandler(dbs func() *db.ReaderWriter, logger *zerolog.Logger) GetPidAllQueryHandler {
-	return GetPidAllQueryHandler{
-		DBS:    dbs,
-		logger: logger,
-	}
-}
-
-type GetPidAllQueryRequest struct {
+type GetPidsQueryRequest struct {
 	TemplateName string
 }
 
-func (h *GetPidAllQueryHandler) Handle(ctx context.Context, request *GetPidAllQueryRequest) (*grpc.GetPidListResponse, error) {
-
-	template, err := models.Templates(models.TemplateWhere.TemplateName.EQ(request.TemplateName)).One(ctx, h.DBS().Reader)
-
+// GetPidsByTemplate gets all pids in a template and their children from inherited parent templates
+func GetPidsByTemplate(ctx context.Context, dbs func() *db.ReaderWriter, request *GetPidsQueryRequest) (models.PidConfigSlice, *models.Template, error) {
+	template, err := models.FindTemplate(ctx, dbs().Reader, request.TemplateName)
 	if err != nil {
-		return nil, fmt.Errorf("invalid template: %w", err)
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil, fmt.Errorf("no template with name: %s found", request.TemplateName)
+		}
+		return nil, nil, errors.Wrapf(err, "failed to retrieve Template %s", request.TemplateName)
 	}
 
-	currentTemplatePids, err := h.getPidsByTemplate(ctx, template.TemplateName)
+	var templates []models.Template
+	currentTemplate := template
+	for {
+		templates = append(templates, *currentTemplate)
 
-	if err != nil {
-		return nil, fmt.Errorf("failed to get PidConfigs: %w", err)
-	}
-
-	parentTemplatePids := make([]*grpc.PidSummary, 0)
-
-	if template.ParentTemplateName.Valid && len(template.ParentTemplateName.String) > 0 {
-		parentTemplatePids, err = h.getPidsByTemplate(ctx, template.ParentTemplateName.String)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get PidConfigs: %w", err)
+		if currentTemplate.ParentTemplateName.Valid {
+			currentTemplate, err = models.FindTemplate(ctx, dbs().Reader, currentTemplate.ParentTemplateName.String)
+			if err != nil {
+				if errors.Is(err, sql.ErrNoRows) {
+					break
+				}
+				return nil, nil, errors.Wrapf(err, "failed to retrieve parent Template %s", currentTemplate.ParentTemplateName.String)
+			}
+		} else {
+			break
 		}
 	}
 
-	pidSummaries := make([]*grpc.PidSummary, 0)
-
-	pidSummaries = append(pidSummaries, currentTemplatePids...)
-
-	for _, item := range parentTemplatePids {
-		item.IsParentPid = true
-		pidSummaries = append(pidSummaries, item)
+	templateNames := make([]interface{}, len(templates))
+	for i, tmpl := range templates {
+		templateNames[i] = tmpl.TemplateName
 	}
 
-	result := &grpc.GetPidListResponse{
-		Pid: pidSummaries,
+	pidConfigs, err := models.PidConfigs(
+		qm.WhereIn("template_name IN ?", templateNames...),
+	).All(ctx, dbs().Reader)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, nil, errors.Wrap(err, "Failed to retrieve PID Configs")
+	}
+	// dedupe any signals, child overrides parent
+	seen := make(map[string]bool)
+	result := []*models.PidConfig{}
+	dupes := make(map[string]bool)
+	// first get the dupes and the seend
+	for _, pid := range pidConfigs {
+		if _, ok := seen[pid.SignalName]; !ok {
+			seen[pid.SignalName] = true
+		} else {
+			dupes[pid.SignalName] = true
+		}
 	}
 
-	return result, nil
-}
-
-func (h *GetPidAllQueryHandler) getPidsByTemplate(ctx context.Context, templateName string) ([]*grpc.PidSummary, error) {
-	allPidConfigs, err := models.PidConfigs(
-		models.PidConfigWhere.TemplateName.EQ(templateName),
-		qm.OrderBy(models.PidConfigColumns.SignalName),
-	).All(ctx, h.DBS().Reader)
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to get PidConfigs: %w", err)
+	// make sure child always gets added
+	for _, pid := range pidConfigs {
+		if _, ok := dupes[pid.SignalName]; ok {
+			if pid.TemplateName == request.TemplateName {
+				result = append(result, pid)
+			}
+		} else {
+			result = append(result, pid)
+		}
 	}
 
-	pidSummaries := make([]*grpc.PidSummary, 0)
-
-	for _, item := range allPidConfigs {
-		pidSummaries = append(pidSummaries, &grpc.PidSummary{
-			Id:                   item.ID,
-			TemplateName:         item.TemplateName,
-			Header:               item.Header,
-			Mode:                 item.Mode,
-			Pid:                  item.Pid,
-			Formula:              item.Formula,
-			IntervalSeconds:      int32(item.IntervalSeconds),
-			Protocol:             item.Protocol.String,
-			SignalName:           item.SignalName,
-			CanFlowControlClear:  item.CanFlowControlClear.Bool,
-			CanFlowControlIdPair: item.CanFlowControlIDPair.String,
-			Enabled:              item.Enabled,
-			VssCovesaName:        item.VSSCovesaName.String,
-			Unit:                 item.Unit.String,
-		})
-	}
-
-	return pidSummaries, nil
+	return result, template, nil
 }

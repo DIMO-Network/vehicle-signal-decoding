@@ -10,16 +10,19 @@ import (
 	"strings"
 	"syscall"
 
+	definitionsapi "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
+
+	usersapi "github.com/DIMO-Network/users-api/pkg/grpc"
+
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/utils"
 	jwtware "github.com/gofiber/contrib/jwt"
 
-	pb "github.com/DIMO-Network/users-api/pkg/grpc"
+	devicesapi "github.com/DIMO-Network/devices-api/pkg/grpc"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/middleware/owner"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 
@@ -91,7 +94,7 @@ func startVehicleSignalConsumer(logger zerolog.Logger, settings *config.Settings
 		logger.Fatal().Err(err).Msg("Could not start credential update consumer")
 	}
 
-	userDeviceService := services.NewUserDeviceService(settings)
+	userDeviceService := services.NewUserDeviceService(nil)
 	handler := commands.NewRunTestSignalCommandHandler(pdb.DBS, logger, userDeviceService)
 	service := NewWorkerListenerService(logger, handler)
 
@@ -125,12 +128,29 @@ func startMonitoringServer(logger zerolog.Logger, settings *config.Settings) {
 
 func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.Store) *fiber.App {
 	//Create gRPC connection
-	userDeviceSvc := services.NewUserDeviceService(settings)
-	deviceDefsvc := services.NewDeviceDefinitionsService(settings)
+	deviceGrpcClient, devicesConn, err := getDeviceGrpcClient(settings.DeviceGRPCAddr)
+	if err != nil {
+		logger.Fatal().Err(err).Msgf("Failed to dial devices-api at %s", settings.DeviceGRPCAddr)
+	}
+	defer devicesConn.Close() //nolint
+
+	definitionsGrpcClient, vinDecoderGrpcClient, definitionsConn, err := getDefinitionsGrpcClient(settings.DefinitionsGRPCAddr)
+	if err != nil {
+		logger.Fatal().Err(err).Msgf("Failed to dial definitions-api at %s", settings.DeviceGRPCAddr)
+	}
+	defer definitionsConn.Close() //nolint
+
+	conn, err := grpc.NewClient(settings.UsersGRPCAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		logger.Fatal().Err(err).Msgf("Failed to dial users-api at %s", settings.UsersGRPCAddr)
+	}
+	defer conn.Close() //nolint
+
+	usersClient := usersapi.NewUserServiceClient(conn)
+	userDeviceSvc := services.NewUserDeviceService(deviceGrpcClient)
+	deviceDefsvc := services.NewDeviceDefinitionsService(definitionsGrpcClient, vinDecoderGrpcClient)
 	deviceTemplatesvc := services.NewDeviceTemplateService(database.DBS().Writer.DB, deviceDefsvc, logger, settings)
 	identityAPI := gateways.NewIdentityAPIService(&logger)
-	// todo: this is messy - we open the connection but are never closing it, or wrapping this in a class that handles the connection for us
-	usersClient := getUsersClient(logger, settings.UsersGRPCAddr)
 
 	app := fiber.New(fiber.Config{
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
@@ -162,7 +182,7 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 		return c.Status(fiber.StatusOK).SendString("healthy")
 	})
 
-	deviceConfigController := controllers.NewDeviceConfigController(settings, &logger, database.DBS().Reader.DB, userDeviceSvc,
+	deviceConfigController := controllers.NewDeviceConfigController(settings, &logger, database.DBS, userDeviceSvc,
 		deviceDefsvc, deviceTemplatesvc, identityAPI)
 	jobsController := controllers.NewJobsController(settings, &logger, database.DBS().Reader.DB, userDeviceSvc, deviceDefsvc)
 
@@ -216,10 +236,10 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 	// Signature authentication
 	v1.Patch("/device-config/eth-addr/:ethAddr/hw/status", etherSigAuth, deviceConfigController.PatchHwConfigStatusByEthAddr)
 
-	// Jobs endpoint
-	v1.Get("/device-config/eth-addr/:ethAddr/jobs", jobsController.GetJobsFromEthAddr)
-	v1.Get("/device-config/eth-addr/:ethAddr/jobs/pending", jobsController.GetJobsPendingFromEthAddr)
-	v1.Patch("/device-config/eth-addr/:ethAddr/jobs/:jobId/:status", jobsController.PatchJobsFromEthAddr)
+	// Jobs endpoints
+	v1.Get("/device-config/eth-addr/:ethAddr/jobs", etherSigAuth, jobsController.GetJobsFromEthAddr)
+	v1.Get("/device-config/eth-addr/:ethAddr/jobs/pending", etherSigAuth, jobsController.GetJobsPendingFromEthAddr)
+	v1.Patch("/device-config/eth-addr/:ethAddr/jobs/:jobId/:status", etherSigAuth, jobsController.PatchJobsFromEthAddr)
 
 	go func() {
 		if err := app.Listen(":" + settings.Port); err != nil {
@@ -264,18 +284,18 @@ type CodeResp struct {
 // getS3ServiceClient instantiates a new default config and then a new s3 services client if not already set. Takes context in, although it could likely use a context from container passed in on instantiation
 func getS3ServiceClient(ctx context.Context, settings *config.Settings, logger zerolog.Logger) *s3.Client {
 	cfg, err := awsconfig.LoadDefaultConfig(ctx,
-		awsconfig.WithRegion(settings.AWSRegion),
-		// Comment the below out if not using localhost
-		awsconfig.WithEndpointResolverWithOptions(aws.EndpointResolverWithOptionsFunc(
-			func(_, _ string, _ ...interface{}) (aws.Endpoint, error) {
-
-				if settings.Environment == "local" {
-					return aws.Endpoint{PartitionID: "aws", URL: settings.CandumpsAWSEndpoint, SigningRegion: settings.AWSRegion}, nil // The SigningRegion key was what's was missing! D'oh.
-				}
-
-				// returning EndpointNotFoundError will allow the service to fallback to its default resolution
-				return aws.Endpoint{}, &aws.EndpointNotFoundError{}
-			})))
+		awsconfig.WithRegion(settings.AWSRegion))
+	// Below code is used when working with locally running S3 simulator. These options have been deprecated and could not quickly find new way to do this.
+	//awsconfig.WithEndpointResolverWithOptions(aws.EndpointResolverWithOptionsFunc(
+	//	func(_, _ string, _ ...interface{}) (aws.Endpoint, error) {
+	//
+	//		if settings.Environment == "local" {
+	//			return aws.Endpoint{PartitionID: "aws", URL: settings.CandumpsAWSEndpoint, SigningRegion: settings.AWSRegion}, nil // The SigningRegion key was what's was missing! D'oh.
+	//		}
+	//
+	//		// returning EndpointNotFoundError will allow the service to fallback to its default resolution
+	//		return aws.Endpoint{}, &aws.EndpointNotFoundError{}
+	//	})))
 
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Could not load aws config, terminating")
@@ -289,11 +309,21 @@ func getS3ServiceClient(ctx context.Context, settings *config.Settings, logger z
 	return s3ServiceClient
 }
 
-func getUsersClient(logger zerolog.Logger, usersAPIGRPCAddr string) pb.UserServiceClient {
-	usersConn, err := grpc.Dial(usersAPIGRPCAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+func getDeviceGrpcClient(deviceGRPCAddr string) (devicesapi.UserDeviceServiceClient, *grpc.ClientConn, error) {
+	conn, err := grpc.NewClient(deviceGRPCAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		logger.Fatal().Err(err).Msgf("Failed to dial users-api at %s", usersAPIGRPCAddr)
+		return nil, conn, err
 	}
+	userDeviceClient := devicesapi.NewUserDeviceServiceClient(conn)
+	return userDeviceClient, conn, nil
+}
 
-	return pb.NewUserServiceClient(usersConn)
+func getDefinitionsGrpcClient(definitionsGRPCAddr string) (definitionsapi.DeviceDefinitionServiceClient, definitionsapi.VinDecoderServiceClient, *grpc.ClientConn, error) {
+	conn, err := grpc.NewClient(definitionsGRPCAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return nil, nil, conn, err
+	}
+	definitionsClient := definitionsapi.NewDeviceDefinitionServiceClient(conn)
+	vinDecoderClient := definitionsapi.NewVinDecoderServiceClient(conn)
+	return definitionsClient, vinDecoderClient, conn, nil
 }
