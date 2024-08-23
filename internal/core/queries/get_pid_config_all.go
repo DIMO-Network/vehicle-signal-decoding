@@ -55,6 +55,29 @@ func GetPidsByTemplate(ctx context.Context, dbs func() *db.ReaderWriter, request
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, nil, errors.Wrap(err, "Failed to retrieve PID Configs")
 	}
-	// todo what about deduping
-	return pidConfigs, template, nil
+	// dedupe any signals, child overrides parent
+	seen := make(map[string]bool)
+	result := []*models.PidConfig{}
+	dupes := make(map[string]bool)
+	// first get the dupes and the seend
+	for _, pid := range pidConfigs {
+		if _, ok := seen[pid.SignalName]; !ok {
+			seen[pid.SignalName] = true
+		} else {
+			dupes[pid.SignalName] = true
+		}
+	}
+
+	// make sure child always gets added
+	for _, pid := range pidConfigs {
+		if _, ok := dupes[pid.SignalName]; ok {
+			if pid.TemplateName == request.TemplateName {
+				result = append(result, pid)
+			}
+		} else {
+			result = append(result, pid)
+		}
+	}
+
+	return result, template, nil
 }
