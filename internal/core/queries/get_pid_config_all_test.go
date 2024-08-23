@@ -3,6 +3,9 @@ package queries
 import (
 	"context"
 	b_rand "crypto/rand"
+	"math/rand"
+	"testing"
+
 	"github.com/DIMO-Network/shared/db"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/dbtest"
@@ -10,8 +13,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
-	"math/rand"
-	"testing"
 )
 
 const dbSchemaName = "vehicle_signal_decoding"
@@ -42,11 +43,11 @@ func TestGetPidsByTemplate_HandleDuplicates(t *testing.T) {
 	err = childTmpl1.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err)
 	// add 3 pids
-	createPID(t, parentTmpl, "soc", "f1", ctx, pdb)
-	createPID(t, parentTmpl, "odometer", "f1", ctx, pdb)
-	createPID(t, parentTmpl, "tires.left", "f1", ctx, pdb)
-	createPID(t, childTmpl1, "odometer", "f2", ctx, pdb)
-	createPID(t, childTmpl1, "tires.left", "f2", ctx, pdb)
+	createPID(ctx, t, parentTmpl, "soc", "f1", pdb)
+	createPID(ctx, t, parentTmpl, "odometer", "f1", pdb)
+	createPID(ctx, t, parentTmpl, "tires.left", "f1", pdb)
+	createPID(ctx, t, childTmpl1, "odometer", "f2", pdb)
+	createPID(ctx, t, childTmpl1, "tires.left", "f2", pdb)
 
 	gotPids, gotTemplate, err := GetPidsByTemplate(ctx, pdb.DBS, &GetPidsQueryRequest{TemplateName: templateName})
 	require.NoError(t, err)
@@ -67,7 +68,7 @@ func TestGetPidsByTemplate_HandleDuplicates(t *testing.T) {
 	}
 }
 
-func createPID(t *testing.T, parentTmpl models.Template, signal, formula string, ctx context.Context, pdb db.Store) {
+func createPID(ctx context.Context, t *testing.T, parentTmpl models.Template, signal, formula string, pdb db.Store) {
 	var bytes [2]byte
 	// Generate random 2 bytes
 	b_rand.Read(bytes[:]) //nolint
