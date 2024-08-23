@@ -133,3 +133,7 @@ func (c *UsersClient) GetUser(_ context.Context, in *pb.GetUserRequest, _ ...grp
 	}
 	return u, nil
 }
+
+func (c *UsersClient) GetUsersByEthereumAddress(_ context.Context, _ *pb.GetUsersByEthereumAddressRequest, _ ...grpc.CallOption) (*pb.GetUsersByEthereumAddressResponse, error) {
+	return nil, status.Error(codes.NotFound, "Not implemented.")
+}

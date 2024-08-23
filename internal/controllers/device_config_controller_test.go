@@ -6,13 +6,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/DIMO-Network/shared/device"
-	mock_gateways "github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways/mocks"
-	"github.com/DIMO-Network/vehicle-signal-decoding/internal/utils"
 	"io"
 	"net/http"
 	"os"
 	"testing"
+
+	"github.com/DIMO-Network/shared/device"
+	mock_gateways "github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways/mocks"
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/utils"
 
 	common2 "github.com/ethereum/go-ethereum/common"
 

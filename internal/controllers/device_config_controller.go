@@ -410,7 +410,7 @@ func (d *DeviceConfigController) GetConfigStatusByEthAddr(c *fiber.Ctx) error {
 			isTemplateUpdated = true
 		}
 	}
-	
+
 	latestFirmwareStr, err := d.getLatestFWVersion()
 	if err != nil {
 		return err

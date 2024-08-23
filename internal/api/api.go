@@ -23,7 +23,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 
@@ -285,18 +284,18 @@ type CodeResp struct {
 // getS3ServiceClient instantiates a new default config and then a new s3 services client if not already set. Takes context in, although it could likely use a context from container passed in on instantiation
 func getS3ServiceClient(ctx context.Context, settings *config.Settings, logger zerolog.Logger) *s3.Client {
 	cfg, err := awsconfig.LoadDefaultConfig(ctx,
-		awsconfig.WithRegion(settings.AWSRegion),
-		// Comment the below out if not using localhost
-		awsconfig.WithEndpointResolverWithOptions(aws.EndpointResolverWithOptionsFunc(
-			func(_, _ string, _ ...interface{}) (aws.Endpoint, error) {
-
-				if settings.Environment == "local" {
-					return aws.Endpoint{PartitionID: "aws", URL: settings.CandumpsAWSEndpoint, SigningRegion: settings.AWSRegion}, nil // The SigningRegion key was what's was missing! D'oh.
-				}
-
-				// returning EndpointNotFoundError will allow the service to fallback to its default resolution
-				return aws.Endpoint{}, &aws.EndpointNotFoundError{}
-			})))
+		awsconfig.WithRegion(settings.AWSRegion))
+	// Below code is used when working with locally running S3 simulator. These options have been deprecated and could not quickly find new way to do this.
+	//awsconfig.WithEndpointResolverWithOptions(aws.EndpointResolverWithOptionsFunc(
+	//	func(_, _ string, _ ...interface{}) (aws.Endpoint, error) {
+	//
+	//		if settings.Environment == "local" {
+	//			return aws.Endpoint{PartitionID: "aws", URL: settings.CandumpsAWSEndpoint, SigningRegion: settings.AWSRegion}, nil // The SigningRegion key was what's was missing! D'oh.
+	//		}
+	//
+	//		// returning EndpointNotFoundError will allow the service to fallback to its default resolution
+	//		return aws.Endpoint{}, &aws.EndpointNotFoundError{}
+	//	})))
 
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Could not load aws config, terminating")
