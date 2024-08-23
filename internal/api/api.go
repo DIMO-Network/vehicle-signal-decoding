@@ -10,7 +10,9 @@ import (
 	"strings"
 	"syscall"
 
-	pb "github.com/DIMO-Network/users-api/pkg/grpc"
+	definitionsapi "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
+
+	usersapi "github.com/DIMO-Network/users-api/pkg/grpc"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/utils"
 	jwtware "github.com/gofiber/contrib/jwt"
@@ -133,17 +135,23 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 	}
 	defer devicesConn.Close() //nolint
 
-	userDeviceSvc := services.NewUserDeviceService(deviceGrpcClient)
-	deviceDefsvc := services.NewDeviceDefinitionsService(settings)
-	deviceTemplatesvc := services.NewDeviceTemplateService(database.DBS().Writer.DB, deviceDefsvc, logger, settings)
-	identityAPI := gateways.NewIdentityAPIService(&logger)
+	definitionsGrpcClient, vinDecoderGrpcClient, definitionsConn, err := getDefinitionsGrpcClient(settings.DefinitionsGRPCAddr)
+	if err != nil {
+		logger.Fatal().Err(err).Msgf("Failed to dial definitions-api at %s", settings.DeviceGRPCAddr)
+	}
+	defer definitionsConn.Close() //nolint
 
 	conn, err := grpc.NewClient(settings.UsersGRPCAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		logger.Fatal().Err(err).Msgf("Failed to dial users-api at %s", settings.UsersGRPCAddr)
 	}
 	defer conn.Close() //nolint
-	usersClient := pb.NewUserServiceClient(conn)
+
+	usersClient := usersapi.NewUserServiceClient(conn)
+	userDeviceSvc := services.NewUserDeviceService(deviceGrpcClient)
+	deviceDefsvc := services.NewDeviceDefinitionsService(definitionsGrpcClient, vinDecoderGrpcClient)
+	deviceTemplatesvc := services.NewDeviceTemplateService(database.DBS().Writer.DB, deviceDefsvc, logger, settings)
+	identityAPI := gateways.NewIdentityAPIService(&logger)
 
 	app := fiber.New(fiber.Config{
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
@@ -309,4 +317,14 @@ func getDeviceGrpcClient(deviceGRPCAddr string) (devicesapi.UserDeviceServiceCli
 	}
 	userDeviceClient := devicesapi.NewUserDeviceServiceClient(conn)
 	return userDeviceClient, conn, nil
+}
+
+func getDefinitionsGrpcClient(definitionsGRPCAddr string) (definitionsapi.DeviceDefinitionServiceClient, definitionsapi.VinDecoderServiceClient, *grpc.ClientConn, error) {
+	conn, err := grpc.NewClient(definitionsGRPCAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return nil, nil, conn, err
+	}
+	definitionsClient := definitionsapi.NewDeviceDefinitionServiceClient(conn)
+	vinDecoderClient := definitionsapi.NewVinDecoderServiceClient(conn)
+	return definitionsClient, vinDecoderClient, conn, nil
 }

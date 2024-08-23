@@ -6,21 +6,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/DIMO-Network/shared/device"
+	mock_gateways "github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways/mocks"
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/utils"
 	"io"
 	"net/http"
 	"os"
 	"testing"
-	"time"
-
-	"github.com/DIMO-Network/shared/device"
-
-	"github.com/DIMO-Network/vehicle-signal-decoding/internal/utils"
-
-	mock_gateways "github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways/mocks"
 
 	common2 "github.com/ethereum/go-ethereum/common"
-
-	"google.golang.org/protobuf/types/known/timestamppb"
 
 	_ "github.com/lib/pq"
 
@@ -712,16 +706,19 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigStatusByEthAddr_DeviceDat
 		CANProtocol:        "6",
 	}
 	s.mockUserDeviceSvc.EXPECT().GetUserDeviceByEthAddr(gomock.Any(), common2.HexToAddress(ethAddr)).Return(testUD, nil)
+	s.mockDeviceTemplateSvc.EXPECT().ResolveDeviceConfiguration(gomock.Any(), testUD, nil).Return(&device.ConfigResponse{
+		PidURL:           "http://localhost/pids/default",
+		DeviceSettingURL: "http://localhost/settings/default",
+		DbcURL:           "http://localhost/dbc/generalmotors",
+	}, "", nil)
 
-	s.mockUserDeviceSvc.EXPECT().GetRawDeviceData(gomock.Any(), testUD.Id).Return(&gdata.RawDeviceDataResponse{Items: []*gdata.RawDeviceDataResponseItem{
-		{
-			IntegrationId:   ksuid.New().String(),
-			UserDeviceId:    testUD.Id,
-			SignalsJsonData: []byte(`{"fwVersion": { "value": "v0.8.5"} }`),
-			RecordUpdatedAt: timestamppb.New(time.Now()),
-			RecordCreatedAt: timestamppb.New(time.Now()),
-		},
-	}}, nil)
+	// db setup
+	dts := &models.DeviceTemplateStatus{
+		DeviceEthAddr:   common2.HexToAddress(ethAddr).Bytes(),
+		FirmwareVersion: null.StringFrom("v0.8.5"),
+	}
+	err := dts.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
 
 	request := dbtest.BuildRequest("GET", "/device-config/eth-addr/"+ethAddr+"/status", "")
 	response, err := s.app.Test(request)
@@ -735,6 +732,57 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigStatusByEthAddr_DeviceDat
 	assert.Equal(s.T(), false, receivedResp.IsTemplateUpToDate)
 	assert.Equal(s.T(), true, receivedResp.IsFirmwareUpToDate)
 	assert.Equal(s.T(), "v0.8.5", receivedResp.FirmwareVersion)
+}
+
+func (s *DeviceConfigControllerTestSuite) TestGetConfigStatusByEthAddr_TemplatesUpToDate() {
+	ethAddr := "0x29e8Ec52A3d2c9b72aA9F0e3e2576F3A28480299"
+	s.app.Get("/device-config/eth-addr/:ethAddr/status", s.controller.GetConfigStatusByEthAddr)
+	vin := "TMBEK6NW1N3088739"
+	s.controller.fwVersionAPI = mockHTTPClientFwVersion{}
+
+	testUD := &pb.UserDevice{
+		Id:                 ksuid.New().String(),
+		UserId:             ksuid.New().String(),
+		Vin:                &vin,
+		DeviceDefinitionId: ksuid.New().String(),
+		VinConfirmed:       true,
+		CountryCode:        "USA",
+		PowerTrainType:     "ICE",
+		CANProtocol:        "6",
+	}
+	s.mockUserDeviceSvc.EXPECT().GetUserDeviceByEthAddr(gomock.Any(), common2.HexToAddress(ethAddr)).Return(testUD, nil)
+	s.mockDeviceTemplateSvc.EXPECT().ResolveDeviceConfiguration(gomock.Any(), testUD, nil).Return(&device.ConfigResponse{
+		PidURL:           "http://localhost/pids/default",
+		DeviceSettingURL: "http://localhost/settings/default",
+		DbcURL:           "http://localhost/dbc/generalmotors",
+	}, "", nil)
+
+	// db setup
+	dts := &models.DeviceTemplateStatus{
+		DeviceEthAddr:       common2.HexToAddress(ethAddr).Bytes(),
+		TemplateDBCURL:      null.StringFrom("http://localhost/dbc/generalmotors"),
+		TemplatePidURL:      null.StringFrom("http://localhost/pids/default"),
+		TemplateSettingsURL: null.StringFrom("http://localhost/settings/default"),
+		FirmwareVersion:     null.StringFrom("v0.8.5"),
+	}
+	err := dts.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
+
+	request := dbtest.BuildRequest("GET", "/device-config/eth-addr/"+ethAddr+"/status", "")
+	response, err := s.app.Test(request)
+	require.NoError(s.T(), err)
+
+	body, _ := io.ReadAll(response.Body)
+	var receivedResp DeviceTemplateStatusResponse
+	err = json.Unmarshal(body, &receivedResp)
+	assert.NoError(s.T(), err)
+
+	assert.Equal(s.T(), true, receivedResp.IsTemplateUpToDate)
+	assert.Equal(s.T(), true, receivedResp.IsFirmwareUpToDate)
+	assert.Equal(s.T(), "v0.8.5", receivedResp.FirmwareVersion)
+	assert.Equal(s.T(), "http://localhost/dbc/generalmotors", receivedResp.Template.DbcURL)
+	assert.Equal(s.T(), "http://localhost/settings/default", receivedResp.Template.DeviceSettingURL)
+	assert.Equal(s.T(), "http://localhost/pids/default", receivedResp.Template.PidURL)
 }
 
 func (s *DeviceConfigControllerTestSuite) TestPatchConfigStatusByEthAddr_WithSignatureAuth() {
