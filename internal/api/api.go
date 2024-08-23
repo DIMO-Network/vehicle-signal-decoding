@@ -10,10 +10,12 @@ import (
 	"strings"
 	"syscall"
 
+	pb "github.com/DIMO-Network/users-api/pkg/grpc"
+
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/utils"
 	jwtware "github.com/gofiber/contrib/jwt"
 
-	pb "github.com/DIMO-Network/users-api/pkg/grpc"
+	devicesapi "github.com/DIMO-Network/devices-api/pkg/grpc"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/middleware/owner"
 	"google.golang.org/grpc"
@@ -91,7 +93,7 @@ func startVehicleSignalConsumer(logger zerolog.Logger, settings *config.Settings
 		logger.Fatal().Err(err).Msg("Could not start credential update consumer")
 	}
 
-	userDeviceService := services.NewUserDeviceService(settings)
+	userDeviceService := services.NewUserDeviceService(nil)
 	handler := commands.NewRunTestSignalCommandHandler(pdb.DBS, logger, userDeviceService)
 	service := NewWorkerListenerService(logger, handler)
 
@@ -125,7 +127,13 @@ func startMonitoringServer(logger zerolog.Logger, settings *config.Settings) {
 
 func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.Store) *fiber.App {
 	//Create gRPC connection
-	userDeviceSvc := services.NewUserDeviceService(settings)
+	deviceGrpcClient, devicesConn, err := getDeviceGrpcClient(settings.DeviceGRPCAddr)
+	if err != nil {
+		logger.Fatal().Err(err).Msgf("Failed to dial devices-api at %s", settings.DeviceGRPCAddr)
+	}
+	defer devicesConn.Close() //nolint
+
+	userDeviceSvc := services.NewUserDeviceService(deviceGrpcClient)
 	deviceDefsvc := services.NewDeviceDefinitionsService(settings)
 	deviceTemplatesvc := services.NewDeviceTemplateService(database.DBS().Writer.DB, deviceDefsvc, logger, settings)
 	identityAPI := gateways.NewIdentityAPIService(&logger)
@@ -292,4 +300,13 @@ func getS3ServiceClient(ctx context.Context, settings *config.Settings, logger z
 	})
 
 	return s3ServiceClient
+}
+
+func getDeviceGrpcClient(deviceGRPCAddr string) (devicesapi.UserDeviceServiceClient, *grpc.ClientConn, error) {
+	conn, err := grpc.NewClient(deviceGRPCAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return nil, conn, err
+	}
+	userDeviceClient := devicesapi.NewUserDeviceServiceClient(conn)
+	return userDeviceClient, conn, nil
 }

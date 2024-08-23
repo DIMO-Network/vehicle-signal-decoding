@@ -410,19 +410,7 @@ func (d *DeviceConfigController) GetConfigStatusByEthAddr(c *fiber.Ctx) error {
 			isTemplateUpdated = true
 		}
 	}
-
-	if deviceFWVers == "" {
-		// get fw version from device if any
-		deviceData, err := d.userDeviceSvc.GetRawDeviceData(c.Context(), ud.Id)
-		if err != nil {
-			d.log.Err(err).Str("device_address", ethAddr).Msg("failed to get device data")
-			if dts == nil {
-				// if don't get anything from device-data-api and dts is nil, nothing we can do
-				return fiber.NewError(fiber.StatusNotFound, "haven't seen device with eth addr yet: "+ethAddr)
-			}
-		}
-		deviceFWVers = parseOutFWVersion(deviceData)
-	}
+	
 	latestFirmwareStr, err := d.getLatestFWVersion()
 	if err != nil {
 		return err
