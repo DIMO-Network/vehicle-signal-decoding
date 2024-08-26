@@ -69,7 +69,7 @@ func (i *identityAPIService) fetchVehicleWithQuery(query string) (*VehicleInfo, 
 	// POST request
 	res, err := i.httpClient.ExecuteRequest(i.identityAPIURL, "POST", payloadBytes)
 	if err != nil {
-		i.logger.Err(err).Send()
+		i.logger.Err(err).Str("func", "fetchVehicleWithQuery").Msgf("request payload: %s", string(payloadBytes))
 		if _, ok := err.(shared.HTTPResponseError); !ok {
 			return nil, errors.Wrapf(err, "error calling identity api to get vehicles definition from url %s", i.identityAPIURL)
 		}
