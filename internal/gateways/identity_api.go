@@ -6,6 +6,8 @@ import (
 	"io"
 	"time"
 
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
+
 	"github.com/DIMO-Network/shared"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
@@ -17,31 +19,31 @@ var ErrBadRequest = errors.New("bad request")
 
 //go:generate mockgen -source identity_api.go -destination mocks/identity_api_mock.go
 type IdentityAPI interface {
-	QueryIdentityAPIForVehicle(ethAddress common.Address) (*VehicleInfo, error)
+	GetVehicleByDeviceAddr(ethAddress common.Address) (*VehicleInfo, error)
 }
 
 type identityAPIService struct {
-	httpClient shared.HTTPClientWrapper
-	logger     zerolog.Logger
+	httpClient     shared.HTTPClientWrapper
+	logger         zerolog.Logger
+	identityAPIURL string
 }
 
-const IdentityAPIURL = "https://identity-api.dimo.zone/query"
-
-func NewIdentityAPIService(logger *zerolog.Logger) IdentityAPI {
+func NewIdentityAPIService(logger *zerolog.Logger, settings *config.Settings) IdentityAPI {
 	h := map[string]string{}
 	h["Content-Type"] = "application/json"
 	hcw, _ := shared.NewHTTPClientWrapper("", "", 10*time.Second, h, false) // ok to ignore err since only used for tor check
 
 	return &identityAPIService{
-		httpClient: hcw,
-		logger:     *logger,
+		httpClient:     hcw,
+		logger:         *logger,
+		identityAPIURL: settings.IdentityAPIURL,
 	}
 }
 
-func (i *identityAPIService) QueryIdentityAPIForVehicle(ethAddress common.Address) (*VehicleInfo, error) {
+func (i *identityAPIService) GetVehicleByDeviceAddr(deviceEthAddr common.Address) (*VehicleInfo, error) {
 	// GraphQL query
 	graphqlQuery := `{
-        aftermarketDevice(by: {address: "` + ethAddress.Hex() + `"}) {
+        aftermarketDevice(by: {address: "` + deviceEthAddr.Hex() + `"}) {
 			vehicle {
 			  tokenId,
 			  definition {
@@ -65,11 +67,11 @@ func (i *identityAPIService) fetchVehicleWithQuery(query string) (*VehicleInfo, 
 	}
 
 	// POST request
-	res, err := i.httpClient.ExecuteRequest(IdentityAPIURL, "POST", payloadBytes)
+	res, err := i.httpClient.ExecuteRequest(i.identityAPIURL, "POST", payloadBytes)
 	if err != nil {
 		i.logger.Err(err).Send()
 		if _, ok := err.(shared.HTTPResponseError); !ok {
-			return nil, errors.Wrapf(err, "error calling identity api to get vehicles definition from url %s", IdentityAPIURL)
+			return nil, errors.Wrapf(err, "error calling identity api to get vehicles definition from url %s", i.identityAPIURL)
 		}
 	}
 	defer res.Body.Close() // nolint
@@ -83,7 +85,7 @@ func (i *identityAPIService) fetchVehicleWithQuery(query string) (*VehicleInfo, 
 
 	bodyBytes, err := io.ReadAll(res.Body)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error get vehicles definition from url %s", IdentityAPIURL)
+		return nil, errors.Wrapf(err, "error get vehicles definition from url %s", i.identityAPIURL)
 	}
 
 	var vehicleResponse struct {

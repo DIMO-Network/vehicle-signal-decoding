@@ -39,17 +39,17 @@ func (m *MockIdentityAPI) EXPECT() *MockIdentityAPIMockRecorder {
 	return m.recorder
 }
 
-// QueryIdentityAPIForVehicle mocks base method.
-func (m *MockIdentityAPI) QueryIdentityAPIForVehicle(ethAddress common.Address) (*gateways.VehicleInfo, error) {
+// GetVehicleByDeviceAddr mocks base method.
+func (m *MockIdentityAPI) GetVehicleByDeviceAddr(ethAddress common.Address) (*gateways.VehicleInfo, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "QueryIdentityAPIForVehicle", ethAddress)
+	ret := m.ctrl.Call(m, "GetVehicleByDeviceAddr", ethAddress)
 	ret0, _ := ret[0].(*gateways.VehicleInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// QueryIdentityAPIForVehicle indicates an expected call of QueryIdentityAPIForVehicle.
-func (mr *MockIdentityAPIMockRecorder) QueryIdentityAPIForVehicle(ethAddress any) *gomock.Call {
+// GetVehicleByDeviceAddr indicates an expected call of GetVehicleByDeviceAddr.
+func (mr *MockIdentityAPIMockRecorder) GetVehicleByDeviceAddr(ethAddress any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueryIdentityAPIForVehicle", reflect.TypeOf((*MockIdentityAPI)(nil).QueryIdentityAPIForVehicle), ethAddress)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVehicleByDeviceAddr", reflect.TypeOf((*MockIdentityAPI)(nil).GetVehicleByDeviceAddr), ethAddress)
 }

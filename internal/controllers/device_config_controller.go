@@ -296,6 +296,7 @@ func (d *DeviceConfigController) GetConfigURLsFromVIN(c *fiber.Ctx) error {
 	if err != nil {
 		definitionResp, err := d.deviceDefSvc.DecodeVIN(c.Context(), vin)
 		if err != nil {
+			d.log.Err(err).Str("func", "GetConfigURLsFromVIN").Msgf("failed to DecodeVIN when trying to get configs")
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": fmt.Sprintf("could not decode VIN, contact support if you're sure this is valid VIN: %s", vin)})
 		}
 
@@ -343,7 +344,7 @@ func (d *DeviceConfigController) GetConfigURLsFromEthAddr(c *fiber.Ctx) error {
 		return c.JSON(directConfig)
 	}
 
-	vehicle, err := d.identityAPI.QueryIdentityAPIForVehicle(address)
+	vehicle, err := d.identityAPI.GetVehicleByDeviceAddr(address)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": fmt.Sprintf("no minted vehicle for device EthAddr: %s", ethAddr)})
 	}

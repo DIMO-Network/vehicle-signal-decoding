@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	grpc "google.golang.org/grpc"
+
 	"github.com/pkg/errors"
 
 	common2 "github.com/ethereum/go-ethereum/common"
@@ -25,9 +27,9 @@ type userDeviceService struct {
 	devicesClient pb.UserDeviceServiceClient
 }
 
-func NewUserDeviceService(devicesGrpcClient pb.UserDeviceServiceClient) UserDeviceService {
+func NewUserDeviceService(devicesGrpcConn *grpc.ClientConn) UserDeviceService {
 	return &userDeviceService{
-		devicesClient: devicesGrpcClient,
+		devicesClient: pb.NewUserDeviceServiceClient(devicesGrpcConn),
 	}
 }
 

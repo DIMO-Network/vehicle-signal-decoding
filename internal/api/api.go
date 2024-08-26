@@ -2,7 +2,10 @@ package api
 
 import (
 	"context"
-	"errors"
+
+	"github.com/pkg/errors"
+
+	//"errors"
 	"fmt"
 	"os"
 	"os/signal"
@@ -10,14 +13,11 @@ import (
 	"strings"
 	"syscall"
 
-	definitionsapi "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
-
 	usersapi "github.com/DIMO-Network/users-api/pkg/grpc"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/utils"
 	jwtware "github.com/gofiber/contrib/jwt"
 
-	devicesapi "github.com/DIMO-Network/devices-api/pkg/grpc"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/middleware/owner"
 	"google.golang.org/grpc"
@@ -57,9 +57,13 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 	pdb.WaitForDB(logger)
 
 	s3Client := getS3ServiceClient(ctx, settings, logger)
+	conns, err := getGRPCConnections(settings)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("failed to dial connection to at least one grpc service")
+	}
 
 	go StartGrpcServer(logger, pdb.DBS, settings, s3Client)
-	startWebAPI(logger, settings, pdb)
+	startWebAPI(logger, settings, pdb, conns)
 	startVehicleSignalConsumer(logger, settings, pdb)
 	startMonitoringServer(logger, settings)
 
@@ -70,6 +74,9 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 	_ = ctx.Done()
 	_ = pdb.DBS().Writer.Close()
 	_ = pdb.DBS().Reader.Close()
+	_ = conns.usersAPIConn.Close()
+	_ = conns.definitionsAPIConn.Close()
+	_ = conns.devicesAPIConn.Close()
 }
 
 func startVehicleSignalConsumer(logger zerolog.Logger, settings *config.Settings, pdb db.Store) {
@@ -126,31 +133,14 @@ func startMonitoringServer(logger zerolog.Logger, settings *config.Settings) {
 	logger.Info().Str("port", settings.MonitoringPort).Msg("started monitoring web server.")
 }
 
-func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.Store) *fiber.App {
-	//Create gRPC connection
-	deviceGrpcClient, devicesConn, err := getDeviceGrpcClient(settings.DeviceGRPCAddr)
-	if err != nil {
-		logger.Fatal().Err(err).Msgf("Failed to dial devices-api at %s", settings.DeviceGRPCAddr)
-	}
-	defer devicesConn.Close() //nolint
+func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.Store, conns *grpcServiceConnections) *fiber.App {
+	usersClient := usersapi.NewUserServiceClient(conns.usersAPIConn) // this is a raw grpc client
+	// these are an abstractions over the grpc client
+	userDeviceSvc := services.NewUserDeviceService(conns.devicesAPIConn)
+	deviceDefsvc := services.NewDeviceDefinitionsService(conns.definitionsAPIConn)
 
-	definitionsGrpcClient, vinDecoderGrpcClient, definitionsConn, err := getDefinitionsGrpcClient(settings.DefinitionsGRPCAddr)
-	if err != nil {
-		logger.Fatal().Err(err).Msgf("Failed to dial definitions-api at %s", settings.DeviceGRPCAddr)
-	}
-	defer definitionsConn.Close() //nolint
-
-	conn, err := grpc.NewClient(settings.UsersGRPCAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		logger.Fatal().Err(err).Msgf("Failed to dial users-api at %s", settings.UsersGRPCAddr)
-	}
-	defer conn.Close() //nolint
-
-	usersClient := usersapi.NewUserServiceClient(conn)
-	userDeviceSvc := services.NewUserDeviceService(deviceGrpcClient)
-	deviceDefsvc := services.NewDeviceDefinitionsService(definitionsGrpcClient, vinDecoderGrpcClient)
 	deviceTemplatesvc := services.NewDeviceTemplateService(database.DBS().Writer.DB, deviceDefsvc, logger, settings)
-	identityAPI := gateways.NewIdentityAPIService(&logger)
+	identityAPI := gateways.NewIdentityAPIService(&logger, settings)
 
 	app := fiber.New(fiber.Config{
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
@@ -243,7 +233,7 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 
 	go func() {
 		if err := app.Listen(":" + settings.Port); err != nil {
-			logger.Fatal().Err(err).Str("port", settings.Port).Msg("Failed to start monitoring web server.")
+			logger.Fatal().Err(err).Str("port", settings.Port).Msg("Failed to start web server.")
 		}
 	}()
 
@@ -281,6 +271,33 @@ type CodeResp struct {
 	Message string `json:"message"`
 }
 
+type grpcServiceConnections struct {
+	devicesAPIConn     *grpc.ClientConn
+	definitionsAPIConn *grpc.ClientConn
+	usersAPIConn       *grpc.ClientConn
+}
+
+// getGRPCConnections establishes and returns the connections for our GRPC dependencies
+func getGRPCConnections(settings *config.Settings) (*grpcServiceConnections, error) {
+	devicesConn, err := grpc.NewClient(settings.DeviceGRPCAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to dial at: %s", settings.DeviceGRPCAddr)
+	}
+	definitionsConn, err := grpc.NewClient(settings.DefinitionsGRPCAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to dial at: %s", settings.DefinitionsGRPCAddr)
+	}
+	usersConn, err := grpc.NewClient(settings.UsersGRPCAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to dial at: %s", settings.UsersGRPCAddr)
+	}
+	return &grpcServiceConnections{
+		devicesAPIConn:     devicesConn,
+		definitionsAPIConn: definitionsConn,
+		usersAPIConn:       usersConn,
+	}, nil
+}
+
 // getS3ServiceClient instantiates a new default config and then a new s3 services client if not already set. Takes context in, although it could likely use a context from container passed in on instantiation
 func getS3ServiceClient(ctx context.Context, settings *config.Settings, logger zerolog.Logger) *s3.Client {
 	cfg, err := awsconfig.LoadDefaultConfig(ctx,
@@ -307,23 +324,4 @@ func getS3ServiceClient(ctx context.Context, settings *config.Settings, logger z
 	})
 
 	return s3ServiceClient
-}
-
-func getDeviceGrpcClient(deviceGRPCAddr string) (devicesapi.UserDeviceServiceClient, *grpc.ClientConn, error) {
-	conn, err := grpc.NewClient(deviceGRPCAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		return nil, conn, err
-	}
-	userDeviceClient := devicesapi.NewUserDeviceServiceClient(conn)
-	return userDeviceClient, conn, nil
-}
-
-func getDefinitionsGrpcClient(definitionsGRPCAddr string) (definitionsapi.DeviceDefinitionServiceClient, definitionsapi.VinDecoderServiceClient, *grpc.ClientConn, error) {
-	conn, err := grpc.NewClient(definitionsGRPCAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		return nil, nil, conn, err
-	}
-	definitionsClient := definitionsapi.NewDeviceDefinitionServiceClient(conn)
-	vinDecoderClient := definitionsapi.NewVinDecoderServiceClient(conn)
-	return definitionsClient, vinDecoderClient, conn, nil
 }
