@@ -29,4 +29,5 @@ type Settings struct {
 	DeviceDataGRPCAddr    string `yaml:"DEVICE_DATA_GRPC_ADDR"`
 	JwtKeySetURL          string `yaml:"JWT_KEY_SET_URL"`
 	UsersGRPCAddr         string `yaml:"USERS_GRPC_ADDR"`
+	IdentityAPIURL        string `yaml:"IDENTITY_API_URL"` //nolint
 }

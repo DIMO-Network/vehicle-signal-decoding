@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	grpc "google.golang.org/grpc"
+
 	pgrpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/exceptions"
 )
@@ -19,10 +21,10 @@ type deviceDefinitionsService struct {
 	vinDecoderClient  pgrpc.VinDecoderServiceClient
 }
 
-func NewDeviceDefinitionsService(definitionsClient pgrpc.DeviceDefinitionServiceClient, vinDecoderClient pgrpc.VinDecoderServiceClient) DeviceDefinitionsService {
+func NewDeviceDefinitionsService(definitionsConn *grpc.ClientConn) DeviceDefinitionsService {
 	return &deviceDefinitionsService{
-		definitionsClient: definitionsClient,
-		vinDecoderClient:  vinDecoderClient,
+		definitionsClient: pgrpc.NewDeviceDefinitionServiceClient(definitionsConn),
+		vinDecoderClient:  pgrpc.NewVinDecoderServiceClient(definitionsConn),
 	}
 }
 
