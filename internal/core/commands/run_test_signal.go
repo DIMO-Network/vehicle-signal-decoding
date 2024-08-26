@@ -28,11 +28,11 @@ type RunTestSignalCommandHandler interface {
 
 type runTestSignalCommandHandler struct {
 	DBS               func() *db.ReaderWriter
-	userDeviceService services.UserDeviceService
+	userDeviceService services.UserDevicesService
 	logger            zerolog.Logger
 }
 
-func NewRunTestSignalCommandHandler(dbs func() *db.ReaderWriter, logger zerolog.Logger, userDeviceService services.UserDeviceService) RunTestSignalCommandHandler {
+func NewRunTestSignalCommandHandler(dbs func() *db.ReaderWriter, logger zerolog.Logger, userDeviceService services.UserDevicesService) RunTestSignalCommandHandler {
 	return runTestSignalCommandHandler{DBS: dbs, logger: logger, userDeviceService: userDeviceService}
 }
 
@@ -53,7 +53,7 @@ type RunTestSignalCommandResponse struct {
 func (h runTestSignalCommandHandler) Execute(ctx context.Context, command *RunTestSignalCommandRequest) error {
 
 	// Get user device
-	userDevice, err := h.userDeviceService.GetUserDeviceServiceByAutoPIUnitID(ctx, command.AutoPIUnitID)
+	userDevice, err := h.userDeviceService.GetUserDeviceByAutoPIUnitID(ctx, command.AutoPIUnitID)
 	if err != nil {
 		return err
 	}

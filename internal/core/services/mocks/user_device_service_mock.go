@@ -18,31 +18,31 @@ import (
 	gomock "go.uber.org/mock/gomock"
 )
 
-// MockUserDeviceService is a mock of UserDeviceService interface.
-type MockUserDeviceService struct {
+// MockUserDevicesService is a mock of UserDevicesService interface.
+type MockUserDevicesService struct {
 	ctrl     *gomock.Controller
-	recorder *MockUserDeviceServiceMockRecorder
+	recorder *MockUserDevicesServiceMockRecorder
 }
 
-// MockUserDeviceServiceMockRecorder is the mock recorder for MockUserDeviceService.
-type MockUserDeviceServiceMockRecorder struct {
-	mock *MockUserDeviceService
+// MockUserDevicesServiceMockRecorder is the mock recorder for MockUserDevicesService.
+type MockUserDevicesServiceMockRecorder struct {
+	mock *MockUserDevicesService
 }
 
-// NewMockUserDeviceService creates a new mock instance.
-func NewMockUserDeviceService(ctrl *gomock.Controller) *MockUserDeviceService {
-	mock := &MockUserDeviceService{ctrl: ctrl}
-	mock.recorder = &MockUserDeviceServiceMockRecorder{mock}
+// NewMockUserDevicesService creates a new mock instance.
+func NewMockUserDevicesService(ctrl *gomock.Controller) *MockUserDevicesService {
+	mock := &MockUserDevicesService{ctrl: ctrl}
+	mock.recorder = &MockUserDevicesServiceMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockUserDeviceService) EXPECT() *MockUserDeviceServiceMockRecorder {
+func (m *MockUserDevicesService) EXPECT() *MockUserDevicesServiceMockRecorder {
 	return m.recorder
 }
 
 // GetUserDevice mocks base method.
-func (m *MockUserDeviceService) GetUserDevice(ctx context.Context, userDeviceID string) (*grpc.UserDevice, error) {
+func (m *MockUserDevicesService) GetUserDevice(ctx context.Context, userDeviceID string) (*grpc.UserDevice, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetUserDevice", ctx, userDeviceID)
 	ret0, _ := ret[0].(*grpc.UserDevice)
@@ -51,13 +51,28 @@ func (m *MockUserDeviceService) GetUserDevice(ctx context.Context, userDeviceID 
 }
 
 // GetUserDevice indicates an expected call of GetUserDevice.
-func (mr *MockUserDeviceServiceMockRecorder) GetUserDevice(ctx, userDeviceID any) *gomock.Call {
+func (mr *MockUserDevicesServiceMockRecorder) GetUserDevice(ctx, userDeviceID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserDevice", reflect.TypeOf((*MockUserDeviceService)(nil).GetUserDevice), ctx, userDeviceID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserDevice", reflect.TypeOf((*MockUserDevicesService)(nil).GetUserDevice), ctx, userDeviceID)
+}
+
+// GetUserDeviceByAutoPIUnitID mocks base method.
+func (m *MockUserDevicesService) GetUserDeviceByAutoPIUnitID(ctx context.Context, id string) (*appmodels.UserDeviceAutoPIUnit, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserDeviceByAutoPIUnitID", ctx, id)
+	ret0, _ := ret[0].(*appmodels.UserDeviceAutoPIUnit)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserDeviceByAutoPIUnitID indicates an expected call of GetUserDeviceByAutoPIUnitID.
+func (mr *MockUserDevicesServiceMockRecorder) GetUserDeviceByAutoPIUnitID(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserDeviceByAutoPIUnitID", reflect.TypeOf((*MockUserDevicesService)(nil).GetUserDeviceByAutoPIUnitID), ctx, id)
 }
 
 // GetUserDeviceByEthAddr mocks base method.
-func (m *MockUserDeviceService) GetUserDeviceByEthAddr(ctx context.Context, address common.Address) (*grpc.UserDevice, error) {
+func (m *MockUserDevicesService) GetUserDeviceByEthAddr(ctx context.Context, address common.Address) (*grpc.UserDevice, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetUserDeviceByEthAddr", ctx, address)
 	ret0, _ := ret[0].(*grpc.UserDevice)
@@ -66,13 +81,13 @@ func (m *MockUserDeviceService) GetUserDeviceByEthAddr(ctx context.Context, addr
 }
 
 // GetUserDeviceByEthAddr indicates an expected call of GetUserDeviceByEthAddr.
-func (mr *MockUserDeviceServiceMockRecorder) GetUserDeviceByEthAddr(ctx, address any) *gomock.Call {
+func (mr *MockUserDevicesServiceMockRecorder) GetUserDeviceByEthAddr(ctx, address any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserDeviceByEthAddr", reflect.TypeOf((*MockUserDeviceService)(nil).GetUserDeviceByEthAddr), ctx, address)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserDeviceByEthAddr", reflect.TypeOf((*MockUserDevicesService)(nil).GetUserDeviceByEthAddr), ctx, address)
 }
 
 // GetUserDeviceByVIN mocks base method.
-func (m *MockUserDeviceService) GetUserDeviceByVIN(ctx context.Context, vin string) (*grpc.UserDevice, error) {
+func (m *MockUserDevicesService) GetUserDeviceByVIN(ctx context.Context, vin string) (*grpc.UserDevice, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetUserDeviceByVIN", ctx, vin)
 	ret0, _ := ret[0].(*grpc.UserDevice)
@@ -81,22 +96,7 @@ func (m *MockUserDeviceService) GetUserDeviceByVIN(ctx context.Context, vin stri
 }
 
 // GetUserDeviceByVIN indicates an expected call of GetUserDeviceByVIN.
-func (mr *MockUserDeviceServiceMockRecorder) GetUserDeviceByVIN(ctx, vin any) *gomock.Call {
+func (mr *MockUserDevicesServiceMockRecorder) GetUserDeviceByVIN(ctx, vin any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserDeviceByVIN", reflect.TypeOf((*MockUserDeviceService)(nil).GetUserDeviceByVIN), ctx, vin)
-}
-
-// GetUserDeviceServiceByAutoPIUnitID mocks base method.
-func (m *MockUserDeviceService) GetUserDeviceServiceByAutoPIUnitID(ctx context.Context, id string) (*appmodels.UserDeviceAutoPIUnit, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUserDeviceServiceByAutoPIUnitID", ctx, id)
-	ret0, _ := ret[0].(*appmodels.UserDeviceAutoPIUnit)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetUserDeviceServiceByAutoPIUnitID indicates an expected call of GetUserDeviceServiceByAutoPIUnitID.
-func (mr *MockUserDeviceServiceMockRecorder) GetUserDeviceServiceByAutoPIUnitID(ctx, id any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserDeviceServiceByAutoPIUnitID", reflect.TypeOf((*MockUserDeviceService)(nil).GetUserDeviceServiceByAutoPIUnitID), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserDeviceByVIN", reflect.TypeOf((*MockUserDevicesService)(nil).GetUserDeviceByVIN), ctx, vin)
 }

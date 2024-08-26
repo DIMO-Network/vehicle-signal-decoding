@@ -27,7 +27,7 @@ var errNotFound = fiber.NewError(fiber.StatusNotFound, "Device not found.")
 //   - There must be a userDeviceID or ethAddr path parameter, and that device must exist.
 //   - Either the user owns the device, or the user's account has an Ethereum address that
 //     owns the corresponding NFT.
-func New(usersClient pb.UserServiceClient, devicesClient services.UserDeviceService, logger *zerolog.Logger) fiber.Handler {
+func New(usersClient pb.UserServiceClient, devicesClient services.UserDevicesService, logger *zerolog.Logger) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		userID := GetUserID(c)
 		udi := c.Params("userDeviceID")

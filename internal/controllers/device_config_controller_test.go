@@ -56,7 +56,7 @@ type DeviceConfigControllerTestSuite struct {
 	container             testcontainers.Container
 	mockCtrl              *gomock.Controller
 	logger                *zerolog.Logger
-	mockUserDeviceSvc     *mock_services.MockUserDeviceService
+	mockUserDevicesSvc    *mock_services.MockUserDevicesService
 	mockDeviceDefSvc      *mock_services.MockDeviceDefinitionsService
 	mockDeviceTemplateSvc *mock_services.MockDeviceTemplateService
 	controller            *DeviceConfigController
@@ -72,12 +72,12 @@ func (s *DeviceConfigControllerTestSuite) SetupSuite() {
 	logger := zerolog.New(os.Stdout).With().Timestamp().Logger()
 	s.logger = &logger
 	s.mockCtrl = gomock.NewController(s.T())
-	s.mockUserDeviceSvc = mock_services.NewMockUserDeviceService(s.mockCtrl)
+	s.mockUserDevicesSvc = mock_services.NewMockUserDevicesService(s.mockCtrl)
 	s.mockDeviceDefSvc = mock_services.NewMockDeviceDefinitionsService(s.mockCtrl)
 	s.mockDeviceTemplateSvc = mock_services.NewMockDeviceTemplateService(s.mockCtrl)
 	s.mockIdentityAPI = mock_gateways.NewMockIdentityAPI(s.mockCtrl)
 	ctrl := NewDeviceConfigController(&config.Settings{Port: "3000", DeploymentURL: "http://localhost:3000"}, s.logger,
-		s.pdb.DBS, s.mockUserDeviceSvc, s.mockDeviceDefSvc, s.mockDeviceTemplateSvc, s.mockIdentityAPI)
+		s.pdb.DBS, s.mockUserDevicesSvc, s.mockDeviceDefSvc, s.mockDeviceTemplateSvc, s.mockIdentityAPI)
 	s.controller = &ctrl
 	s.app = fiber.New()
 }
@@ -426,7 +426,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLsFromVIN_EmptyDBC() {
 		GeoDecodedCountry:   "USA",
 		GeoDecodedStateProv: "MI",
 	}
-	s.mockUserDeviceSvc.EXPECT().GetUserDeviceByVIN(gomock.Any(), vin).Return(mockedUserDevice, nil)
+	s.mockUserDevicesSvc.EXPECT().GetUserDeviceByVIN(gomock.Any(), vin).Return(mockedUserDevice, nil)
 
 	template := &models.Template{
 		TemplateName: "some-template-emptydbc",
@@ -509,7 +509,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLsFromVIN_DecodeVIN() {
 	err = ds.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
 	require.NoError(s.T(), err)
 
-	s.mockUserDeviceSvc.EXPECT().GetUserDeviceByVIN(gomock.Any(), vin).Return(nil, errors.New("user device not found"))
+	s.mockUserDevicesSvc.EXPECT().GetUserDeviceByVIN(gomock.Any(), vin).Return(nil, errors.New("user device not found"))
 
 	s.mockDeviceDefSvc.EXPECT().DecodeVIN(gomock.Any(), vin).Return(&p_grpc.DecodeVinResponse{
 		DeviceDefinitionId: mockedDeviceDefinition.DeviceDefinitionId,
@@ -583,7 +583,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLsFromVIN_ProtocolOverr
 			Value: "HEV",
 		}},
 	}
-	s.mockUserDeviceSvc.EXPECT().GetUserDeviceByVIN(gomock.Any(), vin).Return(nil, errors.New("user device not found"))
+	s.mockUserDevicesSvc.EXPECT().GetUserDeviceByVIN(gomock.Any(), vin).Return(nil, errors.New("user device not found"))
 	s.mockDeviceDefSvc.EXPECT().DecodeVIN(gomock.Any(), vin).Return(&p_grpc.DecodeVinResponse{DeviceDefinitionId: mockedDeviceDefinition.DeviceDefinitionId}, nil)
 
 	s.mockDeviceTemplateSvc.EXPECT().ResolveDeviceConfiguration(gomock.Any(), &pb.UserDevice{
@@ -664,7 +664,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLsFromVIN_FallbackLogic
 			Value: "BEV",
 		}},
 	}
-	s.mockUserDeviceSvc.EXPECT().GetUserDeviceByVIN(gomock.Any(), vin).Return(nil, errors.New("user device not found"))
+	s.mockUserDevicesSvc.EXPECT().GetUserDeviceByVIN(gomock.Any(), vin).Return(nil, errors.New("user device not found"))
 	s.mockDeviceDefSvc.EXPECT().DecodeVIN(gomock.Any(), vin).Return(&p_grpc.DecodeVinResponse{DeviceDefinitionId: mockedDeviceDefinition.DeviceDefinitionId}, nil)
 
 	s.mockDeviceTemplateSvc.EXPECT().ResolveDeviceConfiguration(gomock.Any(), &pb.UserDevice{
@@ -706,7 +706,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigStatusByEthAddr_DeviceDat
 		PowerTrainType:     "ICE",
 		CANProtocol:        "6",
 	}
-	s.mockUserDeviceSvc.EXPECT().GetUserDeviceByEthAddr(gomock.Any(), common2.HexToAddress(ethAddr)).Return(testUD, nil)
+	s.mockUserDevicesSvc.EXPECT().GetUserDeviceByEthAddr(gomock.Any(), common2.HexToAddress(ethAddr)).Return(testUD, nil)
 	s.mockDeviceTemplateSvc.EXPECT().ResolveDeviceConfiguration(gomock.Any(), testUD, nil).Return(&device.ConfigResponse{
 		PidURL:           "http://localhost/pids/default",
 		DeviceSettingURL: "http://localhost/settings/default",
@@ -751,7 +751,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigStatusByEthAddr_Templates
 		PowerTrainType:     "ICE",
 		CANProtocol:        "6",
 	}
-	s.mockUserDeviceSvc.EXPECT().GetUserDeviceByEthAddr(gomock.Any(), common2.HexToAddress(ethAddr)).Return(testUD, nil)
+	s.mockUserDevicesSvc.EXPECT().GetUserDeviceByEthAddr(gomock.Any(), common2.HexToAddress(ethAddr)).Return(testUD, nil)
 	s.mockDeviceTemplateSvc.EXPECT().ResolveDeviceConfiguration(gomock.Any(), testUD, nil).Return(&device.ConfigResponse{
 		PidURL:           "http://localhost/pids/default",
 		DeviceSettingURL: "http://localhost/settings/default",

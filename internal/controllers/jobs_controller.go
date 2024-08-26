@@ -21,12 +21,12 @@ type JobsController struct {
 	settings      *config.Settings
 	log           *zerolog.Logger
 	db            *sql.DB
-	userDeviceSvc services.UserDeviceService
+	userDeviceSvc services.UserDevicesService
 	deviceDefSvc  services.DeviceDefinitionsService
 }
 
 // NewJobsController constructor
-func NewJobsController(settings *config.Settings, logger *zerolog.Logger, database *sql.DB, userDeviceSvc services.UserDeviceService, deviceDefSvc services.DeviceDefinitionsService) JobsController {
+func NewJobsController(settings *config.Settings, logger *zerolog.Logger, database *sql.DB, userDeviceSvc services.UserDevicesService, deviceDefSvc services.DeviceDefinitionsService) JobsController {
 	return JobsController{
 		settings:      settings,
 		log:           logger,

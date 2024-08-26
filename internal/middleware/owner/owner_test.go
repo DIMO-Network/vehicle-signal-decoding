@@ -29,7 +29,7 @@ func TestOwnerMiddleware(t *testing.T) {
 	logger := test.Logger()
 	cont := gomock.NewController(t)
 	usersClient := &test.UsersClient{}
-	devicesClient := mock_services.NewMockUserDeviceService(cont)
+	devicesClient := mock_services.NewMockUserDevicesService(cont)
 	middleware := New(usersClient, devicesClient, logger)
 
 	app := test.SetupAppFiber(*logger)

@@ -33,7 +33,7 @@ type RunTestSignalTestSuite struct {
 	container             testcontainers.Container
 	ctx                   context.Context
 	handler               RunTestSignalCommandHandler
-	mockUserDeviceService *mockService.MockUserDeviceService
+	mockUserDeviceService *mockService.MockUserDevicesService
 }
 
 func TestRunTestSignalCommandHandler(t *testing.T) {
@@ -46,7 +46,7 @@ func (s *RunTestSignalTestSuite) SetupTest() {
 	s.ctrl = gomock.NewController(s.T())
 
 	s.ctx = context.Background()
-	s.mockUserDeviceService = mockService.NewMockUserDeviceService(s.ctrl)
+	s.mockUserDeviceService = mockService.NewMockUserDevicesService(s.ctrl)
 	s.pdb, s.container = dbtesthelper.StartContainerDatabase(s.ctx, dbName, s.T(), migrationsDirRelPath)
 
 	s.handler = NewRunTestSignalCommandHandler(s.pdb.DBS, zerolog.New(os.Stdout), s.mockUserDeviceService)
@@ -75,7 +75,7 @@ func (s *RunTestSignalTestSuite) Test_RunTestSignal() {
 		DeviceDefinitionID: deviceDefinitionID,
 	}
 
-	s.mockUserDeviceService.EXPECT().GetUserDeviceServiceByAutoPIUnitID(s.ctx, gomock.Any()).Return(userDeviceMock, nil).Times(1)
+	s.mockUserDeviceService.EXPECT().GetUserDeviceByAutoPIUnitID(s.ctx, gomock.Any()).Return(userDeviceMock, nil).Times(1)
 
 	eventSignals1 := map[string]RunTestSignalItemCommandRequest{}
 	eventSignals1["canbus_vin_toyota580v1"] = RunTestSignalItemCommandRequest{

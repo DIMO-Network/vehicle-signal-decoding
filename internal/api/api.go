@@ -64,7 +64,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 
 	go StartGrpcServer(logger, pdb.DBS, settings, s3Client)
 	startWebAPI(logger, settings, pdb, conns)
-	startVehicleSignalConsumer(logger, settings, pdb)
+	startVehicleSignalConsumer(logger, settings, pdb, conns)
 	startMonitoringServer(logger, settings)
 
 	c := make(chan os.Signal, 1)                    // Create channel to signify a signal being sent with length of 1
@@ -79,7 +79,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 	_ = conns.devicesAPIConn.Close()
 }
 
-func startVehicleSignalConsumer(logger zerolog.Logger, settings *config.Settings, pdb db.Store) {
+func startVehicleSignalConsumer(logger zerolog.Logger, settings *config.Settings, pdb db.Store, conns *grpcServiceConnections) {
 
 	if len(settings.KafkaBrokers) == 0 {
 		return
@@ -101,7 +101,7 @@ func startVehicleSignalConsumer(logger zerolog.Logger, settings *config.Settings
 		logger.Fatal().Err(err).Msg("Could not start credential update consumer")
 	}
 
-	userDeviceService := services.NewUserDeviceService(nil)
+	userDeviceService := services.NewUserDevicesService(conns.devicesAPIConn)
 	handler := commands.NewRunTestSignalCommandHandler(pdb.DBS, logger, userDeviceService)
 	service := NewWorkerListenerService(logger, handler)
 
@@ -136,7 +136,7 @@ func startMonitoringServer(logger zerolog.Logger, settings *config.Settings) {
 func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.Store, conns *grpcServiceConnections) *fiber.App {
 	usersClient := usersapi.NewUserServiceClient(conns.usersAPIConn) // this is a raw grpc client
 	// these are an abstractions over the grpc client
-	userDeviceSvc := services.NewUserDeviceService(conns.devicesAPIConn)
+	userDeviceSvc := services.NewUserDevicesService(conns.devicesAPIConn)
 	deviceDefsvc := services.NewDeviceDefinitionsService(conns.definitionsAPIConn)
 
 	deviceTemplatesvc := services.NewDeviceTemplateService(database.DBS().Writer.DB, deviceDefsvc, logger, settings)
