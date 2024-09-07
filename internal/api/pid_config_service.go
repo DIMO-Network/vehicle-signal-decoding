@@ -38,6 +38,7 @@ func (s *PidConfigService) CreatePid(ctx context.Context, in *grpc.UpdatePidRequ
 		CanFlowControlIDPair: in.Pid.CanFlowControlIdPair,
 		VSSCovesaSignalName:  in.Pid.VssCovesaName,
 		Unit:                 in.Pid.Unit,
+		ResponseHeader:       in.Pid.ResponseHeader,
 	})
 
 	if err != nil {
@@ -63,6 +64,7 @@ func (s *PidConfigService) UpdatePid(ctx context.Context, in *grpc.UpdatePidRequ
 		Enabled:              in.Pid.Enabled,
 		VSSCovesaSignalName:  in.Pid.VssCovesaName,
 		Unit:                 in.Pid.Unit,
+		ResponseHeader:       in.Pid.ResponseHeader,
 	})
 
 	if err != nil {
