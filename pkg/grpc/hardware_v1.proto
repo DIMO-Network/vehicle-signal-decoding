@@ -32,6 +32,7 @@ message PIDConfig {
   string protocol = 7;
   bool can_flow_control_clear = 8;
   string can_flow_control_id_pair = 9;
+  uint32 response_header = 10;
 }
 
 message PIDRequests {

@@ -718,7 +718,7 @@ func (o JobSlice) UpdateAll(ctx context.Context, exec boil.ContextExecutor, cols
 
 // Upsert attempts an insert using an executor, and does an update or ignore on conflict.
 // See boil.Columns documentation for how to properly use updateColumns and insertColumns.
-func (o *Job) Upsert(ctx context.Context, exec boil.ContextExecutor, updateOnConflict bool, conflictColumns []string, updateColumns, insertColumns boil.Columns) error {
+func (o *Job) Upsert(ctx context.Context, exec boil.ContextExecutor, updateOnConflict bool, conflictColumns []string, updateColumns, insertColumns boil.Columns, opts ...UpsertOptionFunc) error {
 	if o == nil {
 		return errors.New("models: no jobs provided for upsert")
 	}
@@ -772,7 +772,7 @@ func (o *Job) Upsert(ctx context.Context, exec boil.ContextExecutor, updateOnCon
 	var err error
 
 	if !cached {
-		insert, ret := insertColumns.InsertColumnSet(
+		insert, _ := insertColumns.InsertColumnSet(
 			jobAllColumns,
 			jobColumnsWithDefault,
 			jobColumnsWithoutDefault,
@@ -788,12 +788,18 @@ func (o *Job) Upsert(ctx context.Context, exec boil.ContextExecutor, updateOnCon
 			return errors.New("models: unable to upsert jobs, could not build update column list")
 		}
 
+		ret := strmangle.SetComplement(jobAllColumns, strmangle.SetIntersect(insert, update))
+
 		conflict := conflictColumns
-		if len(conflict) == 0 {
+		if len(conflict) == 0 && updateOnConflict && len(update) != 0 {
+			if len(jobPrimaryKeyColumns) == 0 {
+				return errors.New("models: unable to upsert jobs, could not build conflict column list")
+			}
+
 			conflict = make([]string, len(jobPrimaryKeyColumns))
 			copy(conflict, jobPrimaryKeyColumns)
 		}
-		cache.query = buildUpsertQueryPostgres(dialect, "\"vehicle_signal_decoding_api\".\"jobs\"", updateOnConflict, ret, update, conflict, insert)
+		cache.query = buildUpsertQueryPostgres(dialect, "\"vehicle_signal_decoding_api\".\"jobs\"", updateOnConflict, ret, update, conflict, insert, opts...)
 
 		cache.valueMapping, err = queries.BindMapping(jobType, jobMapping, insert)
 		if err != nil {

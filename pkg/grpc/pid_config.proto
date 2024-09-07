@@ -26,6 +26,7 @@ message PidConfig {
   bool enabled = 15;
   optional string vss_covesa_name = 16;
   optional string unit = 17;
+  bytes response_header = 18;
 }
 
 message PidSummary {
