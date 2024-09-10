@@ -37,7 +37,6 @@ type UpdatePidCommandRequest struct {
 	Enabled              bool
 	VSSCovesaSignalName  *string
 	Unit                 *string
-	ResponseHeader       []byte
 }
 
 type UpdatePidCommandResponse struct {
@@ -72,7 +71,6 @@ func (h UpdatePidCommandHandler) Execute(ctx context.Context, req *UpdatePidComm
 	pid.CanFlowControlIDPair = null.StringFromPtr(req.CanFlowControlIDPair)
 	pid.VSSCovesaName = null.StringFromPtr(req.VSSCovesaSignalName)
 	pid.Unit = null.StringFromPtr(req.Unit)
-	pid.ResponseHeader = req.ResponseHeader
 
 	if _, err := pid.Update(ctx, h.DBS().Writer.DB, boil.Infer()); err != nil {
 		return nil, &exceptions.InternalError{

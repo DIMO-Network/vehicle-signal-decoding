@@ -35,7 +35,6 @@ type CreatePidCommandRequest struct {
 	CanFlowControlIDPair *string
 	VSSCovesaSignalName  *string
 	Unit                 *string
-	ResponseHeader       []byte
 }
 
 type CreatePidCommandResponse struct {
@@ -73,7 +72,6 @@ func (h CreatePidCommandHandler) Execute(ctx context.Context, req *CreatePidComm
 		CanFlowControlIDPair: null.StringFromPtr(req.CanFlowControlIDPair),
 		VSSCovesaName:        null.StringFromPtr(req.VSSCovesaSignalName),
 		Unit:                 null.StringFromPtr(req.Unit),
-		ResponseHeader:       req.ResponseHeader,
 	}
 
 	err = pid.Insert(ctx, h.DBS().Writer, boil.Infer())
