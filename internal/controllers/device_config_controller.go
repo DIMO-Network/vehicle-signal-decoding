@@ -120,11 +120,6 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 			d.log.Err(err).Send()
 			return fiber.NewError(fiber.StatusInternalServerError, "invalid header bytes configuration: "+err.Error())
 		}
-		respHdrUint32, err := bytesToUint32(pidConfig.ResponseHeader)
-		if err != nil {
-			d.log.Err(err).Send()
-			return fiber.NewError(fiber.StatusInternalServerError, "invalid header bytes configuration: "+err.Error())
-		}
 
 		modeUint32, err := bytesToUint32(pidConfig.Mode)
 		if err != nil {
@@ -145,7 +140,6 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 			Pid:             pidUint32,
 			Formula:         pidConfig.Formula,
 			IntervalSeconds: uint32(pidConfig.IntervalSeconds),
-			ResponseHeader:  respHdrUint32,
 		}
 		// the pid can override the protocol, otherwise use one at template level.
 		if pidConfig.Protocol.Valid {
