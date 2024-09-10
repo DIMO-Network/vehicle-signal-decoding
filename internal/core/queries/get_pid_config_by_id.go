@@ -51,7 +51,6 @@ func (h GetPidByIDQueryHandler) Handle(ctx context.Context, query *GetPidByIDQue
 			IntervalSeconds: int32(item.IntervalSeconds),
 			Protocol:        item.Protocol.Ptr(),
 			SignalName:      item.SignalName,
-			ResponseHeader:  item.ResponseHeader,
 			CreatedAt:       timestamppb.New(item.CreatedAt),
 			UpdatedAt:       timestamppb.New(item.UpdatedAt),
 		},
