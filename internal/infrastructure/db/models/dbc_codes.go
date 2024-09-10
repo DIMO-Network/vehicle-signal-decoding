@@ -110,6 +110,12 @@ func (w whereHelpernull_String) LIKE(x null.String) qm.QueryMod {
 func (w whereHelpernull_String) NLIKE(x null.String) qm.QueryMod {
 	return qm.Where(w.field+" NOT LIKE ?", x)
 }
+func (w whereHelpernull_String) ILIKE(x null.String) qm.QueryMod {
+	return qm.Where(w.field+" ILIKE ?", x)
+}
+func (w whereHelpernull_String) NILIKE(x null.String) qm.QueryMod {
+	return qm.Where(w.field+" NOT ILIKE ?", x)
+}
 func (w whereHelpernull_String) IN(slice []string) qm.QueryMod {
 	values := make([]interface{}, 0, len(slice))
 	for _, value := range slice {
@@ -1006,7 +1012,7 @@ func (o DBCCodeSlice) UpdateAll(ctx context.Context, exec boil.ContextExecutor, 
 
 // Upsert attempts an insert using an executor, and does an update or ignore on conflict.
 // See boil.Columns documentation for how to properly use updateColumns and insertColumns.
-func (o *DBCCode) Upsert(ctx context.Context, exec boil.ContextExecutor, updateOnConflict bool, conflictColumns []string, updateColumns, insertColumns boil.Columns) error {
+func (o *DBCCode) Upsert(ctx context.Context, exec boil.ContextExecutor, updateOnConflict bool, conflictColumns []string, updateColumns, insertColumns boil.Columns, opts ...UpsertOptionFunc) error {
 	if o == nil {
 		return errors.New("models: no dbc_codes provided for upsert")
 	}
@@ -1060,7 +1066,7 @@ func (o *DBCCode) Upsert(ctx context.Context, exec boil.ContextExecutor, updateO
 	var err error
 
 	if !cached {
-		insert, ret := insertColumns.InsertColumnSet(
+		insert, _ := insertColumns.InsertColumnSet(
 			dbcCodeAllColumns,
 			dbcCodeColumnsWithDefault,
 			dbcCodeColumnsWithoutDefault,
@@ -1076,12 +1082,18 @@ func (o *DBCCode) Upsert(ctx context.Context, exec boil.ContextExecutor, updateO
 			return errors.New("models: unable to upsert dbc_codes, could not build update column list")
 		}
 
+		ret := strmangle.SetComplement(dbcCodeAllColumns, strmangle.SetIntersect(insert, update))
+
 		conflict := conflictColumns
-		if len(conflict) == 0 {
+		if len(conflict) == 0 && updateOnConflict && len(update) != 0 {
+			if len(dbcCodePrimaryKeyColumns) == 0 {
+				return errors.New("models: unable to upsert dbc_codes, could not build conflict column list")
+			}
+
 			conflict = make([]string, len(dbcCodePrimaryKeyColumns))
 			copy(conflict, dbcCodePrimaryKeyColumns)
 		}
-		cache.query = buildUpsertQueryPostgres(dialect, "\"vehicle_signal_decoding_api\".\"dbc_codes\"", updateOnConflict, ret, update, conflict, insert)
+		cache.query = buildUpsertQueryPostgres(dialect, "\"vehicle_signal_decoding_api\".\"dbc_codes\"", updateOnConflict, ret, update, conflict, insert, opts...)
 
 		cache.valueMapping, err = queries.BindMapping(dbcCodeType, dbcCodeMapping, insert)
 		if err != nil {

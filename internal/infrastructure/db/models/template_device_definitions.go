@@ -869,7 +869,7 @@ func (o TemplateDeviceDefinitionSlice) UpdateAll(ctx context.Context, exec boil.
 
 // Upsert attempts an insert using an executor, and does an update or ignore on conflict.
 // See boil.Columns documentation for how to properly use updateColumns and insertColumns.
-func (o *TemplateDeviceDefinition) Upsert(ctx context.Context, exec boil.ContextExecutor, updateOnConflict bool, conflictColumns []string, updateColumns, insertColumns boil.Columns) error {
+func (o *TemplateDeviceDefinition) Upsert(ctx context.Context, exec boil.ContextExecutor, updateOnConflict bool, conflictColumns []string, updateColumns, insertColumns boil.Columns, opts ...UpsertOptionFunc) error {
 	if o == nil {
 		return errors.New("models: no template_device_definitions provided for upsert")
 	}
@@ -923,7 +923,7 @@ func (o *TemplateDeviceDefinition) Upsert(ctx context.Context, exec boil.Context
 	var err error
 
 	if !cached {
-		insert, ret := insertColumns.InsertColumnSet(
+		insert, _ := insertColumns.InsertColumnSet(
 			templateDeviceDefinitionAllColumns,
 			templateDeviceDefinitionColumnsWithDefault,
 			templateDeviceDefinitionColumnsWithoutDefault,
@@ -939,12 +939,18 @@ func (o *TemplateDeviceDefinition) Upsert(ctx context.Context, exec boil.Context
 			return errors.New("models: unable to upsert template_device_definitions, could not build update column list")
 		}
 
+		ret := strmangle.SetComplement(templateDeviceDefinitionAllColumns, strmangle.SetIntersect(insert, update))
+
 		conflict := conflictColumns
-		if len(conflict) == 0 {
+		if len(conflict) == 0 && updateOnConflict && len(update) != 0 {
+			if len(templateDeviceDefinitionPrimaryKeyColumns) == 0 {
+				return errors.New("models: unable to upsert template_device_definitions, could not build conflict column list")
+			}
+
 			conflict = make([]string, len(templateDeviceDefinitionPrimaryKeyColumns))
 			copy(conflict, templateDeviceDefinitionPrimaryKeyColumns)
 		}
-		cache.query = buildUpsertQueryPostgres(dialect, "\"vehicle_signal_decoding_api\".\"template_device_definitions\"", updateOnConflict, ret, update, conflict, insert)
+		cache.query = buildUpsertQueryPostgres(dialect, "\"vehicle_signal_decoding_api\".\"template_device_definitions\"", updateOnConflict, ret, update, conflict, insert, opts...)
 
 		cache.valueMapping, err = queries.BindMapping(templateDeviceDefinitionType, templateDeviceDefinitionMapping, insert)
 		if err != nil {
