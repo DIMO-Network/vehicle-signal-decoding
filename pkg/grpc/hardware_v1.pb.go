@@ -146,14 +146,15 @@ type PIDConfig struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Name                 string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Header               uint32 `protobuf:"varint,2,opt,name=header,proto3" json:"header,omitempty"`
-	Mode                 uint32 `protobuf:"varint,3,opt,name=mode,proto3" json:"mode,omitempty"`
-	Pid                  uint32 `protobuf:"varint,4,opt,name=pid,proto3" json:"pid,omitempty"`
-	Formula              string `protobuf:"bytes,5,opt,name=formula,proto3" json:"formula,omitempty"`
-	IntervalSeconds      uint32 `protobuf:"varint,6,opt,name=interval_seconds,json=intervalSeconds,proto3" json:"interval_seconds,omitempty"`
-	Protocol             string `protobuf:"bytes,7,opt,name=protocol,proto3" json:"protocol,omitempty"`
-	CanFlowControlClear  bool   `protobuf:"varint,8,opt,name=can_flow_control_clear,json=canFlowControlClear,proto3" json:"can_flow_control_clear,omitempty"`
+	Name                string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Header              uint32 `protobuf:"varint,2,opt,name=header,proto3" json:"header,omitempty"`
+	Mode                uint32 `protobuf:"varint,3,opt,name=mode,proto3" json:"mode,omitempty"`
+	Pid                 uint32 `protobuf:"varint,4,opt,name=pid,proto3" json:"pid,omitempty"`
+	Formula             string `protobuf:"bytes,5,opt,name=formula,proto3" json:"formula,omitempty"`
+	IntervalSeconds     uint32 `protobuf:"varint,6,opt,name=interval_seconds,json=intervalSeconds,proto3" json:"interval_seconds,omitempty"`
+	Protocol            string `protobuf:"bytes,7,opt,name=protocol,proto3" json:"protocol,omitempty"`
+	CanFlowControlClear bool   `protobuf:"varint,8,opt,name=can_flow_control_clear,json=canFlowControlClear,proto3" json:"can_flow_control_clear,omitempty"`
+	// can be used to specify a custom response header. format is hex,hex - second hex is the resp header
 	CanFlowControlIdPair string `protobuf:"bytes,9,opt,name=can_flow_control_id_pair,json=canFlowControlIdPair,proto3" json:"can_flow_control_id_pair,omitempty"`
 }
 
