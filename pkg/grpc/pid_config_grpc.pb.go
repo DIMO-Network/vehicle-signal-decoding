@@ -26,6 +26,7 @@ const (
 	PidConfigService_GetPidByID_FullMethodName            = "/grpc.PidConfigService/GetPidByID"
 	PidConfigService_DeletePid_FullMethodName             = "/grpc.PidConfigService/DeletePid"
 	PidConfigService_ChangePidEnableStatus_FullMethodName = "/grpc.PidConfigService/ChangePidEnableStatus"
+	PidConfigService_GetSignalNames_FullMethodName        = "/grpc.PidConfigService/GetSignalNames"
 )
 
 // PidConfigServiceClient is the client API for PidConfigService service.
@@ -38,6 +39,7 @@ type PidConfigServiceClient interface {
 	GetPidByID(ctx context.Context, in *GetPidByIDRequest, opts ...grpc.CallOption) (*GetPidByIDResponse, error)
 	DeletePid(ctx context.Context, in *DeletePidRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	ChangePidEnableStatus(ctx context.Context, in *ChangePidEnableStatusRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	GetSignalNames(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*SignalNames, error)
 }
 
 type pidConfigServiceClient struct {
@@ -102,6 +104,15 @@ func (c *pidConfigServiceClient) ChangePidEnableStatus(ctx context.Context, in *
 	return out, nil
 }
 
+func (c *pidConfigServiceClient) GetSignalNames(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*SignalNames, error) {
+	out := new(SignalNames)
+	err := c.cc.Invoke(ctx, PidConfigService_GetSignalNames_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PidConfigServiceServer is the server API for PidConfigService service.
 // All implementations must embed UnimplementedPidConfigServiceServer
 // for forward compatibility
@@ -112,6 +123,7 @@ type PidConfigServiceServer interface {
 	GetPidByID(context.Context, *GetPidByIDRequest) (*GetPidByIDResponse, error)
 	DeletePid(context.Context, *DeletePidRequest) (*emptypb.Empty, error)
 	ChangePidEnableStatus(context.Context, *ChangePidEnableStatusRequest) (*emptypb.Empty, error)
+	GetSignalNames(context.Context, *emptypb.Empty) (*SignalNames, error)
 	mustEmbedUnimplementedPidConfigServiceServer()
 }
 
@@ -136,6 +148,9 @@ func (UnimplementedPidConfigServiceServer) DeletePid(context.Context, *DeletePid
 }
 func (UnimplementedPidConfigServiceServer) ChangePidEnableStatus(context.Context, *ChangePidEnableStatusRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ChangePidEnableStatus not implemented")
+}
+func (UnimplementedPidConfigServiceServer) GetSignalNames(context.Context, *emptypb.Empty) (*SignalNames, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetSignalNames not implemented")
 }
 func (UnimplementedPidConfigServiceServer) mustEmbedUnimplementedPidConfigServiceServer() {}
 
@@ -258,6 +273,24 @@ func _PidConfigService_ChangePidEnableStatus_Handler(srv interface{}, ctx contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PidConfigService_GetSignalNames_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PidConfigServiceServer).GetSignalNames(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PidConfigService_GetSignalNames_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PidConfigServiceServer).GetSignalNames(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PidConfigService_ServiceDesc is the grpc.ServiceDesc for PidConfigService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -288,6 +321,10 @@ var PidConfigService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ChangePidEnableStatus",
 			Handler:    _PidConfigService_ChangePidEnableStatus_Handler,
+		},
+		{
+			MethodName: "GetSignalNames",
+			Handler:    _PidConfigService_GetSignalNames_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

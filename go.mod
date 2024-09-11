@@ -8,7 +8,7 @@ require (
 	github.com/DIMO-Network/device-data-api v0.9.10
 	github.com/DIMO-Network/device-definitions-api v1.2.36
 	github.com/DIMO-Network/devices-api v1.27.45
-	github.com/DIMO-Network/model-garage v0.2.14
+	github.com/DIMO-Network/model-garage v0.2.16
 	github.com/DIMO-Network/shared v0.11.1
 	github.com/DIMO-Network/users-api v0.7.8
 	github.com/Shopify/sarama v1.38.1

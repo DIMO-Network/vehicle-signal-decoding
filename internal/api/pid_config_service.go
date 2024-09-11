@@ -3,6 +3,9 @@ package api
 import (
 	"context"
 
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
+
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/commands"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/queries"
 
@@ -146,4 +149,23 @@ func (s *PidConfigService) ChangePidEnableStatus(ctx context.Context, in *grpc.C
 	}
 
 	return &emptypb.Empty{}, nil
+}
+
+func (s *PidConfigService) GetSignalNames(ctx context.Context, _ *emptypb.Empty) (*grpc.SignalNames, error) {
+	signals, err := models.PidConfigs(
+		qm.Select("DISTINCT signal_name"),
+		qm.OrderBy("signal_name ASC")).All(ctx, s.dbs().Reader)
+	if err != nil {
+		return nil, err
+	}
+
+	ss := make([]string, len(signals))
+	for i, signal := range signals {
+		ss[i] = signal.SignalName
+	}
+
+	sn := &grpc.SignalNames{
+		SignalName: ss,
+	}
+	return sn, nil
 }
