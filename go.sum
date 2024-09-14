@@ -74,8 +74,8 @@ github.com/DIMO-Network/device-definitions-api v1.2.36 h1:tRWLGjEfzkoF45tZfz5nRi
 github.com/DIMO-Network/device-definitions-api v1.2.36/go.mod h1:Zwrxqb4SKAzS/10yzO7ULLCqqWbWpp/5uwmqDxyBe1k=
 github.com/DIMO-Network/devices-api v1.27.45 h1:uGIDMQChxVjBXOVoJzMVM69M6hb+E+X76yppXJa6gJ0=
 github.com/DIMO-Network/devices-api v1.27.45/go.mod h1:XAU/MLIXItrFWZO8/+CGvRfmGMpsTBF70r9qRGq9V3w=
-github.com/DIMO-Network/model-garage v0.2.16 h1:VJe7J+AJKnk2xGgnQHbsCNaYsBartTadbIdUzaS55j4=
-github.com/DIMO-Network/model-garage v0.2.16/go.mod h1:voOvGWwtAnazsciDVTqjPYDttIkXx0YG4xA+MIjM/8k=
+github.com/DIMO-Network/model-garage v0.2.17 h1:BZIegeSyOe0jXqRJnbgO4gPNvIyOakcQX1NjeQPYfPU=
+github.com/DIMO-Network/model-garage v0.2.17/go.mod h1:voOvGWwtAnazsciDVTqjPYDttIkXx0YG4xA+MIjM/8k=
 github.com/DIMO-Network/shared v0.11.1 h1:LpI2rROKjrBo6KO76sU3dZDvSv4YbQ4XUBEC4P5NosM=
 github.com/DIMO-Network/shared v0.11.1/go.mod h1:lm7rUB5i7Jx7t3EomtCwep0aC+sB+nlYYTJkTdUeKHM=
 github.com/DIMO-Network/users-api v0.7.8 h1:D7aDNyruQqfTxaUFSg8V09KyfyESiApgFP3E4ie+m5A=
