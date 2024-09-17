@@ -2,6 +2,8 @@ package api
 
 import (
 	"context"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/DIMO-Network/shared/db"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/commands"
@@ -81,6 +83,9 @@ func (s *VehicleTemplateService) CreateVehicleTemplate(ctx context.Context, requ
 
 	if request.Make != "" {
 		command.MakeSlug = &request.Make
+	}
+	if command.MakeSlug == nil {
+		return nil, status.Error(codes.InvalidArgument, "make slug required")
 	}
 
 	resp, err := service.Execute(ctx, &command)
