@@ -5,10 +5,11 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"io"
 	"strings"
 	"time"
+
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 
 	"github.com/DIMO-Network/shared/db"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/queries"
@@ -272,9 +273,9 @@ func (d *DeviceConfigController) GetDBCFileByTemplateName(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 	// string append each dbc file
-	var dbcFileStrings []string
-	for _, dbcFile := range dbcFiles {
-		dbcFileStrings = append(dbcFileStrings, dbcFile.DBCFile)
+	var dbcFileStrings = make([]string, len(dbcFiles))
+	for i, dbcFile := range dbcFiles {
+		dbcFileStrings[i] = dbcFile.DBCFile
 	}
 	dbResult := strings.Join(dbcFileStrings, "\n")
 

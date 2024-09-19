@@ -19,6 +19,9 @@ type GetPidsQueryRequest struct {
 // GetPidsByTemplate gets all pids in a template and their children from inherited parent templates
 func GetPidsByTemplate(ctx context.Context, dbs func() *db.ReaderWriter, request *GetPidsQueryRequest) (models.PidConfigSlice, *models.Template, error) {
 	templateNames, template, err := GetAllParentTemplates(ctx, dbs, request.TemplateName)
+	if err != nil {
+		return nil, nil, err
+	}
 
 	pidConfigs, err := models.PidConfigs(
 		qm.WhereIn("template_name IN ?", ToAnySlice(templateNames)...),
