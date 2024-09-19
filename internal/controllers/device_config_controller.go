@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
+
 	"github.com/DIMO-Network/shared/db"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/queries"
 
@@ -248,7 +250,7 @@ func (d *DeviceConfigController) GetDeviceSettingsByName(c *fiber.Ctx) error {
 }
 
 // GetDBCFileByTemplateName godoc
-// @Description  Fetches the DBC file from the dbc_files table given a template name
+// @Description  Fetches the DBC file from the dbc_files table given a template name. Will get all the parent dbc files as well and meld them together
 // @Tags         device-config
 // @Produce      plain
 // @Success      200 {string} string "Successfully retrieved DBC file"
@@ -259,22 +261,28 @@ func (d *DeviceConfigController) GetDBCFileByTemplateName(c *fiber.Ctx) error {
 	templateNameWithVersion := c.Params("templateName")
 	templateName, _ := parseOutTemplateAndVersion(templateNameWithVersion)
 	// ignore version since not really using right now
-
-	dbResult, err := models.DBCFiles(
-		models.DBCFileWhere.TemplateName.EQ(templateName)).One(c.Context(), d.dbs().Reader)
-
-	// Error handling
+	templateNames, _, err := queries.GetAllParentTemplates(c.Context(), d.dbs, templateName)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return c.Status(fiber.StatusNotFound).SendString(fmt.Sprintf("No DBC file found for template name: %s", templateName))
-		}
-		return errors.Wrap(err, "Failed to retrieve DBC File")
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
+
+	dbcFiles, err := models.DBCFiles(
+		qm.WhereIn("template_name IN ?", queries.ToAnySlice(templateNames)...),
+	).All(c.Context(), d.dbs().Reader)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+	// string append each dbc file
+	var dbcFileStrings = make([]string, len(dbcFiles))
+	for i, dbcFile := range dbcFiles {
+		dbcFileStrings[i] = dbcFile.DBCFile
+	}
+	dbResult := strings.Join(dbcFileStrings, "\n")
 
 	// Return the DBC file itself
 	if c.Accepts("text/plain") == "text/plain" {
 		c.Status(fiber.StatusOK).Set("Content-Type", "text/plain")
-		return c.SendString(dbResult.DBCFile)
+		return c.SendString(dbResult)
 	}
 	return c.Status(fiber.StatusNotAcceptable).SendString("Not Acceptable")
 }
