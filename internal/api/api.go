@@ -28,13 +28,8 @@ import (
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/exceptions"
 
-	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/commands"
-
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/controllers"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/services"
-
-	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/kafka"
-	"github.com/Shopify/sarama"
 
 	"github.com/DIMO-Network/shared/db"
 	"github.com/DIMO-Network/shared/middleware/metrics"
@@ -64,7 +59,6 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 
 	go StartGrpcServer(logger, pdb.DBS, settings, s3Client)
 	startWebAPI(logger, settings, pdb, conns)
-	startVehicleSignalConsumer(logger, settings, pdb, conns)
 	startMonitoringServer(logger, settings)
 
 	c := make(chan os.Signal, 1)                    // Create channel to signify a signal being sent with length of 1
@@ -77,37 +71,6 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 	_ = conns.usersAPIConn.Close()
 	_ = conns.definitionsAPIConn.Close()
 	_ = conns.devicesAPIConn.Close()
-}
-
-func startVehicleSignalConsumer(logger zerolog.Logger, settings *config.Settings, pdb db.Store, conns *grpcServiceConnections) {
-
-	if len(settings.KafkaBrokers) == 0 {
-		return
-	}
-
-	clusterConfig := sarama.NewConfig()
-	clusterConfig.Version = sarama.V2_8_1_0
-	clusterConfig.Consumer.Offsets.Initial = sarama.OffsetNewest
-
-	cfg := &kafka.Config{
-		ClusterConfig:   clusterConfig,
-		BrokerAddresses: strings.Split(settings.KafkaBrokers, ","),
-		Topic:           settings.DBCDecodingTopic,
-		GroupID:         "vehicle-signal-decoding",
-		MaxInFlight:     int64(5),
-	}
-	consumer, err := kafka.NewConsumer(cfg, &logger)
-	if err != nil {
-		logger.Fatal().Err(err).Msg("Could not start credential update consumer")
-	}
-
-	userDeviceService := services.NewUserDevicesService(conns.devicesAPIConn)
-	handler := commands.NewRunTestSignalCommandHandler(pdb.DBS, logger, userDeviceService)
-	service := NewWorkerListenerService(logger, handler)
-
-	consumer.Start(context.Background(), service.ProcessWorker)
-
-	logger.Info().Msg("Vehicle Signal Decoding consumer started")
 }
 
 func startMonitoringServer(logger zerolog.Logger, settings *config.Settings) {
