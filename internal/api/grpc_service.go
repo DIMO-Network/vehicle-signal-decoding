@@ -197,6 +197,7 @@ func (s *GrpcService) GetCanBusDumpFiles(ctx context.Context, in *pgrpc.GetCanBu
 	})
 
 	if err != nil {
+		s.logger.Err(err).Msgf("failed to GetCanBusDumpFiles for addr: %s", in.EthAddr)
 		return nil, err
 	}
 

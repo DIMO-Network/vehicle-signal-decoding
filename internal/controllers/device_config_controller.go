@@ -323,7 +323,7 @@ func (d *DeviceConfigController) GetConfigURLsFromVIN(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	d.log.Info().Str("vin", *ud.Vin).Msgf("template configuration urls for VIN %s. strategy: %s. dbc: %s, pids: %s, settings: %s",
+	d.log.Debug().Str("vin", *ud.Vin).Msgf("template configuration urls for VIN %s. strategy: %s. dbc: %s, pids: %s, settings: %s",
 		*ud.Vin, strategy, response.DbcURL, response.PidURL, response.DeviceSettingURL)
 
 	return c.JSON(response)
@@ -347,7 +347,7 @@ func (d *DeviceConfigController) GetConfigURLsFromEthAddr(c *fiber.Ctx) error {
 	// first check for direct mapping
 	directConfig := d.deviceTemplateService.FindDirectDeviceToTemplateConfig(c.Context(), address)
 	if directConfig != nil {
-		d.log.Info().Str("ethAddr", ethAddr).Msgf("template configuration urls for eth addr %s. strategy: direct. dbc: %s, pids: %s, settings: %s",
+		d.log.Debug().Str("ethAddr", ethAddr).Msgf("template configuration urls for eth addr %s. strategy: direct. dbc: %s, pids: %s, settings: %s",
 			ethAddr, directConfig.DbcURL, directConfig.PidURL, directConfig.DeviceSettingURL)
 		return c.JSON(directConfig)
 	}
