@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/volatiletech/null/v8"
 
@@ -55,6 +56,10 @@ func (h UpdatePidCommandHandler) Execute(ctx context.Context, req *UpdatePidComm
 		return nil, &exceptions.InternalError{
 			Err: err,
 		}
+	}
+	// temporary: seing a lot of doubled up strings. Todo break this out to own column
+	if strings.HasPrefix(req.Formula, "python:python:") {
+		req.Formula = strings.TrimPrefix(req.Formula, "python:")
 	}
 
 	pid.ID = req.ID
