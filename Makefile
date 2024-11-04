@@ -56,7 +56,7 @@ fmt:
 	@go mod tidy
 
 lint:
-	@go vet $(GO_FLAGS) ./...
+	@golangci-lint run
 
 test: $(APPS)
 	@go test $(GO_FLAGS) -timeout 3m -race ./...
