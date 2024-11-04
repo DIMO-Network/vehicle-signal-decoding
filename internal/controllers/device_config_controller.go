@@ -301,7 +301,7 @@ func (d *DeviceConfigController) GetConfigURLsFromVIN(c *fiber.Ctx) error {
 	protocol := c.Query("protocol", "")
 
 	ud, err := d.userDeviceSvc.GetUserDeviceByVIN(c.Context(), vin)
-	if err != nil {
+	if err != nil || ud == nil {
 		definitionResp, err := d.deviceDefSvc.DecodeVIN(c.Context(), vin)
 		if err != nil || definitionResp == nil {
 			d.log.Err(err).Str("func", "GetConfigURLsFromVIN").Msgf("failed to DecodeVIN when trying to get configs")

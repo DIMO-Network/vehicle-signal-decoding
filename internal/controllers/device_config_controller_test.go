@@ -728,7 +728,11 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigStatusByEthAddr_DeviceDat
 	body, _ := io.ReadAll(response.Body)
 	var receivedResp DeviceTemplateStatusResponse
 	err = json.Unmarshal(body, &receivedResp)
-	assert.NoError(s.T(), err)
+	if !assert.NoError(s.T(), err) {
+		//todo: models: failed to execute a one query for device_template_status: bind failed to execute query: context canceled
+		fmt.Println(string(body))
+		s.T().FailNow()
+	}
 
 	assert.Equal(s.T(), false, receivedResp.IsTemplateUpToDate)
 	assert.Equal(s.T(), true, receivedResp.IsFirmwareUpToDate)
