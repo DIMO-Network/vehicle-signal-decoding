@@ -26,7 +26,7 @@ env:
   DEFINITIONS_GRPC_ADDR: device-definitions-api-prod:8086
   DEVICE_DATA_GRPC_ADDR: device-data-api-prod:8086
   AWS_CANDUMPS_BUCKET_NAME: dimo-network-canbus-dump-prod
-  IDENTITY_API_URL: http://identity-api-prod/query
+  IDENTITY_API_URL: https://identity-api.dimo.zone/query
 ingress:
   enabled: true
   className: nginx
