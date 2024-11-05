@@ -38,21 +38,21 @@ type DeviceTemplateService interface {
 }
 
 type deviceTemplateService struct {
-	db             *sql.DB
-	log            zerolog.Logger
-	settings       *config.Settings
-	deviceDefSvc   DeviceDefinitionsService
-	identityApiSvc gateways.IdentityAPI
+	db           *sql.DB
+	log          zerolog.Logger
+	settings     *config.Settings
+	deviceDefSvc DeviceDefinitionsService
+	identityAPI  gateways.IdentityAPI
 }
 
 func NewDeviceTemplateService(database *sql.DB, deviceDefSvc DeviceDefinitionsService, log zerolog.Logger,
-	settings *config.Settings, identityApiSvc gateways.IdentityAPI) DeviceTemplateService {
+	settings *config.Settings, identityAPI gateways.IdentityAPI) DeviceTemplateService {
 	return &deviceTemplateService{
-		db:             database,
-		log:            log,
-		settings:       settings,
-		deviceDefSvc:   deviceDefSvc,
-		identityApiSvc: identityApiSvc,
+		db:           database,
+		log:          log,
+		settings:     settings,
+		deviceDefSvc: deviceDefSvc,
+		identityAPI:  identityAPI,
 	}
 }
 
@@ -227,7 +227,7 @@ func (dts *deviceTemplateService) buildConfigRoute(ct configType, name, version 
 
 // retrievePowertrain gets the powertrain for the device definition id from attributes, if empty defaults to ICE
 func (dts *deviceTemplateService) retrievePowertrain(definitionID string) (string, error) {
-	dd, err := dts.identityApiSvc.GetDefinitionByID(definitionID)
+	dd, err := dts.identityAPI.GetDefinitionByID(definitionID)
 	if err != nil {
 		return "", fmt.Errorf("failed to retrieve device definition for definitionId %s: %w", definitionID, err)
 	}
