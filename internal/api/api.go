@@ -103,7 +103,7 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 	deviceDefsvc := services.NewDeviceDefinitionsService(conns.definitionsAPIConn)
 
 	deviceTemplatesvc := services.NewDeviceTemplateService(database.DBS().Writer.DB, deviceDefsvc, logger, settings)
-	identityAPI := gateways.NewIdentityAPIService(&logger, settings)
+	identityAPI := gateways.NewIdentityAPIService(&logger, settings, nil)
 
 	app := fiber.New(fiber.Config{
 		ErrorHandler: func(c *fiber.Ctx, err error) error {

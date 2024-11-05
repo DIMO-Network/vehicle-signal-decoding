@@ -148,11 +148,11 @@ func (dts *deviceTemplateService) FindDirectDeviceToTemplateConfig(ctx context.C
 func (dts *deviceTemplateService) ResolveDeviceConfiguration(c *fiber.Ctx, ud *pb.UserDevice, vehicle *gateways.VehicleInfo) (*device.ConfigResponse, string, error) {
 	canProtocl := convertCANProtocol(dts.log, ud.CANProtocol)
 	// todo (jreate): what about powertrain at the style level... But ideally it is stored at vehicle level. this could come from oracle?
-	powertrain, err := dts.retrievePowertrain(c.Context(), ud.DeviceDefinitionId)
+	powertrain, err := dts.retrievePowertrain(c.Context(), ud.DeviceDefinitionId) //nolint
 	if err != nil {
 		return nil, "", errors.Wrap(err, fmt.Sprintf("Failed to retrieve powertrain for definitionId: %s", ud.DefinitionId))
 	}
-
+	//nolint
 	matchedTemplate, strategy, err := dts.selectAndFetchTemplate(c.Context(), canProtocl, powertrain, ud.DeviceDefinitionId, vehicle)
 	if err != nil {
 		return nil, strategy, err

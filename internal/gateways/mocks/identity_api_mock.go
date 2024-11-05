@@ -5,6 +5,7 @@
 //
 //	mockgen -source identity_api.go -destination mocks/identity_api_mock.go
 //
+
 // Package mock_gateways is a generated GoMock package.
 package mock_gateways
 
@@ -37,6 +38,21 @@ func NewMockIdentityAPI(ctrl *gomock.Controller) *MockIdentityAPI {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockIdentityAPI) EXPECT() *MockIdentityAPIMockRecorder {
 	return m.recorder
+}
+
+// GetDefinitionByID mocks base method.
+func (m *MockIdentityAPI) GetDefinitionByID(definitionID string) (*gateways.DeviceDefinition, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDefinitionByID", definitionID)
+	ret0, _ := ret[0].(*gateways.DeviceDefinition)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetDefinitionByID indicates an expected call of GetDefinitionByID.
+func (mr *MockIdentityAPIMockRecorder) GetDefinitionByID(definitionID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDefinitionByID", reflect.TypeOf((*MockIdentityAPI)(nil).GetDefinitionByID), definitionID)
 }
 
 // GetVehicleByDeviceAddr mocks base method.
