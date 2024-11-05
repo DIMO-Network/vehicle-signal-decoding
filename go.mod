@@ -7,7 +7,7 @@ toolchain go1.23.0
 require (
 	github.com/DIMO-Network/device-data-api v0.9.10
 	github.com/DIMO-Network/device-definitions-api v1.2.54
-	github.com/DIMO-Network/devices-api v1.31.43
+	github.com/DIMO-Network/devices-api v1.31.45
 	github.com/DIMO-Network/model-garage v0.3.3
 	github.com/DIMO-Network/shared v0.12.5
 	github.com/DIMO-Network/users-api v0.9.0

@@ -9,7 +9,7 @@
     "paths": {
         "/device-config/dbc/{templateName}": {
             "get": {
-                "description": "Fetches the DBC file from the dbc_files table given a template name",
+                "description": "Fetches the DBC file from the dbc_files table given a template name. Will get all the parent dbc files as well and meld them together",
                 "produces": [
                     "text/plain"
                 ],
@@ -458,6 +458,7 @@
                     "type": "boolean"
                 },
                 "can_flow_control_id_pair": {
+                    "description": "can be used to specify a custom response header. format is hex,hex - second hex is the resp header",
                     "type": "string"
                 },
                 "formula": {
@@ -520,7 +521,7 @@
                     "type": "string"
                 },
                 "pidsUrl": {
-                    "description": "PidsUrl exists for backwards compatibility\nDeprecated",
+                    "description": "PidsURL exists for backwards compatibility\nDeprecated",
                     "type": "string"
                 },
                 "settingsUrl": {

@@ -313,6 +313,7 @@ func (d *DeviceConfigController) GetConfigURLsFromVIN(c *fiber.Ctx) error {
 			PowerTrainType:     definitionResp.Powertrain,
 			CANProtocol:        protocol,
 			Vin:                &vin,
+			DefinitionId:       definitionResp.DefinitionId,
 		}
 		if len(definitionResp.DeviceStyleId) > 0 {
 			ud.DeviceStyleId = &definitionResp.DeviceStyleId

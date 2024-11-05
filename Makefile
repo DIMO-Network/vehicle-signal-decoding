@@ -38,6 +38,12 @@ $(PATHINSTBIN)/%: $(SOURCE_FILES)
 
 $(APPS): %: $(PATHINSTBIN)/%
 
+new-migration:
+	@goose -dir internal/infrastructure/db/migrations create rename_me sql
+
+gen-swag:
+	@swag init -g cmd/vehicle-signal-decoding/main.go --parseDependency --parseInternal --generatedTime true
+
 docker-tags:
 	@echo "latest,$(VER_CUT),$(VER_MAJOR).$(VER_MINOR),$(VER_MAJOR)" > .tags
 

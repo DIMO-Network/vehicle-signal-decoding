@@ -150,7 +150,7 @@ func (dts *deviceTemplateService) ResolveDeviceConfiguration(c *fiber.Ctx, ud *p
 	// todo (jreate): what about powertrain at the style level... But ideally it is stored at vehicle level. this could come from oracle?
 	powertrain, err := dts.retrievePowertrain(c.Context(), ud.DeviceDefinitionId)
 	if err != nil {
-		return nil, "", errors.Wrap(err, fmt.Sprintf("Failed to retrieve powertrain for ddid: %s", ud.DeviceDefinitionId))
+		return nil, "", errors.Wrap(err, fmt.Sprintf("Failed to retrieve powertrain for definitionId: %s", ud.DefinitionId))
 	}
 
 	matchedTemplate, strategy, err := dts.selectAndFetchTemplate(c.Context(), canProtocl, powertrain, ud.DeviceDefinitionId, vehicle)
@@ -246,7 +246,8 @@ func (dts *deviceTemplateService) retrievePowertrain(ctx context.Context, device
 // selectAndFetchTemplate figures out the right template to use based on the protocol, powertrain, year range, make, and /or model.
 // Returns default template if nothing found. Requirees ud.CANProtocol and Powertrain to be set to something
 func (dts *deviceTemplateService) selectAndFetchTemplate(ctx context.Context, canProtocol, powertrain, definitionID string, vehicle *gateways.VehicleInfo) (*models.Template, string, error) {
-	strategy := "" // strategy used to find right template
+	// strategy used to find right template
+	strategy := fmt.Sprintf("protocol: %s, powertrain: %s, definitionId: %s", canProtocol, powertrain, definitionID)
 	// guard
 	if canProtocol == "" {
 		return nil, strategy, fmt.Errorf("CANProtocol is required in the user device")

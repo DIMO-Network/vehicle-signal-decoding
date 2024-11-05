@@ -41,6 +41,8 @@ definitions:
       can_flow_control_clear:
         type: boolean
       can_flow_control_id_pair:
+        description: can be used to specify a custom response header. format is hex,hex
+          - second hex is the resp header
         type: string
       formula:
         type: string
@@ -86,7 +88,7 @@ definitions:
         type: string
       pidsUrl:
         description: |-
-          PidsUrl exists for backwards compatibility
+          PidsURL exists for backwards compatibility
           Deprecated
         type: string
       settingsUrl:
@@ -127,7 +129,7 @@ paths:
   /device-config/dbc/{templateName}:
     get:
       description: Fetches the DBC file from the dbc_files table given a template
-        name
+        name. Will get all the parent dbc files as well and meld them together
       parameters:
       - description: template name
         in: path
