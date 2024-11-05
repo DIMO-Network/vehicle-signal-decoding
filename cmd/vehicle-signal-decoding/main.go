@@ -51,6 +51,8 @@ func main() {
 		migrateDatabase(ctx, logger, &settings, os.Args)
 	case "covesa_sync":
 		SyncCovesaSignalNames(ctx, logger, &settings, os.Args)
+	case "definitions-sync":
+		SyncDefinitionIDs(ctx, logger, &settings, os.Args)
 	default:
 		api.Run(ctx, logger, &settings)
 	}
