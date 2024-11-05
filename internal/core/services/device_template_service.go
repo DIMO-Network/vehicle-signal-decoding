@@ -38,18 +38,21 @@ type DeviceTemplateService interface {
 }
 
 type deviceTemplateService struct {
-	db           *sql.DB
-	log          zerolog.Logger
-	settings     *config.Settings
-	deviceDefSvc DeviceDefinitionsService
+	db             *sql.DB
+	log            zerolog.Logger
+	settings       *config.Settings
+	deviceDefSvc   DeviceDefinitionsService
+	identityApiSvc gateways.IdentityAPI
 }
 
-func NewDeviceTemplateService(database *sql.DB, deviceDefSvc DeviceDefinitionsService, log zerolog.Logger, settings *config.Settings) DeviceTemplateService {
+func NewDeviceTemplateService(database *sql.DB, deviceDefSvc DeviceDefinitionsService, log zerolog.Logger,
+	settings *config.Settings, identityApiSvc gateways.IdentityAPI) DeviceTemplateService {
 	return &deviceTemplateService{
-		db:           database,
-		log:          log,
-		settings:     settings,
-		deviceDefSvc: deviceDefSvc,
+		db:             database,
+		log:            log,
+		settings:       settings,
+		deviceDefSvc:   deviceDefSvc,
+		identityApiSvc: identityApiSvc,
 	}
 }
 
@@ -148,7 +151,7 @@ func (dts *deviceTemplateService) FindDirectDeviceToTemplateConfig(ctx context.C
 func (dts *deviceTemplateService) ResolveDeviceConfiguration(c *fiber.Ctx, ud *pb.UserDevice, vehicle *gateways.VehicleInfo) (*device.ConfigResponse, string, error) {
 	canProtocl := convertCANProtocol(dts.log, ud.CANProtocol)
 	// todo (jreate): what about powertrain at the style level... But ideally it is stored at vehicle level. this could come from oracle?
-	powertrain, err := dts.retrievePowertrain(c.Context(), ud.DeviceDefinitionId) //nolint
+	powertrain, err := dts.retrievePowertrain(ud.DefinitionId)
 	if err != nil {
 		return nil, "", errors.Wrap(err, fmt.Sprintf("Failed to retrieve powertrain for definitionId: %s", ud.DefinitionId))
 	}
@@ -223,14 +226,14 @@ func (dts *deviceTemplateService) buildConfigRoute(ct configType, name, version 
 }
 
 // retrievePowertrain gets the powertrain for the device definition id from attributes, if empty defaults to ICE
-func (dts *deviceTemplateService) retrievePowertrain(ctx context.Context, deviceDefinitionID string) (string, error) {
-	ddResponse, err := dts.deviceDefSvc.GetDeviceDefinitionByID(ctx, deviceDefinitionID)
+func (dts *deviceTemplateService) retrievePowertrain(definitionID string) (string, error) {
+	dd, err := dts.identityApiSvc.GetDefinitionByID(definitionID)
 	if err != nil {
-		return "", fmt.Errorf("failed to retrieve device definition for deviceDefinitionId %s: %w", deviceDefinitionID, err)
+		return "", fmt.Errorf("failed to retrieve device definition for definitionId %s: %w", definitionID, err)
 	}
 
 	var powerTrainType string
-	for _, attribute := range ddResponse.DeviceAttributes {
+	for _, attribute := range dd.Attributes {
 		if attribute.Name == "powertrain_type" {
 			powerTrainType = attribute.Value
 			break
