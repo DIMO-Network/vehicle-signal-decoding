@@ -509,7 +509,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLsFromVIN_DecodeVIN() {
 	err = ds.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
 	require.NoError(s.T(), err)
 
-	s.mockUserDevicesSvc.EXPECT().GetUserDeviceByVIN(gomock.Any(), vin).Return(nil, errors.New("user device not found"))
+	s.mockUserDevicesSvc.EXPECT().GetUserDeviceByVIN(gomock.Any(), vin).Return(nil, nil)
 
 	s.mockDeviceDefSvc.EXPECT().DecodeVIN(gomock.Any(), vin).Return(&p_grpc.DecodeVinResponse{
 		DeviceDefinitionId: mockedDeviceDefinition.DeviceDefinitionId,
@@ -539,6 +539,41 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLsFromVIN_DecodeVIN() {
 	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/pids/%s@v1.0.0", template.TemplateName), receivedResp.PidURL)
 	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/settings/%s@v1.0.0", ds.Name), receivedResp.DeviceSettingURL)
 	assert.Empty(s.T(), receivedResp.DbcURL)
+}
+
+func (s *DeviceConfigControllerTestSuite) TestGetConfigURLsFromVIN_DecodeVIN_Fail() {
+	vin := "TMBEK6NW1N3088739"
+
+	template := &models.Template{
+		TemplateName: "some-template",
+		Version:      "1.0",
+		Protocol:     models.CanProtocolTypeCAN11_500,
+		Powertrain:   "HEV",
+	}
+	err := template.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
+
+	ds := &models.DeviceSetting{
+		Name:         "default-hev",
+		Powertrain:   "HEV",
+		TemplateName: null.NewString(template.TemplateName, true),
+	}
+	err = ds.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
+
+	s.mockUserDevicesSvc.EXPECT().GetUserDeviceByVIN(gomock.Any(), vin).Return(nil, errors.New("user device not found"))
+
+	s.mockDeviceDefSvc.EXPECT().DecodeVIN(gomock.Any(), vin).Return(nil, nil)
+
+	s.app.Get("/config-urls/:vin", s.controller.GetConfigURLsFromVIN)
+
+	request := dbtest.BuildRequest("GET", "/config-urls/"+vin, "")
+	response, err := s.app.Test(request)
+	require.NoError(s.T(), err)
+
+	body, _ := io.ReadAll(response.Body)
+	require.Equal(s.T(), fiber.StatusBadRequest, response.StatusCode)
+	fmt.Println(string(body))
 }
 
 func (s *DeviceConfigControllerTestSuite) TestGetConfigURLsFromVIN_ProtocolOverrideQS() {

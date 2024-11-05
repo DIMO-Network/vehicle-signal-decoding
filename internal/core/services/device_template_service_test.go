@@ -6,6 +6,8 @@ import (
 	"os"
 	"testing"
 
+	mock_gateways "github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways/mocks"
+
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways"
 
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
@@ -37,6 +39,7 @@ type DeviceTemplateServiceTestSuite struct {
 	mockCtrl         *gomock.Controller
 	logger           *zerolog.Logger
 	mockDeviceDefSvc *mock_services.MockDeviceDefinitionsService
+	mockIdentityAPI  *mock_gateways.MockIdentityAPI
 	// subject under test
 	sut *deviceTemplateService
 }
@@ -50,13 +53,14 @@ func (s *DeviceTemplateServiceTestSuite) SetupSuite() {
 	s.logger = &logger
 	s.mockCtrl = gomock.NewController(s.T())
 	s.mockDeviceDefSvc = mock_services.NewMockDeviceDefinitionsService(s.mockCtrl)
+	s.mockIdentityAPI = mock_gateways.NewMockIdentityAPI(s.mockCtrl)
 
-	s.sut = &deviceTemplateService{
-		db:           s.pdb.DBS().Writer.DB,
-		log:          *s.logger,
-		settings:     &config.Settings{},
-		deviceDefSvc: s.mockDeviceDefSvc,
-	}
+	s.sut = &deviceTemplateService{s.pdb.DBS().Writer.DB,
+		*s.logger,
+		&config.Settings{},
+		s.mockDeviceDefSvc,
+		s.mockIdentityAPI}
+
 }
 
 func (s *DeviceTemplateServiceTestSuite) SetupTest() {
@@ -87,28 +91,18 @@ func TestDeviceTemplateServiceTestSuite(t *testing.T) {
 
 func (s *DeviceTemplateServiceTestSuite) TestRetrievePowertrain() {
 	ud := &pb.UserDevice{
-		DeviceDefinitionId: "some-definition-id",
+		DefinitionId: "some-definition-id",
 	}
-	expectedDDResponse := &p_grpc.GetDeviceDefinitionItemResponse{
-		Type: &p_grpc.DeviceType{
-			Year:      2021,
-			MakeSlug:  "Ford",
-			ModelSlug: "Mustang",
-		},
+	expectedDDResponse := &gateways.DeviceDefinition{
+		Model: "Mustang",
+		Year:  2021,
 	}
 
-	s.mockDeviceDefSvc.EXPECT().
-		GetDeviceDefinitionByID(gomock.Any(), ud.DeviceDefinitionId).
+	s.mockIdentityAPI.EXPECT().
+		GetDefinitionByID(ud.DefinitionId).
 		Return(expectedDDResponse, nil)
 
-	dts := &deviceTemplateService{
-		db:           s.pdb.DBS().Writer.DB,
-		log:          *s.logger,
-		settings:     &config.Settings{},
-		deviceDefSvc: s.mockDeviceDefSvc,
-	}
-
-	powertrain, err := dts.retrievePowertrain(s.ctx, ud.DeviceDefinitionId)
+	powertrain, err := s.sut.retrievePowertrain(ud.DefinitionId)
 
 	require.NoError(s.T(), err)
 	assert.Equal(s.T(), "ICE", powertrain)
@@ -182,7 +176,7 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_DeviceDefin
 	}
 
 	fetchedTemplate, strategy, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice.CANProtocol, mockedUserDevice.PowerTrainType,
-		mockedUserDevice.DeviceDefinitionId, vehicle)
+		mockedUserDevice.DeviceDefinitionId, vehicle) //nolint
 
 	require.NoError(s.T(), err)
 	assert.NotNil(s.T(), fetchedTemplate)
@@ -214,8 +208,9 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_nilVehicle_
 		CANProtocol:        models.CanProtocolTypeCAN29_500,
 		PowerTrainType:     "HEV",
 	}
+	//nolint
 	s.mockDeviceDefSvc.EXPECT().GetDeviceDefinitionByID(gomock.Any(), mockedUserDevice.DeviceDefinitionId).Return(&p_grpc.GetDeviceDefinitionItemResponse{
-		DeviceDefinitionId: mockedUserDevice.DeviceDefinitionId,
+		DeviceDefinitionId: mockedUserDevice.DeviceDefinitionId, //nolint
 		Type: &p_grpc.DeviceType{
 			Type:  "vehicle",
 			Make:  "Ford",
@@ -225,7 +220,7 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_nilVehicle_
 	}, nil) // nil vehicle still should work
 
 	fetchedTemplate, strategy, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice.CANProtocol, mockedUserDevice.PowerTrainType,
-		mockedUserDevice.DeviceDefinitionId, nil)
+		mockedUserDevice.DeviceDefinitionId, nil) //nolint
 
 	require.NoError(s.T(), err)
 	assert.NotNil(s.T(), fetchedTemplate)
@@ -280,7 +275,7 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_MMY() {
 	}
 
 	fetchedTemplate, strategy, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice.CANProtocol, mockedUserDevice.PowerTrainType,
-		mockedUserDevice.DeviceDefinitionId, vehicle)
+		mockedUserDevice.DeviceDefinitionId, vehicle) //nolint
 
 	require.NoError(s.T(), err)
 	assert.NotNil(s.T(), fetchedTemplate)
@@ -347,7 +342,7 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_ModelWhitel
 	}
 
 	fetchedTemplate, strategy, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice.CANProtocol, mockedUserDevice.PowerTrainType,
-		mockedUserDevice.DeviceDefinitionId, vehicle)
+		mockedUserDevice.DeviceDefinitionId, vehicle) //nolint
 
 	require.NoError(s.T(), err)
 	assert.NotNil(s.T(), fetchedTemplate)
@@ -414,7 +409,7 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_ModelWhitel
 	}
 
 	fetchedTemplate, strategy, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice.CANProtocol, mockedUserDevice.PowerTrainType,
-		mockedUserDevice.DeviceDefinitionId, vehicle)
+		mockedUserDevice.DeviceDefinitionId, vehicle) //nolint
 
 	require.NoError(s.T(), err)
 	assert.NotNil(s.T(), fetchedTemplate)
@@ -471,7 +466,7 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_ModelDoesNo
 	}
 
 	fetchedTemplate, strategy, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice.CANProtocol, mockedUserDevice.PowerTrainType,
-		mockedUserDevice.DeviceDefinitionId, vehicle)
+		mockedUserDevice.DeviceDefinitionId, vehicle) //nolint
 
 	require.NoError(s.T(), err)
 	assert.NotNil(s.T(), fetchedTemplate)
@@ -524,7 +519,7 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_YearRange()
 	}
 
 	fetchedTemplate, strategy, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice.CANProtocol, mockedUserDevice.PowerTrainType,
-		mockedUserDevice.DeviceDefinitionId, vehicle)
+		mockedUserDevice.DeviceDefinitionId, vehicle) //nolint
 
 	require.NoError(s.T(), err)
 	assert.NotNil(s.T(), fetchedTemplate)
@@ -579,7 +574,7 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_YearRange_D
 	}
 
 	fetchedTemplate, strategy, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice.CANProtocol, mockedUserDevice.PowerTrainType,
-		mockedUserDevice.DeviceDefinitionId, vehicle)
+		mockedUserDevice.DeviceDefinitionId, vehicle) //nolint
 
 	require.NoError(s.T(), err)
 	assert.NotNil(s.T(), fetchedTemplate)
@@ -626,7 +621,7 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_MatchPowert
 	}
 
 	fetchedTemplate, strategy, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice.CANProtocol, mockedUserDevice.PowerTrainType,
-		mockedUserDevice.DeviceDefinitionId, vehicle)
+		mockedUserDevice.DeviceDefinitionId, vehicle) //nolint
 
 	require.NoError(s.T(), err)
 	assert.NotNil(s.T(), fetchedTemplate)
@@ -671,7 +666,7 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_DefaultMatc
 	}
 
 	fetchedTemplate, strategy, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice.CANProtocol, mockedUserDevice.PowerTrainType,
-		mockedUserDevice.DeviceDefinitionId, vehicle)
+		mockedUserDevice.DeviceDefinitionId, vehicle) //nolint
 
 	require.NoError(s.T(), err)
 	assert.NotNil(s.T(), fetchedTemplate)
