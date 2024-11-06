@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+
 	grpc "google.golang.org/grpc"
 
 	pgrpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"

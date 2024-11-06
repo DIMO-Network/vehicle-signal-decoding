@@ -29,7 +29,7 @@ func (h *CreateTemplateDeviceDefinitionCommandHandler) Execute(ctx context.Conte
 		DeviceDefinitionID: cmd.DeviceDefinitionID,
 		TemplateName:       cmd.TemplateName,
 		DeviceStyleID:      null.StringFromPtr(cmd.DeviceStyleID),
-		DefinitionID:       null.StringFrom(cmd.DefinitionID),
+		DefinitionID:       cmd.DefinitionID,
 	}
 
 	err := templateDeviceDefinition.Insert(ctx, h.DBS().Writer, boil.Infer())
