@@ -226,7 +226,10 @@ func (dts *deviceTemplateService) buildConfigRoute(ct configType, name, version 
 func (dts *deviceTemplateService) retrievePowertrain(definitionID string) (string, error) {
 	dd, err := dts.identityAPI.GetDefinitionByID(definitionID)
 	if err != nil {
-		return "", fmt.Errorf("failed to retrieve device definition for definitionId %s: %w", definitionID, err)
+		// fallback if no dd found
+		// todo improvement: based on dd naming see if can guess better powertrain, logic is in dd-api
+		return "ICE", nil
+		//return "", fmt.Errorf("failed to retrieve device definition for definitionId %s: %w", definitionID, err)
 	}
 
 	var powerTrainType string
