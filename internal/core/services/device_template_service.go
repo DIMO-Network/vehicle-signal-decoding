@@ -250,7 +250,7 @@ func (dts *deviceTemplateService) retrievePowertrain(definitionID string) (strin
 // Returns default template if nothing found. Requirees ud.CANProtocol and Powertrain to be set to something
 func (dts *deviceTemplateService) selectAndFetchTemplate(ctx context.Context, canProtocol, powertrain, definitionID string, vehicle *gateways.VehicleInfo) (*models.Template, string, error) {
 	// strategy used to find right template
-	strategy := fmt.Sprintf("protocol: %s, powertrain: %s, definitionId: %s", canProtocol, powertrain, definitionID)
+	strategy := ""
 	// guard
 	if canProtocol == "" {
 		return nil, strategy, fmt.Errorf("CANProtocol is required in the user device")
@@ -272,7 +272,7 @@ func (dts *deviceTemplateService) selectAndFetchTemplate(ctx context.Context, ca
 
 	if len(deviceDefinitions) > 0 {
 		matchedTemplateName = deviceDefinitions[0].TemplateName
-		strategy = "definition mapping"
+		strategy += "definition mapping"
 	}
 	year := 0
 	mk := ""
@@ -330,6 +330,7 @@ func (dts *deviceTemplateService) selectAndFetchTemplate(ctx context.Context, ca
 					// any matches for same protocol if nothing make or model specific
 					if tv.R.TemplateNameTemplate.Protocol == canProtocol {
 						matchedTemplateName = tv.TemplateName
+						strategy += fmt.Sprintf("protocol: %s, powertrain: %s, definitionId: %s. ", canProtocol, powertrain, definitionID)
 						strategy += ", protocol match"
 					}
 				}
@@ -354,7 +355,8 @@ func (dts *deviceTemplateService) selectAndFetchTemplate(ctx context.Context, ca
 		}
 		if len(templates) > 0 {
 			matchedTemplateName = templates[0].TemplateName
-			strategy = "protocol and powertrain match, default"
+			strategy = "protocol and powertrain match, default. "
+			strategy += fmt.Sprintf("protocol: %s, powertrain: %s, definitionId: %s. ", canProtocol, powertrain, definitionID)
 		}
 		if len(templates) > 1 {
 			dts.log.Warn().Msgf("more than one default template found for protocol: %s and powertrain: %s (%d templates found)", canProtocol, powertrain, len(templates))
