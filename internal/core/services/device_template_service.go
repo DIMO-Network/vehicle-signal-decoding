@@ -227,9 +227,8 @@ func (dts *deviceTemplateService) retrievePowertrain(definitionID string) (strin
 	dd, err := dts.identityAPI.GetDefinitionByID(definitionID)
 	if err != nil {
 		// fallback if no dd found
-		// todo improvement: based on dd naming see if can guess better powertrain, logic is in dd-api
+		dts.log.Warn().Err(err).Msgf("failed to retrieve device definition for definitionId: %s", definitionID)
 		return "ICE", nil
-		//return "", fmt.Errorf("failed to retrieve device definition for definitionId %s: %w", definitionID, err)
 	}
 
 	var powerTrainType string
