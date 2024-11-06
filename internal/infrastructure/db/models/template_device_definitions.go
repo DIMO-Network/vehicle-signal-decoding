@@ -24,72 +24,65 @@ import (
 
 // TemplateDeviceDefinition is an object representing the database table.
 type TemplateDeviceDefinition struct {
-	ID                 int64       `boil:"id" json:"id" toml:"id" yaml:"id"`
-	DeviceDefinitionID string      `boil:"device_definition_id" json:"device_definition_id" toml:"device_definition_id" yaml:"device_definition_id"`
-	DeviceStyleID      null.String `boil:"device_style_id" json:"device_style_id,omitempty" toml:"device_style_id" yaml:"device_style_id,omitempty"`
-	TemplateName       string      `boil:"template_name" json:"template_name" toml:"template_name" yaml:"template_name"`
-	CreatedAt          time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	UpdatedAt          time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
-	DefinitionID       null.String `boil:"definition_id" json:"definition_id,omitempty" toml:"definition_id" yaml:"definition_id,omitempty"`
+	ID            int64       `boil:"id" json:"id" toml:"id" yaml:"id"`
+	DeviceStyleID null.String `boil:"device_style_id" json:"device_style_id,omitempty" toml:"device_style_id" yaml:"device_style_id,omitempty"`
+	TemplateName  string      `boil:"template_name" json:"template_name" toml:"template_name" yaml:"template_name"`
+	CreatedAt     time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UpdatedAt     time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	DefinitionID  string      `boil:"definition_id" json:"definition_id" toml:"definition_id" yaml:"definition_id"`
 
 	R *templateDeviceDefinitionR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L templateDeviceDefinitionL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var TemplateDeviceDefinitionColumns = struct {
-	ID                 string
-	DeviceDefinitionID string
-	DeviceStyleID      string
-	TemplateName       string
-	CreatedAt          string
-	UpdatedAt          string
-	DefinitionID       string
+	ID            string
+	DeviceStyleID string
+	TemplateName  string
+	CreatedAt     string
+	UpdatedAt     string
+	DefinitionID  string
 }{
-	ID:                 "id",
-	DeviceDefinitionID: "device_definition_id",
-	DeviceStyleID:      "device_style_id",
-	TemplateName:       "template_name",
-	CreatedAt:          "created_at",
-	UpdatedAt:          "updated_at",
-	DefinitionID:       "definition_id",
+	ID:            "id",
+	DeviceStyleID: "device_style_id",
+	TemplateName:  "template_name",
+	CreatedAt:     "created_at",
+	UpdatedAt:     "updated_at",
+	DefinitionID:  "definition_id",
 }
 
 var TemplateDeviceDefinitionTableColumns = struct {
-	ID                 string
-	DeviceDefinitionID string
-	DeviceStyleID      string
-	TemplateName       string
-	CreatedAt          string
-	UpdatedAt          string
-	DefinitionID       string
+	ID            string
+	DeviceStyleID string
+	TemplateName  string
+	CreatedAt     string
+	UpdatedAt     string
+	DefinitionID  string
 }{
-	ID:                 "template_device_definitions.id",
-	DeviceDefinitionID: "template_device_definitions.device_definition_id",
-	DeviceStyleID:      "template_device_definitions.device_style_id",
-	TemplateName:       "template_device_definitions.template_name",
-	CreatedAt:          "template_device_definitions.created_at",
-	UpdatedAt:          "template_device_definitions.updated_at",
-	DefinitionID:       "template_device_definitions.definition_id",
+	ID:            "template_device_definitions.id",
+	DeviceStyleID: "template_device_definitions.device_style_id",
+	TemplateName:  "template_device_definitions.template_name",
+	CreatedAt:     "template_device_definitions.created_at",
+	UpdatedAt:     "template_device_definitions.updated_at",
+	DefinitionID:  "template_device_definitions.definition_id",
 }
 
 // Generated where
 
 var TemplateDeviceDefinitionWhere = struct {
-	ID                 whereHelperint64
-	DeviceDefinitionID whereHelperstring
-	DeviceStyleID      whereHelpernull_String
-	TemplateName       whereHelperstring
-	CreatedAt          whereHelpertime_Time
-	UpdatedAt          whereHelpertime_Time
-	DefinitionID       whereHelpernull_String
+	ID            whereHelperint64
+	DeviceStyleID whereHelpernull_String
+	TemplateName  whereHelperstring
+	CreatedAt     whereHelpertime_Time
+	UpdatedAt     whereHelpertime_Time
+	DefinitionID  whereHelperstring
 }{
-	ID:                 whereHelperint64{field: "\"vehicle_signal_decoding_api\".\"template_device_definitions\".\"id\""},
-	DeviceDefinitionID: whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"template_device_definitions\".\"device_definition_id\""},
-	DeviceStyleID:      whereHelpernull_String{field: "\"vehicle_signal_decoding_api\".\"template_device_definitions\".\"device_style_id\""},
-	TemplateName:       whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"template_device_definitions\".\"template_name\""},
-	CreatedAt:          whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"template_device_definitions\".\"created_at\""},
-	UpdatedAt:          whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"template_device_definitions\".\"updated_at\""},
-	DefinitionID:       whereHelpernull_String{field: "\"vehicle_signal_decoding_api\".\"template_device_definitions\".\"definition_id\""},
+	ID:            whereHelperint64{field: "\"vehicle_signal_decoding_api\".\"template_device_definitions\".\"id\""},
+	DeviceStyleID: whereHelpernull_String{field: "\"vehicle_signal_decoding_api\".\"template_device_definitions\".\"device_style_id\""},
+	TemplateName:  whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"template_device_definitions\".\"template_name\""},
+	CreatedAt:     whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"template_device_definitions\".\"created_at\""},
+	UpdatedAt:     whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"template_device_definitions\".\"updated_at\""},
+	DefinitionID:  whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"template_device_definitions\".\"definition_id\""},
 }
 
 // TemplateDeviceDefinitionRels is where relationship names are stored.
@@ -120,9 +113,9 @@ func (r *templateDeviceDefinitionR) GetTemplateNameTemplate() *Template {
 type templateDeviceDefinitionL struct{}
 
 var (
-	templateDeviceDefinitionAllColumns            = []string{"id", "device_definition_id", "device_style_id", "template_name", "created_at", "updated_at", "definition_id"}
-	templateDeviceDefinitionColumnsWithoutDefault = []string{"device_definition_id", "template_name"}
-	templateDeviceDefinitionColumnsWithDefault    = []string{"id", "device_style_id", "created_at", "updated_at", "definition_id"}
+	templateDeviceDefinitionAllColumns            = []string{"id", "device_style_id", "template_name", "created_at", "updated_at", "definition_id"}
+	templateDeviceDefinitionColumnsWithoutDefault = []string{"template_name", "definition_id"}
+	templateDeviceDefinitionColumnsWithDefault    = []string{"id", "device_style_id", "created_at", "updated_at"}
 	templateDeviceDefinitionPrimaryKeyColumns     = []string{"id"}
 	templateDeviceDefinitionGeneratedColumns      = []string{}
 )

@@ -2,45 +2,25 @@ package services
 
 import (
 	"context"
-	"fmt"
 
 	grpc "google.golang.org/grpc"
 
 	pgrpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
-	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/exceptions"
 )
 
 //go:generate mockgen -source device_definitions_service.go -destination mocks/device_definitions_service_mock.go
 type DeviceDefinitionsService interface {
-	GetDeviceDefinitionByID(ctx context.Context, id string) (*pgrpc.GetDeviceDefinitionItemResponse, error)
 	DecodeVIN(ctx context.Context, vin string) (*pgrpc.DecodeVinResponse, error)
 }
 
 type deviceDefinitionsService struct {
-	definitionsClient pgrpc.DeviceDefinitionServiceClient
-	vinDecoderClient  pgrpc.VinDecoderServiceClient
+	vinDecoderClient pgrpc.VinDecoderServiceClient
 }
 
 func NewDeviceDefinitionsService(definitionsConn *grpc.ClientConn) DeviceDefinitionsService {
 	return &deviceDefinitionsService{
-		definitionsClient: pgrpc.NewDeviceDefinitionServiceClient(definitionsConn),
-		vinDecoderClient:  pgrpc.NewVinDecoderServiceClient(definitionsConn),
+		vinDecoderClient: pgrpc.NewVinDecoderServiceClient(definitionsConn),
 	}
-}
-
-func (d *deviceDefinitionsService) GetDeviceDefinitionByID(ctx context.Context, id string) (*pgrpc.GetDeviceDefinitionItemResponse, error) {
-	response, err := d.definitionsClient.GetDeviceDefinitionByID(ctx, &pgrpc.GetDeviceDefinitionRequest{
-		Ids: []string{id},
-	})
-	if err != nil {
-		return nil, err
-	}
-	if len(response.DeviceDefinitions) == 0 {
-		return nil, &exceptions.NotFoundError{
-			Err: fmt.Errorf("no definition found with id: %s", id)}
-	}
-
-	return response.DeviceDefinitions[0], nil
 }
 
 func (d *deviceDefinitionsService) DecodeVIN(ctx context.Context, vin string) (*pgrpc.DecodeVinResponse, error) {

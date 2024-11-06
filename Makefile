@@ -30,7 +30,7 @@ deps:
 	@go mod tidy
 	@go mod vendor
 
-SOURCE_FILES = $(shell find lib internal -type f -name "*.go")
+SOURCE_FILES = $(shell find internal -type f -name "*.go")
 
 
 $(PATHINSTBIN)/%: $(SOURCE_FILES) 
@@ -43,6 +43,9 @@ new-migration:
 
 gen-swag:
 	@swag init -g cmd/vehicle-signal-decoding/main.go --parseDependency --parseInternal --generatedTime true
+
+gen-models:
+	@sqlboiler psql --no-tests --wipe
 
 docker-tags:
 	@echo "latest,$(VER_CUT),$(VER_MAJOR).$(VER_MINOR),$(VER_MAJOR)" > .tags

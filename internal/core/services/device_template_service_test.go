@@ -10,11 +10,9 @@ import (
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways"
 
-	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	pb "github.com/DIMO-Network/devices-api/pkg/grpc"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
-	mock_services "github.com/DIMO-Network/vehicle-signal-decoding/internal/core/services/mocks"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/dbtest"
 	"github.com/rs/zerolog"
@@ -33,13 +31,12 @@ const migrationsDirRelPath = "../../infrastructure/db/migrations"
 
 type DeviceTemplateServiceTestSuite struct {
 	suite.Suite
-	ctx              context.Context
-	pdb              db.Store
-	container        testcontainers.Container
-	mockCtrl         *gomock.Controller
-	logger           *zerolog.Logger
-	mockDeviceDefSvc *mock_services.MockDeviceDefinitionsService
-	mockIdentityAPI  *mock_gateways.MockIdentityAPI
+	ctx             context.Context
+	pdb             db.Store
+	container       testcontainers.Container
+	mockCtrl        *gomock.Controller
+	logger          *zerolog.Logger
+	mockIdentityAPI *mock_gateways.MockIdentityAPI
 	// subject under test
 	sut *deviceTemplateService
 }
@@ -52,13 +49,11 @@ func (s *DeviceTemplateServiceTestSuite) SetupSuite() {
 	logger := zerolog.New(os.Stdout).With().Timestamp().Logger()
 	s.logger = &logger
 	s.mockCtrl = gomock.NewController(s.T())
-	s.mockDeviceDefSvc = mock_services.NewMockDeviceDefinitionsService(s.mockCtrl)
 	s.mockIdentityAPI = mock_gateways.NewMockIdentityAPI(s.mockCtrl)
 
 	s.sut = &deviceTemplateService{s.pdb.DBS().Writer.DB,
 		*s.logger,
 		&config.Settings{},
-		s.mockDeviceDefSvc,
 		s.mockIdentityAPI}
 
 }
@@ -152,18 +147,18 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_DeviceDefin
 	require.NoError(s.T(), err)
 
 	deviceDef := &models.TemplateDeviceDefinition{
-		DeviceDefinitionID: "device-def-id",
-		TemplateName:       template.TemplateName,
+		DefinitionID: "device-def-id",
+		TemplateName: template.TemplateName,
 	}
 	err = deviceDef.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
 	require.NoError(s.T(), err)
 
 	mockedUserDevice := &pb.UserDevice{
-		Id:                 ksuid.New().String(),
-		UserId:             ksuid.New().String(),
-		DeviceDefinitionId: "device-def-id",
-		CANProtocol:        models.CanProtocolTypeCAN29_500,
-		PowerTrainType:     "HEV",
+		Id:             ksuid.New().String(),
+		UserId:         ksuid.New().String(),
+		DefinitionId:   "device-def-id",
+		CANProtocol:    models.CanProtocolTypeCAN29_500,
+		PowerTrainType: "HEV",
 	}
 	// this shouldn't matter since match is based on a specific device definition id
 	vehicle := &gateways.VehicleInfo{
@@ -176,7 +171,7 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_DeviceDefin
 	}
 
 	fetchedTemplate, strategy, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice.CANProtocol, mockedUserDevice.PowerTrainType,
-		mockedUserDevice.DeviceDefinitionId, vehicle) //nolint
+		mockedUserDevice.DefinitionId, vehicle)
 
 	require.NoError(s.T(), err)
 	assert.NotNil(s.T(), fetchedTemplate)
@@ -195,32 +190,26 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_nilVehicle_
 	require.NoError(s.T(), err)
 
 	deviceDef := &models.TemplateDeviceDefinition{
-		DeviceDefinitionID: "device-def-id",
-		TemplateName:       template.TemplateName,
+		DefinitionID: "device-def-id",
+		TemplateName: template.TemplateName,
 	}
 	err = deviceDef.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
 	require.NoError(s.T(), err)
 
 	mockedUserDevice := &pb.UserDevice{
-		Id:                 ksuid.New().String(),
-		UserId:             ksuid.New().String(),
-		DeviceDefinitionId: "device-def-id",
-		CANProtocol:        models.CanProtocolTypeCAN29_500,
-		PowerTrainType:     "HEV",
+		Id:             ksuid.New().String(),
+		UserId:         ksuid.New().String(),
+		DefinitionId:   "device-def-id",
+		CANProtocol:    models.CanProtocolTypeCAN29_500,
+		PowerTrainType: "HEV",
 	}
-	//nolint
-	s.mockDeviceDefSvc.EXPECT().GetDeviceDefinitionByID(gomock.Any(), mockedUserDevice.DeviceDefinitionId).Return(&p_grpc.GetDeviceDefinitionItemResponse{
-		DeviceDefinitionId: mockedUserDevice.DeviceDefinitionId, //nolint
-		Type: &p_grpc.DeviceType{
-			Type:  "vehicle",
-			Make:  "Ford",
-			Model: "Mustang",
-			Year:  2021,
-		},
+	s.mockIdentityAPI.EXPECT().GetDefinitionByID(mockedUserDevice.DefinitionId).Return(&gateways.DeviceDefinition{
+		Model: "Mustang",
+		Year:  2021,
 	}, nil) // nil vehicle still should work
 
 	fetchedTemplate, strategy, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice.CANProtocol, mockedUserDevice.PowerTrainType,
-		mockedUserDevice.DeviceDefinitionId, nil) //nolint
+		mockedUserDevice.DefinitionId, nil)
 
 	require.NoError(s.T(), err)
 	assert.NotNil(s.T(), fetchedTemplate)
@@ -259,11 +248,11 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_MMY() {
 	require.NoError(s.T(), err)
 
 	mockedUserDevice := &pb.UserDevice{
-		Id:                 ksuid.New().String(),
-		UserId:             ksuid.New().String(),
-		DeviceDefinitionId: "non-existing-def-id",
-		CANProtocol:        models.CanProtocolTypeCAN29_500,
-		PowerTrainType:     "HEV",
+		Id:             ksuid.New().String(),
+		UserId:         ksuid.New().String(),
+		DefinitionId:   "non-existing-def-id",
+		CANProtocol:    models.CanProtocolTypeCAN29_500,
+		PowerTrainType: "HEV",
 	}
 	vehicle := &gateways.VehicleInfo{
 		TokenID: 123,
@@ -275,7 +264,7 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_MMY() {
 	}
 
 	fetchedTemplate, strategy, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice.CANProtocol, mockedUserDevice.PowerTrainType,
-		mockedUserDevice.DeviceDefinitionId, vehicle) //nolint
+		mockedUserDevice.DefinitionId, vehicle)
 
 	require.NoError(s.T(), err)
 	assert.NotNil(s.T(), fetchedTemplate)
@@ -325,11 +314,11 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_ModelWhitel
 	require.NoError(s.T(), err)
 
 	mockedUserDevice := &pb.UserDevice{
-		Id:                 ksuid.New().String(),
-		UserId:             ksuid.New().String(),
-		DeviceDefinitionId: "non-existing-def-id",
-		CANProtocol:        models.CanProtocolTypeCAN11_500,
-		PowerTrainType:     "ICE",
+		Id:             ksuid.New().String(),
+		UserId:         ksuid.New().String(),
+		DefinitionId:   "non-existing-def-id",
+		CANProtocol:    models.CanProtocolTypeCAN11_500,
+		PowerTrainType: "ICE",
 	}
 
 	vehicle := &gateways.VehicleInfo{
@@ -342,7 +331,7 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_ModelWhitel
 	}
 
 	fetchedTemplate, strategy, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice.CANProtocol, mockedUserDevice.PowerTrainType,
-		mockedUserDevice.DeviceDefinitionId, vehicle) //nolint
+		mockedUserDevice.DefinitionId, vehicle)
 
 	require.NoError(s.T(), err)
 	assert.NotNil(s.T(), fetchedTemplate)
@@ -392,11 +381,11 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_ModelWhitel
 	require.NoError(s.T(), err)
 
 	mockedUserDevice := &pb.UserDevice{
-		Id:                 ksuid.New().String(),
-		UserId:             ksuid.New().String(),
-		DeviceDefinitionId: "non-existing-def-id",
-		CANProtocol:        models.CanProtocolTypeCAN11_500,
-		PowerTrainType:     "ICE", // powertrain does not match template
+		Id:             ksuid.New().String(),
+		UserId:         ksuid.New().String(),
+		DefinitionId:   "non-existing-def-id",
+		CANProtocol:    models.CanProtocolTypeCAN11_500,
+		PowerTrainType: "ICE", // powertrain does not match template
 	}
 
 	vehicle := &gateways.VehicleInfo{
@@ -409,7 +398,7 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_ModelWhitel
 	}
 
 	fetchedTemplate, strategy, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice.CANProtocol, mockedUserDevice.PowerTrainType,
-		mockedUserDevice.DeviceDefinitionId, vehicle) //nolint
+		mockedUserDevice.DefinitionId, vehicle)
 
 	require.NoError(s.T(), err)
 	assert.NotNil(s.T(), fetchedTemplate)
@@ -449,11 +438,11 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_ModelDoesNo
 	require.NoError(s.T(), err)
 
 	mockedUserDevice := &pb.UserDevice{
-		Id:                 ksuid.New().String(),
-		UserId:             ksuid.New().String(),
-		DeviceDefinitionId: "non-existing-def-id",
-		CANProtocol:        models.CanProtocolTypeCAN11_500,
-		PowerTrainType:     "ICE",
+		Id:             ksuid.New().String(),
+		UserId:         ksuid.New().String(),
+		DefinitionId:   "non-existing-def-id",
+		CANProtocol:    models.CanProtocolTypeCAN11_500,
+		PowerTrainType: "ICE",
 	}
 
 	vehicle := &gateways.VehicleInfo{
@@ -466,12 +455,12 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_ModelDoesNo
 	}
 
 	fetchedTemplate, strategy, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice.CANProtocol, mockedUserDevice.PowerTrainType,
-		mockedUserDevice.DeviceDefinitionId, vehicle) //nolint
+		mockedUserDevice.DefinitionId, vehicle)
 
 	require.NoError(s.T(), err)
 	assert.NotNil(s.T(), fetchedTemplate)
 	assert.Equal(s.T(), defaultTemplate.TemplateName, fetchedTemplate.TemplateName)
-	assert.Equal(s.T(), "protocol and powertrain match, default", strategy)
+	assert.Equal(s.T(), "protocol and powertrain match, default. protocol: CAN11_500, powertrain: ICE, definitionId: non-existing-def-id. ", strategy)
 }
 
 func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_YearRange() {
@@ -503,11 +492,11 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_YearRange()
 	require.NoError(s.T(), err)
 
 	mockedUserDevice := &pb.UserDevice{
-		Id:                 ksuid.New().String(),
-		UserId:             ksuid.New().String(),
-		DeviceDefinitionId: "some-2019-vehicle",
-		PowerTrainType:     template.Powertrain,
-		CANProtocol:        template.Protocol,
+		Id:             ksuid.New().String(),
+		UserId:         ksuid.New().String(),
+		DefinitionId:   "some-2019-vehicle",
+		PowerTrainType: template.Powertrain,
+		CANProtocol:    template.Protocol,
 	}
 	vehicle := &gateways.VehicleInfo{
 		TokenID: 123,
@@ -519,12 +508,12 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_YearRange()
 	}
 
 	fetchedTemplate, strategy, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice.CANProtocol, mockedUserDevice.PowerTrainType,
-		mockedUserDevice.DeviceDefinitionId, vehicle) //nolint
+		mockedUserDevice.DefinitionId, vehicle)
 
 	require.NoError(s.T(), err)
 	assert.NotNil(s.T(), fetchedTemplate)
 	assert.Equal(s.T(), template.TemplateName, fetchedTemplate.TemplateName)
-	assert.Equal(s.T(), "vehicle and year mapping, protocol match", strategy)
+	assert.Equal(s.T(), "vehicle and year mappingprotocol: CAN11_500, powertrain: ICE, definitionId: some-2019-vehicle. , protocol match", strategy)
 }
 
 func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_YearRange_Default() {
@@ -558,11 +547,11 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_YearRange_D
 	require.NoError(s.T(), err)
 
 	mockedUserDevice := &pb.UserDevice{
-		Id:                 ksuid.New().String(),
-		UserId:             ksuid.New().String(),
-		DeviceDefinitionId: "2008-vehicle",
-		PowerTrainType:     "ICE",
-		CANProtocol:        models.CanProtocolTypeCAN11_500,
+		Id:             ksuid.New().String(),
+		UserId:         ksuid.New().String(),
+		DefinitionId:   "2008-vehicle",
+		PowerTrainType: "ICE",
+		CANProtocol:    models.CanProtocolTypeCAN11_500,
 	}
 	vehicle := &gateways.VehicleInfo{
 		TokenID: 123,
@@ -574,13 +563,13 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_YearRange_D
 	}
 
 	fetchedTemplate, strategy, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice.CANProtocol, mockedUserDevice.PowerTrainType,
-		mockedUserDevice.DeviceDefinitionId, vehicle) //nolint
+		mockedUserDevice.DefinitionId, vehicle)
 
 	require.NoError(s.T(), err)
 	assert.NotNil(s.T(), fetchedTemplate)
 	// we want the default template
 	assert.Equal(s.T(), templateDefault.TemplateName, fetchedTemplate.TemplateName)
-	assert.Equal(s.T(), "protocol and powertrain match, default", strategy)
+	assert.Equal(s.T(), "protocol and powertrain match, default. protocol: CAN11_500, powertrain: ICE, definitionId: 2008-vehicle. ", strategy)
 }
 
 func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_MatchPowertrainProtocol() {
@@ -604,11 +593,11 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_MatchPowert
 	require.NoError(s.T(), err)
 
 	mockedUserDevice := &pb.UserDevice{
-		Id:                 ksuid.New().String(),
-		UserId:             ksuid.New().String(),
-		DeviceDefinitionId: "non-existing-def-id",
-		CANProtocol:        models.CanProtocolTypeCAN29_500,
-		PowerTrainType:     "HEV",
+		Id:             ksuid.New().String(),
+		UserId:         ksuid.New().String(),
+		DefinitionId:   "non-existing-def-id",
+		CANProtocol:    models.CanProtocolTypeCAN29_500,
+		PowerTrainType: "HEV",
 	}
 
 	vehicle := &gateways.VehicleInfo{
@@ -621,12 +610,12 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_MatchPowert
 	}
 
 	fetchedTemplate, strategy, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice.CANProtocol, mockedUserDevice.PowerTrainType,
-		mockedUserDevice.DeviceDefinitionId, vehicle) //nolint
+		mockedUserDevice.DefinitionId, vehicle)
 
 	require.NoError(s.T(), err)
 	assert.NotNil(s.T(), fetchedTemplate)
 	assert.Equal(s.T(), template.TemplateName, fetchedTemplate.TemplateName)
-	assert.Equal(s.T(), "protocol and powertrain match, default", strategy)
+	assert.Equal(s.T(), "protocol and powertrain match, default. protocol: CAN29_500, powertrain: HEV, definitionId: non-existing-def-id. ", strategy)
 }
 
 func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_DefaultMatch() {
@@ -650,11 +639,11 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_DefaultMatc
 	require.NoError(s.T(), err)
 
 	mockedUserDevice := &pb.UserDevice{
-		Id:                 ksuid.New().String(),
-		UserId:             ksuid.New().String(),
-		DeviceDefinitionId: "non-existing-def-id",
-		CANProtocol:        models.CanProtocolTypeCAN11_500,
-		PowerTrainType:     "ICE",
+		Id:             ksuid.New().String(),
+		UserId:         ksuid.New().String(),
+		DefinitionId:   "non-existing-def-id",
+		CANProtocol:    models.CanProtocolTypeCAN11_500,
+		PowerTrainType: "ICE",
 	}
 	vehicle := &gateways.VehicleInfo{
 		TokenID: 123,
@@ -666,12 +655,12 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_DefaultMatc
 	}
 
 	fetchedTemplate, strategy, err := s.sut.selectAndFetchTemplate(s.ctx, mockedUserDevice.CANProtocol, mockedUserDevice.PowerTrainType,
-		mockedUserDevice.DeviceDefinitionId, vehicle) //nolint
+		mockedUserDevice.DefinitionId, vehicle)
 
 	require.NoError(s.T(), err)
 	assert.NotNil(s.T(), fetchedTemplate)
 	assert.Equal(s.T(), defaultTemplate.TemplateName, fetchedTemplate.TemplateName)
-	assert.Equal(s.T(), "protocol and powertrain match, default", strategy)
+	assert.Equal(s.T(), "protocol and powertrain match, default. protocol: CAN11_500, powertrain: ICE, definitionId: non-existing-def-id. ", strategy)
 }
 
 func Test_deviceTemplateService_buildConfigRoute(t *testing.T) {
@@ -711,10 +700,9 @@ func Test_deviceTemplateService_buildConfigRoute(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dts := &deviceTemplateService{
-				db:           nil,
-				log:          zerolog.Logger{},
-				settings:     tt.fields.settings,
-				deviceDefSvc: nil,
+				db:       nil,
+				log:      zerolog.Logger{},
+				settings: tt.fields.settings,
 			}
 			assert.Equalf(t, tt.want, dts.buildConfigRoute(tt.args.ct, tt.args.name, tt.args.version), "buildConfigRoute(%v, %v, %v)", tt.args.ct, tt.args.name, tt.args.version)
 		})

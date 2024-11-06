@@ -5,6 +5,7 @@
 //
 //	mockgen -source device_definitions_service.go -destination mocks/device_definitions_service_mock.go
 //
+
 // Package mock_services is a generated GoMock package.
 package mock_services
 
@@ -52,19 +53,4 @@ func (m *MockDeviceDefinitionsService) DecodeVIN(ctx context.Context, vin string
 func (mr *MockDeviceDefinitionsServiceMockRecorder) DecodeVIN(ctx, vin any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DecodeVIN", reflect.TypeOf((*MockDeviceDefinitionsService)(nil).DecodeVIN), ctx, vin)
-}
-
-// GetDeviceDefinitionByID mocks base method.
-func (m *MockDeviceDefinitionsService) GetDeviceDefinitionByID(ctx context.Context, id string) (*grpc.GetDeviceDefinitionItemResponse, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetDeviceDefinitionByID", ctx, id)
-	ret0, _ := ret[0].(*grpc.GetDeviceDefinitionItemResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetDeviceDefinitionByID indicates an expected call of GetDeviceDefinitionByID.
-func (mr *MockDeviceDefinitionsServiceMockRecorder) GetDeviceDefinitionByID(ctx, id any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDeviceDefinitionByID", reflect.TypeOf((*MockDeviceDefinitionsService)(nil).GetDeviceDefinitionByID), ctx, id)
 }

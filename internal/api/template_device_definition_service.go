@@ -29,9 +29,9 @@ func (s *TemplateDeviceDefinitionService) CreateTemplateDeviceDefinition(ctx con
 	service := commands.NewCreateTemplateDeviceDefinitionCommandHandler(s.dbs)
 
 	rq := commands.CreateTemplateDeviceDefinitionCommand{
-		DeviceDefinitionID: request.DeviceDefinitionId,
-		TemplateName:       request.TemplateName,
-		DeviceStyleID:      request.DeviceStyleId,
+		DefinitionID:  request.DefinitionId,
+		TemplateName:  request.TemplateName,
+		DeviceStyleID: request.DeviceStyleId,
 	}
 
 	response, err := service.Execute(ctx, rq)
@@ -50,10 +50,10 @@ func (s *TemplateDeviceDefinitionService) UpdateTemplateDeviceDefinition(ctx con
 	service := commands.NewUpdateTemplateDeviceDefinitionCommandHandler(s.dbs)
 
 	rq := commands.UpdateTemplateDeviceDefinitionCommand{
-		ID:                 request.Id,
-		DeviceDefinitionID: request.DeviceDefinitionId,
-		TemplateName:       request.TemplateName,
-		DeviceStyleID:      request.DeviceStyleId,
+		ID:            request.Id,
+		DefinitionID:  request.DefinitionId,
+		TemplateName:  request.TemplateName,
+		DeviceStyleID: request.DeviceStyleId,
 	}
 
 	response, err := service.Execute(ctx, rq)
