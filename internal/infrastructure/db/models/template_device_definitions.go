@@ -30,7 +30,7 @@ type TemplateDeviceDefinition struct {
 	TemplateName       string      `boil:"template_name" json:"template_name" toml:"template_name" yaml:"template_name"`
 	CreatedAt          time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 	UpdatedAt          time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
-	DefinitionID       null.String `boil:"definition_id" json:"definition_id,omitempty" toml:"definition_id" yaml:"definition_id,omitempty"`
+	DefinitionID       string      `boil:"definition_id" json:"definition_id" toml:"definition_id" yaml:"definition_id"`
 
 	R *templateDeviceDefinitionR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L templateDeviceDefinitionL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -81,7 +81,7 @@ var TemplateDeviceDefinitionWhere = struct {
 	TemplateName       whereHelperstring
 	CreatedAt          whereHelpertime_Time
 	UpdatedAt          whereHelpertime_Time
-	DefinitionID       whereHelpernull_String
+	DefinitionID       whereHelperstring
 }{
 	ID:                 whereHelperint64{field: "\"vehicle_signal_decoding_api\".\"template_device_definitions\".\"id\""},
 	DeviceDefinitionID: whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"template_device_definitions\".\"device_definition_id\""},
@@ -89,7 +89,7 @@ var TemplateDeviceDefinitionWhere = struct {
 	TemplateName:       whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"template_device_definitions\".\"template_name\""},
 	CreatedAt:          whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"template_device_definitions\".\"created_at\""},
 	UpdatedAt:          whereHelpertime_Time{field: "\"vehicle_signal_decoding_api\".\"template_device_definitions\".\"updated_at\""},
-	DefinitionID:       whereHelpernull_String{field: "\"vehicle_signal_decoding_api\".\"template_device_definitions\".\"definition_id\""},
+	DefinitionID:       whereHelperstring{field: "\"vehicle_signal_decoding_api\".\"template_device_definitions\".\"definition_id\""},
 }
 
 // TemplateDeviceDefinitionRels is where relationship names are stored.
@@ -121,8 +121,8 @@ type templateDeviceDefinitionL struct{}
 
 var (
 	templateDeviceDefinitionAllColumns            = []string{"id", "device_definition_id", "device_style_id", "template_name", "created_at", "updated_at", "definition_id"}
-	templateDeviceDefinitionColumnsWithoutDefault = []string{"device_definition_id", "template_name"}
-	templateDeviceDefinitionColumnsWithDefault    = []string{"id", "device_style_id", "created_at", "updated_at", "definition_id"}
+	templateDeviceDefinitionColumnsWithoutDefault = []string{"device_definition_id", "template_name", "definition_id"}
+	templateDeviceDefinitionColumnsWithDefault    = []string{"id", "device_style_id", "created_at", "updated_at"}
 	templateDeviceDefinitionPrimaryKeyColumns     = []string{"id"}
 	templateDeviceDefinitionGeneratedColumns      = []string{}
 )

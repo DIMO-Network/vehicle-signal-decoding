@@ -38,21 +38,18 @@ type DeviceTemplateService interface {
 }
 
 type deviceTemplateService struct {
-	db           *sql.DB
-	log          zerolog.Logger
-	settings     *config.Settings
-	deviceDefSvc DeviceDefinitionsService
-	identityAPI  gateways.IdentityAPI
+	db          *sql.DB
+	log         zerolog.Logger
+	settings    *config.Settings
+	identityAPI gateways.IdentityAPI
 }
 
-func NewDeviceTemplateService(database *sql.DB, deviceDefSvc DeviceDefinitionsService, log zerolog.Logger,
-	settings *config.Settings, identityAPI gateways.IdentityAPI) DeviceTemplateService {
+func NewDeviceTemplateService(database *sql.DB, log zerolog.Logger, settings *config.Settings, identityAPI gateways.IdentityAPI) DeviceTemplateService {
 	return &deviceTemplateService{
-		db:           database,
-		log:          log,
-		settings:     settings,
-		deviceDefSvc: deviceDefSvc,
-		identityAPI:  identityAPI,
+		db:          database,
+		log:         log,
+		settings:    settings,
+		identityAPI: identityAPI,
 	}
 }
 
@@ -156,7 +153,7 @@ func (dts *deviceTemplateService) ResolveDeviceConfiguration(c *fiber.Ctx, ud *p
 		return nil, "", errors.Wrap(err, fmt.Sprintf("Failed to retrieve powertrain for definitionId: %s", ud.DefinitionId))
 	}
 	//nolint
-	matchedTemplate, strategy, err := dts.selectAndFetchTemplate(c.Context(), canProtocl, powertrain, ud.DeviceDefinitionId, vehicle)
+	matchedTemplate, strategy, err := dts.selectAndFetchTemplate(c.Context(), canProtocl, powertrain, ud.DefinitionId, vehicle)
 	if err != nil {
 		return nil, strategy, err
 	}
@@ -263,7 +260,7 @@ func (dts *deviceTemplateService) selectAndFetchTemplate(ctx context.Context, ca
 
 	// First, try to find a template based on device definitions
 	deviceDefinitions, err := models.TemplateDeviceDefinitions(
-		models.TemplateDeviceDefinitionWhere.DeviceDefinitionID.EQ(definitionID),
+		models.TemplateDeviceDefinitionWhere.DefinitionID.EQ(definitionID),
 	).All(ctx, dts.db)
 
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
@@ -278,13 +275,13 @@ func (dts *deviceTemplateService) selectAndFetchTemplate(ctx context.Context, ca
 	mk := ""
 	model := ""
 	if vehicle == nil {
-		definition, err := dts.deviceDefSvc.GetDeviceDefinitionByID(ctx, definitionID)
+		definition, err := dts.identityAPI.GetDefinitionByID(definitionID)
 		if err != nil {
 			return nil, strategy, errors.Wrapf(err, "failed to query device definition %s", definitionID)
 		}
-		year = int(definition.Type.Year)
-		mk = definition.Type.Make
-		model = definition.Type.Model
+		year = definition.Year
+		mk = definition.Manufacturer.Name
+		model = definition.Model
 	} else {
 		year = vehicle.Definition.Year
 		mk = vehicle.Definition.Make
