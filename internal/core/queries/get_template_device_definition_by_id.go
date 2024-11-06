@@ -31,12 +31,12 @@ func (h *GetTemplateDeviceDefinitionByIDQueryHandler) Handle(ctx context.Context
 	}
 
 	response := &grpc.TemplateDeviceDefinition{
-		Id:                 templateDeviceDefinition.ID,
-		DeviceDefinitionId: templateDeviceDefinition.DeviceDefinitionID,
-		DeviceStyleId:      templateDeviceDefinition.DeviceStyleID.Ptr(),
-		TemplateName:       templateDeviceDefinition.TemplateName,
-		CreatedAt:          timestamppb.New(templateDeviceDefinition.CreatedAt),
-		UpdatedAt:          timestamppb.New(templateDeviceDefinition.UpdatedAt),
+		Id:            templateDeviceDefinition.ID,
+		DefinitionId:  templateDeviceDefinition.DefinitionID,
+		DeviceStyleId: templateDeviceDefinition.DeviceStyleID.Ptr(),
+		TemplateName:  templateDeviceDefinition.TemplateName,
+		CreatedAt:     timestamppb.New(templateDeviceDefinition.CreatedAt),
+		UpdatedAt:     timestamppb.New(templateDeviceDefinition.UpdatedAt),
 	}
 
 	return response, nil

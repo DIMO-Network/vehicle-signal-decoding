@@ -15,11 +15,10 @@ type UpdateTemplateDeviceDefinitionCommandHandler struct {
 }
 
 type UpdateTemplateDeviceDefinitionCommand struct {
-	ID                 int64
-	DeviceDefinitionID string
-	DeviceStyleID      *string
-	TemplateName       string
-	DefinitionID       string
+	ID            int64
+	DeviceStyleID *string
+	TemplateName  string
+	DefinitionID  string
 }
 
 func NewUpdateTemplateDeviceDefinitionCommandHandler(dbS func() *db.ReaderWriter) *UpdateTemplateDeviceDefinitionCommandHandler {
@@ -28,11 +27,10 @@ func NewUpdateTemplateDeviceDefinitionCommandHandler(dbS func() *db.ReaderWriter
 
 func (h *UpdateTemplateDeviceDefinitionCommandHandler) Execute(ctx context.Context, cmd UpdateTemplateDeviceDefinitionCommand) (*emptypb.Empty, error) {
 	templateDeviceDefinition := &models.TemplateDeviceDefinition{
-		ID:                 cmd.ID,
-		DeviceDefinitionID: cmd.DeviceDefinitionID,
-		TemplateName:       cmd.TemplateName,
-		DeviceStyleID:      null.StringFromPtr(cmd.DeviceStyleID),
-		DefinitionID:       cmd.DefinitionID,
+		ID:            cmd.ID,
+		TemplateName:  cmd.TemplateName,
+		DeviceStyleID: null.StringFromPtr(cmd.DeviceStyleID),
+		DefinitionID:  cmd.DefinitionID,
 	}
 
 	_, err := templateDeviceDefinition.Update(ctx, h.DBS().Writer, boil.Infer())

@@ -9,7 +9,7 @@ package grpc;
 
 message TemplateDeviceDefinition {
   int64 id = 1;
-  string deviceDefinitionId = 2;
+  string definitionId = 2;
   optional string deviceStyleId = 3;
   string templateName = 4;
   google.protobuf.Timestamp created_at = 5;

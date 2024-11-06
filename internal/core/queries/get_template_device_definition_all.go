@@ -34,12 +34,12 @@ func (h *GetTemplateDeviceDefinitionAllQueryHandler) Handle(ctx context.Context,
 
 	for i, templateDeviceDefinition := range templateDeviceDefinitions {
 		templateDd[i] = &grpc.TemplateDeviceDefinition{
-			Id:                 templateDeviceDefinition.ID,
-			DeviceDefinitionId: templateDeviceDefinition.DeviceDefinitionID,
-			DeviceStyleId:      templateDeviceDefinition.DeviceStyleID.Ptr(),
-			TemplateName:       templateDeviceDefinition.TemplateName,
-			CreatedAt:          timestamppb.New(templateDeviceDefinition.CreatedAt),
-			UpdatedAt:          timestamppb.New(templateDeviceDefinition.UpdatedAt),
+			Id:            templateDeviceDefinition.ID,
+			DefinitionId:  templateDeviceDefinition.DefinitionID,
+			DeviceStyleId: templateDeviceDefinition.DeviceStyleID.Ptr(),
+			TemplateName:  templateDeviceDefinition.TemplateName,
+			CreatedAt:     timestamppb.New(templateDeviceDefinition.CreatedAt),
+			UpdatedAt:     timestamppb.New(templateDeviceDefinition.UpdatedAt),
 		}
 	}
 

@@ -14,10 +14,9 @@ type CreateTemplateDeviceDefinitionCommandHandler struct {
 }
 
 type CreateTemplateDeviceDefinitionCommand struct {
-	DeviceDefinitionID string
-	DeviceStyleID      *string
-	TemplateName       string
-	DefinitionID       string
+	DeviceStyleID *string
+	TemplateName  string
+	DefinitionID  string
 }
 
 func NewCreateTemplateDeviceDefinitionCommandHandler(dbs func() *db.ReaderWriter) *CreateTemplateDeviceDefinitionCommandHandler {
@@ -26,10 +25,9 @@ func NewCreateTemplateDeviceDefinitionCommandHandler(dbs func() *db.ReaderWriter
 
 func (h *CreateTemplateDeviceDefinitionCommandHandler) Execute(ctx context.Context, cmd CreateTemplateDeviceDefinitionCommand) (*int64, error) {
 	templateDeviceDefinition := &models.TemplateDeviceDefinition{
-		DeviceDefinitionID: cmd.DeviceDefinitionID,
-		TemplateName:       cmd.TemplateName,
-		DeviceStyleID:      null.StringFromPtr(cmd.DeviceStyleID),
-		DefinitionID:       cmd.DefinitionID,
+		TemplateName:  cmd.TemplateName,
+		DeviceStyleID: null.StringFromPtr(cmd.DeviceStyleID),
+		DefinitionID:  cmd.DefinitionID,
 	}
 
 	err := templateDeviceDefinition.Insert(ctx, h.DBS().Writer, boil.Infer())

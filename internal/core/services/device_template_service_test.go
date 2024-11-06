@@ -147,8 +147,8 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_DeviceDefin
 	require.NoError(s.T(), err)
 
 	deviceDef := &models.TemplateDeviceDefinition{
-		DeviceDefinitionID: "device-def-id",
-		TemplateName:       template.TemplateName,
+		DefinitionID: "device-def-id",
+		TemplateName: template.TemplateName,
 	}
 	err = deviceDef.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
 	require.NoError(s.T(), err)
@@ -460,7 +460,7 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_ModelDoesNo
 	require.NoError(s.T(), err)
 	assert.NotNil(s.T(), fetchedTemplate)
 	assert.Equal(s.T(), defaultTemplate.TemplateName, fetchedTemplate.TemplateName)
-	assert.Equal(s.T(), "protocol and powertrain match, default", strategy)
+	assert.Equal(s.T(), "protocol and powertrain match, default. protocol: CAN11_500, powertrain: ICE, definitionId: non-existing-def-id. ", strategy)
 }
 
 func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_YearRange() {
@@ -513,7 +513,7 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_YearRange()
 	require.NoError(s.T(), err)
 	assert.NotNil(s.T(), fetchedTemplate)
 	assert.Equal(s.T(), template.TemplateName, fetchedTemplate.TemplateName)
-	assert.Equal(s.T(), "vehicle and year mapping, protocol match", strategy)
+	assert.Equal(s.T(), "vehicle and year mappingprotocol: CAN11_500, powertrain: ICE, definitionId: some-2019-vehicle. , protocol match", strategy)
 }
 
 func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_YearRange_Default() {
@@ -569,7 +569,7 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_YearRange_D
 	assert.NotNil(s.T(), fetchedTemplate)
 	// we want the default template
 	assert.Equal(s.T(), templateDefault.TemplateName, fetchedTemplate.TemplateName)
-	assert.Equal(s.T(), "protocol and powertrain match, default", strategy)
+	assert.Equal(s.T(), "protocol and powertrain match, default. protocol: CAN11_500, powertrain: ICE, definitionId: 2008-vehicle. ", strategy)
 }
 
 func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_MatchPowertrainProtocol() {
@@ -615,7 +615,7 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_MatchPowert
 	require.NoError(s.T(), err)
 	assert.NotNil(s.T(), fetchedTemplate)
 	assert.Equal(s.T(), template.TemplateName, fetchedTemplate.TemplateName)
-	assert.Equal(s.T(), "protocol and powertrain match, default", strategy)
+	assert.Equal(s.T(), "protocol and powertrain match, default. protocol: CAN29_500, powertrain: HEV, definitionId: non-existing-def-id. ", strategy)
 }
 
 func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_DefaultMatch() {
@@ -660,7 +660,7 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_DefaultMatc
 	require.NoError(s.T(), err)
 	assert.NotNil(s.T(), fetchedTemplate)
 	assert.Equal(s.T(), defaultTemplate.TemplateName, fetchedTemplate.TemplateName)
-	assert.Equal(s.T(), "protocol and powertrain match, default", strategy)
+	assert.Equal(s.T(), "protocol and powertrain match, default. protocol: CAN11_500, powertrain: ICE, definitionId: non-existing-def-id. ", strategy)
 }
 
 func Test_deviceTemplateService_buildConfigRoute(t *testing.T) {
