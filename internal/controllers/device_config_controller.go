@@ -548,8 +548,8 @@ func modelMatch(modelList types.StringArray, modelName string) bool {
 	return false
 }
 
-func isFwUpToDate(latest, current string, manufTokenId uint64) bool {
-	if manufTokenId != 142 { // anything not hashdog updates OTA so this should be true
+func isFwUpToDate(latest, current string, manufTokenID uint64) bool {
+	if manufTokenID > 0 && manufTokenID != 142 { // anything not hashdog updates OTA so this should be true
 		return true
 		// todo: this is handled by device definition metadata `deviceUpdateViaBLE`, ideally directly from Mobile App / client
 	}
