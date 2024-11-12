@@ -397,6 +397,12 @@ func (d *DeviceConfigController) GetConfigStatusByEthAddr(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": fmt.Sprintf("no connected user device found for EthAddr: %s", ethAddr)})
 	}
 
+	manufTokenID := uint64(0)
+	if ud.AftermarketDevice != nil {
+		manufTokenID = ud.AftermarketDevice.TokenId
+		d.log.Warn().Msgf("no aftermarket device attached to user_device: %d", ud.TokenId)
+	}
+
 	dts, err := models.DeviceTemplateStatuses(models.DeviceTemplateStatusWhere.DeviceEthAddr.EQ(addr.Bytes())).One(c.Context(), d.dbs().Reader)
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
@@ -427,7 +433,7 @@ func (d *DeviceConfigController) GetConfigStatusByEthAddr(c *fiber.Ctx) error {
 	}
 	resp := DeviceTemplateStatusResponse{
 		IsTemplateUpToDate: isTemplateUpdated,
-		IsFirmwareUpToDate: isFwUpToDate(latestFirmwareStr, deviceFWVers),
+		IsFirmwareUpToDate: isFwUpToDate(latestFirmwareStr, deviceFWVers, manufTokenID),
 		FirmwareVersion:    deviceFWVers,
 	}
 	if dts != nil {
@@ -542,7 +548,11 @@ func modelMatch(modelList types.StringArray, modelName string) bool {
 	return false
 }
 
-func isFwUpToDate(latest, current string) bool {
+func isFwUpToDate(latest, current string, manufTokenId uint64) bool {
+	if manufTokenId != 142 { // anything not hashdog updates OTA so this should be true
+		return true
+		// todo: this is handled by device definition metadata `deviceUpdateViaBLE`, ideally directly from Mobile App / client
+	}
 	if len(latest) > 1 && len(current) > 1 {
 		if latest[0:1] != "v" {
 			latest = "v" + latest
