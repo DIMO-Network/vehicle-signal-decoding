@@ -4,7 +4,8 @@ import (
 	"context"
 	"strings"
 
-	"github.com/DIMO-Network/model-garage/pkg/schema"
+	nativestatus "github.com/DIMO-Network/model-garage/pkg/nativestatus/schema"
+	vssschema "github.com/DIMO-Network/model-garage/pkg/schema"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
@@ -37,10 +38,10 @@ func SyncCovesaSignalNames(ctx context.Context, logger zerolog.Logger, config *c
 		return
 	}
 
-	definitions := []byte(schema.DefinitionsYAML())
+	definitions := []byte(nativestatus.DefinitionsYAML())
 
-	covesaSignals := strings.NewReader(schema.VssRel42DIMO())
-	signals, err := schema.LoadSignalsCSV(covesaSignals)
+	covesaSignals := strings.NewReader(vssschema.VssRel42DIMO())
+	signals, err := vssschema.LoadSignalsCSV(covesaSignals)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("failed to load covesa signals")
 		return

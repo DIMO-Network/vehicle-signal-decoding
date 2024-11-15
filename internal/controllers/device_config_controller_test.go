@@ -740,6 +740,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigStatusByEthAddr_DeviceDat
 		CountryCode:        "USA",
 		PowerTrainType:     "ICE",
 		CANProtocol:        "6",
+		DefinitionId:       "ford_mustang_2020",
 	}
 	s.mockUserDevicesSvc.EXPECT().GetUserDeviceByEthAddr(gomock.Any(), common2.HexToAddress(ethAddr)).Return(testUD, nil)
 	s.mockDeviceTemplateSvc.EXPECT().ResolveDeviceConfiguration(gomock.Any(), testUD, nil).Return(&device.ConfigResponse{
@@ -764,7 +765,6 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigStatusByEthAddr_DeviceDat
 	var receivedResp DeviceTemplateStatusResponse
 	err = json.Unmarshal(body, &receivedResp)
 	if !assert.NoError(s.T(), err) {
-		//todo: models: failed to execute a one query for device_template_status: bind failed to execute query: context canceled
 		fmt.Println(string(body))
 		s.T().FailNow()
 	}
@@ -980,6 +980,7 @@ func Test_isFwUpToDate(t *testing.T) {
 	type args struct {
 		latest  string
 		current string
+		manufID uint64
 	}
 	tests := []struct {
 		name string
@@ -1003,6 +1004,15 @@ func Test_isFwUpToDate(t *testing.T) {
 			want: true,
 		},
 		{
+			name: "up to date b/c not hashdog",
+			args: args{
+				latest:  "v0.8.5",
+				current: "v0.8.1",
+				manufID: uint64(137),
+			},
+			want: true,
+		},
+		{
 			name: "not up to date",
 			args: args{
 				latest:  "v0.8.5",
@@ -1013,7 +1023,7 @@ func Test_isFwUpToDate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equalf(t, tt.want, isFwUpToDate(tt.args.latest, tt.args.current), "isFwUpToDate(%v, %v)", tt.args.latest, tt.args.current)
+			assert.Equalf(t, tt.want, isFwUpToDate(tt.args.latest, tt.args.current, tt.args.manufID), "isFwUpToDate(%v, %v)", tt.args.latest, tt.args.current)
 		})
 	}
 }

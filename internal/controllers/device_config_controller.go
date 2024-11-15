@@ -101,7 +101,7 @@ func (d *DeviceConfigController) GetPIDsByTemplate(c *fiber.Ctx) error {
 	// split out version
 	templateName, _ := parseOutTemplateAndVersion(templateNameWithVersion)
 	// ignore version for now since we're not really using it
-	pidConfigs, template, err := queries.GetPidsByTemplate(c.Context(), d.dbs, &queries.GetPidsQueryRequest{
+	pidConfigs, template, err := queries.GetPidsByTemplate(c.UserContext(), d.dbs, &queries.GetPidsQueryRequest{
 		TemplateName: templateName,
 	})
 	if err != nil {
@@ -193,7 +193,7 @@ func (d *DeviceConfigController) GetDeviceSettingsByName(c *fiber.Ctx) error {
 	name, _ := parseOutTemplateAndVersion(nameWithVersion)
 	// ignore version for now since we're not really using it
 
-	dbDeviceSettings, err := models.FindDeviceSetting(c.Context(), d.dbs().Reader, name)
+	dbDeviceSettings, err := models.FindDeviceSetting(c.UserContext(), d.dbs().Reader, name)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return fiber.NewError(fiber.StatusNotFound, "No Device Settings data found with name: "+name)
@@ -261,14 +261,14 @@ func (d *DeviceConfigController) GetDBCFileByTemplateName(c *fiber.Ctx) error {
 	templateNameWithVersion := c.Params("templateName")
 	templateName, _ := parseOutTemplateAndVersion(templateNameWithVersion)
 	// ignore version since not really using right now
-	templateNames, _, err := queries.GetAllParentTemplates(c.Context(), d.dbs, templateName)
+	templateNames, _, err := queries.GetAllParentTemplates(c.UserContext(), d.dbs, templateName)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
 	dbcFiles, err := models.DBCFiles(
 		qm.WhereIn("template_name IN ?", queries.ToAnySlice(templateNames)...),
-	).All(c.Context(), d.dbs().Reader)
+	).All(c.UserContext(), d.dbs().Reader)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
@@ -300,9 +300,9 @@ func (d *DeviceConfigController) GetConfigURLsFromVIN(c *fiber.Ctx) error {
 	vin := c.Params("vin")
 	protocol := c.Query("protocol", "")
 
-	ud, err := d.userDeviceSvc.GetUserDeviceByVIN(c.Context(), vin)
+	ud, err := d.userDeviceSvc.GetUserDeviceByVIN(c.UserContext(), vin)
 	if err != nil || ud == nil {
-		definitionResp, err := d.deviceDefSvc.DecodeVIN(c.Context(), vin)
+		definitionResp, err := d.deviceDefSvc.DecodeVIN(c.UserContext(), vin)
 		if err != nil || definitionResp == nil {
 			d.log.Err(err).Str("func", "GetConfigURLsFromVIN").Msgf("failed to DecodeVIN when trying to get configs")
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": fmt.Sprintf("could not decode VIN, contact support if you're sure this is valid VIN: %s", vin)})
@@ -346,7 +346,7 @@ func (d *DeviceConfigController) GetConfigURLsFromEthAddr(c *fiber.Ctx) error {
 	address := common2.HexToAddress(ethAddr)
 
 	// first check for direct mapping
-	directConfig := d.deviceTemplateService.FindDirectDeviceToTemplateConfig(c.Context(), address)
+	directConfig := d.deviceTemplateService.FindDirectDeviceToTemplateConfig(c.UserContext(), address)
 	if directConfig != nil {
 		d.log.Debug().Str("ethAddr", ethAddr).Msgf("template configuration urls for eth addr %s. strategy: direct. dbc: %s, pids: %s, settings: %s",
 			ethAddr, directConfig.DbcURL, directConfig.PidURL, directConfig.DeviceSettingURL)
@@ -358,7 +358,7 @@ func (d *DeviceConfigController) GetConfigURLsFromEthAddr(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": fmt.Sprintf("no minted vehicle for device EthAddr: %s", ethAddr)})
 	}
 	// we still need this to get the powertrain
-	ud, err := d.userDeviceSvc.GetUserDeviceByEthAddr(c.Context(), address)
+	ud, err := d.userDeviceSvc.GetUserDeviceByEthAddr(c.UserContext(), address)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": fmt.Sprintf("no connected user device found for EthAddr: %s", ethAddr)})
 	}
@@ -392,12 +392,18 @@ func (d *DeviceConfigController) GetConfigStatusByEthAddr(c *fiber.Ctx) error {
 	addr := common2.HexToAddress(ethAddr)
 
 	// we use this to know what the config should be
-	ud, err := d.userDeviceSvc.GetUserDeviceByEthAddr(c.Context(), addr)
+	ud, err := d.userDeviceSvc.GetUserDeviceByEthAddr(c.UserContext(), addr)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": fmt.Sprintf("no connected user device found for EthAddr: %s", ethAddr)})
 	}
 
-	dts, err := models.DeviceTemplateStatuses(models.DeviceTemplateStatusWhere.DeviceEthAddr.EQ(addr.Bytes())).One(c.Context(), d.dbs().Reader)
+	manufTokenID := uint64(0)
+	if ud.AftermarketDevice != nil {
+		manufTokenID = ud.AftermarketDevice.TokenId
+		d.log.Warn().Msgf("no aftermarket device attached to user_device: %d", ud.TokenId)
+	}
+
+	dts, err := models.DeviceTemplateStatuses(models.DeviceTemplateStatusWhere.DeviceEthAddr.EQ(addr.Bytes())).One(c.UserContext(), d.dbs().Reader)
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
 			return err
@@ -427,7 +433,7 @@ func (d *DeviceConfigController) GetConfigStatusByEthAddr(c *fiber.Ctx) error {
 	}
 	resp := DeviceTemplateStatusResponse{
 		IsTemplateUpToDate: isTemplateUpdated,
-		IsFirmwareUpToDate: isFwUpToDate(latestFirmwareStr, deviceFWVers),
+		IsFirmwareUpToDate: isFwUpToDate(latestFirmwareStr, deviceFWVers, manufTokenID),
 		FirmwareVersion:    deviceFWVers,
 	}
 	if dts != nil {
@@ -466,7 +472,7 @@ func (d *DeviceConfigController) PatchConfigStatusByEthAddr(c *fiber.Ctx) error 
 		payload.DeviceSettingURL = payload.SettingsURL
 	}
 
-	_, err = d.deviceTemplateService.StoreDeviceConfigUsed(c.Context(), addr, payload.DbcURL, payload.PidURL, payload.DeviceSettingURL, payload.FirmwareVersionApplied)
+	_, err = d.deviceTemplateService.StoreDeviceConfigUsed(c.UserContext(), addr, payload.DbcURL, payload.PidURL, payload.DeviceSettingURL, payload.FirmwareVersionApplied)
 	if err != nil {
 		return err
 	}
@@ -542,7 +548,11 @@ func modelMatch(modelList types.StringArray, modelName string) bool {
 	return false
 }
 
-func isFwUpToDate(latest, current string) bool {
+func isFwUpToDate(latest, current string, manufTokenID uint64) bool {
+	if manufTokenID > 0 && manufTokenID != 142 { // anything not hashdog updates OTA so this should be true
+		return true
+		// todo: this is handled by device definition metadata `deviceUpdateViaBLE`, ideally directly from Mobile App / client
+	}
 	if len(latest) > 1 && len(current) > 1 {
 		if latest[0:1] != "v" {
 			latest = "v" + latest
