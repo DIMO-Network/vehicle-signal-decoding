@@ -72,7 +72,7 @@ func (i *identityAPIService) GetDefinitionByID(definitionID string) (*DeviceDefi
 		return nil, err
 	}
 	if wrapper.Data.DeviceDefinition.Model == "" {
-		return nil, ErrNotFound
+		return nil, errors.Wrapf(ErrNotFound, "identity-api did not find definition for id: %s", definitionID)
 	}
 	return &wrapper.Data.DeviceDefinition, nil
 }
