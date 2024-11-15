@@ -740,6 +740,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigStatusByEthAddr_DeviceDat
 		CountryCode:        "USA",
 		PowerTrainType:     "ICE",
 		CANProtocol:        "6",
+		DefinitionId:       "ford_mustang_2020",
 	}
 	s.mockUserDevicesSvc.EXPECT().GetUserDeviceByEthAddr(gomock.Any(), common2.HexToAddress(ethAddr)).Return(testUD, nil)
 	s.mockDeviceTemplateSvc.EXPECT().ResolveDeviceConfiguration(gomock.Any(), testUD, nil).Return(&device.ConfigResponse{
@@ -764,7 +765,6 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigStatusByEthAddr_DeviceDat
 	var receivedResp DeviceTemplateStatusResponse
 	err = json.Unmarshal(body, &receivedResp)
 	if !assert.NoError(s.T(), err) {
-		//todo: models: failed to execute a one query for device_template_status: bind failed to execute query: context canceled
 		fmt.Println(string(body))
 		s.T().FailNow()
 	}
