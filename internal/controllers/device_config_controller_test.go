@@ -489,12 +489,13 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLsFromVIN_DecodeVIN() {
 	require.NoError(s.T(), err)
 
 	mockedDeviceDefinition := &p_grpc.GetDeviceDefinitionItemResponse{
-		DeviceDefinitionId: ksuid.New().String(),
-		Type: &p_grpc.DeviceType{
-			Year:      2020,
-			MakeSlug:  "Ford",
-			ModelSlug: "Mustang",
+		Id:   "ford_mustang_2020",
+		Year: 2020,
+		Make: &p_grpc.DeviceMake{
+			Name:     "Ford",
+			NameSlug: "ford",
 		},
+		Model: "Mustang",
 		DeviceAttributes: []*p_grpc.DeviceTypeAttribute{{
 			Name:  "powertrain_type",
 			Value: "HEV",
@@ -512,12 +513,12 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLsFromVIN_DecodeVIN() {
 	s.mockUserDevicesSvc.EXPECT().GetUserDeviceByVIN(gomock.Any(), vin).Return(nil, nil)
 
 	s.mockDeviceDefSvc.EXPECT().DecodeVIN(gomock.Any(), vin).Return(&p_grpc.DecodeVinResponse{
-		DeviceDefinitionId: mockedDeviceDefinition.DeviceDefinitionId,
+		DefinitionId: mockedDeviceDefinition.Id,
 	}, nil)
 
 	s.mockDeviceTemplateSvc.EXPECT().ResolveDeviceConfiguration(gomock.Any(), &pb.UserDevice{
-		Vin:                &vin,
-		DeviceDefinitionId: mockedDeviceDefinition.DeviceDefinitionId,
+		Vin:          &vin,
+		DefinitionId: mockedDeviceDefinition.Id,
 		//PowerTrainType:     "HEV",
 	}, nil).Return(&device.ConfigResponse{
 		PidURL:           "http://localhost:3000/v1/device-config/pids/some-template@v1.0.0",
@@ -607,24 +608,26 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLsFromVIN_ProtocolOverr
 	require.NoError(s.T(), err)
 
 	mockedDeviceDefinition := &p_grpc.GetDeviceDefinitionItemResponse{
-		DeviceDefinitionId: ksuid.New().String(),
-		Type: &p_grpc.DeviceType{
-			Year:      2020,
-			MakeSlug:  "Ford",
-			ModelSlug: "Mustang",
+		Id: "ford_mustang_2020",
+		Make: &p_grpc.DeviceMake{
+			Name:     "Ford",
+			NameSlug: "ford",
 		},
+		Year:  2020,
+		Model: "Mustang",
 		DeviceAttributes: []*p_grpc.DeviceTypeAttribute{{
 			Name:  "powertrain_type",
 			Value: "HEV",
 		}},
 	}
 	s.mockUserDevicesSvc.EXPECT().GetUserDeviceByVIN(gomock.Any(), vin).Return(nil, errors.New("user device not found"))
-	s.mockDeviceDefSvc.EXPECT().DecodeVIN(gomock.Any(), vin).Return(&p_grpc.DecodeVinResponse{DeviceDefinitionId: mockedDeviceDefinition.DeviceDefinitionId}, nil)
+	s.mockDeviceDefSvc.EXPECT().DecodeVIN(gomock.Any(), vin).Return(&p_grpc.DecodeVinResponse{
+		DefinitionId: mockedDeviceDefinition.Id}, nil)
 
 	s.mockDeviceTemplateSvc.EXPECT().ResolveDeviceConfiguration(gomock.Any(), &pb.UserDevice{
-		Vin:                &vin,
-		DeviceDefinitionId: mockedDeviceDefinition.DeviceDefinitionId,
-		CANProtocol:        "7",
+		Vin:          &vin,
+		DefinitionId: mockedDeviceDefinition.Id,
+		CANProtocol:  "7",
 	}, nil).Return(&device.ConfigResponse{
 		PidURL:           "http://localhost:3000/v1/device-config/pids/some-template-protocol-override@v1.0.0",
 		DeviceSettingURL: "http://localhost:3000/v1/device-config/settings/default-hev-protocol-override@v1.0.0",
@@ -687,25 +690,24 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLsFromVIN_FallbackLogic
 	err = matchedTemplate.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
 	require.NoError(s.T(), err)
 
-	mockedDeviceDefinition := &p_grpc.GetDeviceDefinitionItemResponse{
-		DeviceDefinitionId: ksuid.New().String(),
-		Type: &p_grpc.DeviceType{
-			Year:      2020,
-			MakeSlug:  "Ford",
-			ModelSlug: "Mustang",
-		},
+	mockedDD := &p_grpc.GetDeviceDefinitionItemResponse{
+		Id:    "ford_mustang_2020",
+		Make:  &p_grpc.DeviceMake{Name: "Ford", NameSlug: "ford"},
+		Year:  2020,
+		Model: "Mustang",
 		DeviceAttributes: []*p_grpc.DeviceTypeAttribute{{
 			Name:  "powertrain_type",
 			Value: "BEV",
 		}},
 	}
 	s.mockUserDevicesSvc.EXPECT().GetUserDeviceByVIN(gomock.Any(), vin).Return(nil, errors.New("user device not found"))
-	s.mockDeviceDefSvc.EXPECT().DecodeVIN(gomock.Any(), vin).Return(&p_grpc.DecodeVinResponse{DeviceDefinitionId: mockedDeviceDefinition.DeviceDefinitionId}, nil)
+	s.mockDeviceDefSvc.EXPECT().DecodeVIN(gomock.Any(), vin).Return(&p_grpc.DecodeVinResponse{
+		DefinitionId: mockedDD.Id}, nil)
 
 	s.mockDeviceTemplateSvc.EXPECT().ResolveDeviceConfiguration(gomock.Any(), &pb.UserDevice{
-		Vin:                &vin,
-		DeviceDefinitionId: mockedDeviceDefinition.DeviceDefinitionId,
-		CANProtocol:        "7",
+		Vin:          &vin,
+		DefinitionId: mockedDD.Id,
+		CANProtocol:  "7",
 	}, nil).Return(&device.ConfigResponse{
 		PidURL:           "http://localhost:3000/v1/device-config/pids/parent-template@v1.0.0",
 		DeviceSettingURL: "http://localhost:3000/v1/device-config/settings/parent-settings-fallback@v1.0.0",
@@ -732,15 +734,14 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigStatusByEthAddr_DeviceDat
 	s.controller.fwVersionAPI = mockHTTPClientFwVersion{}
 
 	testUD := &pb.UserDevice{
-		Id:                 ksuid.New().String(),
-		UserId:             ksuid.New().String(),
-		Vin:                &vin,
-		DeviceDefinitionId: ksuid.New().String(),
-		VinConfirmed:       true,
-		CountryCode:        "USA",
-		PowerTrainType:     "ICE",
-		CANProtocol:        "6",
-		DefinitionId:       "ford_mustang_2020",
+		Id:             ksuid.New().String(),
+		UserId:         ksuid.New().String(),
+		Vin:            &vin,
+		VinConfirmed:   true,
+		CountryCode:    "USA",
+		PowerTrainType: "ICE",
+		CANProtocol:    "6",
+		DefinitionId:   "ford_mustang_2020",
 	}
 	s.mockUserDevicesSvc.EXPECT().GetUserDeviceByEthAddr(gomock.Any(), common2.HexToAddress(ethAddr)).Return(testUD, nil)
 	s.mockDeviceTemplateSvc.EXPECT().ResolveDeviceConfiguration(gomock.Any(), testUD, nil).Return(&device.ConfigResponse{
@@ -781,14 +782,14 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigStatusByEthAddr_Templates
 	s.controller.fwVersionAPI = mockHTTPClientFwVersion{}
 
 	testUD := &pb.UserDevice{
-		Id:                 ksuid.New().String(),
-		UserId:             ksuid.New().String(),
-		Vin:                &vin,
-		DeviceDefinitionId: ksuid.New().String(),
-		VinConfirmed:       true,
-		CountryCode:        "USA",
-		PowerTrainType:     "ICE",
-		CANProtocol:        "6",
+		Id:             ksuid.New().String(),
+		UserId:         ksuid.New().String(),
+		Vin:            &vin,
+		DefinitionId:   "ford_mustang_2020",
+		VinConfirmed:   true,
+		CountryCode:    "USA",
+		PowerTrainType: "ICE",
+		CANProtocol:    "6",
 	}
 	s.mockUserDevicesSvc.EXPECT().GetUserDeviceByEthAddr(gomock.Any(), common2.HexToAddress(ethAddr)).Return(testUD, nil)
 	s.mockDeviceTemplateSvc.EXPECT().ResolveDeviceConfiguration(gomock.Any(), testUD, nil).Return(&device.ConfigResponse{
