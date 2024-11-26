@@ -435,6 +435,10 @@ func (d *DeviceConfigController) GetConfigStatusByEthAddr(c *fiber.Ctx) error {
 		IsFirmwareUpToDate: isFwUpToDate(latestFirmwareStr, deviceFWVers, manufTokenID),
 		FirmwareVersion:    deviceFWVers,
 	}
+	// ruptela special case since we don't manage the templates
+	if manufTokenID == 142 {
+		resp.IsTemplateUpToDate = true
+	}
 	if dts != nil {
 		resp.Template.DbcURL = dts.TemplateDBCURL.String
 		resp.Template.PidURL = dts.TemplatePidURL.String
@@ -548,6 +552,7 @@ func modelMatch(modelList types.StringArray, modelName string) bool {
 }
 
 func isFwUpToDate(latest, current string, manufTokenID uint64) bool {
+	// if ruptela return true
 	if manufTokenID > 0 && manufTokenID != 142 { // anything not hashdog updates OTA so this should be true
 		return true
 		// todo: this is handled by device definition metadata `deviceUpdateViaBLE`, ideally directly from Mobile App / client
