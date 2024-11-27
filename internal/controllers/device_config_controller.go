@@ -435,8 +435,8 @@ func (d *DeviceConfigController) GetConfigStatusByEthAddr(c *fiber.Ctx) error {
 		IsFirmwareUpToDate: isFwUpToDate(latestFirmwareStr, deviceFWVers, manufTokenID),
 		FirmwareVersion:    deviceFWVers,
 	}
-	// ruptela special case since we don't manage the templates
-	if manufTokenID == 142 {
+	// macaron special case since only one where we manage the templates via the mobile app
+	if manufTokenID != 142 {
 		resp.IsTemplateUpToDate = true
 	}
 	if dts != nil {
