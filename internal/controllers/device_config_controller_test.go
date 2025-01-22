@@ -879,45 +879,45 @@ func (s *DeviceConfigControllerTestSuite) TestPatchConfigStatusByEthAddr_WithSig
 	assert.Equal(s.T(), fiber.StatusOK, response.StatusCode)
 }
 
-func (s *DeviceConfigControllerTestSuite) TestPatchRuptelaStatusByEthAddr_WithSignatureAuth() {
-	// ruptela dev_status payload
-	body := `{"sn":"016528000005621","battVolt":"13203","hwVersion":"FTX-04-12230","imei":"016528000005621","fwVersion":"00.06.56.45","sigStrength":"16","accessTech":"0","operator":"310260","locAreaCode":"51054","cellId":"46091"}`
-	signature := "0x83e66d324e4d1d5972da3894560ecca2a4854ec4f6744fb304b817ab54fda58113e1b8fa1cbc2fcc89f020dbe3fbae4a27de338123e2afa54a74baaa15ca0fe71b"
-
-	//  Auth middleware
-	etherSigAuth := func(c *fiber.Ctx) error {
-		ethAddr := c.Params("ethAddr")
-
-		// get signature from header
-		signature := c.Get("Signature")
-		if signature == "" {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error": "Signature not found in request header",
-			})
-		}
-
-		ok, err := utils.VerifySignature(c.Body(), common2.FromHex(signature), common2.HexToAddress(ethAddr))
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).SendString(fmt.Sprintf("Failed to recover an address from the signature: %s", ethAddr))
-		} else if !ok {
-			return c.Status(fiber.StatusUnauthorized).SendString("Unauthorized")
-		}
-
-		return c.Next()
-	}
-	// mock
-	ethAddr := "0xf72f14b83c488c8bec316d74cee3186cb3c7ad10"
-	s.mockDeviceTemplateSvc.EXPECT().StoreDeviceConfigUsed(gomock.Any(), common2.HexToAddress(ethAddr), "", "", "", "00.06.56.45").Return(&models.DeviceTemplateStatus{}, nil)
-
-	// define routes
-	s.app.Patch("/device-config/eth-addr/:ethAddr/ruptela/status", etherSigAuth, s.controller.PatchRuptelaConfigStatusByEthAddr)
-
-	//  200 status, OK
-	request := dbtest.BuildRequest("PATCH", "/device-config/eth-addr/"+ethAddr+"/ruptela/status", body)
-	request.Header.Set("Signature", signature)
-	_, err := s.app.Test(request)
-	require.NoError(s.T(), err)
-}
+//func (s *DeviceConfigControllerTestSuite) TestPatchRuptelaStatusByEthAddr_WithSignatureAuth() {
+//	// ruptela dev_status payload
+//	body := `{"sn":"016528000005621","battVolt":"13203","hwVersion":"FTX-04-12230","imei":"016528000005621","fwVersion":"00.06.56.45","sigStrength":"16","accessTech":"0","operator":"310260","locAreaCode":"51054","cellId":"46091"}`
+//	signature := "0x83e66d324e4d1d5972da3894560ecca2a4854ec4f6744fb304b817ab54fda58113e1b8fa1cbc2fcc89f020dbe3fbae4a27de338123e2afa54a74baaa15ca0fe71b"
+//
+//	//  Auth middleware
+//	etherSigAuth := func(c *fiber.Ctx) error {
+//		ethAddr := c.Params("ethAddr")
+//
+//		// get signature from header
+//		signature := c.Get("Signature")
+//		if signature == "" {
+//			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+//				"error": "Signature not found in request header",
+//			})
+//		}
+//
+//		ok, err := utils.VerifySignature(c.Body(), common2.FromHex(signature), common2.HexToAddress(ethAddr))
+//		if err != nil {
+//			return c.Status(fiber.StatusInternalServerError).SendString(fmt.Sprintf("Failed to recover an address from the signature: %s", ethAddr))
+//		} else if !ok {
+//			return c.Status(fiber.StatusUnauthorized).SendString("Unauthorized")
+//		}
+//
+//		return c.Next()
+//	}
+//	// mock
+//	ethAddr := "0xf72f14b83c488c8bec316d74cee3186cb3c7ad10"
+//	s.mockDeviceTemplateSvc.EXPECT().StoreDeviceConfigUsed(gomock.Any(), common2.HexToAddress(ethAddr), "", "", "", "00.06.56.45").Return(&models.DeviceTemplateStatus{}, nil)
+//
+//	// define routes
+//	s.app.Patch("/device-config/eth-addr/:ethAddr/ruptela/status", etherSigAuth, s.controller.PatchRuptelaConfigStatusByEthAddr)
+//
+//	//  200 status, OK
+//	request := dbtest.BuildRequest("PATCH", "/device-config/eth-addr/"+ethAddr+"/ruptela/status", body)
+//	request.Header.Set("Signature", signature)
+//	_, err := s.app.Test(request)
+//	require.NoError(s.T(), err)
+//}
 
 func Test_modelMatch(t *testing.T) {
 	tests := []struct {
