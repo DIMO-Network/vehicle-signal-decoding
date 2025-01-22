@@ -70,6 +70,29 @@ definitions:
       version:
         type: string
     type: object
+  internal_controllers.DeviceRuptelaStatusPatch:
+    properties:
+      accessTech:
+        type: string
+      battVolt:
+        type: string
+      cellId:
+        type: string
+      fwVersion:
+        type: string
+      hwVersion:
+        type: string
+      imei:
+        type: string
+      locAreaCode:
+        type: string
+      operator:
+        type: string
+      sigStrength:
+        type: string
+      sn:
+        type: string
+    type: object
   internal_controllers.DeviceTemplateStatusPatch:
     properties:
       dbcUrl:
@@ -256,7 +279,7 @@ paths:
         name: config
         required: true
         schema:
-          $ref: '#/definitions/internal_controllers.DeviceTemplateStatusPatch'
+          $ref: '#/definitions/internal_controllers.DeviceRuptelaStatusPatch'
       produces:
       - application/json
       responses:

@@ -501,7 +501,7 @@ func (d *DeviceConfigController) PatchHwConfigStatusByEthAddr(c *fiber.Ctx) erro
 // @Success      200 "Successfully updated"
 // @Failure 500  "unable to parse request or storage failure"
 // @Param        ethAddr  path   string  true  "Ethereum Address"
-// @Param        config body DeviceTemplateStatusPatch true "set any properties that were updated on the device"
+// @Param        config body DeviceRuptelaStatusPatch true "set any properties that were updated on the device"
 // @Security     SignatureAuth
 // @Router       /device-config/eth-addr/{ethAddr}/ruptela/status [patch]
 func (d *DeviceConfigController) PatchRuptelaConfigStatusByEthAddr(c *fiber.Ctx) error {
@@ -563,6 +563,19 @@ type DeviceTemplateStatusPatch struct {
 	// SettingsUrl exists for backwards compatibiltiy
 	// Deprecated
 	SettingsURL string `json:"settingsUrl"`
+}
+
+type DeviceRuptelaStatusPatch struct {
+	SN          string `json:"sn"`
+	BattVolt    string `json:"battVolt"`
+	HWVersion   string `json:"hwVersion"`
+	IMEI        string `json:"imei"`
+	FWVersion   string `json:"fwVersion"`
+	SigStrength string `json:"sigStrength"`
+	AccessTech  string `json:"accessTech"`
+	Operator    string `json:"operator"`
+	LocAreaCode string `json:"locAreaCode"`
+	CellID      string `json:"cellId"`
 }
 
 func padByteArray(input []byte, targetLength int) []byte {

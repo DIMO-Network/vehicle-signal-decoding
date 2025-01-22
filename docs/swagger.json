@@ -210,7 +210,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_controllers.DeviceTemplateStatusPatch"
+                            "$ref": "#/definitions/internal_controllers.DeviceRuptelaStatusPatch"
                         }
                     }
                 ],
@@ -539,6 +539,41 @@
                     "type": "string"
                 },
                 "version": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_controllers.DeviceRuptelaStatusPatch": {
+            "type": "object",
+            "properties": {
+                "accessTech": {
+                    "type": "string"
+                },
+                "battVolt": {
+                    "type": "string"
+                },
+                "cellId": {
+                    "type": "string"
+                },
+                "fwVersion": {
+                    "type": "string"
+                },
+                "hwVersion": {
+                    "type": "string"
+                },
+                "imei": {
+                    "type": "string"
+                },
+                "locAreaCode": {
+                    "type": "string"
+                },
+                "operator": {
+                    "type": "string"
+                },
+                "sigStrength": {
+                    "type": "string"
+                },
+                "sn": {
                     "type": "string"
                 }
             }
