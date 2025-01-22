@@ -182,6 +182,48 @@
                 }
             }
         },
+        "/device-config/eth-addr/{ethAddr}/ruptela/status": {
+            "patch": {
+                "security": [
+                    {
+                        "SignatureAuth": []
+                    }
+                ],
+                "description": "Set what firmware was applied. None of the properties are required. Will not be set if not passed in. Endpoint is meant only for hardware devices self-reporting their template update.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "device-config"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Ethereum Address",
+                        "name": "ethAddr",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "set any properties that were updated on the device",
+                        "name": "config",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_controllers.DeviceTemplateStatusPatch"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully updated"
+                    },
+                    "500": {
+                        "description": "unable to parse request or storage failure"
+                    }
+                }
+            }
+        },
         "/device-config/eth-addr/{ethAddr}/status": {
             "get": {
                 "description": "Helps client determine if template (pids, dbc, settings) are up to date or not for the device with the given eth addr.",
