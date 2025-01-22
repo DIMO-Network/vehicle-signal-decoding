@@ -516,7 +516,7 @@ func (d *DeviceConfigController) PatchRuptelaConfigStatusByEthAddr(c *fiber.Ctx)
 		return err
 	}
 
-	// Set PidURL, DeviceSettingURL and dbcURL to null
+	// Set PidURL, DeviceSettingURL and dbcURL to empty
 	pidURL := ""
 	deviceSettingURL := ""
 	dbcURL := ""
