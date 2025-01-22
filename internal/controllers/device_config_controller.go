@@ -516,13 +516,13 @@ func (d *DeviceConfigController) PatchRuptelaConfigStatusByEthAddr(c *fiber.Ctx)
 		return err
 	}
 
-	// Set PidURL and DeviceSettingURL to null
+	// Set PidURL, DeviceSettingURL and dbcURL to null
 	pidURL := ""
 	deviceSettingURL := ""
-	dbcUrl := ""
+	dbcURL := ""
 
 	// Call StoreDeviceConfigUsed with the extracted fwVersion
-	_, err = d.deviceTemplateService.StoreDeviceConfigUsed(c.UserContext(), addr, dbcUrl, pidURL, deviceSettingURL, payload.FwVersion)
+	_, err = d.deviceTemplateService.StoreDeviceConfigUsed(c.UserContext(), addr, dbcURL, pidURL, deviceSettingURL, payload.FwVersion)
 	if err != nil {
 		return err
 	}
