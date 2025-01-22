@@ -2,6 +2,8 @@ package api
 
 import (
 	"context"
+	utils "github.com/DIMO-Network/shared/crypto"
+	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/pkg/errors"
 
@@ -15,7 +17,6 @@ import (
 
 	usersapi "github.com/DIMO-Network/users-api/pkg/grpc"
 
-	"github.com/DIMO-Network/vehicle-signal-decoding/internal/utils"
 	jwtware "github.com/gofiber/contrib/jwt"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways"
@@ -171,7 +172,7 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 			})
 		}
 
-		ok, err := utils.VerifySignature(c.Body(), signature, ethAddr)
+		ok, err := utils.VerifySignature(c.Body(), common.FromHex(signature), common.HexToAddress(ethAddr))
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).SendString(fmt.Sprintf("Failed to recover an address from the signature: %s", ethAddr))
 		} else if !ok {
@@ -188,6 +189,9 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 
 	// Signature authentication
 	v1.Patch("/device-config/eth-addr/:ethAddr/hw/status", etherSigAuth, deviceConfigController.PatchHwConfigStatusByEthAddr)
+
+	// Signature authentication for ruptela devices only
+	v1.Patch("/device-config/eth-addr/:ethAddr/ruptela/status", etherSigAuth, deviceConfigController.PatchRuptelaConfigStatusByEthAddr)
 
 	// Jobs endpoints
 	v1.Get("/device-config/eth-addr/:ethAddr/jobs", etherSigAuth, jobsController.GetJobsFromEthAddr)

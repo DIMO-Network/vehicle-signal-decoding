@@ -494,6 +494,42 @@ func (d *DeviceConfigController) PatchHwConfigStatusByEthAddr(c *fiber.Ctx) erro
 	return d.PatchConfigStatusByEthAddr(c)
 }
 
+// PatchRuptelaConfigStatusByEthAddr godoc
+// @Description  Set what firmware was applied. None of the properties are required. Will not be set if not passed in. Endpoint is meant only for hardware devices self-reporting their template update.
+// @Tags         device-config
+// @Produce      json
+// @Success      200 "Successfully updated"
+// @Failure 500  "unable to parse request or storage failure"
+// @Param        ethAddr  path   string  true  "Ethereum Address"
+// @Param        config body DeviceTemplateStatusPatch true "set any properties that were updated on the device"
+// @Security     SignatureAuth
+// @Router       /device-config/eth-addr/{ethAddr}/ruptela/status [patch]
+func (d *DeviceConfigController) PatchRuptelaConfigStatusByEthAddr(c *fiber.Ctx) error {
+	ethAddr := c.Params("ethAddr")
+	addr := common2.HexToAddress(ethAddr)
+
+	var payload struct {
+		FwVersion string `json:"fwVersion"`
+	}
+	err := c.BodyParser(&payload)
+	if err != nil {
+		return err
+	}
+
+	// Set PidURL and DeviceSettingURL to null
+	pidURL := ""
+	deviceSettingURL := ""
+	dbcUrl := ""
+
+	// Call StoreDeviceConfigUsed with the extracted fwVersion
+	_, err = d.deviceTemplateService.StoreDeviceConfigUsed(c.UserContext(), addr, dbcUrl, pidURL, deviceSettingURL, payload.FwVersion)
+	if err != nil {
+		return err
+	}
+
+	return c.SendStatus(fiber.StatusOK)
+}
+
 func parseOutFWVersion(data *gdata.RawDeviceDataResponse) string {
 	for _, item := range data.Items {
 		v := gjson.GetBytes(item.SignalsJsonData, "fwVersion.value").Str
