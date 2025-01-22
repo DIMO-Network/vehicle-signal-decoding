@@ -566,16 +566,26 @@ type DeviceTemplateStatusPatch struct {
 }
 
 type DeviceRuptelaStatusPatch struct {
-	SN          string `json:"sn"`
-	BattVolt    string `json:"battVolt"`
-	HWVersion   string `json:"hwVersion"`
-	IMEI        string `json:"imei"`
-	FWVersion   string `json:"fwVersion"`
+	// FwVersion version of firmware that was confirmed installed on device
+	FWVersion string `json:"fwVersion"`
+	// ignored, it is only used to validate the signature and authenticate the device
+	SN string `json:"sn"`
+	// ignored, it is only used to validate the signature and authenticate the device
+	BattVolt string `json:"battVolt"`
+	// ignored, it is only used to validate the signature and authenticate the device
+	HWVersion string `json:"hwVersion"`
+	// ignored, it is only used to validate the signature and authenticate the device
+	IMEI string `json:"imei"`
+	// ignored, it is only used to validate the signature and authenticate the device
 	SigStrength string `json:"sigStrength"`
-	AccessTech  string `json:"accessTech"`
-	Operator    string `json:"operator"`
+	// ignored, it is only used to validate the signature and authenticate the device
+	AccessTech string `json:"accessTech"`
+	// ignored, it is only used to validate the signature and authenticate the device
+	Operator string `json:"operator"`
+	// ignored, it is only used to validate the signature and authenticate the device
 	LocAreaCode string `json:"locAreaCode"`
-	CellID      string `json:"cellId"`
+	// ignored, it is only used to validate the signature and authenticate the device
+	CellID string `json:"cellId"`
 }
 
 func padByteArray(input []byte, targetLength int) []byte {
