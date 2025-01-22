@@ -189,7 +189,7 @@
                         "SignatureAuth": []
                     }
                 ],
-                "description": "Set what firmware was applied. None of the properties are required. Will not be set if not passed in. Endpoint is meant only for hardware devices self-reporting their template update.",
+                "description": "Set only by Ruptela device on what firmware was applied. None of the properties are required. Will not be set if not passed in. Endpoint is meant only for Ruptela hardware devices self-reporting their template update.",
                 "produces": [
                     "application/json"
                 ],
