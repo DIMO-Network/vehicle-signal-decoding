@@ -240,6 +240,34 @@ paths:
           description: incorrect eth addr format
       tags:
       - vehicle-signal-decoding
+  /device-config/eth-addr/{ethAddr}/ruptela/status:
+    patch:
+      description: Set only by Ruptela device on what firmware was applied. None of
+        the properties are required. Will not be set if not passed in. Endpoint is
+        meant only for Ruptela hardware devices self-reporting their template update.
+      parameters:
+      - description: Ethereum Address
+        in: path
+        name: ethAddr
+        required: true
+        type: string
+      - description: set any properties that were updated on the device
+        in: body
+        name: config
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully updated
+        "500":
+          description: unable to parse request or storage failure
+      security:
+      - SignatureAuth: []
+      tags:
+      - device-config
   /device-config/eth-addr/{ethAddr}/status:
     get:
       description: Helps client determine if template (pids, dbc, settings) are up
