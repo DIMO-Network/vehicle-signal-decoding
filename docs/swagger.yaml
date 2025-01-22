@@ -70,49 +70,6 @@ definitions:
       version:
         type: string
     type: object
-  internal_controllers.DeviceRuptelaStatusPatch:
-    properties:
-      accessTech:
-        description: ignored, it is only used to validate the signature and authenticate
-          the device
-        type: string
-      battVolt:
-        description: ignored, it is only used to validate the signature and authenticate
-          the device
-        type: string
-      cellId:
-        description: ignored, it is only used to validate the signature and authenticate
-          the device
-        type: string
-      fwVersion:
-        description: FwVersion version of firmware that was confirmed installed on
-          device
-        type: string
-      hwVersion:
-        description: ignored, it is only used to validate the signature and authenticate
-          the device
-        type: string
-      imei:
-        description: ignored, it is only used to validate the signature and authenticate
-          the device
-        type: string
-      locAreaCode:
-        description: ignored, it is only used to validate the signature and authenticate
-          the device
-        type: string
-      operator:
-        description: ignored, it is only used to validate the signature and authenticate
-          the device
-        type: string
-      sigStrength:
-        description: ignored, it is only used to validate the signature and authenticate
-          the device
-        type: string
-      sn:
-        description: ignored, it is only used to validate the signature and authenticate
-          the device
-        type: string
-    type: object
   internal_controllers.DeviceTemplateStatusPatch:
     properties:
       dbcUrl:
@@ -299,7 +256,7 @@ paths:
         name: config
         required: true
         schema:
-          $ref: '#/definitions/internal_controllers.DeviceRuptelaStatusPatch'
+          type: object
       produces:
       - application/json
       responses:
