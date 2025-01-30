@@ -18,7 +18,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.45
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.67.0
 	github.com/docker/go-connections v0.5.0
-	github.com/ethereum/go-ethereum v1.14.11
+	github.com/ethereum/go-ethereum v1.14.13
 	github.com/friendsofgo/errors v0.9.2
 	github.com/gofiber/adaptor/v2 v2.2.1
 	github.com/gofiber/contrib/jwt v1.0.10
@@ -63,8 +63,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.28.4 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.33.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/btcsuite/btcd v0.20.1-beta // indirect
-	github.com/btcsuite/btcd/btcec/v2 v2.3.4 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/containerd/platforms v0.2.1 // indirect
@@ -118,6 +116,7 @@ require (
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
+	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	github.com/sethvargo/go-retry v0.3.0 // indirect
 	github.com/shirou/gopsutil/v3 v3.24.5 // indirect
 	github.com/shoenig/go-m1cpu v0.1.6 // indirect
