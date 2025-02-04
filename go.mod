@@ -9,7 +9,7 @@ require (
 	github.com/DIMO-Network/device-definitions-api v1.2.66
 	github.com/DIMO-Network/devices-api v1.32.5
 	github.com/DIMO-Network/model-garage v0.4.1
-	github.com/DIMO-Network/shared v0.12.5
+	github.com/DIMO-Network/shared v0.12.9
 	github.com/DIMO-Network/users-api v0.9.0
 	github.com/Shopify/sarama v1.38.1
 	github.com/ThreeDotsLabs/watermill v1.4.1
@@ -140,6 +140,7 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/crypto v0.29.0 // indirect
 	golang.org/x/sync v0.9.0 // indirect
+	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/tools v0.27.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240903143218-8af14fe29dc1 // indirect

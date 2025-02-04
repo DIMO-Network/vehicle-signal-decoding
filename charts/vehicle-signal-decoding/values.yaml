@@ -38,6 +38,7 @@ env:
   DB_NAME: vehicle_signal_decoding_api
   DB_MAX_OPEN_CONNECTIONS: '10'
   DB_MAX_IDLE_CONNECTIONS: '3'
+  DB_SSL_MODE: require
   SERVICE_NAME: vehicle-signal-decoding
   JWT_KEY_SET_URL: https://auth.dev.dimo.zone/keys
   DEPLOYMENT_URL: https://vehicle-signal-decoding.dev.dimo.zone
