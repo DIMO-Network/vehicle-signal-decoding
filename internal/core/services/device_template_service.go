@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/DIMO-Network/shared/device"
+	"github.com/DIMO-Network/shared/pkg/device"
 
-	"github.com/DIMO-Network/shared"
+	sharedstrings "github.com/DIMO-Network/shared/pkg/strings"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways"
 
 	common2 "github.com/ethereum/go-ethereum/common"
@@ -308,7 +308,7 @@ func (dts *deviceTemplateService) selectAndFetchTemplate(ctx context.Context, ca
 		// try finding a match by make and/or model
 		for _, tv := range templateVehicles {
 			if tv.MakeSlug.Valid && len(tv.ModelWhitelist) > 0 {
-				if tv.MakeSlug.String == shared.SlugString(mk) && modelMatch(tv.ModelWhitelist, shared.SlugString(model)) {
+				if tv.MakeSlug.String == sharedstrings.SlugString(mk) && modelMatch(tv.ModelWhitelist, sharedstrings.SlugString(model)) {
 					// match by make and models
 					matchedTemplateName = tv.TemplateName
 					strategy += ", makeSlug match, model match"
@@ -316,7 +316,7 @@ func (dts *deviceTemplateService) selectAndFetchTemplate(ctx context.Context, ca
 				}
 			} else if len(tv.ModelWhitelist) == 0 {
 				// match by make only
-				if tv.MakeSlug.String == shared.SlugString(mk) {
+				if tv.MakeSlug.String == sharedstrings.SlugString(mk) {
 					matchedTemplateName = tv.TemplateName
 					strategy += ", makeSlug match"
 				}
@@ -335,7 +335,6 @@ func (dts *deviceTemplateService) selectAndFetchTemplate(ctx context.Context, ca
 				}
 			}
 		}
-
 	}
 
 	// Third, default templates come into play: fallback to query by protocol, 'default' as first word, and powertrain

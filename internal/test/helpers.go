@@ -1,19 +1,12 @@
 package test
 
 import (
-	"context"
-
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
 	"time"
 
-	pb "github.com/DIMO-Network/users-api/pkg/grpc"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/pkg/errors"
@@ -103,37 +96,4 @@ func getLogger(c *fiber.Ctx, d *zerolog.Logger) *zerolog.Logger {
 	}
 
 	return l
-}
-
-//
-//type UsersClient struct {
-//	Store map[string]*pb.User
-//}
-//
-//func (c *UsersClient) GetUser(_ context.Context, in *pb.GetUserRequest, _ ...grpc.CallOption) (*pb.User, error) {
-//	u, ok := c.Store[in.Id]
-//	if !ok {
-//		return nil, status.Error(codes.NotFound, "No user with that id found.")
-//	}
-//	return u, nil
-//}
-
-type UsersClient struct {
-	Store map[string]*pb.User
-}
-
-func (c *UsersClient) GetUserByEthAddr(_ context.Context, _ *pb.GetUserByEthRequest, _ ...grpc.CallOption) (*pb.User, error) {
-	return nil, status.Error(codes.NotFound, "Not implemented.")
-}
-
-func (c *UsersClient) GetUser(_ context.Context, in *pb.GetUserRequest, _ ...grpc.CallOption) (*pb.User, error) {
-	u, ok := c.Store[in.Id]
-	if !ok {
-		return nil, status.Error(codes.NotFound, "No user with that id found.")
-	}
-	return u, nil
-}
-
-func (c *UsersClient) GetUsersByEthereumAddress(_ context.Context, _ *pb.GetUsersByEthereumAddressRequest, _ ...grpc.CallOption) (*pb.GetUsersByEthereumAddressResponse, error) {
-	return nil, status.Error(codes.NotFound, "Not implemented.")
 }

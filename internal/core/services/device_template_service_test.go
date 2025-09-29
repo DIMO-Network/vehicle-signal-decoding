@@ -11,7 +11,7 @@ import (
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways"
 
 	pb "github.com/DIMO-Network/devices-api/pkg/grpc"
-	"github.com/DIMO-Network/shared/db"
+	"github.com/DIMO-Network/shared/pkg/db"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/dbtest"

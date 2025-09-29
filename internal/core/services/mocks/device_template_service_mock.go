@@ -14,7 +14,7 @@ import (
 	reflect "reflect"
 
 	grpc "github.com/DIMO-Network/devices-api/pkg/grpc"
-	device "github.com/DIMO-Network/shared/device"
+	device "github.com/DIMO-Network/shared/pkg/device"
 	gateways "github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways"
 	models "github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 	common "github.com/ethereum/go-ethereum/common"

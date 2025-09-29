@@ -10,7 +10,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/DIMO-Network/shared/db"
+	"github.com/DIMO-Network/shared/pkg/db"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
 	pkggrpc "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"

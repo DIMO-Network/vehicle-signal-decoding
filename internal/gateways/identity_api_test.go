@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/DIMO-Network/shared"
+	sharedhttp "github.com/DIMO-Network/shared/pkg/http"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
 	"github.com/rs/zerolog"
@@ -18,7 +18,7 @@ func TestGetDefinitionByID(t *testing.T) {
 	// Define a slice to hold our test cases
 	testCases := []struct {
 		name             string
-		mockHTTPClient   shared.HTTPClientWrapper
+		mockHTTPClient   sharedhttp.ClientWrapper
 		definitionID     string
 		mockResponse     string
 		mockResponseCode int
@@ -84,5 +84,13 @@ func (c mockHTTPClient) ExecuteRequest(path, method string, body []byte) (*http.
 		return nil, err
 	}
 	// Call the mock function with the created request
+
 	return c(req), nil
+}
+func (c mockHTTPClient) ExecuteRequestWithAuth(path, method string, body []byte, _ string) (*http.Response, error) {
+	return c.ExecuteRequest(path, method, body)
+}
+
+func (c mockHTTPClient) GraphQLQuery(_ string, _ string, _ interface{}) error {
+	return nil
 }

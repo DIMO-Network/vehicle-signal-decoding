@@ -11,18 +11,16 @@ import (
 
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 
-	"github.com/DIMO-Network/shared/db"
+	"github.com/DIMO-Network/shared/pkg/db"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/queries"
 
-	"github.com/DIMO-Network/shared/device"
+	"github.com/DIMO-Network/shared/pkg/device"
+	"github.com/DIMO-Network/shared/pkg/http"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/appmodels"
 
-	gdata "github.com/DIMO-Network/device-data-api/pkg/grpc"
-
-	"github.com/DIMO-Network/shared"
 	common2 "github.com/ethereum/go-ethereum/common"
 	"github.com/tidwall/gjson"
 	"golang.org/x/mod/semver"
@@ -49,7 +47,7 @@ type DeviceConfigController struct {
 	userDeviceSvc         services.UserDevicesService
 	deviceDefSvc          services.DeviceDefinitionsService
 	deviceTemplateService services.DeviceTemplateService
-	fwVersionAPI          shared.HTTPClientWrapper
+	fwVersionAPI          http.ClientWrapper
 	identityAPI           gateways.IdentityAPI
 }
 
@@ -58,7 +56,7 @@ const latestFirmwareURL = "https://binaries.dimo.zone/DIMO-Network/Macaron/relea
 // NewDeviceConfigController constructor
 func NewDeviceConfigController(settings *config.Settings, logger *zerolog.Logger, dbs func() *db.ReaderWriter, userDeviceSvc services.UserDevicesService,
 	deviceDefSvc services.DeviceDefinitionsService, deviceTemplateService services.DeviceTemplateService, identityAPI gateways.IdentityAPI) DeviceConfigController {
-	fwVersionAPI, _ := shared.NewHTTPClientWrapper(latestFirmwareURL, "", 10*time.Second, nil, true)
+	fwVersionAPI, _ := http.NewClientWrapper(latestFirmwareURL, "", 10*time.Second, nil, true)
 
 	return DeviceConfigController{
 		settings:              settings,
@@ -393,6 +391,8 @@ func (d *DeviceConfigController) GetConfigStatusByEthAddr(c *fiber.Ctx) error {
 	addr := common2.HexToAddress(ethAddr)
 
 	// we use this to know what the config should be
+	vehicle, err := d.identityAPI.GetVehicleByDeviceAddr(addr)
+
 	ud, err := d.userDeviceSvc.GetUserDeviceByEthAddr(c.UserContext(), addr)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": fmt.Sprintf("no connected user device found for EthAddr: %s", ethAddr)})
@@ -401,7 +401,7 @@ func (d *DeviceConfigController) GetConfigStatusByEthAddr(c *fiber.Ctx) error {
 	manufTokenID := uint64(0)
 	if ud.AftermarketDevice != nil {
 		manufTokenID = ud.AftermarketDevice.TokenId
-		d.log.Warn().Msgf("no aftermarket device attached to user_device: %d", ud.TokenId)
+		d.log.Warn().Msgf("no aftermarket device attached to user_device with tokenId: %d", vehicle.TokenID)
 	}
 
 	dts, err := models.DeviceTemplateStatuses(models.DeviceTemplateStatusWhere.DeviceEthAddr.EQ(addr.Bytes())).One(c.UserContext(), d.dbs().Reader)
@@ -533,19 +533,6 @@ func (d *DeviceConfigController) PatchRuptelaConfigStatusByEthAddr(c *fiber.Ctx)
 	}
 
 	return c.SendStatus(fiber.StatusOK)
-}
-
-func parseOutFWVersion(data *gdata.RawDeviceDataResponse) string {
-	for _, item := range data.Items {
-		v := gjson.GetBytes(item.SignalsJsonData, "fwVersion.value").Str
-		if len(v) > 1 {
-			if v[0:1] != "v" {
-				return "v" + v
-			}
-			return v
-		}
-	}
-	return ""
 }
 
 func parseOutTemplateAndVersion(templateNameWithVersion string) (string, string) {
