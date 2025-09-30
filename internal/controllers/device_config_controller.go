@@ -19,7 +19,7 @@ import (
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways"
 
-	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/appmodels"
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/appmodels" // for swagger
 
 	common2 "github.com/ethereum/go-ethereum/common"
 	"github.com/tidwall/gjson"
@@ -29,7 +29,6 @@ import (
 
 	pb "github.com/DIMO-Network/devices-api/pkg/grpc"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
-	_ "github.com/DIMO-Network/vehicle-signal-decoding/internal/core/appmodels" // for swagger
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/services"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
@@ -392,6 +391,9 @@ func (d *DeviceConfigController) GetConfigStatusByEthAddr(c *fiber.Ctx) error {
 
 	// we use this to know what the config should be
 	vehicle, err := d.identityAPI.GetVehicleByDeviceAddr(addr)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": fmt.Sprintf("received error when looking up device EthAddr: %s", ethAddr)})
+	}
 
 	ud, err := d.userDeviceSvc.GetUserDeviceByEthAddr(c.UserContext(), addr)
 	if err != nil {

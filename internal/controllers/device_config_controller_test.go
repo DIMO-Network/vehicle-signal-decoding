@@ -6,11 +6,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	utils "github.com/DIMO-Network/shared/pkg/cryptoutils"
 	"io"
 	"net/http"
 	"os"
 	"testing"
+
+	utils "github.com/DIMO-Network/shared/pkg/cryptoutils"
 
 	"github.com/DIMO-Network/shared/pkg/device"
 	mock_gateways "github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways/mocks"
@@ -1015,10 +1016,10 @@ func (m mockHTTPClientFwVersion) ExecuteRequest(_, _ string, _ []byte) (*http.Re
 	return &mockResponse, nil
 }
 
-func (c mockHTTPClientFwVersion) ExecuteRequestWithAuth(path, method string, body []byte, _ string) (*http.Response, error) {
-	return c.ExecuteRequest(path, method, body)
+func (m mockHTTPClientFwVersion) ExecuteRequestWithAuth(path, method string, body []byte, _ string) (*http.Response, error) {
+	return m.ExecuteRequest(path, method, body)
 }
 
-func (c mockHTTPClientFwVersion) GraphQLQuery(_ string, _ string, _ interface{}) error {
+func (m mockHTTPClientFwVersion) GraphQLQuery(_ string, _ string, _ interface{}) error {
 	return nil
 }

@@ -51,10 +51,7 @@ func (h GetTemplateByNameQueryHandler) Handle(ctx context.Context, query *GetTem
 		pidsCount = len(item.R.GetTemplateNamePidConfigs())
 	}
 
-	hasDbc := false
-	if item.R.TemplateNameDBCFile != nil {
-		hasDbc = true
-	}
+	hasDbc := item.R.TemplateNameDBCFile != nil
 
 	result := &grpc.GetTemplateByNameResponse{
 		Template: &grpc.Template{
