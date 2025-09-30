@@ -5,8 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/common"
-
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/exceptions"
 	"github.com/pkg/errors"
@@ -55,7 +53,7 @@ func (h GetTestSignalByIDQueryHandler) Handle(ctx context.Context, query *GetTes
 		Value:              item.Value,
 		AutopiUnitId:       item.AutopiUnitID,
 		Approved:           item.Approved,
-		Signals:            string(common.JSONOrDefault(item.Signals)),
+		Signals:            string(JSONOrDefault(item.Signals)),
 	}
 
 	return result, nil

@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
-	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/common"
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/ethutil"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/services"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 	"github.com/gofiber/fiber/v2"
@@ -54,7 +54,7 @@ type JobResponse struct {
 func (d *JobsController) GetJobsFromEthAddr(c *fiber.Ctx) error {
 	ethAddr := c.Params("ethAddr")
 
-	ethAddrBytes, err := common.ResolveEtherumAddressFromString(ethAddr)
+	ethAddrBytes, err := ethutil.ResolveEtherumAddressFromString(ethAddr)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": fmt.Sprintf("invalid ethereum address: %s", ethAddr)})
 	}
@@ -88,7 +88,7 @@ func (d *JobsController) GetJobsFromEthAddr(c *fiber.Ctx) error {
 func (d *JobsController) GetJobsPendingFromEthAddr(c *fiber.Ctx) error {
 	ethAddr := c.Params("ethAddr")
 
-	ethAddrBytes, err := common.ResolveEtherumAddressFromString(ethAddr)
+	ethAddrBytes, err := ethutil.ResolveEtherumAddressFromString(ethAddr)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": fmt.Sprintf("invalid ethereum address: %s", ethAddr)})
 	}

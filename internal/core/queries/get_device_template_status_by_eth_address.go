@@ -5,11 +5,11 @@ import (
 	"database/sql"
 
 	"github.com/DIMO-Network/shared/pkg/db"
-	corecommon "github.com/DIMO-Network/vehicle-signal-decoding/internal/core/common"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
+	"github.com/volatiletech/null/v8"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -42,14 +42,21 @@ func (h *GetDeviceTemplateStatusByEthAddressQueryHandler) Handle(ctx context.Con
 		return response, nil
 	}
 
-	response.TemplateDbcUrl = corecommon.SafeString(deviceTemplateStatus.TemplateDBCURL)
-	response.TemplatePidUrl = corecommon.SafeString(deviceTemplateStatus.TemplatePidURL)
-	response.TemplateSettingsUrl = corecommon.SafeString(deviceTemplateStatus.TemplateSettingsURL)
-	response.FirmwareVersion = corecommon.SafeString(deviceTemplateStatus.FirmwareVersion)
+	response.TemplateDbcUrl = SafeString(deviceTemplateStatus.TemplateDBCURL)
+	response.TemplatePidUrl = SafeString(deviceTemplateStatus.TemplatePidURL)
+	response.TemplateSettingsUrl = SafeString(deviceTemplateStatus.TemplateSettingsURL)
+	response.FirmwareVersion = SafeString(deviceTemplateStatus.FirmwareVersion)
 
 	if !deviceTemplateStatus.UpdatedAt.IsZero() {
 		response.UpdatedAt = timestamppb.New(deviceTemplateStatus.UpdatedAt)
 	}
 
 	return response, nil
+}
+
+func SafeString(s null.String) string {
+	if s.Valid {
+		return s.String
+	}
+	return ""
 }

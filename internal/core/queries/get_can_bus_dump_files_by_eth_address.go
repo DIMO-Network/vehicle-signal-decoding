@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"regexp"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
-	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/common"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/exceptions"
 	pgrpc "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -51,7 +51,7 @@ func (h GetCanBusDumpFileByEthAddressQueryHandler) Handle(ctx context.Context, q
 	for _, item := range response.Contents {
 		if *item.Size > 0 {
 			files = append(files, &pgrpc.GetCanBusDumpFileItemResponse{
-				Id:        common.RemoveSpecialCharacter(*item.ETag),
+				Id:        RemoveSpecialCharacter(*item.ETag),
 				Name:      filepath.Base(*item.Key),
 				FullName:  *item.Key,
 				Type:      filepath.Ext(*item.Key),
@@ -61,4 +61,12 @@ func (h GetCanBusDumpFileByEthAddressQueryHandler) Handle(ctx context.Context, q
 	}
 
 	return &pgrpc.GetCanBusDumpFileResponse{Items: files}, nil
+}
+
+func RemoveSpecialCharacter(input string) string {
+	expresionRegular := regexp.MustCompile(`[^\w]`)
+
+	cadenaSinEspeciales := expresionRegular.ReplaceAllString(input, "")
+
+	return cadenaSinEspeciales
 }

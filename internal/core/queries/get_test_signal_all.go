@@ -2,9 +2,10 @@ package queries
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
-	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/common"
+	"github.com/volatiletech/null/v8"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/exceptions"
@@ -50,9 +51,16 @@ func (h GetTestSignalAllQueryHandler) Handle(ctx context.Context, _ *GetTestSign
 			Value:              item.Value,
 			AutopiUnitId:       item.AutopiUnitID,
 			Approved:           item.Approved,
-			Signals:            string(common.JSONOrDefault(item.Signals)),
+			Signals:            string(JSONOrDefault(item.Signals)),
 		})
 	}
 
 	return result, nil
+}
+
+func JSONOrDefault(j null.JSON) json.RawMessage {
+	if !j.Valid || len(j.JSON) == 0 {
+		return []byte(`{}`)
+	}
+	return j.JSON
 }
