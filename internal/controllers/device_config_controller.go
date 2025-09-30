@@ -320,8 +320,8 @@ func (d *DeviceConfigController) GetConfigURLsFromVIN(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	d.log.Debug().Str("vin", *ud.Vin).Msgf("template configuration urls for VIN %s. strategy: %s. dbc: %s, pids: %s, settings: %s",
-		*ud.Vin, strategy, response.DbcURL, response.PidURL, response.DeviceSettingURL)
+	d.log.Debug().Str("vin", vin).Msgf("template configuration urls for VIN %s. strategy: %s. dbc: %s, pids: %s, settings: %s",
+		vin, strategy, response.DbcURL, response.PidURL, response.DeviceSettingURL)
 
 	return c.JSON(response)
 }
@@ -370,7 +370,7 @@ func (d *DeviceConfigController) GetConfigURLsFromEthAddr(c *fiber.Ctx) error {
 		return err
 	}
 
-	d.log.Info().Str("vin", *ud.Vin).Msgf("template configuration urls for VIN %s and eth Addr: %s. strategy: %s. dbc: %s, pids: %s, settings: %s",
+	d.log.Debug().Str("vin", *ud.Vin).Msgf("template configuration urls for VIN %s and eth Addr: %s. strategy: %s. dbc: %s, pids: %s, settings: %s",
 		*ud.Vin, ethAddr, strategy, response.DbcURL, response.PidURL, response.DeviceSettingURL)
 
 	return c.JSON(response)

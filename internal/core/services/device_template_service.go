@@ -146,6 +146,9 @@ func (dts *deviceTemplateService) FindDirectDeviceToTemplateConfig(ctx context.C
 
 // ResolveDeviceConfiguration figures out what template to return based on protocol, powertrain, vehicle or definition (vehicle could be nil)
 func (dts *deviceTemplateService) ResolveDeviceConfiguration(c *fiber.Ctx, ud *pb.UserDevice, vehicle *gateways.VehicleInfo) (*device.ConfigResponse, string, error) {
+	if ud == nil {
+		return nil, "", errors.New("user device is nil")
+	}
 	canProtocl := convertCANProtocol(dts.log, ud.CANProtocol)
 	// todo (jreate): what about powertrain at the style level... But ideally it is stored at vehicle level. this could come from oracle?
 	powertrain, err := dts.retrievePowertrain(ud.DefinitionId)
