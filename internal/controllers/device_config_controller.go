@@ -351,9 +351,11 @@ func (d *DeviceConfigController) GetConfigURLsFromEthAddr(c *fiber.Ctx) error {
 
 	vehicle, err := d.identityAPI.GetVehicleByDeviceAddr(address)
 	if err != nil {
+		// todo instead of logging a warning, just increment a counter and return a 404
 		d.log.Warn().Err(err).Str("func", "GetConfigURLsFromEthAddr").Msgf("failed to GetVehicleByDeviceAddr when trying to get configs %s", address.String())
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": fmt.Sprintf("no minted vehicle for device EthAddr: %s", address.String())})
 	}
+	// todo below will stop working soon, figure out different way to get and persist the powertrain
 	// we still need this to get the powertrain
 	ud, err := d.userDeviceSvc.GetUserDeviceByEthAddr(c.UserContext(), address)
 	if err != nil {
