@@ -8,7 +8,7 @@ import (
 
 	dbtesthelper "github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/dbtest"
 
-	"github.com/DIMO-Network/shared/db"
+	"github.com/DIMO-Network/shared/pkg/db"
 	"github.com/testcontainers/testcontainers-go"
 
 	"github.com/stretchr/testify/assert"

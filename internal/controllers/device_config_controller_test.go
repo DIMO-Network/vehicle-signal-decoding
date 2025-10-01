@@ -6,21 +6,22 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	utils "github.com/DIMO-Network/shared/crypto"
 	"io"
 	"net/http"
 	"os"
 	"testing"
 
-	"github.com/DIMO-Network/shared/device"
+	utils "github.com/DIMO-Network/shared/pkg/cryptoutils"
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways"
+
+	"github.com/DIMO-Network/shared/pkg/device"
 	mock_gateways "github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways/mocks"
 
 	common2 "github.com/ethereum/go-ethereum/common"
 
 	_ "github.com/lib/pq"
 
-	gdata "github.com/DIMO-Network/device-data-api/pkg/grpc"
-	"github.com/DIMO-Network/shared/db"
+	"github.com/DIMO-Network/shared/pkg/db"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
 
@@ -488,20 +489,6 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLsFromVIN_DecodeVIN() {
 	err := template.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
 	require.NoError(s.T(), err)
 
-	mockedDeviceDefinition := &p_grpc.GetDeviceDefinitionItemResponse{
-		Id:   "ford_mustang_2020",
-		Year: 2020,
-		Make: &p_grpc.DeviceMake{
-			Name:     "Ford",
-			NameSlug: "ford",
-		},
-		Model: "Mustang",
-		DeviceAttributes: []*p_grpc.DeviceTypeAttribute{{
-			Name:  "powertrain_type",
-			Value: "HEV",
-		}},
-	}
-
 	ds := &models.DeviceSetting{
 		Name:         "default-hev",
 		Powertrain:   "HEV",
@@ -511,14 +498,15 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLsFromVIN_DecodeVIN() {
 	require.NoError(s.T(), err)
 
 	s.mockUserDevicesSvc.EXPECT().GetUserDeviceByVIN(gomock.Any(), vin).Return(nil, nil)
+	//s.mockIdentityAPI.EXPECT().
 
 	s.mockDeviceDefSvc.EXPECT().DecodeVIN(gomock.Any(), vin).Return(&p_grpc.DecodeVinResponse{
-		DefinitionId: mockedDeviceDefinition.Id,
+		DefinitionId: "ford_mustang_2020",
 	}, nil)
 
 	s.mockDeviceTemplateSvc.EXPECT().ResolveDeviceConfiguration(gomock.Any(), &pb.UserDevice{
 		Vin:          &vin,
-		DefinitionId: mockedDeviceDefinition.Id,
+		DefinitionId: "ford_mustang_2020",
 		//PowerTrainType:     "HEV",
 	}, nil).Return(&device.ConfigResponse{
 		PidURL:           "http://localhost:3000/v1/device-config/pids/some-template@v1.0.0",
@@ -607,26 +595,13 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLsFromVIN_ProtocolOverr
 	err = ds.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
 	require.NoError(s.T(), err)
 
-	mockedDeviceDefinition := &p_grpc.GetDeviceDefinitionItemResponse{
-		Id: "ford_mustang_2020",
-		Make: &p_grpc.DeviceMake{
-			Name:     "Ford",
-			NameSlug: "ford",
-		},
-		Year:  2020,
-		Model: "Mustang",
-		DeviceAttributes: []*p_grpc.DeviceTypeAttribute{{
-			Name:  "powertrain_type",
-			Value: "HEV",
-		}},
-	}
 	s.mockUserDevicesSvc.EXPECT().GetUserDeviceByVIN(gomock.Any(), vin).Return(nil, errors.New("user device not found"))
 	s.mockDeviceDefSvc.EXPECT().DecodeVIN(gomock.Any(), vin).Return(&p_grpc.DecodeVinResponse{
-		DefinitionId: mockedDeviceDefinition.Id}, nil)
+		DefinitionId: "ford_mustang_2020"}, nil)
 
 	s.mockDeviceTemplateSvc.EXPECT().ResolveDeviceConfiguration(gomock.Any(), &pb.UserDevice{
 		Vin:          &vin,
-		DefinitionId: mockedDeviceDefinition.Id,
+		DefinitionId: "ford_mustang_2020",
 		CANProtocol:  "7",
 	}, nil).Return(&device.ConfigResponse{
 		PidURL:           "http://localhost:3000/v1/device-config/pids/some-template-protocol-override@v1.0.0",
@@ -690,23 +665,13 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLsFromVIN_FallbackLogic
 	err = matchedTemplate.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
 	require.NoError(s.T(), err)
 
-	mockedDD := &p_grpc.GetDeviceDefinitionItemResponse{
-		Id:    "ford_mustang_2020",
-		Make:  &p_grpc.DeviceMake{Name: "Ford", NameSlug: "ford"},
-		Year:  2020,
-		Model: "Mustang",
-		DeviceAttributes: []*p_grpc.DeviceTypeAttribute{{
-			Name:  "powertrain_type",
-			Value: "BEV",
-		}},
-	}
 	s.mockUserDevicesSvc.EXPECT().GetUserDeviceByVIN(gomock.Any(), vin).Return(nil, errors.New("user device not found"))
 	s.mockDeviceDefSvc.EXPECT().DecodeVIN(gomock.Any(), vin).Return(&p_grpc.DecodeVinResponse{
-		DefinitionId: mockedDD.Id}, nil)
+		DefinitionId: "ford_mustang_2020"}, nil)
 
 	s.mockDeviceTemplateSvc.EXPECT().ResolveDeviceConfiguration(gomock.Any(), &pb.UserDevice{
 		Vin:          &vin,
-		DefinitionId: mockedDD.Id,
+		DefinitionId: "ford_mustang_2020",
 		CANProtocol:  "7",
 	}, nil).Return(&device.ConfigResponse{
 		PidURL:           "http://localhost:3000/v1/device-config/pids/parent-template@v1.0.0",
@@ -743,6 +708,15 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigStatusByEthAddr_DeviceDat
 		CANProtocol:    "6",
 		DefinitionId:   "ford_mustang_2020",
 	}
+	s.mockIdentityAPI.EXPECT().GetVehicleByDeviceAddr(common2.HexToAddress(ethAddr)).Return(&gateways.VehicleInfo{
+		TokenID: 123,
+		Definition: gateways.VehicleDefinition{
+			Make:  "Ford",
+			Model: "Mustang",
+			Year:  2020,
+		},
+	}, nil)
+
 	s.mockUserDevicesSvc.EXPECT().GetUserDeviceByEthAddr(gomock.Any(), common2.HexToAddress(ethAddr)).Return(testUD, nil)
 	s.mockDeviceTemplateSvc.EXPECT().ResolveDeviceConfiguration(gomock.Any(), testUD, nil).Return(&device.ConfigResponse{
 		PidURL:           "http://localhost/pids/default",
@@ -770,7 +744,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigStatusByEthAddr_DeviceDat
 		s.T().FailNow()
 	}
 
-	assert.Equal(s.T(), false, receivedResp.IsTemplateUpToDate)
+	assert.Equal(s.T(), true, receivedResp.IsTemplateUpToDate)
 	assert.Equal(s.T(), true, receivedResp.IsFirmwareUpToDate)
 	assert.Equal(s.T(), "v0.8.5", receivedResp.FirmwareVersion)
 }
@@ -791,6 +765,14 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigStatusByEthAddr_Templates
 		PowerTrainType: "ICE",
 		CANProtocol:    "6",
 	}
+	s.mockIdentityAPI.EXPECT().GetVehicleByDeviceAddr(common2.HexToAddress(ethAddr)).Return(&gateways.VehicleInfo{
+		TokenID: 123,
+		Definition: gateways.VehicleDefinition{
+			Make:  "Ford",
+			Model: "Mustang",
+			Year:  2020,
+		},
+	}, nil)
 	s.mockUserDevicesSvc.EXPECT().GetUserDeviceByEthAddr(gomock.Any(), common2.HexToAddress(ethAddr)).Return(testUD, nil)
 	s.mockDeviceTemplateSvc.EXPECT().ResolveDeviceConfiguration(gomock.Any(), testUD, nil).Return(&device.ConfigResponse{
 		PidURL:           "http://localhost/pids/default",
@@ -947,44 +929,6 @@ func Test_modelMatch(t *testing.T) {
 	}
 }
 
-func Test_parseOutFWVersion(t *testing.T) {
-	type args struct {
-		data *gdata.RawDeviceDataResponse
-	}
-	tests := []struct {
-		name string
-		args args
-		want string
-	}{
-		{
-			name: "get version",
-			args: args{data: &gdata.RawDeviceDataResponse{Items: []*gdata.RawDeviceDataResponseItem{{
-				SignalsJsonData: []byte(`{
-"fwVersion": {
-    "value": "0.8.5",
-    "source": "dimo/integration/2ULfuC8U9dOqRshZBAi0lMM1Rrx",
-    "timestamp": "2024-01-02T11:17:20Z"
-  }			
-}`),
-			}}}},
-			want: "v0.8.5",
-		},
-		{
-			name: "empty version",
-			args: args{data: &gdata.RawDeviceDataResponse{Items: []*gdata.RawDeviceDataResponseItem{{
-				SignalsJsonData: []byte(`{}`),
-			},
-			}}},
-			want: "",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equalf(t, tt.want, parseOutFWVersion(tt.args.data), "parseOutFWVersion(%v)", tt.args.data)
-		})
-	}
-}
-
 func Test_parseOutTemplateAndVersion(t *testing.T) {
 	type args struct {
 		templateNameWithVersion string
@@ -1089,4 +1033,12 @@ func (m mockHTTPClientFwVersion) ExecuteRequest(_, _ string, _ []byte) (*http.Re
 	mockResponse.Header.Set("Content-Type", "application/json")
 
 	return &mockResponse, nil
+}
+
+func (m mockHTTPClientFwVersion) ExecuteRequestWithAuth(path, method string, body []byte, _ string) (*http.Response, error) {
+	return m.ExecuteRequest(path, method, body)
+}
+
+func (m mockHTTPClientFwVersion) GraphQLQuery(_ string, _ string, _ interface{}) error {
+	return nil
 }

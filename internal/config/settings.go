@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/DIMO-Network/shared/db"
+	"github.com/DIMO-Network/shared/pkg/db"
 )
 
 type Settings struct {
@@ -25,8 +25,6 @@ type Settings struct {
 	CandumpsAWSEndpoint   string `yaml:"CANDUMPS_AWS_ENDPOINT"`
 	AWSCandumpsBucketName string `yaml:"AWS_CANDUMPS_BUCKET_NAME"`
 	AWSRegion             string `yaml:"AWS_REGION"`
-	DeviceDataGRPCAddr    string `yaml:"DEVICE_DATA_GRPC_ADDR"`
 	JwtKeySetURL          string `yaml:"JWT_KEY_SET_URL"`
-	UsersGRPCAddr         string `yaml:"USERS_GRPC_ADDR"`
 	IdentityAPIURL        string `yaml:"IDENTITY_API_URL"` //nolint
 }

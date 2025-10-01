@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/DIMO-Network/shared"
+	sharedsettings "github.com/DIMO-Network/shared/pkg/settings"
 	_ "github.com/DIMO-Network/vehicle-signal-decoding/docs"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/api"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
@@ -32,7 +32,7 @@ func main() {
 		arg = os.Args[1]
 	}
 
-	settings, err := shared.LoadConfig[config.Settings]("settings.yaml")
+	settings, err := sharedsettings.LoadConfig[config.Settings]("settings.yaml")
 	if err != nil {
 		log.Fatal("could not load settings: $s", err)
 	}

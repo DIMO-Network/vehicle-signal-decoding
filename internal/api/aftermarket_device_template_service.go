@@ -5,7 +5,7 @@ import (
 
 	common2 "github.com/ethereum/go-ethereum/common"
 
-	"github.com/DIMO-Network/shared/db"
+	"github.com/DIMO-Network/shared/pkg/db"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/commands"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/queries"
 	"github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"

@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 
-	"github.com/DIMO-Network/shared/db"
+	"github.com/DIMO-Network/shared/pkg/db"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
 	_ "github.com/lib/pq"
 	"github.com/pressly/goose/v3"

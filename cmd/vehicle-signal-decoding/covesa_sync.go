@@ -6,7 +6,7 @@ import (
 
 	nativestatus "github.com/DIMO-Network/model-garage/pkg/nativestatus/schema"
 	vssschema "github.com/DIMO-Network/model-garage/pkg/schema"
-	"github.com/DIMO-Network/shared/db"
+	"github.com/DIMO-Network/shared/pkg/db"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 	"github.com/rs/zerolog"

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/common"
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/ethutil"
 	pgrpc "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
 	"github.com/segmentio/ksuid"
 	"github.com/volatiletech/sqlboiler/v4/boil"
@@ -13,7 +13,7 @@ import (
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/exceptions"
 	"github.com/pkg/errors"
 
-	"github.com/DIMO-Network/shared/db"
+	"github.com/DIMO-Network/shared/pkg/db"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 )
 
@@ -32,7 +32,7 @@ type CreateJobCommandRequest struct {
 
 func (h CreateJobByEtherumAddressCommandHandler) Execute(ctx context.Context, command *CreateJobCommandRequest) (*pgrpc.GetJobsByEtherumAddressItemResponse, error) {
 
-	ethAddrBytes, err := common.ResolveEtherumAddressFromString(command.EtherumAddress)
+	ethAddrBytes, err := ethutil.ResolveEtherumAddressFromString(command.EtherumAddress)
 	if err != nil {
 		return nil, &exceptions.ValidationError{
 			Err: fmt.Errorf("invalid ethereum address: %w", err),

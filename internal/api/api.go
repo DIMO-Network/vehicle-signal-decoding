@@ -2,7 +2,8 @@ package api
 
 import (
 	"context"
-	utils "github.com/DIMO-Network/shared/crypto"
+
+	utils "github.com/DIMO-Network/shared/pkg/cryptoutils"
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/pkg/errors"
@@ -15,12 +16,9 @@ import (
 	"strings"
 	"syscall"
 
-	usersapi "github.com/DIMO-Network/users-api/pkg/grpc"
-
 	jwtware "github.com/gofiber/contrib/jwt"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways"
-	"github.com/DIMO-Network/vehicle-signal-decoding/internal/middleware/owner"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
@@ -32,8 +30,8 @@ import (
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/controllers"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/services"
 
-	"github.com/DIMO-Network/shared/db"
-	"github.com/DIMO-Network/shared/middleware/metrics"
+	"github.com/DIMO-Network/shared/pkg/db"
+	"github.com/DIMO-Network/shared/pkg/middleware/metrics"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
 	"github.com/gofiber/adaptor/v2"
 	"github.com/gofiber/fiber/v2"
@@ -69,7 +67,6 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 	_ = ctx.Done()
 	_ = pdb.DBS().Writer.Close()
 	_ = pdb.DBS().Reader.Close()
-	_ = conns.usersAPIConn.Close()
 	_ = conns.definitionsAPIConn.Close()
 	_ = conns.devicesAPIConn.Close()
 }
@@ -98,7 +95,6 @@ func startMonitoringServer(logger zerolog.Logger, settings *config.Settings) {
 }
 
 func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.Store, conns *grpcServiceConnections) *fiber.App {
-	usersClient := usersapi.NewUserServiceClient(conns.usersAPIConn) // this is a raw grpc client
 	// these are an abstractions over the grpc client
 	userDeviceSvc := services.NewUserDevicesService(conns.devicesAPIConn)
 	deviceDefsvc := services.NewDeviceDefinitionsService(conns.definitionsAPIConn)
@@ -142,8 +138,6 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 
 	v1 := app.Group("/v1")
 
-	deviceMw := owner.New(usersClient, userDeviceSvc, &logger)
-
 	v1.Get("/swagger/*", swagger.HandlerDefault)
 
 	// resolve what templates to use for my car/device
@@ -185,7 +179,7 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 	}
 
 	// Jwt authentication
-	v1.Patch("/device-config/eth-addr/:ethAddr/status", jwtAuth, deviceMw, deviceConfigController.PatchConfigStatusByEthAddr)
+	v1.Patch("/device-config/eth-addr/:ethAddr/status", jwtAuth, deviceConfigController.PatchConfigStatusByEthAddr)
 
 	// Signature authentication
 	v1.Patch("/device-config/eth-addr/:ethAddr/hw/status", etherSigAuth, deviceConfigController.PatchHwConfigStatusByEthAddr)
@@ -241,7 +235,6 @@ type CodeResp struct {
 type grpcServiceConnections struct {
 	devicesAPIConn     *grpc.ClientConn
 	definitionsAPIConn *grpc.ClientConn
-	usersAPIConn       *grpc.ClientConn
 }
 
 // getGRPCConnections establishes and returns the connections for our GRPC dependencies
@@ -254,14 +247,9 @@ func getGRPCConnections(settings *config.Settings) (*grpcServiceConnections, err
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to dial at: %s", settings.DefinitionsGRPCAddr)
 	}
-	usersConn, err := grpc.NewClient(settings.UsersGRPCAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to dial at: %s", settings.UsersGRPCAddr)
-	}
 	return &grpcServiceConnections{
 		devicesAPIConn:     devicesConn,
 		definitionsAPIConn: definitionsConn,
-		usersAPIConn:       usersConn,
 	}, nil
 }
 

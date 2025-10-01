@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/DIMO-Network/shared/db"
+	"github.com/DIMO-Network/shared/pkg/db"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
 	"github.com/rs/zerolog"
@@ -51,10 +51,7 @@ func (h GetTemplateByNameQueryHandler) Handle(ctx context.Context, query *GetTem
 		pidsCount = len(item.R.GetTemplateNamePidConfigs())
 	}
 
-	hasDbc := false
-	if item.R.TemplateNameDBCFile != nil {
-		hasDbc = true
-	}
+	hasDbc := item.R.TemplateNameDBCFile != nil
 
 	result := &grpc.GetTemplateByNameResponse{
 		Template: &grpc.Template{
