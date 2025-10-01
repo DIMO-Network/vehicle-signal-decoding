@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	utils "github.com/DIMO-Network/shared/pkg/cryptoutils"
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways"
 
 	"github.com/DIMO-Network/shared/pkg/device"
 	mock_gateways "github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways/mocks"
@@ -497,6 +498,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLsFromVIN_DecodeVIN() {
 	require.NoError(s.T(), err)
 
 	s.mockUserDevicesSvc.EXPECT().GetUserDeviceByVIN(gomock.Any(), vin).Return(nil, nil)
+	//s.mockIdentityAPI.EXPECT().
 
 	s.mockDeviceDefSvc.EXPECT().DecodeVIN(gomock.Any(), vin).Return(&p_grpc.DecodeVinResponse{
 		DefinitionId: "ford_mustang_2020",
@@ -706,6 +708,15 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigStatusByEthAddr_DeviceDat
 		CANProtocol:    "6",
 		DefinitionId:   "ford_mustang_2020",
 	}
+	s.mockIdentityAPI.EXPECT().GetVehicleByDeviceAddr(common2.HexToAddress(ethAddr)).Return(&gateways.VehicleInfo{
+		TokenID: 123,
+		Definition: gateways.VehicleDefinition{
+			Make:  "Ford",
+			Model: "Mustang",
+			Year:  2020,
+		},
+	}, nil)
+
 	s.mockUserDevicesSvc.EXPECT().GetUserDeviceByEthAddr(gomock.Any(), common2.HexToAddress(ethAddr)).Return(testUD, nil)
 	s.mockDeviceTemplateSvc.EXPECT().ResolveDeviceConfiguration(gomock.Any(), testUD, nil).Return(&device.ConfigResponse{
 		PidURL:           "http://localhost/pids/default",
@@ -733,7 +744,7 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigStatusByEthAddr_DeviceDat
 		s.T().FailNow()
 	}
 
-	assert.Equal(s.T(), false, receivedResp.IsTemplateUpToDate)
+	assert.Equal(s.T(), true, receivedResp.IsTemplateUpToDate)
 	assert.Equal(s.T(), true, receivedResp.IsFirmwareUpToDate)
 	assert.Equal(s.T(), "v0.8.5", receivedResp.FirmwareVersion)
 }
@@ -754,6 +765,14 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigStatusByEthAddr_Templates
 		PowerTrainType: "ICE",
 		CANProtocol:    "6",
 	}
+	s.mockIdentityAPI.EXPECT().GetVehicleByDeviceAddr(common2.HexToAddress(ethAddr)).Return(&gateways.VehicleInfo{
+		TokenID: 123,
+		Definition: gateways.VehicleDefinition{
+			Make:  "Ford",
+			Model: "Mustang",
+			Year:  2020,
+		},
+	}, nil)
 	s.mockUserDevicesSvc.EXPECT().GetUserDeviceByEthAddr(gomock.Any(), common2.HexToAddress(ethAddr)).Return(testUD, nil)
 	s.mockDeviceTemplateSvc.EXPECT().ResolveDeviceConfiguration(gomock.Any(), testUD, nil).Return(&device.ConfigResponse{
 		PidURL:           "http://localhost/pids/default",
