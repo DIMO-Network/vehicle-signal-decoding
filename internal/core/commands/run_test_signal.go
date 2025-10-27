@@ -9,15 +9,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/volatiletech/null/v8"
+	"github.com/aarondl/null/v8"
 
 	"github.com/DIMO-Network/shared/pkg/db"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/services"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
+	"github.com/aarondl/sqlboiler/v4/boil"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/segmentio/ksuid"
-	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
 //go:generate mockgen -source run_test_signal.go -destination mocks/run_test_signal_mock.go

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/volatiletech/sqlboiler/v4/queries/qm"
+	"github.com/aarondl/sqlboiler/v4/queries/qm"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"

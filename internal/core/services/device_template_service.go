@@ -10,18 +10,18 @@ import (
 	sharedstrings "github.com/DIMO-Network/shared/pkg/strings"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways"
 
+	"github.com/aarondl/null/v8"
 	common2 "github.com/ethereum/go-ethereum/common"
-	"github.com/volatiletech/null/v8"
 
 	pb "github.com/DIMO-Network/devices-api/pkg/grpc"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
+	"github.com/aarondl/sqlboiler/v4/queries/qm"
+	"github.com/aarondl/sqlboiler/v4/types"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
-	"github.com/volatiletech/sqlboiler/v4/queries/qm"
-	"github.com/volatiletech/sqlboiler/v4/types"
 
+	"github.com/aarondl/sqlboiler/v4/boil"
 	"github.com/pkg/errors"
-	"github.com/volatiletech/sqlboiler/v4/boil"
 
 	"database/sql"
 

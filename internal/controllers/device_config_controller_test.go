@@ -25,9 +25,9 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
 
-	"github.com/volatiletech/null/v8"
+	"github.com/aarondl/null/v8"
 
-	"github.com/volatiletech/sqlboiler/v4/types"
+	"github.com/aarondl/sqlboiler/v4/types"
 
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 
@@ -37,7 +37,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	"github.com/volatiletech/sqlboiler/v4/boil"
+	"github.com/aarondl/sqlboiler/v4/boil"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
 	mock_services "github.com/DIMO-Network/vehicle-signal-decoding/internal/core/services/mocks"
