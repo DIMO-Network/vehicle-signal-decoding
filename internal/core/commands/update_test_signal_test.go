@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
+	"github.com/aarondl/sqlboiler/v4/boil"
 	"github.com/segmentio/ksuid"
-	"github.com/volatiletech/sqlboiler/v4/boil"
 
 	"github.com/stretchr/testify/require"
 

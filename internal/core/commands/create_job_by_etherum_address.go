@@ -6,8 +6,8 @@ import (
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/ethutil"
 	pgrpc "github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
+	"github.com/aarondl/sqlboiler/v4/boil"
 	"github.com/segmentio/ksuid"
-	"github.com/volatiletech/sqlboiler/v4/boil"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/exceptions"

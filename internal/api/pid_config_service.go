@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
-	"github.com/volatiletech/sqlboiler/v4/queries/qm"
+	"github.com/aarondl/sqlboiler/v4/queries/qm"
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/commands"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/queries"

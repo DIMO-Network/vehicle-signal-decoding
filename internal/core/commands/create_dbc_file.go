@@ -5,8 +5,8 @@ import (
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/exceptions"
+	"github.com/aarondl/sqlboiler/v4/boil"
 	"github.com/pkg/errors"
-	"github.com/volatiletech/sqlboiler/v4/boil"
 
 	"github.com/DIMO-Network/shared/pkg/db"
 )

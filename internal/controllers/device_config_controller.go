@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/volatiletech/sqlboiler/v4/queries/qm"
+	"github.com/aarondl/sqlboiler/v4/queries/qm"
 
 	"github.com/DIMO-Network/shared/pkg/db"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/queries"
@@ -25,7 +25,7 @@ import (
 	"github.com/tidwall/gjson"
 	"golang.org/x/mod/semver"
 
-	"github.com/volatiletech/sqlboiler/v4/types"
+	"github.com/aarondl/sqlboiler/v4/types"
 
 	pb "github.com/DIMO-Network/devices-api/pkg/grpc"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
