@@ -362,6 +362,9 @@ func (d *DeviceConfigController) GetConfigURLsFromEthAddr(c *fiber.Ctx) error {
 		d.log.Warn().Err(err).Str("func", "GetConfigURLsFromEthAddr").Msgf("failed to GetUserDeviceByEthAddr, no connected user device found for EthAddr: %s", address.String())
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": fmt.Sprintf("no connected user device found for EthAddr: %s", address.String())})
 	}
+	if ud == nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": fmt.Sprintf("no connected user device found for EthAddr: %s", address.String())})
+	}
 
 	if protocol != "" {
 		ud.CANProtocol = protocol
@@ -372,8 +375,8 @@ func (d *DeviceConfigController) GetConfigURLsFromEthAddr(c *fiber.Ctx) error {
 		return err
 	}
 
-	d.log.Debug().Str("vin", *ud.Vin).Msgf("template configuration urls for VIN %s and eth Addr: %s. strategy: %s. dbc: %s, pids: %s, settings: %s",
-		*ud.Vin, ethAddr, strategy, response.DbcURL, response.PidURL, response.DeviceSettingURL)
+	d.log.Debug().Msgf("template configuration urls for eth Addr: %s. strategy: %s. dbc: %s, pids: %s, settings: %s",
+		ethAddr, strategy, response.DbcURL, response.PidURL, response.DeviceSettingURL)
 
 	return c.JSON(response)
 }
