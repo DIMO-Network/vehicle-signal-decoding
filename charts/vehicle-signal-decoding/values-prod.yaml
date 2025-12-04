@@ -1,4 +1,4 @@
-replicaCount: 1
+replicaCount: 2
 image:
   repository: dimozone/vehicle-signal-decoding
   pullPolicy: IfNotPresent
@@ -57,4 +57,4 @@ nodeSelector: {}
 tolerations: []
 affinity: {}
 podDisruptionBudget:
-  minAvailable: 0
+  minAvailable: 1
