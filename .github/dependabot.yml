@@ -1,7 +1,13 @@
 version: 2
 updates:
-  # Maintain dependencies for GitHub Actions
-  - package-ecosystem: "github-actions"
+  - package-ecosystem: "gomod"
     directory: "/"
     schedule:
       interval: "weekly"
+    allow:
+      - dependency-name: "github.com/DIMO-Network/model-garage"
+    commit-message:
+      prefix: "chore(deps)"
+    labels:
+      - "dependencies"
+      - "go"
