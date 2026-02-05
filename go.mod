@@ -17,7 +17,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.70
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.67.0
 	github.com/docker/go-connections v0.6.0
-	github.com/ethereum/go-ethereum v1.16.3
+	github.com/ethereum/go-ethereum v1.16.8
 	github.com/friendsofgo/errors v0.9.2
 	github.com/gofiber/adaptor/v2 v2.2.1
 	github.com/gofiber/contrib/jwt v1.1.2
@@ -46,6 +46,7 @@ require (
 	github.com/DIMO-Network/yaml v0.1.0 // indirect
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/MicahParks/keyfunc/v2 v2.1.0 // indirect
+	github.com/ProjectZKM/Ziren/crates/go-runtime/zkvm_runtime v0.0.0-20251001021608-1fe7b43fc4d6 // indirect
 	github.com/aarondl/inflect v0.0.2 // indirect
 	github.com/aarondl/randomize v0.0.2 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.6 // indirect
@@ -83,7 +84,7 @@ require (
 	github.com/go-openapi/spec v0.21.0 // indirect
 	github.com/go-openapi/swag v0.23.1 // indirect
 	github.com/gofrs/uuid v4.4.0+incompatible // indirect
-	github.com/golang/snappy v0.0.5-0.20220116011046-fa5810519dcb // indirect
+	github.com/golang/snappy v1.0.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
