@@ -5,7 +5,7 @@ go 1.25.0
 require (
 	github.com/DIMO-Network/device-definitions-api v1.5.8
 	github.com/DIMO-Network/devices-api v1.41.7
-	github.com/DIMO-Network/model-garage v0.7.4
+	github.com/DIMO-Network/model-garage v0.8.7
 	github.com/DIMO-Network/shared v1.0.7
 	github.com/Shopify/sarama v1.38.1
 	github.com/ThreeDotsLabs/watermill v1.4.1
@@ -17,7 +17,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.70
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.67.0
 	github.com/docker/go-connections v0.6.0
-	github.com/ethereum/go-ethereum v1.16.3
+	github.com/ethereum/go-ethereum v1.16.4
 	github.com/friendsofgo/errors v0.9.2
 	github.com/gofiber/adaptor/v2 v2.2.1
 	github.com/gofiber/contrib/jwt v1.1.2
@@ -38,7 +38,7 @@ require (
 	go.uber.org/mock v0.5.2
 	golang.org/x/mod v0.28.0
 	google.golang.org/grpc v1.74.2
-	google.golang.org/protobuf v1.36.9
+	google.golang.org/protobuf v1.36.10
 )
 
 require (

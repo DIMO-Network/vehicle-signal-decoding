@@ -12,8 +12,8 @@ github.com/DIMO-Network/device-definitions-api v1.5.8 h1:/gz5I9F2z3N5HFHz0MkKzt+
 github.com/DIMO-Network/device-definitions-api v1.5.8/go.mod h1:+rRLeRY1B+Q5QnKcXeX51gAeQ8z6Rv9/lDCIiRcrp78=
 github.com/DIMO-Network/devices-api v1.41.7 h1:ASpXD8UTXongZDxbpK45sMxgsDMvLctpFEFRk7BB1z0=
 github.com/DIMO-Network/devices-api v1.41.7/go.mod h1:df8avnirXFcw6EF1+wulAEYgo/42Bl6PFq62QBteOns=
-github.com/DIMO-Network/model-garage v0.7.4 h1:mFnGPPMxOWexeJe7LmykLlwIr5JgCC5C0giIssmZRio=
-github.com/DIMO-Network/model-garage v0.7.4/go.mod h1:xtHRSvILRrC99CGavoaUFQT+hOxbghbTy5MYzT2KTtM=
+github.com/DIMO-Network/model-garage v0.8.7 h1:tsmO57l8LXIwa+TyUqwtf9eVi/4TC4Ufy96WASYZvhM=
+github.com/DIMO-Network/model-garage v0.8.7/go.mod h1:goE7y2N58G8CDUym/RqaAEH0E0w6+gzdUSprWItqmyU=
 github.com/DIMO-Network/shared v1.0.7 h1:LfSgsqJ6R7EUyfo2GTfuhrCpoDcweJqe7eVOa4j7Xbo=
 github.com/DIMO-Network/shared v1.0.7/go.mod h1:lDHUKwwT2LW6Zvd42Nb33dXklRNTmfyOlbUNx2dQfGY=
 github.com/DIMO-Network/yaml v0.1.0 h1:KQ3oKHUZETchR6Pxbmmol3e4ewrPv/q8cEwqxfwyZbU=
@@ -137,8 +137,8 @@ github.com/envoyproxy/go-control-plane v0.9.4/go.mod h1:6rpuAdCZL397s3pYoYcLgu1m
 github.com/envoyproxy/protoc-gen-validate v0.1.0/go.mod h1:iSmxcyjqTsJpI2R4NaDN7+kN2VEUnK/pcBlmesArF7c=
 github.com/ericlagergren/decimal v0.0.0-20240411145413-00de7ca16731 h1:R/ZjJpjQKsZ6L/+Gf9WHbt31GG8NMVcpRqUE+1mMIyo=
 github.com/ericlagergren/decimal v0.0.0-20240411145413-00de7ca16731/go.mod h1:M9R1FoZ3y//hwwnJtO51ypFGwm8ZfpxPT/ZLtO1mcgQ=
-github.com/ethereum/go-ethereum v1.16.3 h1:nDoBSrmsrPbrDIVLTkDQCy1U9KdHN+F2PzvMbDoS42Q=
-github.com/ethereum/go-ethereum v1.16.3/go.mod h1:Lrsc6bt9Gm9RyvhfFK53vboCia8kpF9nv+2Ukntnl+8=
+github.com/ethereum/go-ethereum v1.16.4 h1:H6dU0r2p/amA7cYg6zyG9Nt2JrKKH6oX2utfcqrSpkQ=
+github.com/ethereum/go-ethereum v1.16.4/go.mod h1:P7551slMFbjn2zOQaKrJShZVN/d8bGxp4/I6yZVlb5w=
 github.com/felixge/httpsnoop v1.0.4 h1:NFTV2Zj1bL4mc9sqWACXbQFVBBg2W3GPvqp8/ESS2Wg=
 github.com/felixge/httpsnoop v1.0.4/go.mod h1:m8KPJKqk1gH5J9DgRY2ASl2lWCfGKXixSwevea8zH2U=
 github.com/fortytw2/leaktest v1.3.0 h1:u8491cBMTQ8ft8aeV+adlcytMZylmA5nnwwkRZjI8vw=
@@ -524,8 +524,8 @@ google.golang.org/grpc v1.27.0/go.mod h1:qbnxyOmOxrQa7FizSgH+ReBfzJrCY1pSN7KXBS8
 google.golang.org/grpc v1.29.1/go.mod h1:itym6AZVZYACWQqET3MqgPpjcuV5QH3BxFS3IjizoKk=
 google.golang.org/grpc v1.74.2 h1:WoosgB65DlWVC9FqI82dGsZhWFNBSLjQ84bjROOpMu4=
 google.golang.org/grpc v1.74.2/go.mod h1:CtQ+BGjaAIXHs/5YS3i473GqwBBa1zGQNevxdeBEXrM=
-google.golang.org/protobuf v1.36.9 h1:w2gp2mA27hUeUzj9Ex9FBjsBm40zfaDtEWow293U7Iw=
-google.golang.org/protobuf v1.36.9/go.mod h1:fuxRtAxBytpl4zzqUh6/eyUujkJdNiuEkXntxiD/uRU=
+google.golang.org/protobuf v1.36.10 h1:AYd7cD/uASjIL6Q9LiTjz8JLcrh/88q5UObnmY3aOOE=
+google.golang.org/protobuf v1.36.10/go.mod h1:HTf+CrKn2C3g5S8VImy6tdcUvCska2kB7j23XfzDpco=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c h1:Hei/4ADfdWqJk1ZMxUNpqntNwaWcugrBjAiHlqqRiVk=
