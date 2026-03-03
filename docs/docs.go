@@ -409,43 +409,6 @@ const docTemplate = `{
                     }
                 }
             }
-        },
-        "/device-config/vin/{vin}/urls": {
-            "get": {
-                "description": "Retrieve the URLs for PID, DeviceSettings, and DBC configuration based on a given VIN. These could be empty if not configs available",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "device-config"
-                ],
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "vehicle identification number (VIN)",
-                        "name": "vin",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "CAN Protocol, '6' or '7', 8,9,66,77,88,99",
-                        "name": "protocol",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successfully retrieved configuration URLs",
-                        "schema": {
-                            "$ref": "#/definitions/device.ConfigResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found - No templates available for the given parameters"
-                    }
-                }
-            }
         }
     },
     "definitions": {

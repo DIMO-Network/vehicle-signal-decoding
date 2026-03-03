@@ -391,36 +391,10 @@ paths:
           description: No Device Settings data found for the given name.
       tags:
       - device-config
-  /device-config/vin/{vin}/urls:
-    get:
-      description: Retrieve the URLs for PID, DeviceSettings, and DBC configuration
-        based on a given VIN. These could be empty if not configs available
-      parameters:
-      - description: vehicle identification number (VIN)
-        in: path
-        name: vin
-        required: true
-        type: string
-      - description: CAN Protocol, '6' or '7', 8,9,66,77,88,99
-        in: query
-        name: protocol
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Successfully retrieved configuration URLs
-          schema:
-            $ref: '#/definitions/device.ConfigResponse'
-        "404":
-          description: Not Found - No templates available for the given parameters
-      tags:
-      - device-config
 securityDefinitions:
   BearerAuth:
     description: 'Flow to get your device config: start by Getting the URL''s to your
-      device''s configuration: `/device-config/eth-addr/:ethAddr/urls` or by vin,
-      check readme for details.'
+      device''s configuration: `/device-config/eth-addr/:ethAddr/urls`. See readme for details.'
     in: header
     name: Authorization
     type: apiKey

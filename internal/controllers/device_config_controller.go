@@ -27,7 +27,6 @@ import (
 
 	"github.com/aarondl/sqlboiler/v4/types"
 
-	pb "github.com/DIMO-Network/devices-api/pkg/grpc"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/services"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
@@ -43,7 +42,6 @@ type DeviceConfigController struct {
 	settings              *config.Settings
 	log                   *zerolog.Logger
 	dbs                   func() *db.ReaderWriter
-	userDeviceSvc         services.UserDevicesService
 	deviceDefSvc          services.DeviceDefinitionsService
 	deviceTemplateService services.DeviceTemplateService
 	fwVersionAPI          http.ClientWrapper
@@ -53,7 +51,7 @@ type DeviceConfigController struct {
 const latestFirmwareURL = "https://binaries.dimo.zone/DIMO-Network/Macaron/releases/latest"
 
 // NewDeviceConfigController constructor
-func NewDeviceConfigController(settings *config.Settings, logger *zerolog.Logger, dbs func() *db.ReaderWriter, userDeviceSvc services.UserDevicesService,
+func NewDeviceConfigController(settings *config.Settings, logger *zerolog.Logger, dbs func() *db.ReaderWriter,
 	deviceDefSvc services.DeviceDefinitionsService, deviceTemplateService services.DeviceTemplateService, identityAPI gateways.IdentityAPI) DeviceConfigController {
 	fwVersionAPI, _ := http.NewClientWrapper(latestFirmwareURL, "", 10*time.Second, nil, true)
 
@@ -61,7 +59,6 @@ func NewDeviceConfigController(settings *config.Settings, logger *zerolog.Logger
 		settings:              settings,
 		log:                   logger,
 		dbs:                   dbs,
-		userDeviceSvc:         userDeviceSvc,
 		deviceDefSvc:          deviceDefSvc,
 		deviceTemplateService: deviceTemplateService,
 		fwVersionAPI:          fwVersionAPI,
@@ -284,48 +281,6 @@ func (d *DeviceConfigController) GetDBCFileByTemplateName(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusNotAcceptable).SendString("Not Acceptable")
 }
 
-// GetConfigURLsFromVIN godoc
-// @Description  Retrieve the URLs for PID, DeviceSettings, and DBC configuration based on a given VIN. These could be empty if not configs available
-// @Tags         device-config
-// @Produce      json
-// @Success      200 {object} device.ConfigResponse "Successfully retrieved configuration URLs"
-// @Failure 404  "Not Found - No templates available for the given parameters"
-// @Param        vin  path   string  true   "vehicle identification number (VIN)"
-// @Param        protocol  query   string  false  "CAN Protocol, '6' or '7', 8,9,66,77,88,99"
-// @Router       /device-config/vin/{vin}/urls [get]
-func (d *DeviceConfigController) GetConfigURLsFromVIN(c *fiber.Ctx) error {
-	vin := c.Params("vin")
-	protocol := c.Query("protocol", "")
-
-	ud, err := d.userDeviceSvc.GetUserDeviceByVIN(c.UserContext(), vin)
-	if err != nil || ud == nil {
-		definitionResp, err := d.deviceDefSvc.DecodeVIN(c.UserContext(), vin)
-		if err != nil || definitionResp == nil {
-			d.log.Err(err).Str("func", "GetConfigURLsFromVIN").Msgf("failed to DecodeVIN when trying to get configs")
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": fmt.Sprintf("could not decode VIN, contact support if you're sure this is valid VIN: %s", vin)})
-		}
-
-		ud = &pb.UserDevice{
-			PowerTrainType: definitionResp.Powertrain,
-			CANProtocol:    protocol,
-			Vin:            &vin,
-			DefinitionId:   definitionResp.DefinitionId,
-		}
-		if len(definitionResp.DeviceStyleId) > 0 {
-			ud.DeviceStyleId = &definitionResp.DeviceStyleId
-		}
-	}
-
-	response, strategy, err := d.deviceTemplateService.ResolveDeviceConfiguration(c, ud, nil)
-	if err != nil {
-		return err
-	}
-	d.log.Debug().Str("vin", vin).Msgf("template configuration urls for VIN %s. strategy: %s. dbc: %s, pids: %s, settings: %s",
-		vin, strategy, response.DbcURL, response.PidURL, response.DeviceSettingURL)
-
-	return c.JSON(response)
-}
-
 // GetConfigURLsFromEthAddr godoc
 // @Description  Retrieve the URLs for PID, DeviceSettings, and DBC configuration based on device's Ethereum Address. These could be empty if not configs available
 // @Tags         device-config
@@ -349,28 +304,26 @@ func (d *DeviceConfigController) GetConfigURLsFromEthAddr(c *fiber.Ctx) error {
 		return c.JSON(directConfig)
 	}
 
-	vehicle, err := d.identityAPI.GetVehicleByDeviceAddr(address)
+	device, err := d.identityAPI.GetDeviceByAddress(address)
 	if err != nil {
-		// todo instead of logging a warning, just increment a counter and return a 404
-		d.log.Warn().Err(err).Str("func", "GetConfigURLsFromEthAddr").Msgf("failed to GetVehicleByDeviceAddr when trying to get configs %s", address.String())
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": fmt.Sprintf("no minted vehicle for device EthAddr: %s", address.String())})
-	}
-	// todo below will stop working soon, figure out different way to get and persist the powertrain
-	// we still need this to get the powertrain
-	ud, err := d.userDeviceSvc.GetUserDeviceByEthAddr(c.UserContext(), address)
-	if err != nil {
-		d.log.Warn().Err(err).Str("func", "GetConfigURLsFromEthAddr").Msgf("failed to GetUserDeviceByEthAddr, no connected user device found for EthAddr: %s", address.String())
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": fmt.Sprintf("no connected user device found for EthAddr: %s", address.String())})
-	}
-	if ud == nil {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": fmt.Sprintf("no connected user device found for EthAddr: %s", address.String())})
+		if errors.Is(err, gateways.ErrNotFound) {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": fmt.Sprintf("no device found for address: %s", address.String())})
+		}
+		d.log.Warn().Err(err).Str("func", "GetConfigURLsFromEthAddr").Msgf("identity API error for EthAddr: %s", address.String())
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to look up device"})
 	}
 
+	canProtocol := device.CANProtocol
 	if protocol != "" {
-		ud.CANProtocol = protocol
+		canProtocol = protocol
 	}
-
-	response, strategy, err := d.deviceTemplateService.ResolveDeviceConfiguration(c, ud, vehicle)
+	input := &services.ResolveConfigInput{
+		DefinitionID:   device.DefinitionID,
+		CANProtocol:    canProtocol,
+		PowerTrainType: "",
+		Vehicle:        device.Vehicle,
+	}
+	response, strategy, err := d.deviceTemplateService.ResolveDeviceConfiguration(c, input)
 	if err != nil {
 		return err
 	}
@@ -394,21 +347,18 @@ func (d *DeviceConfigController) GetConfigStatusByEthAddr(c *fiber.Ctx) error {
 	ethAddr := c.Params("ethAddr")
 	addr := common2.HexToAddress(ethAddr)
 
-	// we use this to know what the config should be
-	vehicle, err := d.identityAPI.GetVehicleByDeviceAddr(addr)
+	device, err := d.identityAPI.GetDeviceByAddress(addr)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": fmt.Sprintf("received error when looking up device EthAddr: %s", ethAddr)})
+		if errors.Is(err, gateways.ErrNotFound) {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": fmt.Sprintf("no device found for address: %s", ethAddr)})
+		}
+		d.log.Warn().Err(err).Str("func", "GetConfigStatusByEthAddr").Msgf("identity API error for EthAddr: %s", ethAddr)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to look up device"})
 	}
 
-	ud, err := d.userDeviceSvc.GetUserDeviceByEthAddr(c.UserContext(), addr)
-	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": fmt.Sprintf("no connected user device found for EthAddr: %s", ethAddr)})
-	}
-
-	manufTokenID := uint64(0)
-	if ud.AftermarketDevice != nil {
-		manufTokenID = ud.AftermarketDevice.TokenId
-		d.log.Warn().Msgf("no aftermarket device attached to user_device with tokenId: %d", vehicle.TokenID)
+	manufTokenID := device.ManufacturerTokenID
+	if manufTokenID == 0 {
+		d.log.Debug().Str("ethAddr", ethAddr).Msg("no aftermarket device token for device")
 	}
 
 	dts, err := models.DeviceTemplateStatuses(models.DeviceTemplateStatusWhere.DeviceEthAddr.EQ(addr.Bytes())).One(c.UserContext(), d.dbs().Reader)
@@ -421,16 +371,19 @@ func (d *DeviceConfigController) GetConfigStatusByEthAddr(c *fiber.Ctx) error {
 	isTemplateUpdated := false
 	if dts != nil {
 		deviceFWVers = dts.FirmwareVersion.String
-		// figure out what the config should be
-		deviceConfiguration, _, err := d.deviceTemplateService.ResolveDeviceConfiguration(c, ud, nil)
+		input := &services.ResolveConfigInput{
+			DefinitionID:   device.DefinitionID,
+			CANProtocol:    device.CANProtocol,
+			PowerTrainType: "",
+			Vehicle:        device.Vehicle,
+		}
+		deviceConfiguration, _, err := d.deviceTemplateService.ResolveDeviceConfiguration(c, input)
 		if err != nil {
 			return err
 		}
-		// if all this is true then we know we're up to date
 		if dts.TemplateDBCURL.String == deviceConfiguration.DbcURL &&
 			dts.TemplatePidURL.String == deviceConfiguration.PidURL &&
 			dts.TemplateSettingsURL.String == deviceConfiguration.DeviceSettingURL {
-
 			isTemplateUpdated = true
 		}
 	}

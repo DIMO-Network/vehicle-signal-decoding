@@ -27,7 +27,7 @@ func BuildRequest(method, url, body string) *http.Request {
 func Logger() *zerolog.Logger {
 	l := zerolog.New(os.Stdout).With().
 		Timestamp().
-		Str("app", "devices-api").
+		Str("app", "vehicle-signal-decoding").
 		Logger()
 	return &l
 }

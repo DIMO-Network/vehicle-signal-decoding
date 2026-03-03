@@ -13,7 +13,6 @@ import (
 	"github.com/aarondl/null/v8"
 	common2 "github.com/ethereum/go-ethereum/common"
 
-	pb "github.com/DIMO-Network/devices-api/pkg/grpc"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
 	"github.com/aarondl/sqlboiler/v4/queries/qm"
 	"github.com/aarondl/sqlboiler/v4/types"
@@ -28,12 +27,18 @@ import (
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
 )
 
+// ResolveConfigInput carries only what template resolution needs; decoupled from devices-api pb.UserDevice.
+type ResolveConfigInput struct {
+	DefinitionID   string
+	CANProtocol    string
+	PowerTrainType string
+	Vehicle        *gateways.VehicleInfo
+}
+
 //go:generate mockgen -source device_template_service.go -destination mocks/device_template_service_mock.go
 type DeviceTemplateService interface {
 	StoreDeviceConfigUsed(ctx context.Context, address common2.Address, dbcURL, pidURL, settingURL, firmwareVersion string) (*models.DeviceTemplateStatus, error)
-	ResolveDeviceConfiguration(c *fiber.Ctx, ud *pb.UserDevice, vehicle *gateways.VehicleInfo) (*device.ConfigResponse, string, error)
-	// todo: pass in a ResolveConfigRequest instead of pb.UserDevice - this is not tied to a user device
-
+	ResolveDeviceConfiguration(c *fiber.Ctx, input *ResolveConfigInput) (*device.ConfigResponse, string, error)
 	FindDirectDeviceToTemplateConfig(ctx context.Context, address common2.Address) *device.ConfigResponse
 }
 
@@ -144,19 +149,17 @@ func (dts *deviceTemplateService) FindDirectDeviceToTemplateConfig(ctx context.C
 	return &response
 }
 
-// ResolveDeviceConfiguration figures out what template to return based on protocol, powertrain, vehicle or definition (vehicle could be nil)
-func (dts *deviceTemplateService) ResolveDeviceConfiguration(c *fiber.Ctx, ud *pb.UserDevice, vehicle *gateways.VehicleInfo) (*device.ConfigResponse, string, error) {
-	if ud == nil {
-		return nil, "", errors.New("user device is nil")
+// ResolveDeviceConfiguration figures out what template to return based on protocol, powertrain, vehicle or definition (vehicle could be nil).
+func (dts *deviceTemplateService) ResolveDeviceConfiguration(c *fiber.Ctx, input *ResolveConfigInput) (*device.ConfigResponse, string, error) {
+	if input == nil {
+		return nil, "", errors.New("ResolveConfigInput is nil")
 	}
-	canProtocl := convertCANProtocol(dts.log, ud.CANProtocol)
-	// todo (jreate): what about powertrain at the style level... But ideally it is stored at vehicle level. this could come from oracle?
-	powertrain, err := dts.retrievePowertrain(ud.DefinitionId)
+	canProtocol := convertCANProtocol(dts.log, input.CANProtocol)
+	powertrain, err := dts.retrievePowertrain(input.DefinitionID)
 	if err != nil {
-		return nil, "", errors.Wrap(err, fmt.Sprintf("Failed to retrieve powertrain for definitionId: %s", ud.DefinitionId))
+		return nil, "", errors.Wrap(err, fmt.Sprintf("Failed to retrieve powertrain for definitionId: %s", input.DefinitionID))
 	}
-	//nolint
-	matchedTemplate, strategy, err := dts.selectAndFetchTemplate(c.Context(), canProtocl, powertrain, ud.DefinitionId, vehicle)
+	matchedTemplate, strategy, err := dts.selectAndFetchTemplate(c.Context(), canProtocol, powertrain, input.DefinitionID, input.Vehicle)
 	if err != nil {
 		return nil, strategy, err
 	}
@@ -189,24 +192,19 @@ func (dts *deviceTemplateService) ResolveDeviceConfiguration(c *fiber.Ctx, ud *p
 		}
 
 		if deviceSetting == nil {
-			var pt string
-			if ud.PowerTrainType != "" {
-				pt = ud.PowerTrainType
-			} else {
+			pt := input.PowerTrainType
+			if pt == "" {
 				pt = matchedTemplate.Powertrain
 			}
-			// default will be whatever gets ordered first
 			deviceSetting, dbErr = models.DeviceSettings(models.DeviceSettingWhere.Powertrain.EQ(pt),
 				qm.OrderBy(models.DeviceSettingColumns.Name)).One(c.Context(), dts.db)
 			if errors.Is(dbErr, sql.ErrNoRows) {
-				// grab the first record in db
 				deviceSetting, dbErr = models.DeviceSettings(qm.OrderBy(models.DeviceSettingColumns.Name)).One(c.Context(), dts.db)
 			}
 			if dbErr != nil {
-				return nil, strategy, errors.Wrap(err, fmt.Sprintf("Failed to retrieve device setting. Powertrain: %s", pt))
+				return nil, strategy, errors.Wrap(dbErr, fmt.Sprintf("Failed to retrieve device setting. Powertrain: %s", pt))
 			}
 		}
-		// device settings have a name key separate from templateName since simpler setup
 		response.DeviceSettingURL = dts.buildConfigRoute(Setting, deviceSetting.Name, deviceSetting.Version)
 	}
 

@@ -33,7 +33,6 @@ formatters:
       sections:
         - standard
         - default
-        - prefix(github.com/DIMO-Network/devices-api)
         - blank
         - dot
       custom-order: false
