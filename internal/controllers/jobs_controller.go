@@ -18,23 +18,20 @@ import (
 )
 
 type JobsController struct {
-	settings      *config.Settings
-	log           *zerolog.Logger
-	db            *sql.DB
-	userDeviceSvc services.UserDevicesService
-	deviceDefSvc  services.DeviceDefinitionsService
+	settings     *config.Settings
+	log          *zerolog.Logger
+	db           *sql.DB
+	deviceDefSvc services.DeviceDefinitionsService
 }
 
 // NewJobsController constructor
-func NewJobsController(settings *config.Settings, logger *zerolog.Logger, database *sql.DB, userDeviceSvc services.UserDevicesService, deviceDefSvc services.DeviceDefinitionsService) JobsController {
+func NewJobsController(settings *config.Settings, logger *zerolog.Logger, database *sql.DB, deviceDefSvc services.DeviceDefinitionsService) JobsController {
 	return JobsController{
-		settings:      settings,
-		log:           logger,
-		db:            database,
-		userDeviceSvc: userDeviceSvc,
-		deviceDefSvc:  deviceDefSvc,
+		settings:     settings,
+		log:          logger,
+		db:           database,
+		deviceDefSvc: deviceDefSvc,
 	}
-
 }
 
 type JobResponse struct {

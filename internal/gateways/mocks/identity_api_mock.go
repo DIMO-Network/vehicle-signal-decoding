@@ -69,3 +69,18 @@ func (mr *MockIdentityAPIMockRecorder) GetVehicleByDeviceAddr(ethAddress any) *g
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVehicleByDeviceAddr", reflect.TypeOf((*MockIdentityAPI)(nil).GetVehicleByDeviceAddr), ethAddress)
 }
+
+// GetDeviceByAddress mocks base method.
+func (m *MockIdentityAPI) GetDeviceByAddress(ethAddress common.Address) (*gateways.DeviceByAddress, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDeviceByAddress", ethAddress)
+	ret0, _ := ret[0].(*gateways.DeviceByAddress)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetDeviceByAddress indicates an expected call of GetDeviceByAddress.
+func (mr *MockIdentityAPIMockRecorder) GetDeviceByAddress(ethAddress any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDeviceByAddress", reflect.TypeOf((*MockIdentityAPI)(nil).GetDeviceByAddress), ethAddress)
+}

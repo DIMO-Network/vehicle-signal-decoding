@@ -68,7 +68,6 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 	_ = pdb.DBS().Writer.Close()
 	_ = pdb.DBS().Reader.Close()
 	_ = conns.definitionsAPIConn.Close()
-	_ = conns.devicesAPIConn.Close()
 }
 
 func startMonitoringServer(logger zerolog.Logger, settings *config.Settings) {
@@ -95,8 +94,6 @@ func startMonitoringServer(logger zerolog.Logger, settings *config.Settings) {
 }
 
 func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.Store, conns *grpcServiceConnections) *fiber.App {
-	// these are an abstractions over the grpc client
-	userDeviceSvc := services.NewUserDevicesService(conns.devicesAPIConn)
 	deviceDefsvc := services.NewDeviceDefinitionsService(conns.definitionsAPIConn)
 
 	identityAPI := gateways.NewIdentityAPIService(&logger, settings, nil)
@@ -132,9 +129,9 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 		return c.Status(fiber.StatusOK).SendString("healthy")
 	})
 
-	deviceConfigController := controllers.NewDeviceConfigController(settings, &logger, database.DBS, userDeviceSvc,
+	deviceConfigController := controllers.NewDeviceConfigController(settings, &logger, database.DBS,
 		deviceDefsvc, deviceTemplatesvc, identityAPI)
-	jobsController := controllers.NewJobsController(settings, &logger, database.DBS().Reader.DB, userDeviceSvc, deviceDefsvc)
+	jobsController := controllers.NewJobsController(settings, &logger, database.DBS().Reader.DB, deviceDefsvc)
 
 	v1 := app.Group("/v1")
 
@@ -142,7 +139,6 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 
 	// resolve what templates to use for my car/device
 	v1.Get("/device-config/eth-addr/:ethAddr/urls", deviceConfigController.GetConfigURLsFromEthAddr)
-	v1.Get("/device-config/vin/:vin/urls", deviceConfigController.GetConfigURLsFromVIN)
 
 	// endpoints that serve up the template contents
 	v1.Get("/device-config/pids/:templateName", deviceConfigController.GetPIDsByTemplate)
@@ -233,22 +229,16 @@ type CodeResp struct {
 }
 
 type grpcServiceConnections struct {
-	devicesAPIConn     *grpc.ClientConn
 	definitionsAPIConn *grpc.ClientConn
 }
 
 // getGRPCConnections establishes and returns the connections for our GRPC dependencies
 func getGRPCConnections(settings *config.Settings) (*grpcServiceConnections, error) {
-	devicesConn, err := grpc.NewClient(settings.DeviceGRPCAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to dial at: %s", settings.DeviceGRPCAddr)
-	}
 	definitionsConn, err := grpc.NewClient(settings.DefinitionsGRPCAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to dial at: %s", settings.DefinitionsGRPCAddr)
 	}
 	return &grpcServiceConnections{
-		devicesAPIConn:     devicesConn,
 		definitionsAPIConn: definitionsConn,
 	}, nil
 }

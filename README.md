@@ -11,14 +11,13 @@ starts with the word `default-`. Templates can also have special mappings by:
 ### Flow for a device to get their configuration:
 
 1. Get the URL's to your device's configuration: `/device-config/eth-addr/:ethAddr/urls`
-2. If above fails, typically b/c your vehicle/device pairing hasn't been minted yet, then can try by VIN: `/device-config/vin/:vin/urls`
-3. Now you should have the URL's to the different device configurations:
+2. Now you should have the URL's to the different device configurations:
   - PID's
   - DBC file, may be blank
   - settings, usually power related settings
   If nothing is returned, your device should at least have some default PID's and power settings it can try in the meantime. Check back every so often on endpoint in 1.
-4. Download the respective data and use it for your device. 
-5. You should also persist the urls responses so that you can compare them in the future to check for configuration updates for your device/vehicle. 
+3. Download the respective data and use it for your device.
+4. You should also persist the urls responses so that you can compare them in the future to check for configuration updates for your device/vehicle. 
   _Note that the URL's have a version at the end eg. @v1.0.0_
 
 ## Developing locally

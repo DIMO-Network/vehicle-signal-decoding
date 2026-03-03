@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -29,11 +28,8 @@ import (
 
 	"github.com/aarondl/sqlboiler/v4/types"
 
-	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
-
-	pb "github.com/DIMO-Network/devices-api/pkg/grpc"
+	"github.com/DIMO-Network/vehicle-signal-decoding/internal/core/services"
 	"github.com/DIMO-Network/vehicle-signal-decoding/pkg/grpc"
-	"github.com/segmentio/ksuid"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
@@ -57,7 +53,6 @@ type DeviceConfigControllerTestSuite struct {
 	container             testcontainers.Container
 	mockCtrl              *gomock.Controller
 	logger                *zerolog.Logger
-	mockUserDevicesSvc    *mock_services.MockUserDevicesService
 	mockDeviceDefSvc      *mock_services.MockDeviceDefinitionsService
 	mockDeviceTemplateSvc *mock_services.MockDeviceTemplateService
 	controller            *DeviceConfigController
@@ -73,12 +68,11 @@ func (s *DeviceConfigControllerTestSuite) SetupSuite() {
 	logger := zerolog.New(os.Stdout).With().Timestamp().Logger()
 	s.logger = &logger
 	s.mockCtrl = gomock.NewController(s.T())
-	s.mockUserDevicesSvc = mock_services.NewMockUserDevicesService(s.mockCtrl)
 	s.mockDeviceDefSvc = mock_services.NewMockDeviceDefinitionsService(s.mockCtrl)
 	s.mockDeviceTemplateSvc = mock_services.NewMockDeviceTemplateService(s.mockCtrl)
 	s.mockIdentityAPI = mock_gateways.NewMockIdentityAPI(s.mockCtrl)
 	ctrl := NewDeviceConfigController(&config.Settings{Port: "3000", DeploymentURL: "http://localhost:3000"}, s.logger,
-		s.pdb.DBS, s.mockUserDevicesSvc, s.mockDeviceDefSvc, s.mockDeviceTemplateSvc, s.mockIdentityAPI)
+		s.pdb.DBS, s.mockDeviceDefSvc, s.mockDeviceTemplateSvc, s.mockIdentityAPI)
 	s.controller = &ctrl
 	s.app = fiber.New()
 }
@@ -411,314 +405,32 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLsFromDeviceEthAddr() {
 	assert.Empty(s.T(), receivedResp.DbcURL)
 }
 
-func (s *DeviceConfigControllerTestSuite) TestGetConfigURLsFromVIN_EmptyDBC() {
-	vin := "TMBEK6NW1N3088739"
-
-	mockedUserDevice := &pb.UserDevice{
-		Id:                  ksuid.New().String(),
-		UserId:              ksuid.New().String(),
-		Vin:                 &vin,
-		DeviceDefinitionId:  ksuid.New().String(),
-		VinConfirmed:        true,
-		CountryCode:         "USA",
-		PowerTrainType:      "HEV",
-		CANProtocol:         "7",
-		PostalCode:          "48025",
-		GeoDecodedCountry:   "USA",
-		GeoDecodedStateProv: "MI",
-	}
-	s.mockUserDevicesSvc.EXPECT().GetUserDeviceByVIN(gomock.Any(), vin).Return(mockedUserDevice, nil)
-
-	template := &models.Template{
-		TemplateName: "some-template-emptydbc",
-		Version:      "1.0",
-		Protocol:     models.CanProtocolTypeCAN29_500,
-		Powertrain:   "HEV",
-	}
-	err := template.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
-	require.NoError(s.T(), err)
-
-	templateVehicle := &models.TemplateVehicle{
-		TemplateName: template.TemplateName,
-		YearStart:    2010,
-		YearEnd:      2025,
-	}
-	err = templateVehicle.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
-	require.NoError(s.T(), err)
-
-	ds := &models.DeviceSetting{
-		Name:         "default-hev-emptydbc",
-		Powertrain:   "HEV",
-		TemplateName: null.NewString(template.TemplateName, true),
-	}
-	err = ds.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
-	require.NoError(s.T(), err)
-
-	s.mockDeviceTemplateSvc.EXPECT().ResolveDeviceConfiguration(gomock.Any(), mockedUserDevice, nil).Return(&device.ConfigResponse{
-		PidURL:           "http://localhost:3000/v1/device-config/pids/some-template-emptydbc@v1.0.0",
-		DeviceSettingURL: "http://localhost:3000/v1/device-config/settings/default-hev-emptydbc@v1.0.0",
-	}, "definition match", nil)
-
-	s.app.Get("/config-urls/:vin", s.controller.GetConfigURLsFromVIN)
-
-	request := dbtest.BuildRequest("GET", "/config-urls/"+vin, "")
-	response, err := s.app.Test(request)
-	require.NoError(s.T(), err)
-
-	body, _ := io.ReadAll(response.Body)
-	require.Equal(s.T(), fiber.StatusOK, response.StatusCode)
-
-	var receivedResp device.ConfigResponse
-	err = json.Unmarshal(body, &receivedResp)
-	require.NoError(s.T(), err)
-
-	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/pids/%s@v1.0.0", template.TemplateName), receivedResp.PidURL)
-	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/settings/%s@v1.0.0", ds.Name), receivedResp.DeviceSettingURL)
-	assert.Empty(s.T(), receivedResp.DbcURL)
-}
-
-func (s *DeviceConfigControllerTestSuite) TestGetConfigURLsFromVIN_DecodeVIN() {
-	vin := "TMBEK6NW1N3088739"
-
-	template := &models.Template{
-		TemplateName: "some-template",
-		Version:      "1.0",
-		Protocol:     models.CanProtocolTypeCAN11_500,
-		Powertrain:   "HEV",
-	}
-	err := template.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
-	require.NoError(s.T(), err)
-
-	ds := &models.DeviceSetting{
-		Name:         "default-hev",
-		Powertrain:   "HEV",
-		TemplateName: null.NewString(template.TemplateName, true),
-	}
-	err = ds.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
-	require.NoError(s.T(), err)
-
-	s.mockUserDevicesSvc.EXPECT().GetUserDeviceByVIN(gomock.Any(), vin).Return(nil, nil)
-	//s.mockIdentityAPI.EXPECT().
-
-	s.mockDeviceDefSvc.EXPECT().DecodeVIN(gomock.Any(), vin).Return(&p_grpc.DecodeVinResponse{
-		DefinitionId: "ford_mustang_2020",
-	}, nil)
-
-	s.mockDeviceTemplateSvc.EXPECT().ResolveDeviceConfiguration(gomock.Any(), &pb.UserDevice{
-		Vin:          &vin,
-		DefinitionId: "ford_mustang_2020",
-		//PowerTrainType:     "HEV",
-	}, nil).Return(&device.ConfigResponse{
-		PidURL:           "http://localhost:3000/v1/device-config/pids/some-template@v1.0.0",
-		DeviceSettingURL: "http://localhost:3000/v1/device-config/settings/default-hev@v1.0.0",
-	}, "definition match", nil)
-	s.app.Get("/config-urls/:vin", s.controller.GetConfigURLsFromVIN)
-
-	request := dbtest.BuildRequest("GET", "/config-urls/"+vin, "")
-	response, err := s.app.Test(request)
-	require.NoError(s.T(), err)
-
-	body, _ := io.ReadAll(response.Body)
-	require.Equal(s.T(), fiber.StatusOK, response.StatusCode)
-
-	var receivedResp device.ConfigResponse
-	err = json.Unmarshal(body, &receivedResp)
-	require.NoError(s.T(), err)
-
-	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/pids/%s@v1.0.0", template.TemplateName), receivedResp.PidURL)
-	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/settings/%s@v1.0.0", ds.Name), receivedResp.DeviceSettingURL)
-	assert.Empty(s.T(), receivedResp.DbcURL)
-}
-
-func (s *DeviceConfigControllerTestSuite) TestGetConfigURLsFromVIN_DecodeVIN_Fail() {
-	vin := "TMBEK6NW1N3088739"
-
-	template := &models.Template{
-		TemplateName: "some-template",
-		Version:      "1.0",
-		Protocol:     models.CanProtocolTypeCAN11_500,
-		Powertrain:   "HEV",
-	}
-	err := template.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
-	require.NoError(s.T(), err)
-
-	ds := &models.DeviceSetting{
-		Name:         "default-hev",
-		Powertrain:   "HEV",
-		TemplateName: null.NewString(template.TemplateName, true),
-	}
-	err = ds.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
-	require.NoError(s.T(), err)
-
-	s.mockUserDevicesSvc.EXPECT().GetUserDeviceByVIN(gomock.Any(), vin).Return(nil, errors.New("user device not found"))
-
-	s.mockDeviceDefSvc.EXPECT().DecodeVIN(gomock.Any(), vin).Return(nil, nil)
-
-	s.app.Get("/config-urls/:vin", s.controller.GetConfigURLsFromVIN)
-
-	request := dbtest.BuildRequest("GET", "/config-urls/"+vin, "")
-	response, err := s.app.Test(request)
-	require.NoError(s.T(), err)
-
-	body, _ := io.ReadAll(response.Body)
-	require.Equal(s.T(), fiber.StatusBadRequest, response.StatusCode)
-	fmt.Println(string(body))
-}
-
-func (s *DeviceConfigControllerTestSuite) TestGetConfigURLsFromVIN_ProtocolOverrideQS() {
-
-	vin := "TMBEK6NW1N3088739"
-
-	decoy := &models.Template{
-		TemplateName: "not-wanted-template",
-		Version:      "1.0",
-		Protocol:     models.CanProtocolTypeCAN11_500,
-		Powertrain:   "HEV",
-	}
-	err := decoy.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
-	require.NoError(s.T(), err)
-
-	template := &models.Template{
-		TemplateName: "some-template-protocol-override",
-		Version:      "1.0",
-		Protocol:     models.CanProtocolTypeCAN29_500,
-		Powertrain:   "HEV",
-	}
-	err = template.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
-	require.NoError(s.T(), err)
-
-	ds := &models.DeviceSetting{
-		Name:         "default-hev-protocol-override",
-		Powertrain:   "HEV",
-		TemplateName: null.NewString(template.TemplateName, template.TemplateName != ""),
-	}
-	err = ds.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
-	require.NoError(s.T(), err)
-
-	s.mockUserDevicesSvc.EXPECT().GetUserDeviceByVIN(gomock.Any(), vin).Return(nil, errors.New("user device not found"))
-	s.mockDeviceDefSvc.EXPECT().DecodeVIN(gomock.Any(), vin).Return(&p_grpc.DecodeVinResponse{
-		DefinitionId: "ford_mustang_2020"}, nil)
-
-	s.mockDeviceTemplateSvc.EXPECT().ResolveDeviceConfiguration(gomock.Any(), &pb.UserDevice{
-		Vin:          &vin,
-		DefinitionId: "ford_mustang_2020",
-		CANProtocol:  "7",
-	}, nil).Return(&device.ConfigResponse{
-		PidURL:           "http://localhost:3000/v1/device-config/pids/some-template-protocol-override@v1.0.0",
-		DeviceSettingURL: "http://localhost:3000/v1/device-config/settings/default-hev-protocol-override@v1.0.0",
-	}, "something", nil)
-
-	s.app.Get("/config-urls/:vin", s.controller.GetConfigURLsFromVIN)
-
-	request := dbtest.BuildRequest("GET", "/config-urls/"+vin+"?protocol=7", "")
-	response, err := s.app.Test(request, -1)
-	require.NoError(s.T(), err)
-
-	body, _ := io.ReadAll(response.Body)
-
-	assert.Equal(s.T(), fiber.StatusOK, response.StatusCode, "response body: "+string(body))
-
-	var receivedResp device.ConfigResponse
-	err = json.Unmarshal(body, &receivedResp)
-	assert.NoError(s.T(), err)
-
-	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/pids/%s@v1.0.0", template.TemplateName), receivedResp.PidURL)
-	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/settings/%s@v1.0.0", ds.Name), receivedResp.DeviceSettingURL)
-
-}
-
-func (s *DeviceConfigControllerTestSuite) TestGetConfigURLsFromVIN_FallbackLogic() {
-	vin := "TMBEK6NW1N3088739"
-
-	parentTemplate := &models.Template{
-		TemplateName: "parent-template",
-		Version:      "1.0",
-		Protocol:     models.CanProtocolTypeCAN11_500,
-		Powertrain:   "BEV",
-	}
-	err := parentTemplate.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
-	require.NoError(s.T(), err)
-
-	parentDS := &models.DeviceSetting{
-		Name:         "parent-settings-fallback",
-		Powertrain:   "BEV",
-		TemplateName: null.NewString(parentTemplate.TemplateName, true),
-	}
-	err = parentDS.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
-	require.NoError(s.T(), err)
-
-	decoyDS := &models.DeviceSetting{
-		Name:       "decoy-device-settings",
-		Powertrain: "BEV",
-	}
-	err = decoyDS.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
-	require.NoError(s.T(), err)
-
-	// matched template without device settings but has a parent template
-	matchedTemplate := &models.Template{
-		TemplateName:       "matched-template",
-		Version:            "1.0",
-		Protocol:           models.CanProtocolTypeCAN29_500,
-		Powertrain:         "BEV",
-		ParentTemplateName: null.NewString(parentTemplate.TemplateName, true),
-	}
-	err = matchedTemplate.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
-	require.NoError(s.T(), err)
-
-	s.mockUserDevicesSvc.EXPECT().GetUserDeviceByVIN(gomock.Any(), vin).Return(nil, errors.New("user device not found"))
-	s.mockDeviceDefSvc.EXPECT().DecodeVIN(gomock.Any(), vin).Return(&p_grpc.DecodeVinResponse{
-		DefinitionId: "ford_mustang_2020"}, nil)
-
-	s.mockDeviceTemplateSvc.EXPECT().ResolveDeviceConfiguration(gomock.Any(), &pb.UserDevice{
-		Vin:          &vin,
-		DefinitionId: "ford_mustang_2020",
-		CANProtocol:  "7",
-	}, nil).Return(&device.ConfigResponse{
-		PidURL:           "http://localhost:3000/v1/device-config/pids/parent-template@v1.0.0",
-		DeviceSettingURL: "http://localhost:3000/v1/device-config/settings/parent-settings-fallback@v1.0.0",
-	}, "definition match", nil)
-
-	s.app.Get("/config-urls/:vin", s.controller.GetConfigURLsFromVIN)
-
-	request := dbtest.BuildRequest("GET", "/config-urls/"+vin+"?protocol=7", "")
-	response, err := s.app.Test(request)
-	require.NoError(s.T(), err)
-
-	body, _ := io.ReadAll(response.Body)
-
-	var receivedResp device.ConfigResponse
-	err = json.Unmarshal(body, &receivedResp)
-	assert.NoError(s.T(), err)
-	assert.Equal(s.T(), fmt.Sprintf("http://localhost:3000/v1/device-config/settings/%s@v1.0.0", parentDS.Name), receivedResp.DeviceSettingURL)
-}
-
 func (s *DeviceConfigControllerTestSuite) TestGetConfigStatusByEthAddr_DeviceDataOnly() {
 	ethAddr := "0x29e8Ec52A3d2c9b72aA9F0e3e2576F3A28480299"
 	s.app.Get("/device-config/eth-addr/:ethAddr/status", s.controller.GetConfigStatusByEthAddr)
-	vin := "TMBEK6NW1N3088739"
 	s.controller.fwVersionAPI = mockHTTPClientFwVersion{}
 
-	testUD := &pb.UserDevice{
-		Id:             ksuid.New().String(),
-		UserId:         ksuid.New().String(),
-		Vin:            &vin,
-		VinConfirmed:   true,
-		CountryCode:    "USA",
-		PowerTrainType: "ICE",
-		CANProtocol:    "6",
-		DefinitionId:   "ford_mustang_2020",
-	}
-	s.mockIdentityAPI.EXPECT().GetVehicleByDeviceAddr(common2.HexToAddress(ethAddr)).Return(&gateways.VehicleInfo{
+	vehicle := &gateways.VehicleInfo{
 		TokenID: 123,
 		Definition: gateways.VehicleDefinition{
 			Make:  "Ford",
 			Model: "Mustang",
 			Year:  2020,
 		},
-	}, nil)
-
-	s.mockUserDevicesSvc.EXPECT().GetUserDeviceByEthAddr(gomock.Any(), common2.HexToAddress(ethAddr)).Return(testUD, nil)
-	s.mockDeviceTemplateSvc.EXPECT().ResolveDeviceConfiguration(gomock.Any(), testUD, nil).Return(&device.ConfigResponse{
+	}
+	deviceByAddr := &gateways.DeviceByAddress{
+		Vehicle:             vehicle,
+		DefinitionID:        "ford_mustang_2020",
+		ManufacturerTokenID: 0,
+		CANProtocol:         "6",
+	}
+	s.mockIdentityAPI.EXPECT().GetDeviceByAddress(common2.HexToAddress(ethAddr)).Return(deviceByAddr, nil)
+	input := &services.ResolveConfigInput{
+		DefinitionID: "ford_mustang_2020",
+		CANProtocol:  "6",
+		Vehicle:      vehicle,
+	}
+	s.mockDeviceTemplateSvc.EXPECT().ResolveDeviceConfiguration(gomock.Any(), input).Return(&device.ConfigResponse{
 		PidURL:           "http://localhost/pids/default",
 		DeviceSettingURL: "http://localhost/settings/default",
 		DbcURL:           "http://localhost/dbc/generalmotors",
@@ -752,29 +464,29 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigStatusByEthAddr_DeviceDat
 func (s *DeviceConfigControllerTestSuite) TestGetConfigStatusByEthAddr_TemplatesUpToDate() {
 	ethAddr := "0x29e8Ec52A3d2c9b72aA9F0e3e2576F3A28480299"
 	s.app.Get("/device-config/eth-addr/:ethAddr/status", s.controller.GetConfigStatusByEthAddr)
-	vin := "TMBEK6NW1N3088739"
 	s.controller.fwVersionAPI = mockHTTPClientFwVersion{}
 
-	testUD := &pb.UserDevice{
-		Id:             ksuid.New().String(),
-		UserId:         ksuid.New().String(),
-		Vin:            &vin,
-		DefinitionId:   "ford_mustang_2020",
-		VinConfirmed:   true,
-		CountryCode:    "USA",
-		PowerTrainType: "ICE",
-		CANProtocol:    "6",
-	}
-	s.mockIdentityAPI.EXPECT().GetVehicleByDeviceAddr(common2.HexToAddress(ethAddr)).Return(&gateways.VehicleInfo{
+	vehicle := &gateways.VehicleInfo{
 		TokenID: 123,
 		Definition: gateways.VehicleDefinition{
 			Make:  "Ford",
 			Model: "Mustang",
 			Year:  2020,
 		},
-	}, nil)
-	s.mockUserDevicesSvc.EXPECT().GetUserDeviceByEthAddr(gomock.Any(), common2.HexToAddress(ethAddr)).Return(testUD, nil)
-	s.mockDeviceTemplateSvc.EXPECT().ResolveDeviceConfiguration(gomock.Any(), testUD, nil).Return(&device.ConfigResponse{
+	}
+	deviceByAddr := &gateways.DeviceByAddress{
+		Vehicle:             vehicle,
+		DefinitionID:        "ford_mustang_2020",
+		ManufacturerTokenID: 0,
+		CANProtocol:         "6",
+	}
+	s.mockIdentityAPI.EXPECT().GetDeviceByAddress(common2.HexToAddress(ethAddr)).Return(deviceByAddr, nil)
+	input := &services.ResolveConfigInput{
+		DefinitionID: "ford_mustang_2020",
+		CANProtocol:  "6",
+		Vehicle:      vehicle,
+	}
+	s.mockDeviceTemplateSvc.EXPECT().ResolveDeviceConfiguration(gomock.Any(), input).Return(&device.ConfigResponse{
 		PidURL:           "http://localhost/pids/default",
 		DeviceSettingURL: "http://localhost/settings/default",
 		DbcURL:           "http://localhost/dbc/generalmotors",

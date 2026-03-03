@@ -20,6 +20,7 @@ var ErrBadRequest = errors.New("bad request")
 //go:generate mockgen -source identity_api.go -destination mocks/identity_api_mock.go
 type IdentityAPI interface {
 	GetVehicleByDeviceAddr(ethAddress common.Address) (*VehicleInfo, error)
+	GetDeviceByAddress(ethAddress common.Address) (*DeviceByAddress, error)
 	GetDefinitionByID(definitionID string) (*DeviceDefinition, error)
 }
 
@@ -95,6 +96,52 @@ func (i *identityAPIService) GetVehicleByDeviceAddr(deviceEthAddr common.Address
 	return i.fetchVehicleWithQuery(graphqlQuery)
 }
 
+func (i *identityAPIService) GetDeviceByAddress(deviceEthAddr common.Address) (*DeviceByAddress, error) {
+	graphqlQuery := `{
+        aftermarketDevice(by: {address: "` + deviceEthAddr.Hex() + `"}) {
+			tokenId
+			vehicle {
+				tokenId
+				definition {
+					id
+					make
+					model
+					year
+				}
+			}
+		}
+	}`
+	var wrapper struct {
+		Data struct {
+			AftermarketDevice struct {
+				TokenID int `json:"tokenId"`
+				Vehicle *struct {
+					TokenID    uint64            `json:"tokenId"`
+					Definition VehicleDefinition `json:"definition"`
+				} `json:"vehicle"`
+			} `json:"aftermarketDevice"`
+		} `json:"data"`
+	}
+	err := i.fetchWithQuery(graphqlQuery, &wrapper)
+	if err != nil {
+		return nil, err
+	}
+	ad := wrapper.Data.AftermarketDevice
+	if ad.Vehicle == nil || ad.Vehicle.TokenID == 0 {
+		return nil, ErrNotFound
+	}
+	out := &DeviceByAddress{
+		ManufacturerTokenID: uint64(ad.TokenID),
+		DefinitionID:        ad.Vehicle.Definition.ID,
+		CANProtocol:         "",
+	}
+	out.Vehicle = &VehicleInfo{
+		TokenID:    ad.Vehicle.TokenID,
+		Definition: ad.Vehicle.Definition,
+	}
+	return out, nil
+}
+
 func (i *identityAPIService) fetchWithQuery(query string, result interface{}) error {
 	// GraphQL request
 	requestPayload := GraphQLRequest{Query: query}
@@ -160,9 +207,19 @@ type VehicleInfo struct {
 }
 
 type VehicleDefinition struct {
+	ID    string `json:"id"`
 	Make  string `json:"make"`
 	Model string `json:"model"`
 	Year  int    `json:"year"`
+}
+
+// DeviceByAddress is the result of looking up an aftermarket device by its Ethereum address.
+// It carries everything needed for config resolution and status (e.g. GetConfigStatusByEthAddr).
+type DeviceByAddress struct {
+	Vehicle             *VehicleInfo
+	DefinitionID        string
+	ManufacturerTokenID uint64
+	CANProtocol         string
 }
 
 type GraphQLRequest struct {

@@ -10,8 +10,6 @@ github.com/DATA-DOG/go-sqlmock v1.4.1 h1:ThlnYciV1iM/V0OSF/dtkqWb6xo5qITT1TJBG1M
 github.com/DATA-DOG/go-sqlmock v1.4.1/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q5eFN3EC/SaM=
 github.com/DIMO-Network/device-definitions-api v1.5.8 h1:/gz5I9F2z3N5HFHz0MkKzt+g7qioS6bZsKcQKhmqcv0=
 github.com/DIMO-Network/device-definitions-api v1.5.8/go.mod h1:+rRLeRY1B+Q5QnKcXeX51gAeQ8z6Rv9/lDCIiRcrp78=
-github.com/DIMO-Network/devices-api v1.41.7 h1:ASpXD8UTXongZDxbpK45sMxgsDMvLctpFEFRk7BB1z0=
-github.com/DIMO-Network/devices-api v1.41.7/go.mod h1:df8avnirXFcw6EF1+wulAEYgo/42Bl6PFq62QBteOns=
 github.com/DIMO-Network/model-garage v0.7.4 h1:mFnGPPMxOWexeJe7LmykLlwIr5JgCC5C0giIssmZRio=
 github.com/DIMO-Network/model-garage v0.7.4/go.mod h1:xtHRSvILRrC99CGavoaUFQT+hOxbghbTy5MYzT2KTtM=
 github.com/DIMO-Network/shared v1.0.7 h1:LfSgsqJ6R7EUyfo2GTfuhrCpoDcweJqe7eVOa4j7Xbo=
@@ -512,7 +510,6 @@ google.golang.org/appengine v1.4.0/go.mod h1:xpcJRLb0r/rnEns0DIKYYv+WjYCduHsrkT7
 google.golang.org/genproto v0.0.0-20180817151627-c66870c02cf8/go.mod h1:JiN7NxoALGmiZfu7CAH4rXhgtRTLTxftemlI0sWmxmc=
 google.golang.org/genproto v0.0.0-20190819201941-24fa4b261c55/go.mod h1:DMBHOl98Agz4BDEuKkezgsaosCRResVns1a3J2ZsMNc=
 google.golang.org/genproto v0.0.0-20200423170343-7949de9c1215/go.mod h1:55QSHmfGQM9UVYDPBsyGGes0y52j32PQ3BqQfXhyH3c=
-google.golang.org/genproto v0.0.0-20230526203410-71b5a4ffd15e h1:Ao9GzfUMPH3zjVfzXG5rlWlk+Q8MXWKwWpwVQE1MXfw=
 google.golang.org/genproto/googleapis/api v0.0.0-20250721164621-a45f3dfb1074 h1:mVXdvnmR3S3BQOqHECm9NGMjYiRtEvDYcqAqedTXY6s=
 google.golang.org/genproto/googleapis/api v0.0.0-20250721164621-a45f3dfb1074/go.mod h1:vYFwMYFbmA8vl6Z/krj/h7+U/AqpHknwJX4Uqgfyc7I=
 google.golang.org/genproto/googleapis/rpc v0.0.0-20250721164621-a45f3dfb1074 h1:qJW29YvkiJmXOYMu5Tf8lyrTp3dOS+K4z6IixtLaCf8=

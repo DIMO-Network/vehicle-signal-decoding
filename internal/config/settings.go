@@ -16,7 +16,6 @@ type Settings struct {
 	KafkaBrokers               string      `yaml:"KAFKA_BROKERS"`
 	TaskStatusTopic            string      `yaml:"TASK_STATUS_TOPIC"`
 	MonitoringPort             string      `yaml:"MONITORING_PORT"`
-	DeviceGRPCAddr             string      `yaml:"DEVICE_GRPC_ADDR"`
 	DeploymentURL              string      `yaml:"DEPLOYMENT_URL"`
 	DefinitionsGRPCAddr        string      `yaml:"DEFINITIONS_GRPC_ADDR"`
 	CandumpsAWSAccessKeyID     string      `yaml:"CANDUMPS_AWS_ACCESS_KEY_ID"`

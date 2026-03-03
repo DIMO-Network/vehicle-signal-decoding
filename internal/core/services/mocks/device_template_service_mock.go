@@ -13,10 +13,9 @@ import (
 	context "context"
 	reflect "reflect"
 
-	grpc "github.com/DIMO-Network/devices-api/pkg/grpc"
 	device "github.com/DIMO-Network/shared/pkg/device"
-	gateways "github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways"
 	models "github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
+	services "github.com/DIMO-Network/vehicle-signal-decoding/internal/core/services"
 	common "github.com/ethereum/go-ethereum/common"
 	fiber "github.com/gofiber/fiber/v2"
 	gomock "go.uber.org/mock/gomock"
@@ -60,9 +59,9 @@ func (mr *MockDeviceTemplateServiceMockRecorder) FindDirectDeviceToTemplateConfi
 }
 
 // ResolveDeviceConfiguration mocks base method.
-func (m *MockDeviceTemplateService) ResolveDeviceConfiguration(c *fiber.Ctx, ud *grpc.UserDevice, vehicle *gateways.VehicleInfo) (*device.ConfigResponse, string, error) {
+func (m *MockDeviceTemplateService) ResolveDeviceConfiguration(c *fiber.Ctx, input *services.ResolveConfigInput) (*device.ConfigResponse, string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ResolveDeviceConfiguration", c, ud, vehicle)
+	ret := m.ctrl.Call(m, "ResolveDeviceConfiguration", c, input)
 	ret0, _ := ret[0].(*device.ConfigResponse)
 	ret1, _ := ret[1].(string)
 	ret2, _ := ret[2].(error)
@@ -70,9 +69,9 @@ func (m *MockDeviceTemplateService) ResolveDeviceConfiguration(c *fiber.Ctx, ud 
 }
 
 // ResolveDeviceConfiguration indicates an expected call of ResolveDeviceConfiguration.
-func (mr *MockDeviceTemplateServiceMockRecorder) ResolveDeviceConfiguration(c, ud, vehicle any) *gomock.Call {
+func (mr *MockDeviceTemplateServiceMockRecorder) ResolveDeviceConfiguration(c, input any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResolveDeviceConfiguration", reflect.TypeOf((*MockDeviceTemplateService)(nil).ResolveDeviceConfiguration), c, ud, vehicle)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResolveDeviceConfiguration", reflect.TypeOf((*MockDeviceTemplateService)(nil).ResolveDeviceConfiguration), c, input)
 }
 
 // StoreDeviceConfigUsed mocks base method.

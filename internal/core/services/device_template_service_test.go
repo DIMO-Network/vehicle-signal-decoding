@@ -10,7 +10,6 @@ import (
 
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/gateways"
 
-	pb "github.com/DIMO-Network/devices-api/pkg/grpc"
 	"github.com/DIMO-Network/shared/pkg/db"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/config"
 	"github.com/DIMO-Network/vehicle-signal-decoding/internal/infrastructure/db/models"
@@ -19,7 +18,6 @@ import (
 	"github.com/aarondl/sqlboiler/v4/boil"
 	"github.com/aarondl/sqlboiler/v4/types"
 	"github.com/rs/zerolog"
-	"github.com/segmentio/ksuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -28,6 +26,13 @@ import (
 )
 
 const migrationsDirRelPath = "../../infrastructure/db/migrations"
+
+// testDeviceParams holds params used by selectAndFetchTemplate/retrievePowertrain tests (replaces pb.UserDevice).
+type testDeviceParams struct {
+	DefinitionId   string
+	CANProtocol    string
+	PowerTrainType string
+}
 
 type DeviceTemplateServiceTestSuite struct {
 	suite.Suite
@@ -85,7 +90,7 @@ func TestDeviceTemplateServiceTestSuite(t *testing.T) {
 }
 
 func (s *DeviceTemplateServiceTestSuite) TestRetrievePowertrain() {
-	ud := &pb.UserDevice{
+	ud := &testDeviceParams{
 		DefinitionId: "some-definition-id",
 	}
 	expectedDDResponse := &gateways.DeviceDefinition{
@@ -128,7 +133,7 @@ func (s *DeviceTemplateServiceTestSuite) TestConvertCANProtocol() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			ud := &pb.UserDevice{CANProtocol: tc.initialCAN}
+			ud := &testDeviceParams{CANProtocol: tc.initialCAN}
 			cp := convertCANProtocol(s.sut.log, ud.CANProtocol)
 			assert.Equal(s.T(), tc.expectedCAN, cp)
 		})
@@ -153,9 +158,7 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_DeviceDefin
 	err = deviceDef.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
 	require.NoError(s.T(), err)
 
-	mockedUserDevice := &pb.UserDevice{
-		Id:             ksuid.New().String(),
-		UserId:         ksuid.New().String(),
+	mockedUserDevice := &testDeviceParams{
 		DefinitionId:   "device-def-id",
 		CANProtocol:    models.CanProtocolTypeCAN29_500,
 		PowerTrainType: "HEV",
@@ -196,9 +199,7 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_nilVehicle_
 	err = deviceDef.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
 	require.NoError(s.T(), err)
 
-	mockedUserDevice := &pb.UserDevice{
-		Id:             ksuid.New().String(),
-		UserId:         ksuid.New().String(),
+	mockedUserDevice := &testDeviceParams{
 		DefinitionId:   "device-def-id",
 		CANProtocol:    models.CanProtocolTypeCAN29_500,
 		PowerTrainType: "HEV",
@@ -247,9 +248,7 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_MMY() {
 	err = templateVehicle.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
 	require.NoError(s.T(), err)
 
-	mockedUserDevice := &pb.UserDevice{
-		Id:             ksuid.New().String(),
-		UserId:         ksuid.New().String(),
+	mockedUserDevice := &testDeviceParams{
 		DefinitionId:   "non-existing-def-id",
 		CANProtocol:    models.CanProtocolTypeCAN29_500,
 		PowerTrainType: "HEV",
@@ -313,9 +312,7 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_ModelWhitel
 	err = templateVehicle.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
 	require.NoError(s.T(), err)
 
-	mockedUserDevice := &pb.UserDevice{
-		Id:             ksuid.New().String(),
-		UserId:         ksuid.New().String(),
+	mockedUserDevice := &testDeviceParams{
 		DefinitionId:   "non-existing-def-id",
 		CANProtocol:    models.CanProtocolTypeCAN11_500,
 		PowerTrainType: "ICE",
@@ -380,9 +377,7 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_ModelWhitel
 	err = templateVehicle.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
 	require.NoError(s.T(), err)
 
-	mockedUserDevice := &pb.UserDevice{
-		Id:             ksuid.New().String(),
-		UserId:         ksuid.New().String(),
+	mockedUserDevice := &testDeviceParams{
 		DefinitionId:   "non-existing-def-id",
 		CANProtocol:    models.CanProtocolTypeCAN11_500,
 		PowerTrainType: "ICE", // powertrain does not match template
@@ -437,9 +432,7 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_ModelDoesNo
 	err = decoyTemplateVehicle.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
 	require.NoError(s.T(), err)
 
-	mockedUserDevice := &pb.UserDevice{
-		Id:             ksuid.New().String(),
-		UserId:         ksuid.New().String(),
+	mockedUserDevice := &testDeviceParams{
 		DefinitionId:   "non-existing-def-id",
 		CANProtocol:    models.CanProtocolTypeCAN11_500,
 		PowerTrainType: "ICE",
@@ -491,9 +484,7 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_YearRange()
 	err = templateVehicle.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
 	require.NoError(s.T(), err)
 
-	mockedUserDevice := &pb.UserDevice{
-		Id:             ksuid.New().String(),
-		UserId:         ksuid.New().String(),
+	mockedUserDevice := &testDeviceParams{
 		DefinitionId:   "some-2019-vehicle",
 		PowerTrainType: template.Powertrain,
 		CANProtocol:    template.Protocol,
@@ -546,9 +537,7 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_YearRange_D
 	err = templateVehicle.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
 	require.NoError(s.T(), err)
 
-	mockedUserDevice := &pb.UserDevice{
-		Id:             ksuid.New().String(),
-		UserId:         ksuid.New().String(),
+	mockedUserDevice := &testDeviceParams{
 		DefinitionId:   "2008-vehicle",
 		PowerTrainType: "ICE",
 		CANProtocol:    models.CanProtocolTypeCAN11_500,
@@ -592,9 +581,7 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_MatchPowert
 	err = template.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
 	require.NoError(s.T(), err)
 
-	mockedUserDevice := &pb.UserDevice{
-		Id:             ksuid.New().String(),
-		UserId:         ksuid.New().String(),
+	mockedUserDevice := &testDeviceParams{
 		DefinitionId:   "non-existing-def-id",
 		CANProtocol:    models.CanProtocolTypeCAN29_500,
 		PowerTrainType: "HEV",
@@ -638,9 +625,7 @@ func (s *DeviceTemplateServiceTestSuite) Test_selectAndFetchTemplate_DefaultMatc
 	err = defaultTemplate.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
 	require.NoError(s.T(), err)
 
-	mockedUserDevice := &pb.UserDevice{
-		Id:             ksuid.New().String(),
-		UserId:         ksuid.New().String(),
+	mockedUserDevice := &testDeviceParams{
 		DefinitionId:   "non-existing-def-id",
 		CANProtocol:    models.CanProtocolTypeCAN11_500,
 		PowerTrainType: "ICE",
