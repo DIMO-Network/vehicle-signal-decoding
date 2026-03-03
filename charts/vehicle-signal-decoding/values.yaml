@@ -2,7 +2,7 @@ replicaCount: 1
 image:
   repository: dimozone/vehicle-signal-decoding
   pullPolicy: IfNotPresent
-  tag: 3e632c8
+  tag: 37142d2
 imagePullSecrets: []
 nameOverride: ''
 fullnameOverride: ''
