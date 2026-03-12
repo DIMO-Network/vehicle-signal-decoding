@@ -144,6 +144,8 @@ func startWebAPI(logger zerolog.Logger, settings *config.Settings, database db.S
 	v1.Get("/device-config/pids/:templateName", deviceConfigController.GetPIDsByTemplate)
 	v1.Get("/device-config/settings/:name", deviceConfigController.GetDeviceSettingsByName)
 	v1.Get("/device-config/dbc/:templateName", deviceConfigController.GetDBCFileByTemplateName)
+	// needed for macarons
+	v1.Get("/device-configs/vin/:vin/urls", deviceConfigController.GetConfigURLsFromVIN)
 	// for backwards compatibility - remove after a month or 2
 	v1.Get("/device-config/:name/device-settings", deviceConfigController.GetDeviceSettingsByName)
 
