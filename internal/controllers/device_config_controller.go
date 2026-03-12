@@ -567,7 +567,7 @@ func padByteArray(input []byte, targetLength int) []byte {
 		return input // No need to pad if the input is already longer or equal to the target length
 	}
 
-	padded := make([]byte, targetLength-len(input))
+	padded := make([]byte, targetLength-len(input), targetLength)
 	return append(padded, input...)
 }
 
