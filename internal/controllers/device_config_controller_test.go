@@ -405,6 +405,82 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLsFromDeviceEthAddr() {
 	assert.Empty(s.T(), receivedResp.DbcURL)
 }
 
+func (s *DeviceConfigControllerTestSuite) TestGetConfigURLsFromVIN_DefaultTemplate() {
+	template := models.Template{
+		TemplateName: "default-ice-can11",
+		Version:      "v1.2.3",
+		Protocol:     models.CanProtocolTypeCAN11_500,
+		Powertrain:   "ICE",
+	}
+	err := template.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
+
+	dbc := models.DBCFile{
+		TemplateName: template.TemplateName,
+		DBCFile:      "BO_ 1 Example: 8 Vector__XXX",
+	}
+	err = dbc.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
+
+	settings := models.DeviceSetting{
+		Name:       "default-ice",
+		Powertrain: "ICE",
+		Version:    "v9.9.9",
+		Settings:   null.JSONFrom([]byte(`{"wake_trigger_voltage_level": 12.8}`)),
+	}
+	err = settings.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
+
+	s.app.Get("/device-configs/vin/:vin/urls", s.controller.GetConfigURLsFromVIN)
+	request := dbtest.BuildRequest("GET", "/device-configs/vin/1HGCM82633A004352/urls", "")
+	response, err := s.app.Test(request)
+	require.NoError(s.T(), err)
+	require.Equal(s.T(), fiber.StatusOK, response.StatusCode)
+
+	body, _ := io.ReadAll(response.Body)
+	var receivedResp DeviceTemplateStatusResponse
+	err = json.Unmarshal(body, &receivedResp)
+	require.NoError(s.T(), err)
+
+	assert.Equal(s.T(), "http://localhost:3000/v1/device-config/pids/default-ice-can11@v1.2.3", receivedResp.Template.PidURL)
+	assert.Equal(s.T(), "http://localhost:3000/v1/device-config/dbc/default-ice-can11@v1.2.3", receivedResp.Template.DbcURL)
+	assert.Equal(s.T(), "http://localhost:3000/v1/device-config/settings/default-ice@v9.9.9", receivedResp.Template.DeviceSettingURL)
+}
+
+func (s *DeviceConfigControllerTestSuite) TestGetConfigURLsFromVIN_ProtocolOverrideQS() {
+	template := models.Template{
+		TemplateName: "default-ice-can29",
+		Version:      "v2.0.0",
+		Protocol:     models.CanProtocolTypeCAN29_500,
+		Powertrain:   "ICE",
+	}
+	err := template.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
+
+	settings := models.DeviceSetting{
+		Name:       "default-ice",
+		Powertrain: "ICE",
+		Version:    "v1.0.0",
+		Settings:   null.JSONFrom([]byte(`{"wake_trigger_voltage_level": 12.8}`)),
+	}
+	err = settings.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
+
+	s.app.Get("/device-configs/vin/:vin/urls", s.controller.GetConfigURLsFromVIN)
+	request := dbtest.BuildRequest("GET", "/device-configs/vin/1HGCM82633A004352/urls?protocol=7", "")
+	response, err := s.app.Test(request)
+	require.NoError(s.T(), err)
+	require.Equal(s.T(), fiber.StatusOK, response.StatusCode)
+
+	body, _ := io.ReadAll(response.Body)
+	var receivedResp DeviceTemplateStatusResponse
+	err = json.Unmarshal(body, &receivedResp)
+	require.NoError(s.T(), err)
+
+	assert.Equal(s.T(), "http://localhost:3000/v1/device-config/pids/default-ice-can29@v2.0.0", receivedResp.Template.PidURL)
+	assert.Equal(s.T(), "http://localhost:3000/v1/device-config/settings/default-ice@v1.0.0", receivedResp.Template.DeviceSettingURL)
+}
+
 func (s *DeviceConfigControllerTestSuite) TestGetConfigStatusByEthAddr_DeviceDataOnly() {
 	ethAddr := "0x29e8Ec52A3d2c9b72aA9F0e3e2576F3A28480299"
 	s.app.Get("/device-config/eth-addr/:ethAddr/status", s.controller.GetConfigStatusByEthAddr)

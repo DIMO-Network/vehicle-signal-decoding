@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"context"
 	"database/sql"
 	"encoding/binary"
 	"encoding/json"
@@ -9,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/DIMO-Network/shared/pkg/vin"
 	"github.com/aarondl/sqlboiler/v4/queries/qm"
 
 	"github.com/DIMO-Network/shared/pkg/db"
@@ -495,6 +497,49 @@ func (d *DeviceConfigController) PatchRuptelaConfigStatusByEthAddr(c *fiber.Ctx)
 	return c.SendStatus(fiber.StatusOK)
 }
 
+func (d *DeviceConfigController) GetConfigURLsFromVIN(c *fiber.Ctx) error {
+	vinStr := c.Params("vin")
+	protocol := c.Query("protocol", "")
+
+	v := vin.VIN(vinStr)
+	if !v.IsValidVIN() {
+		return fiber.NewError(fiber.StatusBadRequest, "invalid VIN")
+	}
+
+	canProtocol := fallbackCANProtocol(protocol)
+	defaultTemplate, err := models.Templates(
+		models.TemplateWhere.Protocol.EQ(canProtocol),
+		models.TemplateWhere.Powertrain.EQ("ICE"),
+		qm.Where("template_name like 'default%'"),
+		qm.OrderBy(models.TemplateColumns.TemplateName),
+		qm.Load(models.TemplateRels.TemplateNameDBCFile),
+		qm.Load(models.TemplateRels.TemplateNameDeviceSettings),
+	).One(c.UserContext(), d.dbs().Reader)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("no default template found for protocol: %s", canProtocol))
+		}
+		return err
+	}
+
+	resp := device.ConfigResponse{
+		PidURL: fmt.Sprintf("%s/v1/device-config/pids/%s@%s", d.settings.DeploymentURL, defaultTemplate.TemplateName, defaultTemplate.Version),
+	}
+	if defaultTemplate.R.TemplateNameDBCFile != nil && len(defaultTemplate.R.TemplateNameDBCFile.DBCFile) > 0 {
+		resp.DbcURL = fmt.Sprintf("%s/v1/device-config/dbc/%s@%s", d.settings.DeploymentURL, defaultTemplate.TemplateName, defaultTemplate.Version)
+	}
+
+	deviceSetting, err := d.defaultDeviceSettingForTemplate(c.UserContext(), defaultTemplate)
+	if err != nil {
+		return err
+	}
+	resp.DeviceSettingURL = fmt.Sprintf("%s/v1/device-config/settings/%s@%s", d.settings.DeploymentURL, deviceSetting.Name, deviceSetting.Version)
+
+	return c.JSON(DeviceTemplateStatusResponse{
+		Template: resp,
+	})
+}
+
 func parseOutTemplateAndVersion(templateNameWithVersion string) (string, string) {
 	parts := strings.Split(templateNameWithVersion, "@")
 	if len(parts) == 2 {
@@ -554,6 +599,67 @@ func isFwUpToDate(latest, current string, manufTokenID uint64) bool {
 		}
 	}
 	return false
+}
+
+func fallbackCANProtocol(canProtocolSimple string) string {
+	switch canProtocolSimple {
+	case "6":
+		return models.CanProtocolTypeCAN11_500
+	case "7":
+		return models.CanProtocolTypeCAN29_500
+	case "8":
+		return models.CanProtocolTypeCAN11_250
+	case "9":
+		return models.CanProtocolTypeCAN29_250
+	case "66":
+		return models.CanProtocolTypeCAN11_500
+	case "77":
+		return models.CanProtocolTypeCAN29_500
+	case "88":
+		return models.CanProtocolTypeCAN11_250
+	case "99":
+		return models.CanProtocolTypeCAN29_250
+	case "":
+		return models.CanProtocolTypeCAN11_500
+	default:
+		return models.CanProtocolTypeCAN11_500
+	}
+}
+
+func (d *DeviceConfigController) defaultDeviceSettingForTemplate(ctx context.Context, tmpl *models.Template) (*models.DeviceSetting, error) {
+	if len(tmpl.R.TemplateNameDeviceSettings) > 0 {
+		return tmpl.R.TemplateNameDeviceSettings[0], nil
+	}
+
+	var (
+		deviceSetting *models.DeviceSetting
+		err           error
+	)
+
+	if tmpl.ParentTemplateName.Valid {
+		deviceSetting, err = models.DeviceSettings(
+			models.DeviceSettingWhere.TemplateName.EQ(tmpl.ParentTemplateName),
+			qm.OrderBy(models.DeviceSettingColumns.Name),
+		).One(ctx, d.dbs().Reader)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return nil, errors.Wrap(err, "failed to retrieve device setting for parent template")
+		}
+	}
+
+	if deviceSetting == nil {
+		deviceSetting, err = models.DeviceSettings(
+			models.DeviceSettingWhere.Powertrain.EQ(tmpl.Powertrain),
+			qm.OrderBy(models.DeviceSettingColumns.Name),
+		).One(ctx, d.dbs().Reader)
+		if errors.Is(err, sql.ErrNoRows) {
+			deviceSetting, err = models.DeviceSettings(qm.OrderBy(models.DeviceSettingColumns.Name)).One(ctx, d.dbs().Reader)
+		}
+		if err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("failed to retrieve device setting. Powertrain: %s", tmpl.Powertrain))
+		}
+	}
+
+	return deviceSetting, nil
 }
 
 // calls well known dimo URL to get latest Macaron fw version
