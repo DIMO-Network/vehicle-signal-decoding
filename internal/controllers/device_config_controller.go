@@ -535,9 +535,7 @@ func (d *DeviceConfigController) GetConfigURLsFromVIN(c *fiber.Ctx) error {
 	}
 	resp.DeviceSettingURL = fmt.Sprintf("%s/v1/device-config/settings/%s@%s", d.settings.DeploymentURL, deviceSetting.Name, deviceSetting.Version)
 
-	return c.JSON(DeviceTemplateStatusResponse{
-		Template: resp,
-	})
+	return c.JSON(resp)
 }
 
 func parseOutTemplateAndVersion(templateNameWithVersion string) (string, string) {
