@@ -438,13 +438,15 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLsFromVIN_DefaultTempla
 	require.Equal(s.T(), fiber.StatusOK, response.StatusCode)
 
 	body, _ := io.ReadAll(response.Body)
-	var receivedResp DeviceTemplateStatusResponse
+	s.T().Logf("RAW JSON:\n%s", string(body))
+
+	var receivedResp device.ConfigResponse
 	err = json.Unmarshal(body, &receivedResp)
 	require.NoError(s.T(), err)
 
-	assert.Equal(s.T(), "http://localhost:3000/v1/device-config/pids/default-ice-can11@v1.2.3", receivedResp.Template.PidURL)
-	assert.Equal(s.T(), "http://localhost:3000/v1/device-config/dbc/default-ice-can11@v1.2.3", receivedResp.Template.DbcURL)
-	assert.Equal(s.T(), "http://localhost:3000/v1/device-config/settings/default-ice@v9.9.9", receivedResp.Template.DeviceSettingURL)
+	assert.Equal(s.T(), "http://localhost:3000/v1/device-config/pids/default-ice-can11@v1.2.3", receivedResp.PidURL)
+	assert.Equal(s.T(), "http://localhost:3000/v1/device-config/dbc/default-ice-can11@v1.2.3", receivedResp.DbcURL)
+	assert.Equal(s.T(), "http://localhost:3000/v1/device-config/settings/default-ice@v9.9.9", receivedResp.DeviceSettingURL)
 }
 
 func (s *DeviceConfigControllerTestSuite) TestGetConfigURLsFromVIN_ProtocolOverrideQS() {
@@ -473,12 +475,14 @@ func (s *DeviceConfigControllerTestSuite) TestGetConfigURLsFromVIN_ProtocolOverr
 	require.Equal(s.T(), fiber.StatusOK, response.StatusCode)
 
 	body, _ := io.ReadAll(response.Body)
-	var receivedResp DeviceTemplateStatusResponse
+	s.T().Logf("RAW JSON:\n%s", string(body))
+
+	var receivedResp device.ConfigResponse
 	err = json.Unmarshal(body, &receivedResp)
 	require.NoError(s.T(), err)
 
-	assert.Equal(s.T(), "http://localhost:3000/v1/device-config/pids/default-ice-can29@v2.0.0", receivedResp.Template.PidURL)
-	assert.Equal(s.T(), "http://localhost:3000/v1/device-config/settings/default-ice@v1.0.0", receivedResp.Template.DeviceSettingURL)
+	assert.Equal(s.T(), "http://localhost:3000/v1/device-config/pids/default-ice-can29@v2.0.0", receivedResp.PidURL)
+	assert.Equal(s.T(), "http://localhost:3000/v1/device-config/settings/default-ice@v1.0.0", receivedResp.DeviceSettingURL)
 }
 
 func (s *DeviceConfigControllerTestSuite) TestGetConfigStatusByEthAddr_DeviceDataOnly() {
